@@ -75,7 +75,7 @@ def export(visual_root: Path, project: Path = PROJECT) -> None:
         provenance["worldSnapshot"] = data.get("snapshot")
         outputs[data_dir / "provenance.json"] = json.dumps(provenance, ensure_ascii=False, indent=2) + "\n"
     for path, content in outputs.items():
-        path.write_text(content, encoding="utf-8")
+        path.write_text("\n".join(line.rstrip() for line in content.splitlines()) + "\n", encoding="utf-8")
     subprocess.run([sys.executable, str(project / "scripts" / "build.py")], check=True)
     print(f"Imported {len(data['maps'])} maps and {len(data['spots'])} reviewed atlas positions.")
 
