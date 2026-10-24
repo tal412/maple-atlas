@@ -1,5 +1,5 @@
 #maple-atlas-concept #mc-companion-desktop{display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
-#maple-atlas-concept #mc-companion-dialog{width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--mc-edge);border-radius:28px;background:var(--mc-paper);color:var(--mc-ink)}
+#maple-atlas-concept #mc-companion-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--mc-edge);border-radius:28px;background:var(--mc-paper);color:var(--mc-ink)}
 #maple-atlas-concept #mc-companion-dialog header{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-24px;background:var(--mc-paper);z-index:3;padding:12px 0;gap:16px;margin:0 0 20px}
 #maple-atlas-concept #mc-companion-dialog header button{flex:0 0 48px;width:48px;height:48px;padding:12px}
 #maple-atlas-concept #mc-companion-dialog h2{font-size:24px;margin:0}
@@ -7,15 +7,17 @@
 #maple-atlas-concept #mc-companion-dialog :where(p){line-height:1.55;margin:0}
 #maple-atlas-concept .mc-companion-flow,#maple-atlas-concept #mc-pair-active{display:grid;gap:20px;min-width:0}
 #maple-atlas-concept #mc-companion-dialog :where(section){display:grid;gap:16px;min-width:0;margin:0;padding:20px;border-radius:22px;background:var(--mc-soft)}
-#maple-atlas-concept #mc-companion-dialog button{min-height:48px}
-#maple-atlas-concept #mc-companion-dialog section>button,#maple-atlas-concept #mc-companion-dialog details>button,#maple-atlas-concept #mc-pair-retry,#maple-atlas-concept #mc-pair-stop,#maple-atlas-concept #mc-camera-box>button{width:100%;padding:12px 16px;border-radius:24px}
+#maple-atlas-concept #mc-companion-dialog button{min-height:48px;width:fit-content;max-width:100%;justify-self:start;white-space:normal}
+#maple-atlas-concept #mc-companion-dialog section>button,#maple-atlas-concept #mc-companion-dialog details>button,#maple-atlas-concept #mc-pair-retry,#maple-atlas-concept #mc-pair-stop,#maple-atlas-concept #mc-camera-box>button{padding:12px 20px;border-radius:24px}
+#maple-atlas-concept #mc-companion-dialog .mc-text-action{border-color:transparent;background:transparent;color:var(--mc-muted);padding:10px 12px;margin-left:-12px}
+#maple-atlas-concept #mc-companion-dialog .mc-text-action:hover{background:var(--mc-soft);color:var(--mc-ink)}
 #maple-atlas-concept #mc-companion-dialog textarea{display:block;width:100%;min-height:90px;resize:vertical;margin:8px 0 0;background:var(--mc-paper);color:var(--mc-ink);border:1px solid var(--mc-edge);border-radius:14px;padding:12px;overflow-wrap:anywhere;font:12px/1.4 monospace}
 #maple-atlas-concept #mc-companion-dialog summary{padding:12px 0;min-height:48px;cursor:pointer;font-weight:500;line-height:1.5}
 #maple-atlas-concept #mc-companion-dialog details>label{display:block}
 #maple-atlas-concept #mc-companion-dialog details[open]>:not(summary){margin:12px 0 0}
 #maple-atlas-concept .mc-companion-help{border-top:1px solid var(--mc-edge);padding-top:8px}
-#maple-atlas-concept .mc-companion-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;min-width:0;margin:0}
-#maple-atlas-concept .mc-companion-actions button{width:100%;min-width:0;padding:12px 16px;border-radius:24px}
+#maple-atlas-concept .mc-companion-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;min-width:0;margin:0}
+#maple-atlas-concept .mc-companion-actions button{flex:0 1 auto;min-width:0;padding:12px 20px;border-radius:24px}
 #maple-atlas-concept .mc-companion-actions:not(:has(button:not([hidden]))){display:none}
 #maple-atlas-concept #mc-companion-status{display:flex;align-items:flex-start;gap:12px;margin:0;padding:16px;background:var(--mc-soft);border:1px solid var(--mc-edge);border-radius:18px;overflow-wrap:anywhere}
 #maple-atlas-concept #mc-companion-state-icon{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:var(--mc-paper);font-size:18px;font-weight:600}
@@ -50,6 +52,7 @@
  #maple-atlas-concept #mc-companion-dialog{width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;padding:20px;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
  #maple-atlas-concept #mc-companion-dialog header{top:-20px}
  #maple-atlas-concept #mc-companion-dialog section{padding:16px}
+ #maple-atlas-concept #mc-companion-dialog[data-role="phone"] .mc-primary{width:100%}
  #maple-atlas-concept #mc-companion-badge{bottom:calc(var(--mc-nav-height,80px) + 88px + env(safe-area-inset-bottom));left:16px;transform:none;max-width:calc(100vw - 88px)}
 }
 #maple-atlas-concept .mc-companion-file input::file-selector-button{min-height:44px;margin-right:12px;padding:10px 18px;border:1px solid var(--mc-edge);border-radius:24px;background:var(--mc-soft);color:var(--mc-ink);cursor:pointer}

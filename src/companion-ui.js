@@ -5,7 +5,7 @@
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),qr=$('#mc-pair-qr'),input=$('#mc-pair-input'),output=$('#mc-pair-output');
     const video=$('#mc-reader-video'),selection=$('#mc-reader-selection'),scanVideo=$('#mc-scan-video'),readerState=$('#mc-reader-state');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData,canShareScreen:!!navigator.mediaDevices?.getDisplayMedia});
-    const role=device.role;
+    const role=device.role;dialog.dataset.role=role;
     let stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null,qrCells=0,accepting=false,uiEpoch=0;
     let currentState={phase:'idle',message:'',expires:0};
     function fitQR(){
@@ -74,12 +74,16 @@
       if(version!==uiEpoch)return;
       qr.style.removeProperty('width');qr.style.removeProperty('height');
       $('#mc-pair-code-title').textContent=role==='pc'?'1 · Scan this with your phone':'2 · Show this response to your computer';
-      $('#mc-pair-next').textContent=role==='pc'?'On your phone, open Maple Atlas → Live companion → Connect to computer. Scan this code.':'Computer code accepted. This is a new response code, not a refresh. On the computer, choose “Scan phone response” and scan the code below.';
+      const hidden=link.addressing&&!link.addressing.ip?' This device is only sharing a private network name, which some networks cannot resolve. Allowing camera access on '+(role==='pc'?'this computer':'this phone')+' makes pairing more reliable.':'';
+      $('#mc-pair-next').textContent=(role==='pc'?'On your phone, open Maple Atlas → Live companion → Connect to computer. Scan this code.':'Computer code accepted. This is a new response code, not a refresh. Hold it up to the computer’s camera, or choose “Scan phone response” there.')+hidden;
       paint(currentState);fitQR();$('#mc-pair-copy-status').textContent='';$('#mc-pair-exchange').scrollIntoView({block:'start'});
     }
     async function accept(code){
-      if(accepting)return;accepting=true;const version=uiEpoch;stopScan();clearError();
-      try{if(role==='pc')await link.finish(code);else{const answer=await link.answer(code);if(version===uiEpoch)await showCode(answer,version);}}
+      if(accepting)return;accepting=true;const version=uiEpoch;clearError();
+      // Browsers reveal a device's real local address only while it holds camera access.
+      // The phone keeps the camera open until its response is built, then releases it.
+      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code);stopScan();if(version===uiEpoch)await showCode(answer,version);}}
+      catch(e){stopScan();throw e;}
       finally{accepting=false;}
     }
     async function begin(){
@@ -88,7 +92,15 @@
       $('#mc-pair-scan-button').textContent=role==='pc'?'Scan phone response':'Scan computer code';
       $('#mc-pair-scan-title').textContent=role==='pc'?'2 · Scan the phone response':'1 · Scan the computer code';
       $('#mc-pair-scan-help').textContent=role==='pc'?'After the phone scans your code, it displays a new QR. Scan that response here to connect.':'Keep the computer’s Maple Atlas page open. Point your camera at its pairing QR.';
-      if(role==='pc'){const version=uiEpoch;await showCode(await link.offer(),version);}
+      if(role==='pc'){
+        const version=uiEpoch;let note='';
+        // Opening the camera first makes the browser share this computer's local address
+        // instead of a private .local name that many phones and routers cannot resolve.
+        try{await scan();}catch(e){note=e?.name==='NotAllowedError'?'Camera access was not allowed. ':e?.name==='NotFoundError'?'No camera was found. ':'The camera could not start. ';}
+        if(version!==uiEpoch)return;
+        $('#mc-pair-scan-help').textContent=note?note+'Use a QR image or paste the phone response below. Without camera access the browser hides this computer’s local address, so pairing may fail on some networks.':'The camera is ready. After your phone scans the code above, hold the phone’s response QR up to this camera.';
+        await showCode(await link.offer(),version);
+      }
       else{link.stop('Starting a new pairing.');clearError();paint({phase:'scan-computer',message:'Scan the code displayed by your computer. You will then show a response code back to it.'});}
     }
     $('#mc-pair-start').textContent=role==='pc'?'Create computer code':'Connect to computer';
@@ -107,11 +119,13 @@
       if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access is unavailable. Use a QR image or paste a pairing code.');
       const camera=await navigator.mediaDevices.getUserMedia({video:{facingMode:role==='phone'?'environment':'user'},audio:false});
       if(version!==scanEpoch){camera.getTracks().forEach(t=>t.stop());return;}
-      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-box').hidden=false;await scanVideo.play();$('#mc-camera-box').scrollIntoView({block:'nearest'});
+      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-hint').textContent='Point the camera at the entire QR code.';$('#mc-camera-box').hidden=false;await scanVideo.play();$('#mc-camera-box').scrollIntoView({block:'nearest'});
       const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
       async function frame(){
         if(!scanner||version!==scanEpoch)return;
-        if(scanVideo.videoWidth){const scale=Math.min(1,1200/scanVideo.videoWidth);canvas.width=Math.round(scanVideo.videoWidth*scale);canvas.height=Math.round(scanVideo.videoHeight*scale);context.drawImage(scanVideo,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(pixels.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});if(code){try{await accept(code.data);}catch(e){error(e);}return;}}
+        if(scanVideo.videoWidth){const scale=Math.min(1,1200/scanVideo.videoWidth);canvas.width=Math.round(scanVideo.videoWidth*scale);canvas.height=Math.round(scanVideo.videoHeight*scale);context.drawImage(scanVideo,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(pixels.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
+          if(code&&!/^\s*(MA2|MAPLE1:)/i.test(code.data))$('#mc-camera-hint').textContent='That QR is not a Maple Atlas pairing code. Point the camera at the code in Maple Atlas.';
+          else if(code){try{await accept(code.data);}catch(e){error(e);}return;}}
         scanTimer=setTimeout(frame,250);
       }void frame();
     }
