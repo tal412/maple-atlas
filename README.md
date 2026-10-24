@@ -126,6 +126,8 @@ The validator checks all 457 included directed portal pairs against the pinned s
 
 Open Live companion from **Connect phone** on a computer or **Your character → Live companion** on a phone.
 
+**On a Mac, use Maple Atlas Companion** (`macos/`, see [macos/README.md](macos/README.md)). It captures the game window natively and pairs with **one scan**: point the phone's camera at the app's QR and the phone connects. No camera is needed on the Mac. The browser flow below remains for other computers.
+
 1. The app detects the device role. Computers (including Macs) only create pairing codes and share the game window. Phones/tablets only receive the connection. Role detection uses mobile client hints and platform signals, including iPad desktop mode; it does not use viewport width. Screen-sharing support is checked separately. Browser identity can be spoofed, so this is interface guidance, not authentication. See [mobile browser signals](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/mobile) and [screen-capture support](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia).
 2. Computer: **Create computer code** (allow the camera; it opens first so the browser shares this computer's local address and is ready to read the phone's response). Phone: **Connect to computer → Scan computer code**.
 3. The phone explicitly shows **Code scanned · One more step** and a new response QR. Hold it up to the computer's camera, which is already scanning. This second scan is required. A computer without a camera can use a QR image or pasted response.

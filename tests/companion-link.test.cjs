@@ -86,5 +86,26 @@ function openChannel(peer,link,session,remoteRole){
  }
  const gathering=harness({Peer:GatheringPeer}),gatheringOffer=gathering.link.offer();await gatheringStarted;gathering.link.stop();await assert.rejects(gatheringOffer,/cancelled/);assert.equal(gathering.last().phase,'disconnected');assert.equal(gathering.clock.tasks.size,0);assert.equal(Peer.last.listener,null);
  const mismatch=harness();await mismatch.link.offer();const mismatchPeer=Peer.last;mismatchPeer.channel.readyState='open';mismatchPeer.channel.onopen();const hello=mismatchPeer.channel.messages.find(m=>m.kind==='hello');mismatchPeer.channel.onmessage({data:JSON.stringify({...hello,v:99,role:'phone'})});assert.equal(mismatch.last().reason,'version');assert(!mismatch.link.connected);
- console.log('PASS: compact MA2 codes (IPv4, IPv6, mDNS, rejection), explicit scan/response states, stable repeated scans, two-way confirmation, no false connected state, heartbeat loss/recovery, timeout/expiry/failure, replay rejection and cleanup');
+ // Single-scan pairing with the native Mac app (ICE-lite host + QR secret).
+ const golden='MA2FCVKVKVKVKVKVKTLJHJAAAJQARAWEQZRDBQWEY3EMVTGO2DJNJVWY3LON5YHC4TTOR2XMMJSAADQ4FI4EMVDCOB7IZGVIW3CNFYHO7UFRSJZVINIV63L3RGL2LMQCBAKAAAAEMBZAAAQEAYEAUDAOCAJBIFQYDIOB4';
+ const goldenSdp=['v=0','m=application 9 UDP/DTLS/SCTP webrtc-datachannel','a=candidate:1 1 udp 2122260223 10.0.0.2 12345 typ host','a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=fingerprint:sha-256 '+fp,'a=setup:actpass','a=mid:0',''].join('\r\n');
+ const secret=Uint8Array.from({length:16},(_,i)=>i);
+ assert.equal(await pack({type:'offer',sdp:goldenSdp,session:'a'.repeat(16),expires:1800000000000,secret}),golden,'Must match the Go encoder in macos/link');
+ const host=await unpack(golden,1800000000000-60000);assert(host.native);assert.deepEqual([...host.secret],[...secret]);assert.match(host.sdp,/\r\na=ice-lite\r\n/);
+ assert.equal((await unpack('https://tal412.github.io/maple-atlas/dev/#link='+golden,1800000000000-60000)).session,'a'.repeat(16),'The QR link form is accepted');
+ await assert.rejects(unpack('https://tal412.github.io/maple-atlas/dev/#link=nope',initial),/website link/);
+ await assert.rejects(packed({...asAnswer(offer),secret}),undefined,'Only offers carry a host secret');
+ const nativeCode=await pack({...offer,secret}),joined=harness();
+ assert.equal(await joined.link.answer(nativeCode),null,'No response code is shown for the Mac app');assert.equal(joined.last().phase,'connecting');
+ const joinPeer=Peer.last;assert.match(joinPeer.remoteDescription.sdp,/a=ice-lite/);
+ const hostChannel=joinPeer.createDataChannel('maple-atlas');joinPeer.ondatachannel({channel:hostChannel});hostChannel.readyState='open';hostChannel.onopen();
+ await new Promise(r=>setTimeout(r,50));
+ const [auth,phoneHello]=hostChannel.messages;assert.equal(auth.kind,'auth');assert.equal(auth.v,3);assert.equal(phoneHello.kind,'hello','Auth goes first, then the usual hello');
+ const expected=require('node:crypto').createHmac('sha256',Buffer.from(secret)).update('maple-atlas-link|'+offer.session+'|'+fp).digest('base64url');assert.equal(auth.proof,expected);
+ const toPhone=v=>hostChannel.onmessage({data:JSON.stringify(v)});
+ toPhone({kind:'hello',v:2,session:offer.session,role:'pc',nonce:'e'.repeat(32)});toPhone({kind:'hello-ack',v:2,session:offer.session,nonce:phoneHello.nonce});assert(joined.link.connected);
+ toPhone({kind:'bye',v:2,session:'0'.repeat(16)});assert(joined.link.connected,'A goodbye for another session is ignored');
+ toPhone({kind:'bye',v:2,session:offer.session});assert.equal(joined.last().phase,'disconnected');assert.match(joined.last().message,/Mac disconnected/);assert.equal(joined.clock.tasks.size,0);
+ const late=harness();await late.link.answer(nativeCode);late.clock.advance(25000);assert.equal(late.last().reason,'timeout');assert.match(late.last().message,/Mac/);
+ console.log('PASS: compact MA2 codes (IPv4, IPv6, mDNS, rejection), Mac app single-scan (golden code, QR link, HMAC auth, bye), explicit scan/response states, stable repeated scans, two-way confirmation, no false connected state, heartbeat loss/recovery, timeout/expiry/failure, replay rejection and cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1;});

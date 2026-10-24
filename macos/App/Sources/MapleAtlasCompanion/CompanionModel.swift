@@ -1,0 +1,454 @@
+import AppKit
+import Foundation
+import Observation
+import os
+
+/// Which build of the website the phone should open.
+enum SiteOption: String, CaseIterable, Identifiable {
+    case dev
+    case main
+
+    var id: String { rawValue }
+    var title: String { self == .dev ? "Dev" : "Main" }
+    var url: String {
+        switch self {
+        case .dev: "https://tal412.github.io/maple-atlas/dev/"
+        case .main: "https://tal412.github.io/maple-atlas/"
+        }
+    }
+}
+
+enum EngineStatus: Equatable {
+    case waitingForHelper
+    case loading(String)
+    case ready(mapCount: Int)
+    case failed(String)
+}
+
+struct ConfirmedMap: Equatable {
+    let id: String
+    let name: String
+    let inliers: Int?
+    let confidence: Int?
+    let kind: String?
+    let at: Date
+}
+
+/// All app state. Owns the helper process, the engine web view and the tracking loop.
+@MainActor
+@Observable
+final class CompanionModel {
+    // MARK: Phone
+    private(set) var phase = "idle"
+    private(set) var phaseMessage = "Starting the connection helper…"
+    private(set) var pairing: PairingCode?
+    private(set) var qrImage: CGImage?
+    private(set) var helperProblem: String?
+    var lastError: String?
+
+    // MARK: Game window
+    /// Name of the window chosen in the system picker, if one is being read.
+    private(set) var gameWindowLabel: String?
+    private(set) var captureProblem: String?
+    /// In-memory thumbnail of the selected window; never written to disk.
+    private(set) var previewImage: CGImage?
+    private(set) var minimapRect = CompanionModel.defaultMinimapRect
+
+    // MARK: Tracking
+    private(set) var engineStatus = EngineStatus.waitingForHelper
+    private(set) var isTracking = false
+    private(set) var readingText = "Not tracking"
+    private(set) var lastConfirmed: ConfirmedMap?
+
+    // MARK: Diagnostics
+    private(set) var logLines: [String] = []
+
+    var site: SiteOption {
+        didSet {
+            guard site != oldValue else { return }
+            UserDefaults.standard.set(site.rawValue, forKey: Keys.site)
+            restartHelper()
+        }
+    }
+
+    @ObservationIgnored let engine = EngineHost()
+    @ObservationIgnored let capture = GameCapture()
+    @ObservationIgnored private var regionKey = "default"
+    @ObservationIgnored private var helper: HelperProcess?
+    @ObservationIgnored private var helperGeneration = 0
+    @ObservationIgnored private var engineLoad: Task<Void, Never>?
+    @ObservationIgnored private var trackingTask: Task<Void, Never>?
+    @ObservationIgnored private var trackingActivity: NSObjectProtocol?
+    @ObservationIgnored private var lastSearchingSent: Date?
+    @ObservationIgnored private var previewTask: Task<Void, Never>?
+    @ObservationIgnored private var noMatchSince = Date.now
+    @ObservationIgnored private let logger = Logger(subsystem: "io.github.tal412.maple-atlas-companion", category: "app")
+
+    private enum Keys {
+        static let site = "site"
+        static let minimapRects = "minimapRects"
+    }
+
+    init() {
+        site = SiteOption(rawValue: UserDefaults.standard.string(forKey: Keys.site) ?? "") ?? .dev
+        engine.onProgress = { [weak self] message in
+            guard let self else { return }
+            if case .ready = self.engineStatus { return }
+            self.engineStatus = .loading(message)
+        }
+        engine.onConsole = { [weak self] message in self?.log("engine: \(message)") }
+        capture.onSelected = { [weak self] label, key in
+            guard let self else { return }
+            self.gameWindowLabel = label
+            self.captureProblem = nil
+            self.regionKey = key
+            self.minimapRect = Self.storedMinimapRect(for: key) ?? Self.defaultMinimapRect
+            self.previewImage = nil
+            self.log("Reading window: \(label)")
+            if self.isTracking { self.runTrackingLoop() }
+        }
+        capture.onStopped = { [weak self] message in
+            guard let self else { return }
+            self.gameWindowLabel = nil
+            self.previewImage = nil
+            self.captureProblem = message
+            self.stopTracking()
+            self.log(message)
+        }
+        engine.onCrash = { [weak self] in
+            guard let self, let url = self.engine.loadedURL else { return }
+            self.log("Engine web process stopped; reloading.")
+            self.loadEngine(url, force: true)
+        }
+    }
+
+    var isPhoneConnected: Bool { phase == "connected" }
+    var isHelperRunning: Bool { helper?.isRunning == true }
+
+    var phaseTitle: String {
+        switch phase {
+        case "idle": "Not paired"
+        case "waiting": "Waiting for your phone"
+        case "connecting": "Connecting…"
+        case "verifying": "Verifying…"
+        case "connected": "Connected to phone"
+        case "reconnecting": "Connection interrupted"
+        case "disconnected": "Disconnected"
+        case "failed": "Connection failed"
+        case "expired": "Code expired"
+        default: phase.capitalized
+        }
+    }
+
+    var hasGameWindow: Bool { gameWindowLabel != nil }
+
+    // MARK: Lifecycle
+
+    func start() {
+        launchHelper()
+        startPreviewLoop()
+    }
+
+    /// Called from `applicationWillTerminate`: stop, close stdin, terminate.
+    func shutdown() {
+        trackingTask?.cancel()
+        previewTask?.cancel()
+        capture.stop()
+        helper?.shutdown()
+        helper = nil
+    }
+
+    func restartHelper() {
+        helperGeneration += 1 // Ignore the old process's remaining output and exit.
+        helper?.shutdown()
+        helper = nil
+        pairing = nil
+        qrImage = nil
+        phase = "idle"
+        phaseMessage = "Restarting the connection helper…"
+        launchHelper()
+    }
+
+    private func launchHelper() {
+        helperProblem = nil
+        let paths = Self.helperPaths()
+        log("Starting helper: \(paths.executable.path) (site \(site.url))")
+        helperGeneration += 1
+        let generation = helperGeneration
+        do {
+            let process = try HelperProcess(
+                executable: paths.executable,
+                arguments: ["--engine-dir", paths.engineDir.path, "--site", site.url],
+                onEvent: { [weak self] event in
+                    guard let self, self.helperGeneration == generation else { return }
+                    self.handle(event)
+                },
+                onStderr: { [weak self] line in self?.log("helper: \(line)") },
+                onExit: { [weak self] status in
+                    guard let self, self.helperGeneration == generation else { return }
+                    self.helper = nil
+                    self.helperProblem = "The connection helper stopped (status \(status))."
+                    self.phase = "failed"
+                    self.phaseMessage = "Restart the helper to pair again."
+                    self.pairing = nil
+                    self.qrImage = nil
+                    self.log("Helper exited with status \(status).")
+                })
+            helper = process
+            helper?.send(.pair)
+        } catch {
+            helperProblem = error.localizedDescription
+            phase = "failed"
+            phaseMessage = "The phone link can't start without its helper."
+            log("Helper launch failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// The helper lives next to our executable; env vars let a dev build point elsewhere.
+    private static func helperPaths() -> (executable: URL, engineDir: URL) {
+        let env = ProcessInfo.processInfo.environment
+        let executable = env["MAPLE_LINK_PATH"].map(URL.init(fileURLWithPath:))
+            ?? Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/maple-link")
+        let engineDir = env["MAPLE_ENGINE_DIR"].map(URL.init(fileURLWithPath:))
+            ?? (Bundle.main.resourceURL ?? Bundle.main.bundleURL).appendingPathComponent("engine")
+        return (executable, engineDir)
+    }
+
+    private func handle(_ event: HelperEvent) {
+        switch event {
+        case .engine(let url):
+            log("Engine at \(url.absoluteString)")
+            loadEngine(url)
+        case .code(let code):
+            pairing = code
+            qrImage = QRCode.image(for: code.link)
+            log("New pairing code \(code.code)")
+        case .state(let newPhase, let message):
+            let wasConnected = isPhoneConnected
+            phase = newPhase
+            phaseMessage = message
+            if !["waiting", "connecting", "verifying"].contains(newPhase) {
+                // The QR is only useful while a code is pending.
+                pairing = nil
+                qrImage = nil
+            }
+            if isPhoneConnected && !wasConnected {
+                lastSearchingSent = nil
+                if !isTracking { helper?.send(.tracking(state: "paused")) }
+            }
+        case .log(let message):
+            log("helper: \(message)")
+        case .error(let message):
+            lastError = message
+            log("helper error: \(message)")
+        }
+    }
+
+    // MARK: Phone actions
+
+    func newCode() {
+        if helper == nil { launchHelper(); return }
+        helper?.send(.pair)
+    }
+
+    func disconnect() {
+        helper?.send(.stop)
+    }
+
+    // MARK: Engine
+
+    func reloadEngine() {
+        guard let url = engine.loadedURL else { return }
+        loadEngine(url, force: true)
+    }
+
+    private func loadEngine(_ url: URL, force: Bool = false) {
+        guard force || url != engine.loadedURL else { return }
+        engineLoad?.cancel()
+        engineStatus = .loading("Loading the map index…")
+        engineLoad = Task {
+            do {
+                try await engine.load(url)
+                let count = try await engine.ready()
+                guard !Task.isCancelled else { return }
+                engineStatus = .ready(mapCount: count)
+                log("Engine ready with \(count) maps.")
+            } catch EngineHost.EngineError.superseded {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                engineStatus = .failed(error.localizedDescription)
+                log("Engine failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: Game window
+
+    /// Opens Apple's window picker. Choosing a window there needs no Screen Recording permission.
+    func chooseGameWindow() {
+        captureProblem = nil
+        capture.presentPicker()
+    }
+
+    // MARK: Minimap region
+
+    /// MapleStory draws its minimap in the top-left corner.
+    static let defaultMinimapRect = CGRect(x: 0, y: 0, width: 0.4, height: 0.4)
+
+    /// Sets the normalized (top-left origin) region that is sent to the engine.
+    func setMinimapRect(_ rect: CGRect) {
+        let unit = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let clamped = rect.standardized.intersection(unit)
+        guard !clamped.isNull, clamped.width >= 0.02, clamped.height >= 0.02, clamped != minimapRect else { return }
+        minimapRect = clamped
+        Self.storeMinimapRect(clamped, for: regionKey)
+        regionChanged()
+    }
+
+    func resetMinimapRect() {
+        setMinimapRect(Self.defaultMinimapRect)
+    }
+
+    var isDefaultMinimapRect: Bool { minimapRect == Self.defaultMinimapRect }
+
+    private func regionChanged() {
+        noMatchSince = .now
+        if isTracking { Task { await engine.reset() } }
+    }
+
+    private static func storedMinimapRect(for key: String) -> CGRect? {
+        let all = UserDefaults.standard.dictionary(forKey: Keys.minimapRects) as? [String: [Double]]
+        guard let values = all?[key], values.count == 4 else { return nil }
+        return CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
+    }
+
+    private static func storeMinimapRect(_ rect: CGRect, for key: String) {
+        var all = (UserDefaults.standard.dictionary(forKey: Keys.minimapRects) as? [String: [Double]]) ?? [:]
+        all[key] = [rect.minX, rect.minY, rect.width, rect.height].map { Double($0) }
+        UserDefaults.standard.set(all, forKey: Keys.minimapRects)
+    }
+
+    // MARK: Preview
+
+    /// Refreshes the preview once a second while not tracking (the tracking loop updates it otherwise).
+    private func startPreviewLoop() {
+        previewTask?.cancel()
+        previewTask = Task {
+            while !Task.isCancelled {
+                if !isTracking, capture.isCapturing {
+                    let capture = self.capture, region = minimapRect
+                    let frame = await Task.detached { try? capture.frame(region: region, previewOnly: true) }.value
+                    if !isTracking, let frame { previewImage = frame.preview }
+                }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    // MARK: Tracking
+
+    /// How long the minimap can go without any candidate before the status suggests moving the box.
+    private static let noMatchHint: TimeInterval = 12
+
+    func startTracking() {
+        guard !isTracking, hasGameWindow else { return }
+        isTracking = true
+        readingText = "Reading the minimap…"
+        // Keep App Nap from stretching the capture interval while the game is in front.
+        trackingActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep], reason: "Tracking the game window")
+        runTrackingLoop()
+    }
+
+    func stopTracking() {
+        guard isTracking else { return }
+        trackingTask?.cancel()
+        trackingTask = nil
+        isTracking = false
+        readingText = "Not tracking"
+        if let activity = trackingActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            trackingActivity = nil
+        }
+        helper?.send(.tracking(state: "paused"))
+    }
+
+    private func runTrackingLoop() {
+        trackingTask?.cancel()
+        lastSearchingSent = nil
+        noMatchSince = .now
+        trackingTask = Task {
+            await engine.reset()
+            while !Task.isCancelled {
+                let deadline = ContinuousClock.now + .milliseconds(1500)
+                await trackOnce()
+                try? await Task.sleep(until: deadline, clock: .continuous)
+            }
+        }
+    }
+
+    private func trackOnce() async {
+        guard case .ready = engineStatus else {
+            if case .failed = engineStatus { readingText = "The map engine didn't load." }
+            else { readingText = "Loading the map index…" }
+            return
+        }
+        do {
+            let capture = self.capture, region = minimapRect
+            let frame = try await Task.detached { try capture.frame(region: region, previewOnly: false) }.value
+            guard !Task.isCancelled else { return }
+            previewImage = frame.preview
+            guard let jpeg = frame.minimapJPEG else { return }
+            let reading = try await engine.read(jpeg)
+            guard !Task.isCancelled else { return }
+            apply(reading)
+        } catch EngineHost.EngineError.busy {
+            return
+        } catch {
+            guard !Task.isCancelled else { return }
+            if readingText != error.localizedDescription {
+                log("Tracking: \(error.localizedDescription)") // Once per distinct failure, not every tick.
+            }
+            readingText = error.localizedDescription
+        }
+    }
+
+    private func apply(_ reading: EngineReading) {
+        if reading.phase == "confirmed", let id = reading.id {
+            noMatchSince = .now
+            let name = reading.name ?? id
+            lastConfirmed = ConfirmedMap(
+                id: id, name: name, inliers: reading.inliers, confidence: reading.confidence,
+                kind: reading.kind, at: .now)
+            readingText = (isPhoneConnected ? "Following on phone · " : "Minimap match · ") + name
+            if isPhoneConnected {
+                helper?.send(.location(id: id, confidence: reading.confidence ?? 0, observedAt: .now))
+            }
+            return
+        }
+        if reading.phase == "candidate" {
+            noMatchSince = .now
+            readingText = "Checking the minimap…" + (reading.name.map { " · \($0)?" } ?? "")
+        } else if Date.now.timeIntervalSince(noMatchSince) >= Self.noMatchHint {
+            readingText = "No map found in the selected minimap area. Adjust the box around the minimap."
+        } else {
+            readingText = "Reading the minimap…"
+        }
+        if isPhoneConnected, lastSearchingSent.map({ Date.now.timeIntervalSince($0) >= 5 }) ?? true {
+            helper?.send(.tracking(state: "searching"))
+            lastSearchingSent = .now
+        }
+    }
+
+    // MARK: Log
+
+    func log(_ message: String) {
+        logger.info("\(message, privacy: .public)")
+        let stamp = Date.now.formatted(date: .omitted, time: .standard)
+        logLines.append("\(stamp)  \(message)")
+        if logLines.count > 1000 { logLines.removeFirst(logLines.count - 1000) }
+    }
+
+    func clearLog() { logLines.removeAll() }
+}

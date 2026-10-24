@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; img-src 'self' data: blob:; connect-src 'self' data: blob:; worker-src 'self'">
+<title>Maple Atlas matching engine</title>
+<!-- Runs inside Maple Atlas Companion's hidden web view. It reuses the website's
+     matcher (OpenCV ORB + local index in a worker) and short observation history,
+     so the Mac app recognizes maps exactly like the browser version did. Frames
+     arrive from the app as data URLs and never leave this Mac. -->
+<script src="./visual-client.js"></script>
+<script src="./visual-tracker.js"></script>
+<script>
+(function(){
+  const notify=message=>{try{window.webkit?.messageHandlers?.atlas?.postMessage(message);}catch(_){}};
+  const vision=MapleVisualClient.create({onProgress:message=>notify({type:'progress',message})});
+  const tracker=MapleVisualTracker.create(),canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
+  let names=new Map(),busy=false;
+  // The app reads only the in-game minimap, so scene references are ignored.
+  // "strong" is recomputed with the matcher's own rule over the remaining candidates.
+  function minimapOnly(result){
+    const candidates=(result.candidates||[]).filter(c=>c.kind==='minimap'),best=candidates[0],runner=candidates[1];
+    const strong=!!best&&best.inliers>=18&&best.ratio>=.55&&(!runner||best.score>=runner.score*1.65&&best.score-runner.score>=8);
+    return {...result,candidates,strong};
+  }
+  async function ready(){
+    const catalog=await vision.ready();
+    names=new Map(catalog.maps.map(m=>[String(m.id),m.name]));
+    notify({type:'progress',message:'Map matcher ready · '+catalog.maps.length+' maps'});
+    return {maps:catalog.maps.map(m=>({id:String(m.id),name:m.name}))};
+  }
+  async function read(dataURL){
+    if(busy)throw Error('A frame is already being matched.');
+    busy=true;const started=performance.now();
+    try{
+      await ready();
+      const bitmap=await createImageBitmap(await (await fetch(dataURL)).blob());
+      const scale=Math.min(1,960/Math.max(bitmap.width,bitmap.height));
+      canvas.width=Math.max(16,Math.round(bitmap.width*scale));canvas.height=Math.max(16,Math.round(bitmap.height*scale));
+      context.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+      const result=minimapOnly(await vision.match(context.getImageData(0,0,canvas.width,canvas.height)));
+      const observation=tracker.read(result),match=observation.match,elapsed=Math.round(performance.now()-started);
+      if(!match)return {phase:'searching',text:'Reading the minimap… Keep the in-game minimap visible inside the box.',elapsed};
+      const name=names.get(String(match.id))||'Map '+match.id,kind='minimap';
+      const base={id:String(match.id),name,inliers:match.inliers,kind,confidence:Math.min(100,Math.round(match.ratio*100)),elapsed};
+      if(observation.phase==='confirmed')return {...base,phase:'confirmed',text:name+' · '+match.inliers+' aligned landmarks'};
+      return {...base,phase:'candidate',text:'Checking the terrain… Keep walking to reveal more landmarks.'};
+    }finally{busy=false;}
+  }
+  window.atlasEngine={ready,read,reset:()=>tracker.reset()};
+})();
+</script>
+</html>

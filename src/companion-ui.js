@@ -82,7 +82,7 @@
       if(accepting)return;accepting=true;const version=uiEpoch;clearError();
       // Browsers reveal a device's real local address only while it holds camera access.
       // The phone keeps the camera open until its response is built, then releases it.
-      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code);stopScan();if(version===uiEpoch)await showCode(answer,version);}}
+      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code);stopScan();if(answer&&version===uiEpoch)await showCode(answer,version);}}
       catch(e){stopScan();throw e;}
       finally{accepting=false;}
     }
@@ -106,7 +106,7 @@
     $('#mc-pair-start').textContent=role==='pc'?'Create computer code':'Connect to computer';
     $('#mc-companion-intro').textContent=role==='pc'?'This is your computer. Connect a phone on the same local network to follow your game. Pairing needs two scans.':'This is your phone or tablet. Connect to the computer running your game. Both devices must use the same local network.';
     $('#mc-pair-start').disabled=role==='pc'&&!device.canShareScreen;
-    paint({phase:'idle',message:role==='pc'?device.canShareScreen?'Create a code, scan it on your phone, then scan the phone’s response here.':'This computer’s browser cannot share its screen. Use a desktop browser that supports game-window sharing.':'First create a pairing code in Maple Atlas on your computer. Then connect here.'});
+    paint({phase:'idle',message:role==='pc'?device.canShareScreen?'Create a code, scan it on your phone, then scan the phone’s response here.':'This computer’s browser cannot share its screen. Use a desktop browser that supports game-window sharing.':'Open Maple Atlas Companion on your Mac and scan its code with your phone’s camera. Or create a code in Maple Atlas on a computer browser, then connect here.'});
     $('#mc-pair-start').onclick=e=>run(e.currentTarget,begin);$('#mc-pair-retry').onclick=e=>run(e.currentTarget,begin);
     $('#mc-pair-check').onclick=()=>{clearError();link.waitForConnection();dialog.scrollTo({top:0});};
     $('#mc-pair-apply').onclick=e=>run(e.currentTarget,()=>accept(input.value));
@@ -124,7 +124,7 @@
       async function frame(){
         if(!scanner||version!==scanEpoch)return;
         if(scanVideo.videoWidth){const scale=Math.min(1,1200/scanVideo.videoWidth);canvas.width=Math.round(scanVideo.videoWidth*scale);canvas.height=Math.round(scanVideo.videoHeight*scale);context.drawImage(scanVideo,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(pixels.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
-          if(code&&!/^\s*(MA2|MAPLE1:)/i.test(code.data))$('#mc-camera-hint').textContent='That QR is not a Maple Atlas pairing code. Point the camera at the code in Maple Atlas.';
+          if(code&&!/^\s*(MA2|MAPLE1:)|#link=MA2/i.test(code.data))$('#mc-camera-hint').textContent='That QR is not a Maple Atlas pairing code. Point the camera at the code in Maple Atlas.';
           else if(code){try{await accept(code.data);}catch(e){error(e);}return;}}
         scanTimer=setTimeout(frame,250);
       }void frame();
@@ -178,7 +178,11 @@
       }void read();
     }
     $('#mc-reader-run').onclick=e=>run(e.currentTarget,startReader);
-    function open(){$('#mc-profile-dialog').close();dialog.showModal();}$('#mc-companion-open').onclick=open;$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=open;
+    function open(){$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();}$('#mc-companion-open').onclick=open;$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=open;
+    // The Mac app's QR opens this page with the pairing code in the fragment. Remove
+    // it from the address bar and history, then connect without a second scan.
+    const linked=/^#link=(MA2[A-Z2-7]+)$/i.exec(location.hash);
+    if(linked){history.replaceState(null,'',location.pathname+location.search);if(role==='phone'){open();void run($('#mc-pair-start'),()=>accept(linked[1]));}}
     dialog.addEventListener('close',()=>{stopScan();if(!stream)vision.stop();});
     watch=setInterval(()=>{clock();if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The device connection is working. Check screen sharing and visual tracking on your computer.');onConnection('stale');}},1000);
     // Browsers suspend this interval in the back/forward cache and resume it on return.

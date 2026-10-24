@@ -11,3 +11,6 @@ backend/
 node_modules/
 
 docs/mobile-qa.html
+
+macos/build/
+macos/App/.build/
