@@ -34,6 +34,8 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 
 Work on `dev`, commit source changes and push. The Pages workflow validates both branches and publishes them together, keeping the root site on the `main` revision. To release tested work, merge `dev` into `main` and push `main`. A failed check prevents publishing. Both URLs expose `version.json` with their branch and commit.
 
+To republish the current branches without another commit, run `gh workflow run pages.yml --ref main`, or use **Run workflow** on the repository's Actions page. The deployment never merges development changes into the stable branch.
+
 ```sh
 git switch dev
 python3 scripts/build.py
