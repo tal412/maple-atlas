@@ -424,7 +424,22 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept #mc-companion-dialog summary{padding:14px 0;cursor:pointer;font-weight:500}
 #maple-atlas-concept .mc-companion-actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
 #maple-atlas-concept .mc-companion-actions button{flex:1}
-#maple-atlas-concept #mc-companion-status{padding:14px 16px;background:var(--mc-soft);border-radius:16px;overflow-wrap:anywhere}
+#maple-atlas-concept #mc-companion-status{position:sticky;top:52px;z-index:2;display:flex;align-items:flex-start;gap:12px;margin:12px 0;padding:16px;background:var(--mc-soft);border:1px solid var(--mc-edge);border-radius:18px;overflow-wrap:anywhere;box-shadow:0 2px 6px #0001}
+#maple-atlas-concept #mc-companion-state-icon{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:var(--mc-paper);font-size:18px;font-weight:600}
+#maple-atlas-concept #mc-companion-state-title{display:block;font-size:18px;line-height:1.4}
+#maple-atlas-concept #mc-companion-message{font-size:14px;margin:4px 0 0}
+#maple-atlas-concept #mc-companion-status[data-tone="success"]{border-color:#4f8766;background:light-dark(#eaf5ee,#203c2c)}
+#maple-atlas-concept #mc-companion-status[data-tone="error"],#maple-atlas-concept #mc-pair-error{border:1px solid #b96c66;background:light-dark(#fff0ee,#462724)}
+#maple-atlas-concept #mc-companion-status[data-tone="pending"]{border-color:var(--mc-blue)}
+#maple-atlas-concept #mc-pair-error{padding:16px;border-radius:16px;margin:16px 0;scroll-margin-top:190px}
+#maple-atlas-concept #mc-pair-error p{margin:6px 0 0;font-size:14px}
+#maple-atlas-concept #mc-pair-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none;margin:16px 0 8px;padding:0;font-size:12px;color:var(--mc-muted)}
+#maple-atlas-concept #mc-pair-steps li{display:flex;align-items:center;gap:6px}
+#maple-atlas-concept #mc-pair-steps span{display:grid;place-items:center;flex:none;width:24px;height:24px;border:1px solid var(--mc-edge);border-radius:50%}
+#maple-atlas-concept #mc-pair-steps [data-state="active"]{color:var(--mc-blue);font-weight:600}
+#maple-atlas-concept #mc-pair-steps [data-state="done"] span{background:var(--mc-blue);color:var(--mc-paper);border-color:transparent}
+#maple-atlas-concept #mc-pair-exchange,#maple-atlas-concept #mc-pair-scan{scroll-margin-top:190px}
+#maple-atlas-concept #mc-pair-code-title,#maple-atlas-concept #mc-pair-scan-title,#maple-atlas-concept #mc-tracking-title{font-size:18px;margin:0}
 #maple-atlas-concept #mc-pair-qr{display:block;width:var(--mc-qr-size,280px);max-width:100%;height:auto;aspect-ratio:1;image-rendering:pixelated;margin:16px auto;border-radius:12px;background:white}
 #maple-atlas-concept #mc-reader-preview{position:relative;margin:16px 0;cursor:crosshair;touch-action:none;line-height:0}
 #maple-atlas-concept #mc-reader-video,#maple-atlas-concept #mc-scan-video{display:block;width:100%;height:auto;background:#111}
@@ -441,9 +456,7 @@ body {background:light-dark(#d7e9e9,#142937);}
  #maple-atlas-concept #mc-companion-dialog section{padding:16px}
  #maple-atlas-concept #mc-companion-badge{bottom:calc(var(--mc-nav-height,80px) + 88px + env(safe-area-inset-bottom));left:16px;transform:none;max-width:calc(100vw - 88px)}
 }
-#maple-atlas-concept #mc-visual-canvas{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;border-radius:16px;background:var(--mc-soft);margin:16px 0}
 #maple-atlas-concept .mc-companion-file input::file-selector-button{min-height:44px;margin-right:12px;padding:10px 18px;border:1px solid var(--mc-edge);border-radius:24px;background:var(--mc-soft);color:var(--mc-ink);cursor:pointer}
-#maple-atlas-concept #mc-visual-result{font-size:15px;font-weight:500;color:var(--mc-ink)}
 
 @media(prefers-color-scheme:dark){#maple-atlas-concept{--art-36574f:#25342d;--art-365f57:#25372e;--art-426c57:#293b30;--art-476d60:#2b3b32;--art-49725d:#2c3c32;--art-4f7a61:#2e3f34;--art-507778:#2f3e3e;--art-527663:#2f3d35;--art-547e64:#304036;--art-577b64:#313f36;--art-586f6b:#323b37;--art-5d8869:#334338;--art-61886c:#354339;--art-687e78:#37403b;--art-68846c:#37423a;--art-697d72:#383f3b;--art-698f80:#38453e;--art-6ba8a5:#37504e;--art-6c9a79:#384a3d;--art-6e9572:#39483c;--art-6f8064:#364036;--art-709c76:#394b3d;--art-728f86:#3b4540;--art-738c70:#3a443b;--art-776f51:#3e3b2f;--art-778566:#384237;--art-779780:#3c4940;--art-779caf:#394b54;--art-78aaa1:#3a5147;--art-7b8666:#384237;--art-7c8667:#394237;--art-7d918a:#3e4642;--art-7d9eaa:#3c4c51;--art-7f9690:#3f4844;--art-80b6c1:#38575e;--art-826f51:#423a2f;--art-82958b:#404843;--art-829d7b:#3d4b3e;--art-867a61:#433e35;--art-8b8469:#444238;--art-8c8764:#454336;--art-8c9270:#3d473a;--art-8c927f:#40473f;--art-8c9480:#40473f;--art-8caf7f:#3c543d;--art-8d8260:#454134;--art-8d9a87:#414a41;--art-8db18c:#405543;--art-8e8060:#454034;--art-8fac87:#3f5240;--art-917b59:#473e32;--art-91b29a:#425547;--art-92977b:#40493d;--art-929875:#3e493b;--art-929f82:#404c3f;--art-947c59:#483f32;--art-957f60:#484034;--art-97ab8a:#405240;--art-98a385:#414e40;--art-98bb93:#415a43;--art-999e81:#414c3f;--art-9a9875:#4a493b;--art-9bbbc0:#42595c;--art-9bbd85:#3b5b3b;--art-9d8d69:#4b4537;--art-9eafa8:#48524c;--art-9fae9a:#465247;--art-a18f68:#4c4536;--art-a197ad:#4b4552;--art-a1b3a6:#48544c;--art-a28b63:#4d4435;--art-a4a46c:#4e4e37;--art-a4aaa1:#4a4f4a;--art-a5cdbb:#426450;--art-a68d63:#4e4535;--art-a6936a:#4f4737;--art-a78b5f:#4f4433;--art-a7b09a:#475346;--art-a7c59b:#416042;--art-a89068:#504636;--art-a8a88c:#505041;--art-a9956c:#504837;--art-a9cfdc:#102431;--art-aa9066:#504635;--art-aab48a:#43563f;--art-ab9367:#514735;--art-ac7d65:#513e34;--art-af965f:#524832;--art-b0af8b:#545440;--art-b0c99a:#41623f;--art-b0d0d1:#466566;--art-b0d7d8:#244a52;--art-b1917d:#55453b;--art-b1b391:#545542;--art-b4af83:#56543c;--art-b4c8ca:#4b5e60;--art-b5c597:#43603f;--art-b5ce9e:#334d3b;--art-b68866:#564233;--art-b6a079:#574c39;--art-b6a682:#574f3c;--art-b6d3bb:#48674f;--art-b79869:#574934;--art-b79e72:#574b36;--art-b7c4ad:#4a5d49;--art-b89c70:#584b36;--art-b8c5b5:#4d5c4f;--art-b9ae80:#5d634d;--art-b9b0c4:#534b5c;--art-b9b995:#595942;--art-bad7db:#45696d;--art-bbae82:#5a533a;--art-bca779:#5a4f37;--art-bca877:#5a5037;--art-bd8866:#5a4232;--art-bda375:#5b4e36;--art-bda77d:#5b4f38;--art-bdab87:#5b513c;--art-bdc798:#45613f;--art-beb48f:#5c553e;--art-bfa778:#5c4f36;--art-c0e0e7:#142937;--art-c18e72:#5d4334;--art-c1c6a5:#4a5f45;--art-c1cbbb:#4e5f4e;--art-c2cec3:#515f54;--art-c3cf9a:#44673d;--art-c4d2a4:#456840;--art-c5c39c:#605e41;--art-c5c3a0:#5f5e43;--art-c5d79e:#426d3b;--art-c5d7a2:#426d3c;--art-c5dce0:#486a70;--art-c6b17e:#615436;--art-c7bb8d:#61593b;--art-c7c9b7:#515e4d;--art-c8cdb9:#50614c;--art-c9976d:#614731;--art-c9b180:#625436;--art-c9c99c:#626240;--art-cb9274:#634332;--art-cbb180:#645436;--art-cd9871:#644731;--art-cfae77:#665232;--art-cfb57e:#463d2e;--art-cfba91:#67583a;--art-d0d7a4:#43543b;--art-d3bd8d:#6a5a37;--art-d3e6c5:#447842;--art-d7c3a4:#6d5a3d;--art-d8d9a6:#6d6e3d;--art-d8dbc4:#526b4b;--art-d8ece0:#49795a;--art-d8ede3:#35585a;--art-d8eff0:#172d3c;--art-d9bd88:#6c5935;--art-dad4ac:#6f683f;--art-dce5b1:#47783b;--art-dce5cb:#4d7447;--art-e0d4df:#6a5368;--art-e1cc9f:#736039;--art-e2e3c8:#717347;--art-e4ce9c:#736139;--art-e5e9d6:#53754b;--art-e6dbac:#4b4a35;--art-e6dfbf:#796f3f;--art-e8d0a0:#756139;--art-e8dfbb:#7b6e3c;--art-e9b092:#724c38;--art-e9dfb6:#7a6e3c;--art-ead3a4:#76623a;--art-ead6a8:#514633;--art-eaf1c8:#4c803f;--art-ece9d2:#7c7644;--art-eddeb1:#7a6a3c;--art-eef0cc:#7d803f;--art-efd3a1:#76613a;--art-f0d9aa:#79653b;--art-f1deb2:#7b683c;--art-f1f6df:#4f8642;--art-f2dcb4:#7b653d;--art-f3e8cf:#826e40;--art-f3e9bf:#7e723e;--art-f5edcb:#817540;--art-f5efd1:#50645b;--art-f6edcf:#837340;--art-f6f9ec:#35515b;--art-f7e7bf:#7f6d3f;--art-f8dfb4:#7d663d;--art-f8ebc5:#81703f;--art-fff0c9:#837141;--art-fff4d4:#867442;--art-fff7dd:#887843;--art-fffaf0:#85a5b5;--art-fff4cc:#a59970;}}
 .cursor-interaction{cursor:pointer}
@@ -591,17 +604,35 @@ body {background:light-dark(#d7e9e9,#142937);}
 
   <dialog id="mc-companion-dialog" class="mc-mobile-dialog" aria-labelledby="mc-companion-title">
     <header><h2 id="mc-companion-title">Live companion</h2><button type="button" data-close-dialog="mc-companion-dialog" aria-label="Close companion settings">×</button></header>
-    <p>Read the game on your PC. Follow your location on your phone. Both devices use the same home Wi-Fi; no account or relay server.</p>
-    <p id="mc-companion-status" role="status">Choose this device to start.</p>
-    <div id="mc-pair-roles" class="mc-companion-actions"><button type="button" id="mc-pair-pc" class="mc-primary">Use this PC</button><button type="button" id="mc-pair-phone">Use this phone</button></div>
+    <p id="mc-companion-intro">Connect your computer and phone on the same local network. Pairing needs two scans.</p>
+    <section id="mc-companion-status" data-tone="neutral" role="status" aria-live="polite" aria-atomic="true">
+      <span id="mc-companion-state-icon" aria-hidden="true">○</span><div><strong id="mc-companion-state-title">Not connected</strong><p id="mc-companion-message">Checking this device…</p></div>
+    </section>
+    <ol id="mc-pair-steps" aria-label="Pairing progress" hidden><li data-step="1"><span>1</span>Scan computer</li><li data-step="2"><span>2</span>Scan phone</li><li data-step="3"><span>3</span>Connected</li></ol>
+    <p id="mc-pair-timer" class="mc-companion-note" hidden></p>
+    <div id="mc-pair-error" role="alert" hidden><strong>Could not complete this step</strong><p id="mc-pair-error-message"></p></div>
+    <div id="mc-pair-roles" class="mc-companion-actions"><button type="button" id="mc-pair-start" class="mc-primary">Start pairing</button></div>
+    <button type="button" id="mc-pair-retry" class="mc-primary" hidden>Start new pairing</button>
     <div id="mc-pair-active" hidden>
-      <section id="mc-pair-exchange" hidden><p id="mc-pair-next"></p><canvas id="mc-pair-qr" aria-label="Private pairing QR code"></canvas><details><summary>Copy pairing code instead</summary><textarea id="mc-pair-output" aria-label="Your pairing code" readonly spellcheck="false"></textarea><button type="button" id="mc-pair-copy">Copy code</button></details><p class="mc-companion-note">Expires in 10 minutes. Only share with your own device. Session keys stay in browser memory; refreshing either page requires pairing again.</p></section>
-      <section id="mc-pair-scan"><button type="button" id="mc-pair-scan-button" class="mc-primary">Scan code</button><div id="mc-camera-box" hidden><video id="mc-scan-video" muted autoplay playsinline></video><button type="button" id="mc-camera-stop">Stop camera</button></div><details><summary>Use an image or paste a code</summary><label class="mc-companion-file">Choose a QR image<input id="mc-pair-file" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Code from the other device<textarea id="mc-pair-input" aria-label="Code from the other device" spellcheck="false" autocomplete="off"></textarea></label><button type="button" id="mc-pair-apply">Use code</button></details></section>
-      <section id="mc-reader" hidden><h3>Follow the terrain</h3><p>Share the game window. The reader matches visible minimap or scenery landmarks, including partial views. Images stay on this PC; only a recognized map ID is sent.</p><div class="mc-companion-actions"><button type="button" id="mc-reader-share" class="mc-primary">Share game window</button><button type="button" id="mc-reader-stop" hidden>Stop sharing</button></div><div id="mc-reader-preview" hidden><video id="mc-reader-video" muted autoplay playsinline></video><span id="mc-reader-selection" hidden></span></div><div class="mc-companion-actions"><button type="button" id="mc-reader-run" class="mc-primary" hidden>Start visual tracking</button><button type="button" id="mc-reader-whole" hidden>Use whole window</button></div><p id="mc-reader-state" role="status"></p><p id="mc-reader-text" class="mc-companion-note"></p><p class="mc-companion-note">Keep this page open while playing. Recognition identifies the map; the exact player position is not tracked yet. No game memory or game controls are accessed. This fan tool is not approved by Nexon; ban-free use cannot be guaranteed.</p></section>
-      <button type="button" id="mc-pair-stop">Disconnect and stop sharing</button>
+      <section id="mc-pair-exchange" hidden>
+        <h3 id="mc-pair-code-title">Computer pairing code</h3><p id="mc-pair-next"></p>
+        <canvas id="mc-pair-qr" aria-label="Private pairing QR code"></canvas>
+        <details><summary>Copy pairing code instead</summary><textarea id="mc-pair-output" aria-label="Your pairing code" readonly spellcheck="false"></textarea><button type="button" id="mc-pair-copy">Copy code</button></details>
+        <p id="mc-pair-copy-status" class="mc-companion-note" role="status"></p>
+        <button type="button" id="mc-pair-check" hidden>The computer scanned this response</button>
+        <p class="mc-companion-note">Keep both pages open. Refreshing either page ends this pairing.</p>
+      </section>
+      <section id="mc-pair-scan" hidden>
+        <h3 id="mc-pair-scan-title">Scan the other device</h3><p id="mc-pair-scan-help"></p>
+        <button type="button" id="mc-pair-scan-button" class="mc-primary">Scan code</button>
+        <div id="mc-camera-box" hidden><video id="mc-scan-video" muted autoplay playsinline></video><p id="mc-camera-hint" role="status">Point the camera at the entire QR code.</p><button type="button" id="mc-camera-stop">Stop camera</button></div>
+        <details><summary>No camera? Use an image or paste a code</summary><label class="mc-companion-file">Choose a QR image<input id="mc-pair-file" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Code from the other device<textarea id="mc-pair-input" aria-label="Code from the other device" spellcheck="false" autocomplete="off"></textarea></label><button type="button" id="mc-pair-apply">Use code</button></details>
+      </section>
+      <section id="mc-tracking-status" hidden><h3 id="mc-tracking-title">Waiting for screen sharing</h3><p id="mc-tracking-message">The connection is ready. Start sharing the game window on your computer.</p><button type="button" id="mc-pair-view-map" class="mc-primary" hidden>View map</button></section>
+      <section id="mc-reader" hidden><h3>Share your game window</h3><p>Match visible minimap or scenery landmarks, including partial views. Images stay on this computer; only a recognized map ID is sent.</p><div class="mc-companion-actions"><button type="button" id="mc-reader-share" class="mc-primary">Share game window</button><button type="button" id="mc-reader-stop" hidden>Stop sharing</button></div><div id="mc-reader-preview" hidden><video id="mc-reader-video" muted autoplay playsinline></video><span id="mc-reader-selection" hidden></span></div><div class="mc-companion-actions"><button type="button" id="mc-reader-run" class="mc-primary" hidden>Start visual tracking</button><button type="button" id="mc-reader-whole" hidden>Use whole window</button></div><p id="mc-reader-state" role="status"></p><p id="mc-reader-text" class="mc-companion-note"></p><p class="mc-companion-note">Keep this page open while playing. Recognition identifies the map; the exact player position is not tracked yet. This fan tool is not approved by Nexon; ban-free use cannot be guaranteed.</p></section>
+      <button type="button" id="mc-pair-stop">Disconnect</button>
     </div>
-    <details class="mc-companion-help"><summary>Try image recognition</summary><p>Choose a screenshot or a photo of the minimap. Matching runs on this device; the image is never uploaded or saved. The first use downloads about 43 MB of visual references and matching tools.</p><label class="mc-companion-file">Choose an image<input id="mc-visual-file" type="file" accept="image/png,image/jpeg,image/webp"></label><canvas id="mc-visual-canvas" hidden aria-label="Selected image with matched landmarks"></canvas><p id="mc-visual-result" role="status">335 maps have visual landmarks. White Room has no distinctive landmarks; 12 other map names have no reference image. Similar-looking locations may need another view.</p><button type="button" id="mc-visual-open" hidden>Open matched location</button></details>
-    <details class="mc-companion-help"><summary>Pairing help &amp; offline use</summary><p>There are two scans: phone scans PC, then PC scans phone. If the PC has no camera, use a QR image or paste the response using a transfer method you already trust. Short room codes would require a server.</p><p>Use regular home Wi-Fi, not isolated guest Wi-Fi. VPNs, firewalls and router settings can prevent direct connections. Keep both pages open; screen lock or closing a page can end the session.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data and visual matching can then run locally. Market updates still need internet.</p></details>
+    <details class="mc-companion-help"><summary>Connection help &amp; offline use</summary><p>First, the phone scans the computer’s QR. Then the computer scans the new response shown on the phone. Both screens must say Connected before tracking starts.</p><p>If the computer has no camera, use a QR image or copy the phone response using a transfer method you already trust.</p><p>Both devices must be on the same reachable local network. A phone on cellular data or a computer on a different network cannot connect through this server-free mode. Guest Wi-Fi, VPNs and firewalls can also block it. Keep both pages open.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data and visual matching can then run locally. Market updates still need internet.</p></details>
   </dialog>
   <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title">
     <header><button type="button" id="mc-search-back" aria-label="Back to search" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button><h2 id="mc-search-title">Search Maple Atlas</h2><button type="button" data-close-dialog="mc-search-dialog" aria-label="Close search"><i data-lucide="x" aria-hidden="true"></i></button></header>
@@ -614,7 +645,7 @@ body {background:light-dark(#d7e9e9,#142937);}
     <div id="mc-search-entity" hidden></div>
   </dialog>
   <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
-  <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title"><header><h2 id="mc-profile-title">Your character</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-character-level"><span>Character level<small>Find quests for your level</small></span><input id="mc-mobile-level" type="number" min="1" max="100" value="18" aria-label="Character level"></label><p>Appearance follows your device’s light or dark theme.</p><button type="button" id="mc-companion-open">Live companion · Connect to your PC</button><button type="button" id="mc-mobile-journal" class="mc-primary">Open quest journal</button><a id="mc-mobile-channel" class="mc-mobile-channel" href="../">Dev preview · Open main ↗</a></dialog>
+  <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title"><header><h2 id="mc-profile-title">Your character</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-character-level"><span>Character level<small>Find quests for your level</small></span><input id="mc-mobile-level" type="number" min="1" max="100" value="18" aria-label="Character level"></label><p>Appearance follows your device’s light or dark theme.</p><button type="button" id="mc-companion-open">Live companion · Connect devices</button><button type="button" id="mc-mobile-journal" class="mc-primary">Open quest journal</button><a id="mc-mobile-channel" class="mc-mobile-channel" href="../">Dev preview · Open main ↗</a></dialog>
   <dialog id="mc-local-dialog" aria-labelledby="mc-local-title">
     <header class="mc-local-header"><div><div class="mc-eyebrow">Local game map</div><h2 id="mc-local-title"></h2></div><button type="button" id="mc-local-close" aria-label="Close local map"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <div class="mc-local-controls"><label>Show portal to<select id="mc-local-select" aria-label="Portal destination"></select></label><button type="button" id="mc-local-focus" data-local-zoom>Focus exit</button></div>
@@ -1508,77 +1539,150 @@ window.mapleStorageReady.then(() => {
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
-  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},Peer=scope.RTCPeerConnection,now=Date.now}={}){
-    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,expiryTimer=null,connectTimer=null;
-    const state=(phase,message)=>onState({phase,message,role});
-    function stop(message='Disconnected. Pair again to reconnect.'){
-      epoch++;clearTimeout(expiryTimer);clearTimeout(connectTimer);
-      if(channel){channel.onopen=channel.onmessage=channel.onclose=null;channel.close();}channel=null;
-      if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;session=null;lastSeq=-1;seq=0;
-      state('disconnected',message);
+  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
+    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,phase='idle';
+    let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
+    let savedOffer=null,savedAnswer=null,finishing=false,cancelGather=null;
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,role,expires,...extra});};
+    const random=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+    function clear(){
+      epoch++;cancelGather?.();cancelGather=null;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
+      expiryTimer=connectTimer=verifyTimer=heartbeat=null;
+      if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
+      if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;seq=0;pingSeq=0;pongSeq=-1;savedOffer=savedAnswer=null;finishing=false;
+    }
+    function stop(message='Disconnected. Start a new pairing to reconnect.'){clear();state('disconnected',message);}
+    function fail(message,reason='network'){clear();state('failed',message,{reason});}
+    function control(value){if(channel?.readyState==='open'&&channel.bufferedAmount<4096)channel.send(JSON.stringify(value));}
+    function ping(){
+      if(!verified)return;
+      const age=now()-lastPong;
+      if(age>=20000){fail('The other device stopped responding. Keep both pages open and pair again.','heartbeat');return;}
+      if(age>=9000&&phase==='connected')state('reconnecting','No response from the other device. Checking the connection…');
+      control({kind:'ping',v:2,session,seq:++pingSeq});
+    }
+    function confirm(){
+      if(!helloSeen||!helloAck||verified)return;
+      verified=true;lastPong=now();
+      for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);
+      state('connected','Both devices exchanged a confirmation. The connection is working.');
+      heartbeat=timers.setInterval(ping,3000);ping();
     }
     function bind(c){
       if(channel||c.label!=='maple-atlas'){c.close();return;}channel=c;
-      c.onopen=()=>{clearTimeout(expiryTimer);clearTimeout(connectTimer);state('connected','Connected directly · Keep both pages open');};
-      c.onclose=()=>stop();
+      c.onopen=()=>{
+        timers.clearTimeout(connectTimer);state('verifying','The link opened. Verifying that the other device can send and receive…',{deadline:now()+7000});
+        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the other device. Refresh Maple Atlas on both devices, then pair again.','verification'),7000);
+        control({kind:'hello',v:2,session,role,nonce});
+      };
+      c.onclose=()=>stop('The other device disconnected or closed its page. Start a new pairing to reconnect.');
+      c.onerror=()=>fail('The device connection encountered an error. Start a new pairing.','channel');
       c.onmessage=event=>{
-        if(role!=='phone'||typeof event.data!=='string'||event.data.length>512)return;
-        try{const value=JSON.parse(event.data);if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)){lastSeq=value.seq;onReading(value.state);}}catch(_){}
+        if(typeof event.data!=='string'||event.data.length>512)return;
+        try{
+          const value=JSON.parse(event.data);
+          if(['hello','hello-ack','ping','pong'].includes(value.kind)){
+            if(value.session!==session)return;
+            if(value.v!==2){fail('These pages use different pairing versions. Refresh both devices and pair again.','version');return;}
+            if(value.kind==='hello'&&value.role===(role==='pc'?'phone':'pc')&&/^[a-f0-9]{32}$/.test(value.nonce)){
+              helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();
+            }else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
+            else if(value.kind==='ping'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>0)control({kind:'pong',v:2,session,seq:value.seq});
+            else if(value.kind==='pong'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>pongSeq&&value.seq<=pingSeq){
+              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored. Both devices are responding.');
+            }
+            return;
+          }
+          if(role!=='phone'||!verified||phase!=='connected')return;
+          if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
+          else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+        }catch(_){}
       };
     }
     function start(nextRole){
-      stop('Preparing a local connection…');role=nextRole;
-      if(!Peer)throw Error('This browser does not support direct device connections.');
+      clear();role=nextRole;
+      if(!Peer){state('failed','This browser cannot connect directly to another device.',{reason:'unsupported'});throw Error('Use a browser with WebRTC support.');}
       pc=new Peer({iceServers:[],iceTransportPolicy:'all'});
       pc.onconnectionstatechange=()=>{
         if(!pc)return;
-        if(pc.connectionState==='failed')stop('Could not connect. Use the same home Wi-Fi; guest networks or VPNs may block peers.');
-        else if(pc.connectionState==='disconnected')state('reconnecting','Connection interrupted · Waiting for the other device');
-        else if(pc.connectionState==='connected'&&channel?.readyState==='open')state('connected','Connected directly · Keep both pages open');
+        if(pc.connectionState==='failed')fail('The devices could not reach each other. Use the same local network. Guest Wi-Fi, VPNs or a firewall can block the link.','network');
+        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for the other device to respond…');
+        // ICE alone does not prove that the other app is receiving messages.
+        else if(pc.connectionState==='connected'&&verified&&now()-lastPong<9000)ping();
       };
       pc.ondatachannel=e=>bind(e.channel);
-      state('pairing','Pairing stays in this page. Refreshing or closing it ends the session.');
-      return epoch;
+      state('preparing','Preparing a private pairing code…');return epoch;
     }
     async function gathered(current,version){
+      if(version!==epoch)throw Error('Pairing was cancelled.');
       if(current.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{
-        const timer=setTimeout(()=>{current.removeEventListener('icegatheringstatechange',check);reject(Error('Could not find a local connection. Retry with Wi-Fi enabled.'));},8000);
-        function check(){if(current.iceGatheringState==='complete'){clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);resolve();}}
+        const timer=timers.setTimeout(()=>finish(Error('Could not find a local connection. Check Wi-Fi and retry.')),8000);
+        function finish(error){timers.clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);cancelGather=null;error?reject(error):resolve();}
+        function check(){if(current.iceGatheringState==='complete')finish();}
+        cancelGather=()=>finish(Error('Pairing was cancelled.'));
         current.addEventListener('icegatheringstatechange',check);check();
       });
       if(version!==epoch)throw Error('Pairing was cancelled.');
       const value={v:1,type:current.localDescription.type,sdp:current.localDescription.sdp,session,expires};
-      const code=await pack(value);await unpack(code,now());
-      expiryTimer=setTimeout(()=>stop('Pairing code expired. Start again.'),Math.max(1,expires-now()));
+      const code=await pack(value);await unpack(code,now());if(version!==epoch)throw Error('Pairing was cancelled.');
+      expiryTimer=timers.setTimeout(()=>{clear();state('expired','The pairing code expired. Create a new code on the computer and scan it again.');},Math.max(1,expires-now()));
       return code;
     }
     async function offer(){
-      const version=start('pc');session=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');expires=now()+ttl;
-      const current=pc;bind(pc.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());return gathered(current,version);
+      const version=start('pc');session=random();expires=now()+ttl;const current=pc;
+      try{
+        bind(current.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());const code=await gathered(current,version);
+        state('waiting-phone','Not connected yet. Scan this code on your phone, then scan the phone’s response on this computer.');return code;
+      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
     async function answer(code){
-      const value=await unpack(code,now());if(value.type!=='offer')throw Error('Scan the pairing code from the PC first.');
+      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(value.type!=='offer')throw Error('This is a phone response. Scan the code shown on your computer.');
+      // Re-reading the same computer QR must not rotate an active response.
+      if(savedOffer===code&&savedAnswer&&pc)return savedAnswer;
       const version=start('phone');session=value.session;expires=value.expires;const current=pc;
-      await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());return gathered(current,version);
+      try{
+        await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());const answerCode=await gathered(current,version);
+        savedOffer=code;savedAnswer=answerCode;state('waiting-computer','Computer code scanned successfully. Show this new response QR to your computer. You are not connected yet.');return answerCode;
+      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
+    }
+    function waitForConnection(){
+      if(!pc||verified||!['waiting-computer','waiting-phone','connecting'].includes(phase))return;
+      timers.clearTimeout(connectTimer);const deadline=now()+25000;
+      state('connecting','Waiting for the device link. Keep both pages open on the same local network.',{deadline});
+      connectTimer=timers.setTimeout(()=>fail('Connection timed out. Make sure the computer scanned the phone response. Both devices must use the same local network; guest Wi-Fi, VPNs or firewalls may block pairing.','timeout'),25000);
     }
     async function finish(code){
-      const value=await unpack(code,now());
-      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer')throw Error('This response belongs to another pairing. Start again on both devices.');
-      await pc.setRemoteDescription({type:'answer',sdp:value.sdp});state('connecting','Connecting over the local network…');
-      connectTimer=setTimeout(()=>{if(channel?.readyState!=='open')stop('Connection timed out. Guest Wi-Fi, VPNs or firewalls may block direct pairing.');},20000);
+      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer'||finishing)throw Error('This is not the response to this computer’s current code. Scan the current phone response, or restart pairing on both devices.');
+      const current=pc,version=epoch;finishing=true;
+      try{await current.setRemoteDescription({type:'answer',sdp:value.sdp});if(version===epoch&&!verified&&phase!=='verifying')waitForConnection();}
+      catch(e){if(version===epoch)fail('The phone response could not be applied. Start a new pairing.','response');throw e;}
+      finally{finishing=false;}
     }
     function send({id,confidence,observedAt}){
-      if(role!=='pc'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
+      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
       const value={kind:'location',id:String(id),confidence,observedAt,seq:seq++};if(!location(value,ids))return false;
       channel.send(JSON.stringify(value));return true;
     }
     function sendStatus(value){
-      if(role!=='pc'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
+      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
       channel.send(JSON.stringify({kind:'tracking',state:value,seq:seq++,observedAt:now()}));return true;
     }
-    return {offer,answer,finish,send,sendStatus,stop,get connected(){return channel?.readyState==='open';}};
+    return {offer,answer,finish,waitForConnection,send,sendStatus,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
+})(globalThis);
+
+/* Device role uses browser platform signals, never viewport width. */
+(function(scope){
+  function detect({userAgent='',platform='',maxTouchPoints=0,userAgentData,canShareScreen=false}={}){
+    const os=userAgentData?.platform||platform;
+    const handheld=userAgentData?.mobile===true||/Android|iPhone|iPad|iPod|Windows Phone/i.test(userAgent)||/Android|iOS/i.test(os)||(/Mac/i.test(os)&&maxTouchPoints>1);
+    return {role:handheld?'phone':'pc',label:handheld?'Phone or tablet':'Computer',canShareScreen:!handheld&&canShareScreen};
+  }
+  scope.MapleCompanionDevice={detect};if(typeof module!=='undefined')module.exports=scope.MapleCompanionDevice;
 })(globalThis);
 
 /* Short, session-only visual history. Scores are evidence, not probabilities. */
@@ -1629,10 +1733,13 @@ window.mapleStorageReady.then(() => {
 (function(scope){
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the local reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
-  function create({root,maps,visualMaps,onLocation,onConnection,onInspect}){
+  function create({root,visualMaps,onLocation,onConnection,device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),qr=$('#mc-pair-qr'),input=$('#mc-pair-input'),output=$('#mc-pair-output');
     const video=$('#mc-reader-video'),selection=$('#mc-reader-selection'),scanVideo=$('#mc-scan-video'),readerState=$('#mc-reader-state');
-    let role=null,stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null,qrCells=0;
+    device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData,canShareScreen:!!navigator.mediaDevices?.getDisplayMedia});
+    const role=device.role;
+    let stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null,qrCells=0,accepting=false,uiEpoch=0;
+    let currentState={phase:'idle',message:'',expires:0};
     function fitQR(){
       const parent=qr.parentElement,style=getComputedStyle(parent),available=parent.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
       if(!qrCells||available<=0)return;
@@ -1642,46 +1749,97 @@ window.mapleStorageReady.then(() => {
     }
     new ResizeObserver(fitQR).observe(qr.parentElement);window.addEventListener('resize',fitQR);
     const tracker=MapleVisualTracker.create(),known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
-    const vision=MapleVisualClient.create({onProgress:message=>{readerState.textContent=message;$('#mc-visual-result').textContent=message;}});let fileEpoch=0,lastTest=null;
-    const link=MapleCompanionLink.create({ids,onLocation:value=>{lastSeen=Date.now();onLocation(value);},onReading:state=>{lastSeen=0;onConnection(state==='paused'?'stale':'searching');},onState:value=>{
-      status.textContent=value.message;$('#mc-companion-badge').textContent=value.phase==='connected'?'Phone connected':value.phase==='reconnecting'?'Reconnecting':'Live companion';
-      $('#mc-pair-active').hidden=value.phase==='disconnected';
-      if(value.phase==='pairing')$('#mc-pair-roles').hidden=true;
-      if(value.phase==='connected'){$('#mc-pair-exchange').hidden=true;$('#mc-pair-scan').hidden=true;stopScan();output.value='';input.value='';if(role==='phone'){dialog.close();onConnection('connected');}else readerState.textContent=stream?'Watching the visible terrain…':'Phone connected. Share the game window to start.';}
-      if(value.phase==='disconnected'){stopReader();stopScan();lastSeen=0;onConnection('disconnected');$('#mc-pair-roles').hidden=false;}
-      if(value.phase==='reconnecting')onConnection('stale');
+    const vision=MapleVisualClient.create({onProgress:message=>{readerState.textContent=message;}});
+    function activity(title,message){$('#mc-tracking-title').textContent=title;$('#mc-tracking-message').textContent=message;}
+    function clock(){
+      const timer=$('#mc-pair-timer'),{phase,expires,deadline}=currentState;
+      timer.hidden=!(['waiting-phone','waiting-computer'].includes(phase)&&expires||['connecting','verifying'].includes(phase)&&deadline);
+      if(timer.hidden)return;
+      const seconds=Math.max(0,Math.ceil(((deadline||expires)-Date.now())/1000));
+      timer.textContent=deadline?'Checking connection · '+seconds+'s remaining':'Pairing code expires in '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+    }
+    function paint(value){
+      currentState=value;const phase=value.phase,terminal=['idle','disconnected','failed','expired'].includes(phase),linked=phase==='connected',pending=!terminal&&!linked;
+      const titles={idle:'Not connected',preparing:'Preparing pairing…','scan-computer':'Step 1 · Scan your computer','waiting-phone':'Not connected · Waiting for phone','waiting-computer':'Code scanned · One more step',connecting:'Connecting…',verifying:'Verifying both devices…',connected:role==='phone'?'Connected to computer':'Connected to phone',reconnecting:'Connection interrupted',failed:'Connection failed',expired:'Code expired',disconnected:'Disconnected'};
+      status.dataset.tone=linked?'success':['failed','expired'].includes(phase)?'error':pending?'pending':'neutral';
+      $('#mc-companion-state-icon').textContent=linked?'✓':['failed','expired'].includes(phase)?'!':pending?'…':'○';
+      $('#mc-companion-state-title').textContent=titles[phase]||'Not connected';$('#mc-companion-message').textContent=value.message;
+      $('#mc-pair-roles').hidden=phase!=='idle';$('#mc-pair-retry').hidden=!['failed','expired','disconnected'].includes(phase);
+      $('#mc-pair-active').hidden=terminal;$('#mc-pair-steps').hidden=terminal;
+      const step=linked?4:['connecting','verifying','reconnecting'].includes(phase)?3:phase==='waiting-computer'?2:1;
+      for(const item of root.querySelectorAll('#mc-pair-steps li')){const n=Number(item.dataset.step);item.dataset.state=n<step?'done':n===step?'active':'pending';item.firstElementChild.textContent=n<step?'✓':n;if(n===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');}
+      $('#mc-pair-scan').hidden=!(phase==='scan-computer'||phase==='waiting-phone');
+      $('#mc-pair-exchange').hidden=!(['waiting-phone','waiting-computer'].includes(phase)&&output.value);
+      $('#mc-pair-check').hidden=phase!=='waiting-computer';
+      $('#mc-reader').hidden=!(role==='pc'&&linked);$('#mc-tracking-status').hidden=!(role==='phone'&&linked);$('#mc-pair-view-map').hidden=role!=='phone'||!linked;
+      clock();
+      if(phase!=='idle'){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent=linked?(role==='phone'?'Computer connected':'Phone connected'):titles[phase]||'Not connected';}
+    }
+    const link=MapleCompanionLink.create({ids,onLocation:value=>{
+      lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
+    },onReading:state=>{
+      lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The device connection is working. Resume screen sharing and visual tracking on your computer.':'The device connection is working. Keep the minimap or scenery visible while the computer identifies your map.');onConnection(state==='paused'?'stale':'searching');
+    },onState:value=>{
+      paint(value);
+      if(value.phase==='connected'){
+        stopScan();output.value='';input.value='';clearError();onConnection('connected');
+        if(role==='phone'){if(!lastSeen)activity('Waiting for screen sharing','The connection is working. On your computer, share the game window and start visual tracking.');}
+        else{$('#mc-companion-badge').textContent='Phone connected';readerState.textContent=stream?'Connection ready. Watching the visible terrain…':'Phone connected. Share the game window to start.';}
+        dialog.scrollTo({top:0});
+      }
+      if(['failed','expired','disconnected'].includes(value.phase)){
+        uiEpoch++;stopReader();stopScan();lastSeen=0;output.value='';input.value='';onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
+      }else if(value.phase==='reconnecting')onConnection('reconnecting');
+      else if(['preparing','waiting-phone','waiting-computer','connecting','verifying'].includes(value.phase))onConnection('pairing');
     }});
-    function error(e){status.textContent=e?.message||'Something went wrong. Please retry.';}
-    async function run(button,fn){button.disabled=true;try{await fn();}catch(e){error(e);}finally{button.disabled=false;}}
-    async function showCode(code){
-      output.value=code;await load('./vendor/companion/qr.js');
-      qrCells=MapleQR.create(code,{errorCorrectionLevel:'M'}).modules.size+8;
+    function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';}
+    function error(e,source='camera'){
+      if(e?.message==='Pairing was cancelled.')return;
+      const message=e?.name==='NotAllowedError'?(source==='screen'?'Screen sharing was cancelled or blocked. Choose Share game window to try again. Your phone connection is unchanged.':'Camera access was denied. Allow the camera in browser settings, or use a QR image or paste the pairing code.'):e?.name==='NotFoundError'?(source==='screen'?'No shareable window was found. Open the game, then choose Share game window again.':'No camera was found. Use a QR image or paste the pairing code.'):e?.message||'This step could not finish. Please retry.';
+      $('#mc-pair-error-message').textContent=message;$('#mc-pair-error').hidden=false;$('#mc-pair-error').scrollIntoView({block:'start'});
+    }
+    async function run(button,fn){button.disabled=true;clearError();try{await fn();}catch(e){error(e,button.id==='mc-reader-share'?'screen':'camera');}finally{button.disabled=false;}}
+    async function showCode(code,version){
+      await load('./vendor/companion/qr.js');if(version!==uiEpoch||link.connected||['failed','expired','disconnected'].includes(currentState.phase))return;
+      output.value=code;qrCells=MapleQR.create(code,{errorCorrectionLevel:'M'}).modules.size+8;
       await MapleQR.toCanvas(qr,code,{scale:8,margin:4,errorCorrectionLevel:'M'});
-      // Keep the high-resolution bitmap; let CSS size its on-screen square.
-      // node-qrcode also writes inline dimensions, overriding responsive CSS.
+      if(version!==uiEpoch)return;
       qr.style.removeProperty('width');qr.style.removeProperty('height');
-      $('#mc-pair-exchange').hidden=false;fitQR();
-      $('#mc-pair-next').textContent=role==='pc'?'1. On the phone, open Live companion → Use this phone. Scan this code. Then scan the phone’s response here.':'2. On the PC, choose Scan phone response and scan this code. Keep this page open.';
+      $('#mc-pair-code-title').textContent=role==='pc'?'1 · Scan this with your phone':'2 · Show this response to your computer';
+      $('#mc-pair-next').textContent=role==='pc'?'On your phone, open Maple Atlas → Live companion → Connect to computer. Scan this code.':'Computer code accepted. This is a new response code, not a refresh. On the computer, choose “Scan phone response” and scan the code below.';
+      paint(currentState);fitQR();$('#mc-pair-copy-status').textContent='';$('#mc-pair-exchange').scrollIntoView({block:'start'});
     }
     async function accept(code){
-      stopScan();if(role==='pc'){await link.finish(code);}else if(role==='phone'){const answer=await link.answer(code);await showCode(answer);}else throw Error('Choose PC or phone first.');
+      if(accepting)return;accepting=true;const version=uiEpoch;stopScan();clearError();
+      try{if(role==='pc')await link.finish(code);else{const answer=await link.answer(code);if(version===uiEpoch)await showCode(answer,version);}}
+      finally{accepting=false;}
     }
-    function choose(nextRole){
-      link.stop();role=nextRole;$('#mc-pair-roles').hidden=true;$('#mc-pair-active').hidden=false;$('#mc-reader').hidden=role!=='pc';$('#mc-pair-exchange').hidden=true;$('#mc-pair-scan').hidden=false;input.value='';output.value='';
-      $('#mc-pair-scan-button').textContent=role==='pc'?'Scan phone response':'Scan PC code';
+    async function begin(){
+      if(role==='pc'&&!device.canShareScreen)throw Error('This computer’s browser cannot share a game window. Open Maple Atlas in a desktop browser with screen sharing.');
+      uiEpoch++;stopScan();stopReader();clearError();output.value='';input.value='';lastSeen=0;
+      $('#mc-pair-scan-button').textContent=role==='pc'?'Scan phone response':'Scan computer code';
+      $('#mc-pair-scan-title').textContent=role==='pc'?'2 · Scan the phone response':'1 · Scan the computer code';
+      $('#mc-pair-scan-help').textContent=role==='pc'?'After the phone scans your code, it displays a new QR. Scan that response here to connect.':'Keep the computer’s Maple Atlas page open. Point your camera at its pairing QR.';
+      if(role==='pc'){const version=uiEpoch;await showCode(await link.offer(),version);}
+      else{link.stop('Starting a new pairing.');clearError();paint({phase:'scan-computer',message:'Scan the code displayed by your computer. You will then show a response code back to it.'});}
     }
-    $('#mc-pair-pc').onclick=e=>run(e.currentTarget,async()=>{choose('pc');await showCode(await link.offer());});
-    $('#mc-pair-phone').onclick=()=>{choose('phone');status.textContent='Scan the code on your PC. Both devices must use the same local network.';};
+    $('#mc-pair-start').textContent=role==='pc'?'Create computer code':'Connect to computer';
+    $('#mc-companion-intro').textContent=role==='pc'?'This is your computer. Connect a phone on the same local network to follow your game. Pairing needs two scans.':'This is your phone or tablet. Connect to the computer running your game. Both devices must use the same local network.';
+    $('#mc-pair-start').disabled=role==='pc'&&!device.canShareScreen;
+    paint({phase:'idle',message:role==='pc'?device.canShareScreen?'Create a code, scan it on your phone, then scan the phone’s response here.':'This computer’s browser cannot share its screen. Use a desktop browser that supports game-window sharing.':'First create a pairing code in Maple Atlas on your computer. Then connect here.'});
+    $('#mc-pair-start').onclick=e=>run(e.currentTarget,begin);$('#mc-pair-retry').onclick=e=>run(e.currentTarget,begin);
+    $('#mc-pair-check').onclick=()=>{clearError();link.waitForConnection();dialog.scrollTo({top:0});};
     $('#mc-pair-apply').onclick=e=>run(e.currentTarget,()=>accept(input.value));
-    $('#mc-pair-copy').onclick=e=>run(e.currentTarget,async()=>{try{await navigator.clipboard.writeText(output.value);status.textContent='Pairing code copied. Share only with your own device.';}catch(_){output.focus();output.select();status.textContent='Select and copy the pairing code.';}});
-    $('#mc-pair-stop').onclick=()=>link.stop('Disconnected. Screen sharing and the camera are stopped.');
+    $('#mc-pair-copy').onclick=e=>run(e.currentTarget,async()=>{try{await navigator.clipboard.writeText(output.value);$('#mc-pair-copy-status').textContent='Code copied. Paste it into Maple Atlas on the other device.';}catch(_){output.focus();output.select();$('#mc-pair-copy-status').textContent='Select and copy this code to the other device.';}});
+    $('#mc-pair-stop').onclick=()=>{clearError();link.stop('You disconnected. Screen sharing and the camera have stopped.');};
+    $('#mc-pair-view-map').onclick=()=>dialog.close();
     function stopScan(){scanEpoch++;clearTimeout(scanTimer);scanner?.getTracks().forEach(t=>t.stop());scanner=null;scanVideo.srcObject=null;$('#mc-camera-box').hidden=true;}
     async function scan(){
       stopScan();const version=scanEpoch;await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;
       if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access is unavailable. Use a QR image or paste a pairing code.');
       const camera=await navigator.mediaDevices.getUserMedia({video:{facingMode:role==='phone'?'environment':'user'},audio:false});
       if(version!==scanEpoch){camera.getTracks().forEach(t=>t.stop());return;}
-      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-box').hidden=false;await scanVideo.play();
+      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-box').hidden=false;await scanVideo.play();$('#mc-camera-box').scrollIntoView({block:'nearest'});
       const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
       async function frame(){
         if(!scanner||version!==scanEpoch)return;
@@ -1691,14 +1849,15 @@ window.mapleStorageReady.then(() => {
     }
     $('#mc-pair-scan-button').onclick=e=>run(e.currentTarget,scan);$('#mc-camera-stop').onclick=stopScan;
     $('#mc-pair-file').onchange=async e=>{
-      const file=e.target.files[0];if(!file)return;stopScan();const version=scanEpoch;
-      try{if(file.size>12000000)throw Error('Choose an image under 12 MB.');await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;const bitmap=await createImageBitmap(file);if(version!==scanEpoch){bitmap.close();return;}const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const data=ctx.getImageData(0,0,canvas.width,canvas.height);const code=MapleQR.decode(data.data,canvas.width,canvas.height);if(!code)throw Error('No readable QR code found in that image.');await accept(code.data);}catch(e){error(e);}finally{e.target.value='';}
+      const file=e.target.files[0];if(!file)return;stopScan();clearError();const version=scanEpoch;
+      try{if(file.size>12000000)throw Error('Choose an image under 12 MB.');await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;const bitmap=await createImageBitmap(file);if(version!==scanEpoch){bitmap.close();return;}const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const data=ctx.getImageData(0,0,canvas.width,canvas.height);const code=MapleQR.decode(data.data,canvas.width,canvas.height);if(!code)throw Error('No readable pairing QR was found. Include the entire code or paste the text instead.');await accept(code.data);}catch(e){error(e);}finally{e.target.value='';}
     };
     function stopReader(){
       if(stream)link.sendStatus('paused');
       readerEpoch++;clearTimeout(readTimer);stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;vision.stop();roi=null;startPoint=null;tracker.reset();lastFrame=-1;selection.hidden=true;$('#mc-reader-preview').hidden=true;$('#mc-reader-stop').hidden=true;$('#mc-reader-run').hidden=true;$('#mc-reader-whole').hidden=true;
     }
     $('#mc-reader-share').onclick=e=>run(e.currentTarget,async()=>{
+      if(!link.connected)throw Error('Connect your phone before sharing the game window.');
       stopReader();if(!navigator.mediaDevices?.getDisplayMedia)throw Error('Open this on a desktop browser that supports window sharing, such as Chrome or Edge. The phone only receives your location.');
       const version=readerEpoch,captured=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'window',frameRate:5},audio:false});
       if(version!==readerEpoch){captured.getTracks().forEach(t=>t.stop());return;}
@@ -1714,6 +1873,7 @@ window.mapleStorageReady.then(() => {
     preview.onpointercancel=()=>{startPoint=null;};
     $('#mc-reader-whole').onclick=()=>{link.sendStatus('paused');readerEpoch++;clearTimeout(readTimer);tracker.reset();roi={x:0,y:0,w:1,h:1};selection.hidden=true;$('#mc-reader-run').hidden=false;readerState.textContent='The whole game window will be matched.';};
     async function startReader(){
+      if(!link.connected)throw Error('Connect your phone before starting live tracking.');
       if(!stream||!roi)throw Error('Share the game window first.');
       clearTimeout(readTimer);const version=++readerEpoch;tracker.reset();await vision.ready();if(version!==readerEpoch)return;
       const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
@@ -1736,22 +1896,11 @@ window.mapleStorageReady.then(() => {
       }void read();
     }
     $('#mc-reader-run').onclick=e=>run(e.currentTarget,startReader);
-    $('#mc-visual-file').onchange=async e=>{
-      const file=e.target.files[0];if(!file)return;const version=++fileEpoch;lastTest=null;$('#mc-visual-open').hidden=true;
-      try{
-        if(file.size>16000000)throw Error('Choose a screenshot under 16 MB.');
-        const bitmap=await createImageBitmap(file);if(version!==fileEpoch){bitmap.close();return;}const canvas=$('#mc-visual-canvas'),scale=Math.min(1,960/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();canvas.hidden=false;
-        $('#mc-visual-result').textContent='Matching the image locally…';const result=await vision.match(ctx.getImageData(0,0,canvas.width,canvas.height));if(version!==fileEpoch)return;
-        const best=result.candidates[0];
-        if(result.strong){lastTest=known.get(best.id);$('#mc-visual-result').textContent='Visual match · '+lastTest.name+' · '+best.inliers+' aligned landmarks';$('#mc-visual-open').hidden=false;ctx.strokeStyle='#a8ffcf';ctx.lineWidth=1.5;for(const [x,y] of best.points){ctx.beginPath();ctx.arc(x*canvas.width,y*canvas.height,4,0,Math.PI*2);ctx.stroke();}}
-        else $('#mc-visual-result').textContent=best?'Several locations look alike in this view. Try a wider view or another part of the map.':'No reliable visual match. Try a clearer view of the minimap or terrain.';
-      }catch(error){if(version===fileEpoch)$('#mc-visual-result').textContent=error.message;}finally{e.target.value='';}
-    };
-    $('#mc-visual-open').onclick=()=>{if(lastTest){dialog.close();onInspect(lastTest.id);}};
     function open(){$('#mc-profile-dialog').close();dialog.showModal();}$('#mc-companion-open').onclick=open;$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=open;
-    dialog.addEventListener('close',()=>{stopScan();if(!stream){fileEpoch++;vision.stop();}});
-    watch=setInterval(()=>{if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000)onConnection('stale');},3000);
-    window.addEventListener('pagehide',()=>{link.stop();clearInterval(watch);});
+    dialog.addEventListener('close',()=>{stopScan();if(!stream)vision.stop();});
+    watch=setInterval(()=>{clock();if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The device connection is working. Check screen sharing and visual tracking on your computer.');onConnection('stale');}},1000);
+    // Browsers suspend this interval in the back/forward cache and resume it on return.
+    window.addEventListener('pagehide',()=>link.stop());
     return {open};
   }
   scope.MapleCompanionUI={create};
@@ -1878,7 +2027,7 @@ window.mapleStorageReady.then(() => {
   function openProfile(){$('#mc-mobile-level').value=state.level;$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
   let liveLocation=null,liveFresh=false;
-  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onInspect:id=>get(id)?inspect(id):localMaps.open(id),onLocation:value=>{
+  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onLocation:value=>{
     const m=get(value.id)||visualMaps.get(value.id);if(!m)return;
     const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;liveLocation=value.id;liveFresh=true;
     $('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Live · '+m.name;
@@ -1893,9 +2042,12 @@ window.mapleStorageReady.then(() => {
   },onConnection:phase=>{
     const wasFresh=liveFresh;
     $('#mc-companion-badge').hidden=false;
-    if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Location paused · Check PC';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
+    if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
     if(phase==='searching'){liveFresh=false;$('#mc-companion-badge').textContent='Finding your location…';$('#mc-status').textContent='Waiting for a reliable visual match · Last location retained';}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
+    if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
+    if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
+    if(phase==='failed'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Connection failed · Try again';$('#mc-status').textContent='Companion is not connected';}
     if(phase==='disconnected'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Companion disconnected';$('#mc-status').textContent='Location set manually · Companion is disconnected';}
     if(wasFresh&&!liveFresh&&state.panel==='route')detail();
   }});

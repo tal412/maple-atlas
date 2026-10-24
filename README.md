@@ -124,21 +124,24 @@ The validator checks all 457 included directed portal pairs against the pinned s
 
 ## Visual location companion
 
-Open Live companion from **Connect phone** on desktop or **Your character → Live companion** on mobile.
+Open Live companion from **Connect phone** on a computer or **Your character → Live companion** on a phone.
 
-1. PC: choose **Use this PC**. Phone: choose **Use this phone** and scan the PC QR.
-2. PC: scan the response displayed on the phone. If the PC has no camera, use a QR image or copy/paste the response through your own transfer method. Pairing needs both directions; there is no room-code server.
-3. PC: **Share game window → Start visual tracking**. The whole window is searched; optionally drag around the minimap to reduce irrelevant content. A title is not required.
-4. Walk between locations. Two consistent strong observations, or sufficient new landmarks across several partial views, confirm a map. The phone follows the detected location and recalculates a recorded route when that map is within route coverage. Outside that coverage, it opens the original local map without inventing an atlas position.
-5. **Disconnect and stop sharing**, browser Stop sharing, or closing/reloading ends the relevant capture/session. Unreadable views send a finding-location state immediately. Missing updates also mark the last location stale.
+1. The app detects the device role. Computers (including Macs) only create pairing codes and share the game window. Phones/tablets only receive the connection. Role detection uses mobile client hints and platform signals, including iPad desktop mode; it does not use viewport width. Screen-sharing support is checked separately. Browser identity can be spoofed, so this is interface guidance, not authentication. See [mobile browser signals](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/mobile) and [screen-capture support](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia).
+2. Computer: **Create computer code**. Phone: **Connect to computer → Scan computer code**.
+3. The phone explicitly shows **Code scanned · One more step** and a new response QR. On the computer, choose **Scan phone response**. This second scan is required. A computer without a camera can use a QR image or pasted response.
+4. Both pages show **Connecting**, then **Verifying both devices**. **Connected** appears only after a two-way application confirmation. The phone keeps the success screen open until **View map** is pressed. A phone waiting for its response to be scanned can choose **The computer scanned this response** to start a bounded connection check; that button does not claim success.
+5. Computer: **Share game window → Start visual tracking**. Sharing controls stay hidden until the connection is verified. Two consistent strong observations, or enough new landmarks across partial views, confirm a map. The phone follows a recognized location; outside route coverage, it opens the original local map.
+6. Connection and tracking are separate states. A healthy link can show **Waiting for screen sharing**, **Finding your map**, **Tracking live** or **Tracking paused**. Heartbeat acknowledgements detect interruption and failed connections even when no game map is being detected. Code expiry, timeout, version mismatch and disconnection have explicit messages and a new-pairing action.
 
-**Try image recognition** checks a chosen screenshot/photo entirely on the current device, without pairing or uploading it. Green circles show geometrically verified landmarks. This static test does not set a live player position.
+Both devices must be on the same reachable local network. A phone on cellular data or a computer on a different network cannot use this relay-free mode. Keep both pages open. **Disconnect**, closing/reloading, or a failed connection ends the session and stops capture. Refresh both devices after pairing protocol updates.
+
+Screenshot/photo recognition tests are developer tooling only. The public app has no minimap-test uploader. Use the local benchmark commands below for private image checks.
 
 The source inventory has 336 maps with images, 335 with usable landmarks, and 12 additional catalog names with no image reference. White Room has no distinctive landmarks. The index contains both minimap and full-scene descriptors. It identifies map IDs; it does not yet track the exact player dot, verify quest completion, or read account data. Repeated event maps can be visually indistinguishable. The reader keeps those uncertain. Full-scene recognition depends on reference coverage, scale and visible landmarks; use the minimap when scenery is insufficient.
 
 The pipeline uses ORB binary descriptors with their reference coordinates, a local locality-sensitive search index, Hamming-distance matching, a RANSAC geometric check, separation from competing maps, and a short in-memory observation history. Repeated ambiguous frames cannot manufacture confidence. A second image scale is checked when necessary. OpenCV executes in a dedicated Web Worker; one frame is analyzed at a time. No OCR, cloud AI, account login, extension, game-memory access or simulated game inputs are used. This is an independent fan tool, not approved by Nexon; it cannot promise ban-free use.
 
-The first visual download is about 43 MB. In **Pairing help & offline use**, **Download offline essentials** saves the application, search catalog, QR tools, visual vectors and matching runtime in this browser's Cache Storage. Existing browser IndexedDB stores quest progress and dated market records. Session identifiers, WebRTC keys, screenshots and visual observations are never written to either store. Pairing uses an encrypted WebRTC data channel with `iceServers: []`; the QR/manual exchange supplies the offer/answer and host candidates. Only map IDs, a geometric match ratio, status, sequence numbers and timestamps cross the channel. Both pages must remain open on the same reachable local network. Guest isolation, firewalls, VPNs, browser restrictions, screen lock and background suspension can prevent or interrupt the connection. No relay fallback is configured.
+The first visual download is about 43 MB. In **Connection help & offline use**, **Download offline essentials** saves the application, search catalog, QR tools, visual vectors and matching runtime in this browser's Cache Storage. Existing browser IndexedDB stores quest progress and dated market records. Session identifiers, WebRTC keys, screenshots and visual observations are never written to either store. Pairing uses an encrypted WebRTC data channel with `iceServers: []`; the QR/manual exchange supplies the offer/answer and host candidates. The channel carries session confirmations, heartbeats, map IDs, a geometric match ratio, status, sequence numbers and timestamps. It never carries screen images or video. Both pages must remain open on the same reachable local network. Guest isolation, firewalls, VPNs, browser restrictions, screen lock and background suspension can prevent or interrupt the connection. No relay fallback is configured.
 
 ### Rebuilding and checking the visual index
 
@@ -152,6 +155,7 @@ python3 scripts/build.py --channel dev
 node tests/visual-matcher.test.cjs
 node tests/visual-tracker.test.cjs
 node tests/companion-link.test.cjs
+node tests/companion-device.test.cjs
 node tests/offline.test.cjs
 ```
 

@@ -22,75 +22,138 @@
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
-  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},Peer=scope.RTCPeerConnection,now=Date.now}={}){
-    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,expiryTimer=null,connectTimer=null;
-    const state=(phase,message)=>onState({phase,message,role});
-    function stop(message='Disconnected. Pair again to reconnect.'){
-      epoch++;clearTimeout(expiryTimer);clearTimeout(connectTimer);
-      if(channel){channel.onopen=channel.onmessage=channel.onclose=null;channel.close();}channel=null;
-      if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;session=null;lastSeq=-1;seq=0;
-      state('disconnected',message);
+  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
+    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,phase='idle';
+    let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
+    let savedOffer=null,savedAnswer=null,finishing=false,cancelGather=null;
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,role,expires,...extra});};
+    const random=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+    function clear(){
+      epoch++;cancelGather?.();cancelGather=null;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
+      expiryTimer=connectTimer=verifyTimer=heartbeat=null;
+      if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
+      if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;seq=0;pingSeq=0;pongSeq=-1;savedOffer=savedAnswer=null;finishing=false;
+    }
+    function stop(message='Disconnected. Start a new pairing to reconnect.'){clear();state('disconnected',message);}
+    function fail(message,reason='network'){clear();state('failed',message,{reason});}
+    function control(value){if(channel?.readyState==='open'&&channel.bufferedAmount<4096)channel.send(JSON.stringify(value));}
+    function ping(){
+      if(!verified)return;
+      const age=now()-lastPong;
+      if(age>=20000){fail('The other device stopped responding. Keep both pages open and pair again.','heartbeat');return;}
+      if(age>=9000&&phase==='connected')state('reconnecting','No response from the other device. Checking the connection…');
+      control({kind:'ping',v:2,session,seq:++pingSeq});
+    }
+    function confirm(){
+      if(!helloSeen||!helloAck||verified)return;
+      verified=true;lastPong=now();
+      for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);
+      state('connected','Both devices exchanged a confirmation. The connection is working.');
+      heartbeat=timers.setInterval(ping,3000);ping();
     }
     function bind(c){
       if(channel||c.label!=='maple-atlas'){c.close();return;}channel=c;
-      c.onopen=()=>{clearTimeout(expiryTimer);clearTimeout(connectTimer);state('connected','Connected directly · Keep both pages open');};
-      c.onclose=()=>stop();
+      c.onopen=()=>{
+        timers.clearTimeout(connectTimer);state('verifying','The link opened. Verifying that the other device can send and receive…',{deadline:now()+7000});
+        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the other device. Refresh Maple Atlas on both devices, then pair again.','verification'),7000);
+        control({kind:'hello',v:2,session,role,nonce});
+      };
+      c.onclose=()=>stop('The other device disconnected or closed its page. Start a new pairing to reconnect.');
+      c.onerror=()=>fail('The device connection encountered an error. Start a new pairing.','channel');
       c.onmessage=event=>{
-        if(role!=='phone'||typeof event.data!=='string'||event.data.length>512)return;
-        try{const value=JSON.parse(event.data);if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)){lastSeq=value.seq;onReading(value.state);}}catch(_){}
+        if(typeof event.data!=='string'||event.data.length>512)return;
+        try{
+          const value=JSON.parse(event.data);
+          if(['hello','hello-ack','ping','pong'].includes(value.kind)){
+            if(value.session!==session)return;
+            if(value.v!==2){fail('These pages use different pairing versions. Refresh both devices and pair again.','version');return;}
+            if(value.kind==='hello'&&value.role===(role==='pc'?'phone':'pc')&&/^[a-f0-9]{32}$/.test(value.nonce)){
+              helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();
+            }else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
+            else if(value.kind==='ping'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>0)control({kind:'pong',v:2,session,seq:value.seq});
+            else if(value.kind==='pong'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>pongSeq&&value.seq<=pingSeq){
+              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored. Both devices are responding.');
+            }
+            return;
+          }
+          if(role!=='phone'||!verified||phase!=='connected')return;
+          if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
+          else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+        }catch(_){}
       };
     }
     function start(nextRole){
-      stop('Preparing a local connection…');role=nextRole;
-      if(!Peer)throw Error('This browser does not support direct device connections.');
+      clear();role=nextRole;
+      if(!Peer){state('failed','This browser cannot connect directly to another device.',{reason:'unsupported'});throw Error('Use a browser with WebRTC support.');}
       pc=new Peer({iceServers:[],iceTransportPolicy:'all'});
       pc.onconnectionstatechange=()=>{
         if(!pc)return;
-        if(pc.connectionState==='failed')stop('Could not connect. Use the same home Wi-Fi; guest networks or VPNs may block peers.');
-        else if(pc.connectionState==='disconnected')state('reconnecting','Connection interrupted · Waiting for the other device');
-        else if(pc.connectionState==='connected'&&channel?.readyState==='open')state('connected','Connected directly · Keep both pages open');
+        if(pc.connectionState==='failed')fail('The devices could not reach each other. Use the same local network. Guest Wi-Fi, VPNs or a firewall can block the link.','network');
+        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for the other device to respond…');
+        // ICE alone does not prove that the other app is receiving messages.
+        else if(pc.connectionState==='connected'&&verified&&now()-lastPong<9000)ping();
       };
       pc.ondatachannel=e=>bind(e.channel);
-      state('pairing','Pairing stays in this page. Refreshing or closing it ends the session.');
-      return epoch;
+      state('preparing','Preparing a private pairing code…');return epoch;
     }
     async function gathered(current,version){
+      if(version!==epoch)throw Error('Pairing was cancelled.');
       if(current.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{
-        const timer=setTimeout(()=>{current.removeEventListener('icegatheringstatechange',check);reject(Error('Could not find a local connection. Retry with Wi-Fi enabled.'));},8000);
-        function check(){if(current.iceGatheringState==='complete'){clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);resolve();}}
+        const timer=timers.setTimeout(()=>finish(Error('Could not find a local connection. Check Wi-Fi and retry.')),8000);
+        function finish(error){timers.clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);cancelGather=null;error?reject(error):resolve();}
+        function check(){if(current.iceGatheringState==='complete')finish();}
+        cancelGather=()=>finish(Error('Pairing was cancelled.'));
         current.addEventListener('icegatheringstatechange',check);check();
       });
       if(version!==epoch)throw Error('Pairing was cancelled.');
       const value={v:1,type:current.localDescription.type,sdp:current.localDescription.sdp,session,expires};
-      const code=await pack(value);await unpack(code,now());
-      expiryTimer=setTimeout(()=>stop('Pairing code expired. Start again.'),Math.max(1,expires-now()));
+      const code=await pack(value);await unpack(code,now());if(version!==epoch)throw Error('Pairing was cancelled.');
+      expiryTimer=timers.setTimeout(()=>{clear();state('expired','The pairing code expired. Create a new code on the computer and scan it again.');},Math.max(1,expires-now()));
       return code;
     }
     async function offer(){
-      const version=start('pc');session=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');expires=now()+ttl;
-      const current=pc;bind(pc.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());return gathered(current,version);
+      const version=start('pc');session=random();expires=now()+ttl;const current=pc;
+      try{
+        bind(current.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());const code=await gathered(current,version);
+        state('waiting-phone','Not connected yet. Scan this code on your phone, then scan the phone’s response on this computer.');return code;
+      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
     async function answer(code){
-      const value=await unpack(code,now());if(value.type!=='offer')throw Error('Scan the pairing code from the PC first.');
+      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(value.type!=='offer')throw Error('This is a phone response. Scan the code shown on your computer.');
+      // Re-reading the same computer QR must not rotate an active response.
+      if(savedOffer===code&&savedAnswer&&pc)return savedAnswer;
       const version=start('phone');session=value.session;expires=value.expires;const current=pc;
-      await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());return gathered(current,version);
+      try{
+        await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());const answerCode=await gathered(current,version);
+        savedOffer=code;savedAnswer=answerCode;state('waiting-computer','Computer code scanned successfully. Show this new response QR to your computer. You are not connected yet.');return answerCode;
+      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
+    }
+    function waitForConnection(){
+      if(!pc||verified||!['waiting-computer','waiting-phone','connecting'].includes(phase))return;
+      timers.clearTimeout(connectTimer);const deadline=now()+25000;
+      state('connecting','Waiting for the device link. Keep both pages open on the same local network.',{deadline});
+      connectTimer=timers.setTimeout(()=>fail('Connection timed out. Make sure the computer scanned the phone response. Both devices must use the same local network; guest Wi-Fi, VPNs or firewalls may block pairing.','timeout'),25000);
     }
     async function finish(code){
-      const value=await unpack(code,now());
-      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer')throw Error('This response belongs to another pairing. Start again on both devices.');
-      await pc.setRemoteDescription({type:'answer',sdp:value.sdp});state('connecting','Connecting over the local network…');
-      connectTimer=setTimeout(()=>{if(channel?.readyState!=='open')stop('Connection timed out. Guest Wi-Fi, VPNs or firewalls may block direct pairing.');},20000);
+      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer'||finishing)throw Error('This is not the response to this computer’s current code. Scan the current phone response, or restart pairing on both devices.');
+      const current=pc,version=epoch;finishing=true;
+      try{await current.setRemoteDescription({type:'answer',sdp:value.sdp});if(version===epoch&&!verified&&phase!=='verifying')waitForConnection();}
+      catch(e){if(version===epoch)fail('The phone response could not be applied. Start a new pairing.','response');throw e;}
+      finally{finishing=false;}
     }
     function send({id,confidence,observedAt}){
-      if(role!=='pc'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
+      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
       const value={kind:'location',id:String(id),confidence,observedAt,seq:seq++};if(!location(value,ids))return false;
       channel.send(JSON.stringify(value));return true;
     }
     function sendStatus(value){
-      if(role!=='pc'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
+      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
       channel.send(JSON.stringify({kind:'tracking',state:value,seq:seq++,observedAt:now()}));return true;
     }
-    return {offer,answer,finish,send,sendStatus,stop,get connected(){return channel?.readyState==='open';}};
+    return {offer,answer,finish,waitForConnection,send,sendStatus,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

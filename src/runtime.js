@@ -92,7 +92,7 @@
   function openProfile(){$('#mc-mobile-level').value=state.level;$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
   let liveLocation=null,liveFresh=false;
-  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onInspect:id=>get(id)?inspect(id):localMaps.open(id),onLocation:value=>{
+  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onLocation:value=>{
     const m=get(value.id)||visualMaps.get(value.id);if(!m)return;
     const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;liveLocation=value.id;liveFresh=true;
     $('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Live · '+m.name;
@@ -107,9 +107,12 @@
   },onConnection:phase=>{
     const wasFresh=liveFresh;
     $('#mc-companion-badge').hidden=false;
-    if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Location paused · Check PC';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
+    if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
     if(phase==='searching'){liveFresh=false;$('#mc-companion-badge').textContent='Finding your location…';$('#mc-status').textContent='Waiting for a reliable visual match · Last location retained';}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
+    if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
+    if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
+    if(phase==='failed'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Connection failed · Try again';$('#mc-status').textContent='Companion is not connected';}
     if(phase==='disconnected'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Companion disconnected';$('#mc-status').textContent='Location set manually · Companion is disconnected';}
     if(wasFresh&&!liveFresh&&state.panel==='route')detail();
   }});

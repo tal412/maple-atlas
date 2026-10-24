@@ -166,6 +166,9 @@ for name, digest in versions['files'].items():
 service_worker = (ROOT / 'docs/sw.js').read_text()
 assert visual['data'][2:] in service_worker and '__OFFLINE_FILES__' not in service_worker
 assert 'Tesseract' not in page and 'MapleVisualClient' in page
+assert 'MapleCompanionDevice.detect' in page
+assert not any('id="' + removed + '"' in page for removed in ('mc-visual-file', 'mc-pair-pc', 'mc-pair-phone')), 'Public companion must not expose developer testing or role switches'
+assert all('id="' + required + '"' in page for required in ('mc-companion-state-title', 'mc-pair-error', 'mc-pair-retry', 'mc-tracking-status'))
 print('PASS: 336 image-backed locations, 335 vectorized maps; every reference and vector bundle matches its pinned hash.')
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')
 print('PASS: all 464 hosted map assets match their pinned source Git blobs.')
