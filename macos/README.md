@@ -11,10 +11,9 @@ bash macos/build.sh
 open "macos/build/Maple Atlas Companion.app"
 ```
 
-First launch asks for:
+First launch asks for **Local Network** access, so the phone can connect on your Wi-Fi.
 
-- **Local Network** — to accept the phone's connection on your Wi-Fi.
-- **Screen & System Audio Recording** — to read the game window. Grant it in System Settings › Privacy & Security, then reopen the app. Ad-hoc builds are re-signed on every build, so macOS may ask again after rebuilding.
+Click **Choose game window…** and pick the game in macOS's own window picker. Picker capture needs no Screen Recording permission, so there's no prompt to grant. The app never lists windows itself. Pick the window again after each launch. Then drag the box over the in-game minimap (top-left by default). Only that area is matched.
 
 The phone uses the website (`/dev/` by default; switch to Main in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
 
@@ -24,10 +23,10 @@ The phone uses the website (`/dev/` by default; switch to Main in Settings). The
 Phone (website)  ──WebRTC data channel, same Wi-Fi──>  maple-link (Go, Pion)
                                                           │ stdin/stdout JSON
 Game window ──ScreenCaptureKit──> Swift app ──frames──> hidden WKWebView
-                                                          (engine.html: OpenCV ORB matcher, local index)
+                                                          (engine.html: OpenCV ORB matcher, minimap references)
 ```
 
-- **`App/`** — SwiftUI app: pairing QR and status, game-window picker, 1.5 s capture loop, and the hidden web view that runs `engine.html`. Frames stay in memory on the Mac; only map IDs are sent.
+- **`App/`** — SwiftUI app: pairing QR and status, the system window picker with a 2 fps ScreenCaptureKit stream, the minimap box, a 1.5 s matching loop, and the hidden web view that runs `engine.html`. Frames stay in memory on the Mac; only map IDs are sent.
 - **`link/`** — `maple-link` helper. Runs a WebRTC peer in ICE-lite mode on one UDP port, serves the engine files on `127.0.0.1`, and speaks the same data-channel protocol as the browser computer role in `src/companion-link.js`.
 - **`engine/engine.html`** — wraps the website's `visual-client.js`, `vision-worker.js`, `visual-matcher.js` and `visual-tracker.js` unchanged. `build.sh` copies them and the visual index into the app.
 
