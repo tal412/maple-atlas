@@ -1,6 +1,6 @@
 name: Publish main and dev
 
-on:
+"on":
   push:
     branches: [main, dev]
   workflow_dispatch:
@@ -15,6 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pages: read
@@ -64,6 +65,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
