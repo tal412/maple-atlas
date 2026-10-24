@@ -122,7 +122,7 @@ node tests/map-images.test.cjs
 The validator checks all 457 included directed portal pairs against the pinned source audit, road/route endpoint agreement, known routes and sprite coverage. The illustrated atlas has 64 published community anchors and three clearly marked schematic forest points; 179 other map records remain available through search and connections without invented map coordinates. Portal activation conditions and complete transport coverage still require in-game verification.
 
 
-## Visual location companion (dev preview)
+## Visual location companion
 
 Open Live companion from **Connect phone** on desktop or **Your character → Live companion** on mobile.
 
