@@ -30,10 +30,11 @@
   function sprite(kind,item){const src=DATA.sprites[kind]?.[String(item.id)];return src?'<span class="mc-sprite"><img src="'+esc(src)+'" alt="'+esc(item.name)+' game sprite" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'<span class="mc-sprite" aria-hidden="true"></span>';}
   function icons(){if(globalThis.lucide)lucide.createIcons({attrs:{width:18,height:18}});}
   const localMaps=MapleLocalMaps.create({root,get});
+  const previewImages=MapleMapImages.previews({root,get});
   const questFlow=MapleQuestFlow.create(DATA.quests),expandedQuests=new Set();
   let questHistoryOpen=false;
   const currentQuests=()=>questFlow.current(state.status,state.level);
-  function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" aria-label="View local map of '+esc(m.name)+'"><img src="'+esc(m.minimap||m.image)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
+  function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" data-lazy="'+(state.panel==='route')+'" aria-label="View local map of '+esc(m.name)+'">'+(m.minimap?'<span class="mc-preview-media"><img alt="" hidden decoding="async" referrerpolicy="no-referrer"><span class="mc-preview-message" role="status">Loading preview…</span></span>':'')+'<span class="mc-preview-caption">'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
   function find(text){const v=text.toLowerCase().trim();if(!v)return null;const exact=DATA.maps.filter(m=>m.name.toLowerCase()===v);if(exact.length===1)return exact[0];const matches=DATA.maps.filter(m=>m.name.toLowerCase().includes(v));return matches.length===1?matches[0]:null;}
   function plan(){
     state.routeActive=true;state.fitAll=false;state.focus=null;state.dx=0;state.dy=0;state.zoom=1;state.step=0;
@@ -139,6 +140,7 @@
       $$('[data-category]').forEach(b=>b.onclick=()=>{state.category=b.dataset.category;detail();save();});
     }
     $$('[data-localmap]').forEach(b=>b.onclick=()=>localMaps.open(b.dataset.localmap,b.dataset.next));
+    previewImages.refresh();
     $$('[data-inspect]').forEach(b=>b.onclick=()=>inspect(b.dataset.inspect));
     $$('[data-quest-card]').forEach(d=>d.ontoggle=()=>{if(!d.isConnected)return;if(d.open)expandedQuests.add(d.dataset.questCard);else expandedQuests.delete(d.dataset.questCard);});
     const history=$('.mc-quest-history');if(history)history.ontoggle=()=>{if(history.isConnected)questHistoryOpen=history.open;};

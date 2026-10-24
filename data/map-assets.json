@@ -1,0 +1,3281 @@
+{
+  "sourceCommit": "a44f101bffa8272164ca47484ab18c078dcab0a0",
+  "maps": {
+    "10000000": {
+      "image": {
+        "path": "assets/maps/395db7d03cb5d4bec0d020c1f1fe6b4f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/395db7d03cb5d4bec0d020c1f1fe6b4f.webp",
+        "gitBlob": "6ea7f6d33b016c5bd11736060014f93c111baf1a",
+        "bytes": 1671588
+      },
+      "preview": {
+        "path": "assets/minimaps/010000000.216645e9cd83.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000000.png",
+        "gitBlob": "216645e9cd83a1163760c8873cbee20cc0c8fb5c",
+        "bytes": 59982
+      }
+    },
+    "10000001": {
+      "image": {
+        "path": "assets/maps/66c472839041e7d573a0a757151c2fc6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66c472839041e7d573a0a757151c2fc6.webp",
+        "gitBlob": "8882082f834e37fb8e20ab5187aa98a6a4a59ef0",
+        "bytes": 104156
+      }
+    },
+    "10000002": {
+      "image": {
+        "path": "assets/maps/219a8d029e484eb36baf528d834eaccf.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/219a8d029e484eb36baf528d834eaccf.webp",
+        "gitBlob": "86f45f9366eb8869b69afdda6708e7da07f95c39",
+        "bytes": 118854
+      }
+    },
+    "10000003": {
+      "image": {
+        "path": "assets/maps/246a91b3ad2cd28d92ea25c9a510ff3a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/246a91b3ad2cd28d92ea25c9a510ff3a.webp",
+        "gitBlob": "f36131e3d8f141bcb61d7fe425a3ee5fdf32bb34",
+        "bytes": 101602
+      }
+    },
+    "10000010": {
+      "image": {
+        "path": "assets/maps/fab834850c67b631633f719fa0ed777a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fab834850c67b631633f719fa0ed777a.webp",
+        "gitBlob": "86899ecc210e4a7e61f7b924fd9b24adec11a319",
+        "bytes": 764102
+      },
+      "preview": {
+        "path": "assets/minimaps/010000010.33aff9d546c3.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000010.png",
+        "gitBlob": "33aff9d546c3b950b96145b4b890208169e80bff",
+        "bytes": 19170
+      }
+    },
+    "10000011": {
+      "image": {
+        "path": "assets/maps/50476be7b48c618c6706997bddc9e416.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/50476be7b48c618c6706997bddc9e416.webp",
+        "gitBlob": "8c55ce4567864ac8707f55cc9af6faa34caa7417",
+        "bytes": 827708
+      },
+      "preview": {
+        "path": "assets/minimaps/010000011.b275eb9ffb15.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000011.png",
+        "gitBlob": "b275eb9ffb1547c76b3dee3d70c4a41bfcf9be4e",
+        "bytes": 25755
+      }
+    },
+    "10000012": {
+      "image": {
+        "path": "assets/maps/10e0d86c6f03521da2d96466748c0455.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/10e0d86c6f03521da2d96466748c0455.webp",
+        "gitBlob": "b2869338344ef289e5b257f4e8b128b6138237ce",
+        "bytes": 620496
+      },
+      "preview": {
+        "path": "assets/minimaps/010000012.683ac81bb2ab.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000012.png",
+        "gitBlob": "683ac81bb2ab3da929d102abb2ad54746a9b29ae",
+        "bytes": 17538
+      }
+    },
+    "10000013": {
+      "image": {
+        "path": "assets/maps/9cea03efb9c613020696d484080254cd.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9cea03efb9c613020696d484080254cd.webp",
+        "gitBlob": "c6f02b0bfd6d2decd505c1f88ab71a73b4b57bca",
+        "bytes": 409882
+      },
+      "preview": {
+        "path": "assets/minimaps/010000013.d72b6554998b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000013.png",
+        "gitBlob": "d72b6554998bb5d481a97112915880014632783a",
+        "bytes": 12215
+      }
+    },
+    "10000020": {
+      "image": {
+        "path": "assets/maps/d6561e47426d936ea7f98ca62baa715f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d6561e47426d936ea7f98ca62baa715f.webp",
+        "gitBlob": "4980fad87b7db3a6685a4e5e14179fde2bb14f40",
+        "bytes": 2281760
+      },
+      "preview": {
+        "path": "assets/minimaps/010000020.f212a4d0a492.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000020.png",
+        "gitBlob": "f212a4d0a4925a2bf8cbc8c62f83de0ce24a6b80",
+        "bytes": 67556
+      }
+    },
+    "10000021": {
+      "image": {
+        "path": "assets/maps/06a698c7419387638e69cf9e5adef40f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06a698c7419387638e69cf9e5adef40f.webp",
+        "gitBlob": "6a9fe6a5457b6108943cdf2d7a44c60977def6f7",
+        "bytes": 787240
+      },
+      "preview": {
+        "path": "assets/minimaps/010000021.c9147d85dc16.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000021.png",
+        "gitBlob": "c9147d85dc164e3b6510de5cae53cf709e445fe2",
+        "bytes": 20998
+      }
+    },
+    "10000022": {
+      "image": {
+        "path": "assets/maps/c31f590f78043bb4161b85d533a936a5.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c31f590f78043bb4161b85d533a936a5.webp",
+        "gitBlob": "1c19b6dc7a514cef08216601c800bb2eb3b14122",
+        "bytes": 858008
+      },
+      "preview": {
+        "path": "assets/minimaps/010000022.ee3c87cbff56.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010000022.png",
+        "gitBlob": "ee3c87cbff5642473d7c84110787f05565d8d4fb",
+        "bytes": 20238
+      }
+    },
+    "10001000": {
+      "image": {
+        "path": "assets/maps/b6a1b13b416eb17f7609c2cfebc1393a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b6a1b13b416eb17f7609c2cfebc1393a.webp",
+        "gitBlob": "7f2c0b3efa0f274fc0ed566df2a2a35117069a9e",
+        "bytes": 1734936
+      },
+      "preview": {
+        "path": "assets/minimaps/010001000.a3a014622101.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001000.png",
+        "gitBlob": "a3a014622101447d842ac9585839719cefe76396",
+        "bytes": 45247
+      }
+    },
+    "10001001": {
+      "image": {
+        "path": "assets/maps/891e495a260163d9a6369e5e34ca82fe.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/891e495a260163d9a6369e5e34ca82fe.webp",
+        "gitBlob": "409d7472d408c2c3e348ac6bdcf0d1adc2f81f1f",
+        "bytes": 261668
+      },
+      "preview": {
+        "path": "assets/minimaps/010001001.6a435d59284f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001001.png",
+        "gitBlob": "6a435d59284ffc61cd1e518a7607229e49347741",
+        "bytes": 5582
+      }
+    },
+    "10004041": {
+      "image": {
+        "path": "assets/maps/ad4932edbe3919990ad8b3a7d0bdb7e7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ad4932edbe3919990ad8b3a7d0bdb7e7.webp",
+        "gitBlob": "9fa08445ded402debf3bb6bf240bead12336b774",
+        "bytes": 606630
+      },
+      "preview": {
+        "path": "assets/minimaps/010004041.4ed3d348c614.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004041.png",
+        "gitBlob": "4ed3d348c614d3dcd08bfbdaad21baf951875522",
+        "bytes": 14961
+      }
+    },
+    "10001002": {
+      "image": {
+        "path": "assets/maps/da137f50814532bc16edaf416f878bb3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/da137f50814532bc16edaf416f878bb3.webp",
+        "gitBlob": "6844d5170bae6ad8eabff66565f93174f3678918",
+        "bytes": 372250
+      },
+      "preview": {
+        "path": "assets/minimaps/010001002.283f0db761ba.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001002.png",
+        "gitBlob": "283f0db761ba9caa969980ae133b6af84ff99a43",
+        "bytes": 11177
+      }
+    },
+    "10001003": {
+      "image": {
+        "path": "assets/maps/7da41c7fdcf3f2b7ea9baeb9346571ea.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7da41c7fdcf3f2b7ea9baeb9346571ea.webp",
+        "gitBlob": "d4bad4b82f33b348d65d468b881aa3d7f91b935d",
+        "bytes": 581726
+      },
+      "preview": {
+        "path": "assets/minimaps/010001003.5cb1950950a9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001003.png",
+        "gitBlob": "5cb1950950a98119fb4cf4a96387f610e5352d57",
+        "bytes": 13391
+      }
+    },
+    "10001004": {
+      "image": {
+        "path": "assets/maps/5e52ab0e71ba3e199252aa95cb548a57.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5e52ab0e71ba3e199252aa95cb548a57.webp",
+        "gitBlob": "9cf89e26bc2b7985ca07757084af3d8732558f28",
+        "bytes": 420162
+      },
+      "preview": {
+        "path": "assets/minimaps/010001004.fee0355e2749.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001004.png",
+        "gitBlob": "fee0355e27490caeb2394e913bd07c0a337b6f91",
+        "bytes": 10983
+      }
+    },
+    "10001005": {
+      "image": {
+        "path": "assets/maps/10d0416dbc3e5d19edaecc1f26be9ac3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/10d0416dbc3e5d19edaecc1f26be9ac3.webp",
+        "gitBlob": "f689a758e1c3b1c312a9113f38a7384979f52eb9",
+        "bytes": 220094
+      },
+      "preview": {
+        "path": "assets/minimaps/010001005.53307220c71d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001005.png",
+        "gitBlob": "53307220c71d688d8028dfa6e2dbb8d7b87b25fd",
+        "bytes": 5149
+      }
+    },
+    "10001006": {
+      "image": {
+        "path": "assets/maps/966e6b44dd00116482c30c5b5032a265.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/966e6b44dd00116482c30c5b5032a265.webp",
+        "gitBlob": "069db2c75faf5ac6c90ea099276a18ab894bbf0f",
+        "bytes": 187988
+      },
+      "preview": {
+        "path": "assets/minimaps/010001006.0ca614c196e6.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001006.png",
+        "gitBlob": "0ca614c196e61a9534b5e138e5b5fb71dc8c6eb0",
+        "bytes": 3968
+      }
+    },
+    "10001007": {
+      "image": {
+        "path": "assets/maps/ac3a375190fafa98db61112bc6d201ae.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ac3a375190fafa98db61112bc6d201ae.webp",
+        "gitBlob": "00ab22b8f99f64b3b91d0e51f5cfbc9a875ad9ab",
+        "bytes": 218192
+      },
+      "preview": {
+        "path": "assets/minimaps/010001007.8c35891d65ef.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001007.png",
+        "gitBlob": "8c35891d65efef89af98791515eec45354c4501e",
+        "bytes": 7261
+      }
+    },
+    "10001008": {
+      "image": {
+        "path": "assets/maps/5db5b5670830b0daa0b06c7cd13c366b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5db5b5670830b0daa0b06c7cd13c366b.webp",
+        "gitBlob": "7e3bd255eb652a1b10e7df8fa7a01ae28b95b7f3",
+        "bytes": 184190
+      },
+      "preview": {
+        "path": "assets/minimaps/010001008.a68aac87fb4e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001008.png",
+        "gitBlob": "a68aac87fb4eaa8d3482e08d927e6615e9b618dd",
+        "bytes": 4669
+      }
+    },
+    "10001010": {
+      "image": {
+        "path": "assets/maps/1055ad9d0f80c843fd7d61a7bf8024a9.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1055ad9d0f80c843fd7d61a7bf8024a9.webp",
+        "gitBlob": "d9a5a80952c6eb509b3bab86e9f3b760e59115be",
+        "bytes": 516254
+      },
+      "preview": {
+        "path": "assets/minimaps/010001010.560b7c70c8be.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001010.png",
+        "gitBlob": "560b7c70c8be28552d7324a2b9157d38edb1e97a",
+        "bytes": 12205
+      }
+    },
+    "10001011": {
+      "image": {
+        "path": "assets/maps/420f0baea69182b79178bb6abbfd4a5c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/420f0baea69182b79178bb6abbfd4a5c.webp",
+        "gitBlob": "052b482af51c690f55da7d810ed717819d808f65",
+        "bytes": 446618
+      },
+      "preview": {
+        "path": "assets/minimaps/010001011.1abffc875ede.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001011.png",
+        "gitBlob": "1abffc875edeac4b9dac342d2994ef01c76def34",
+        "bytes": 11546
+      }
+    },
+    "10001012": {
+      "image": {
+        "path": "assets/maps/f9338ac62b10d6c321a9dacc50f82342.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f9338ac62b10d6c321a9dacc50f82342.webp",
+        "gitBlob": "03f5c2d7e865a85d91faed3bc6acb92e4f9d7843",
+        "bytes": 468468
+      },
+      "preview": {
+        "path": "assets/minimaps/010001012.90ed582ddb70.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001012.png",
+        "gitBlob": "90ed582ddb70b533245780e970a7f498b7a433b6",
+        "bytes": 11981
+      }
+    },
+    "10001020": {
+      "image": {
+        "path": "assets/maps/d587df44787714b2021f2f2c48418d28.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d587df44787714b2021f2f2c48418d28.webp",
+        "gitBlob": "f1cd99f80bdc80c67462d1b5e7fe62bdbaecc811",
+        "bytes": 1024224
+      },
+      "preview": {
+        "path": "assets/minimaps/010001020.14443c4a8608.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001020.png",
+        "gitBlob": "14443c4a860866f3f871089f45b22042daf08e98",
+        "bytes": 28408
+      }
+    },
+    "10001021": {
+      "image": {
+        "path": "assets/maps/1931e149ae973b7e8e75c3917b74eda4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1931e149ae973b7e8e75c3917b74eda4.webp",
+        "gitBlob": "8e09d0400951c35f1fe24fe87fe2984650440e38",
+        "bytes": 423612
+      },
+      "preview": {
+        "path": "assets/minimaps/010001021.85d30d406bc0.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001021.png",
+        "gitBlob": "85d30d406bc0450af95b89072f8c4fba6b3a2c5f",
+        "bytes": 10753
+      }
+    },
+    "10001030": {
+      "image": {
+        "path": "assets/maps/0126ce824e3f3bc1ae4c8a5f6f7cdb97.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0126ce824e3f3bc1ae4c8a5f6f7cdb97.webp",
+        "gitBlob": "8e05fb855f8828239596eb0ea483fffdff7c0c1a",
+        "bytes": 1246988
+      },
+      "preview": {
+        "path": "assets/minimaps/010001030.7e16394f77e9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001030.png",
+        "gitBlob": "7e16394f77e995aa27c46d2aae58590a4f05bfa9",
+        "bytes": 33496
+      }
+    },
+    "10001040": {
+      "image": {
+        "path": "assets/maps/a0ade2275c71930b5d185edb758c954f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a0ade2275c71930b5d185edb758c954f.webp",
+        "gitBlob": "e0fb01484c0a4cce3f602a60d35c86957a7ca4ec",
+        "bytes": 1100500
+      },
+      "preview": {
+        "path": "assets/minimaps/010001040.0f1ac700779f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001040.png",
+        "gitBlob": "0f1ac700779f951778c72e4bb5473760abda88c5",
+        "bytes": 28283
+      }
+    },
+    "10001041": {
+      "image": {
+        "path": "assets/maps/5d39bf30b57f35a84d7d35448f16ba0a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5d39bf30b57f35a84d7d35448f16ba0a.webp",
+        "gitBlob": "5a2322fa6a6efec7b364c8568db8a5d8784b7636",
+        "bytes": 144578
+      }
+    },
+    "10001042": {
+      "image": {
+        "path": "assets/maps/c6c79e8caa6c9f2d9b2e4149b3d9a684.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c6c79e8caa6c9f2d9b2e4149b3d9a684.webp",
+        "gitBlob": "08fcf90cac93bea476445198e155bdd6fbef85dc",
+        "bytes": 113776
+      }
+    },
+    "10001043": {
+      "image": {
+        "path": "assets/maps/bae45ede1a3efa2b379cf2e036c3ff4c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bae45ede1a3efa2b379cf2e036c3ff4c.webp",
+        "gitBlob": "3b34b99cc9209f013a59ad4dccb7cf06c233a339",
+        "bytes": 92688
+      }
+    },
+    "10001044": {
+      "image": {
+        "path": "assets/maps/6fe40f7c1c3bdb494ccacad3dabf3eca.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6fe40f7c1c3bdb494ccacad3dabf3eca.webp",
+        "gitBlob": "3c09e785a91a7484dcc5c5b6447c24c953ae0408",
+        "bytes": 128686
+      }
+    },
+    "10001045": {
+      "image": {
+        "path": "assets/maps/c833f641dfd00c8b450c53823dd629c8.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c833f641dfd00c8b450c53823dd629c8.webp",
+        "gitBlob": "6830c07d8d2da77c33898d28600e1063d61b896f",
+        "bytes": 129692
+      }
+    },
+    "10001050": {
+      "image": {
+        "path": "assets/maps/5b218aa4282b869049fc1e4dac08f971.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5b218aa4282b869049fc1e4dac08f971.webp",
+        "gitBlob": "790f8a34592c6db4d212bc87b4ecfffbd65901ea",
+        "bytes": 939104
+      },
+      "preview": {
+        "path": "assets/minimaps/010001050.e693752ae874.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001050.png",
+        "gitBlob": "e693752ae874b15d103c19d99d3c615162dd4239",
+        "bytes": 25031
+      }
+    },
+    "10001051": {
+      "image": {
+        "path": "assets/maps/95fbff5d3173eaa016dc79d1e1ba2f8d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/95fbff5d3173eaa016dc79d1e1ba2f8d.webp",
+        "gitBlob": "c3810b4fc5657e72aae050b66e2e491ae56ffd45",
+        "bytes": 127364
+      }
+    },
+    "10001052": {
+      "image": {
+        "path": "assets/maps/0b116ab7f930c105a0c58dc25496c06f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0b116ab7f930c105a0c58dc25496c06f.webp",
+        "gitBlob": "94381d68db11911aefa880a39b7e8f30f5a07228",
+        "bytes": 900564
+      },
+      "preview": {
+        "path": "assets/minimaps/010001052.fc6d06a1a306.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001052.png",
+        "gitBlob": "fc6d06a1a3067c1c83611b717775164c8429cd82",
+        "bytes": 25121
+      }
+    },
+    "10001060": {
+      "image": {
+        "path": "assets/maps/0378ef8c07d3e200e6e97082b0a7821e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0378ef8c07d3e200e6e97082b0a7821e.webp",
+        "gitBlob": "f05bfee06d5d366562dbee9efdc0e1cbee0fe771",
+        "bytes": 606420
+      },
+      "preview": {
+        "path": "assets/minimaps/010001060.a186fe30284d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001060.png",
+        "gitBlob": "a186fe30284d6eb8547b3a403ad374ac2121185e",
+        "bytes": 15408
+      }
+    },
+    "10001070": {
+      "image": {
+        "path": "assets/maps/f508766f19a72b0c7373668b02ecbe49.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f508766f19a72b0c7373668b02ecbe49.webp",
+        "gitBlob": "1b176558c3689968f59f4f652c6a6a3498883cb2",
+        "bytes": 540410
+      },
+      "preview": {
+        "path": "assets/minimaps/010001070.d44fc0897389.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001070.png",
+        "gitBlob": "d44fc08973892192fbc11785c9a7a825496a4a5a",
+        "bytes": 13345
+      }
+    },
+    "10001080": {
+      "image": {
+        "path": "assets/maps/ba58ca8886b9faeb9af62b1f3cedd951.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba58ca8886b9faeb9af62b1f3cedd951.webp",
+        "gitBlob": "fe6192f09c9791f4a183113013c2b91531b59a4b",
+        "bytes": 1932272
+      },
+      "preview": {
+        "path": "assets/minimaps/010001080.55f4e60de988.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001080.png",
+        "gitBlob": "55f4e60de98876f0830ddc0b8e5f4809cea34bbe",
+        "bytes": 56817
+      }
+    },
+    "10001081": {
+      "image": {
+        "path": "assets/maps/324269712b1430ef03ef1849c2719d67.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/324269712b1430ef03ef1849c2719d67.webp",
+        "gitBlob": "6c97874fe4ad1617a619f96a6f135311fc836e21",
+        "bytes": 627446
+      },
+      "preview": {
+        "path": "assets/minimaps/010001081.7343d5cab5d8.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001081.png",
+        "gitBlob": "7343d5cab5d87f45e4f48c2837fb0397b9ce3315",
+        "bytes": 16175
+      }
+    },
+    "10001082": {
+      "image": {
+        "path": "assets/maps/5c478375701cd0ae719e2b5ce7eca976.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5c478375701cd0ae719e2b5ce7eca976.webp",
+        "gitBlob": "9fd633bdf387657c7866f340f63ab645c4705aa2",
+        "bytes": 968710
+      },
+      "preview": {
+        "path": "assets/minimaps/010001082.b7a2e8f170ef.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001082.png",
+        "gitBlob": "b7a2e8f170efa9918c5fdebe4d94d3d971b684eb",
+        "bytes": 27145
+      }
+    },
+    "10001090": {
+      "image": {
+        "path": "assets/maps/eb6bf353f00442e72923e1b81784fbd1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/eb6bf353f00442e72923e1b81784fbd1.webp",
+        "gitBlob": "b952ee42ed6d4105a763a96773bb5bd50e30bf2f",
+        "bytes": 1358184
+      },
+      "preview": {
+        "path": "assets/minimaps/010001090.56b4f737d184.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001090.png",
+        "gitBlob": "56b4f737d18485c2bd291e7d932bb193c20bd82c",
+        "bytes": 39466
+      }
+    },
+    "10001100": {
+      "image": {
+        "path": "assets/maps/1a0ff864b824cce74f07b587db1d4edc.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1a0ff864b824cce74f07b587db1d4edc.webp",
+        "gitBlob": "58e92e9f32cc0110af6ee796dfeea8c59b883832",
+        "bytes": 1152436
+      },
+      "preview": {
+        "path": "assets/minimaps/010001100.32fe7ea8716c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001100.png",
+        "gitBlob": "32fe7ea8716c7d1d04134e818bf0912c929d7d17",
+        "bytes": 32335
+      }
+    },
+    "10001101": {
+      "image": {
+        "path": "assets/maps/1ce85aea56715d0abed52707e6491c5a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1ce85aea56715d0abed52707e6491c5a.webp",
+        "gitBlob": "514228211586e0e7d58593ee3998b0a666297797",
+        "bytes": 327778
+      },
+      "preview": {
+        "path": "assets/minimaps/010001101.c385444196c2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001101.png",
+        "gitBlob": "c385444196c2de6333efdc7850126e567961f95d",
+        "bytes": 9530
+      }
+    },
+    "10001102": {
+      "image": {
+        "path": "assets/maps/04ab79620fc06f539141db0b53c1a725.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/04ab79620fc06f539141db0b53c1a725.webp",
+        "gitBlob": "fec774d761bd1a2edcc4b2c82d31726fd75367e4",
+        "bytes": 349636
+      },
+      "preview": {
+        "path": "assets/minimaps/010001102.65e4e3cb4cce.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001102.png",
+        "gitBlob": "65e4e3cb4ccefbc78508fb1ec766b965e3f068ba",
+        "bytes": 7541
+      }
+    },
+    "10001103": {
+      "image": {
+        "path": "assets/maps/952b039e531fc6d27113af784487b706.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/952b039e531fc6d27113af784487b706.webp",
+        "gitBlob": "f5fd89d4272427cfe881b3ef9ef2127c74260ca8",
+        "bytes": 335720
+      },
+      "preview": {
+        "path": "assets/minimaps/010001103.a1d5e225b443.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001103.png",
+        "gitBlob": "a1d5e225b44353a94fce902bc3a913541d159ddc",
+        "bytes": 7035
+      }
+    },
+    "10001104": {
+      "image": {
+        "path": "assets/maps/833254b43424a35175ef0ecffd688af4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/833254b43424a35175ef0ecffd688af4.webp",
+        "gitBlob": "e292d81b7d43799d2c1bf6edd8e8c5a2979d150a",
+        "bytes": 305478
+      },
+      "preview": {
+        "path": "assets/minimaps/010001104.07e29577d75b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001104.png",
+        "gitBlob": "07e29577d75bf61ce21c5762bd80b4f4251bf298",
+        "bytes": 6502
+      }
+    },
+    "10001105": {
+      "image": {
+        "path": "assets/maps/9ee4f835ff5540eb9d063a949a2499f7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9ee4f835ff5540eb9d063a949a2499f7.webp",
+        "gitBlob": "a86135c1f2832e42e4a4c75071a789445fa96e9a",
+        "bytes": 424322
+      },
+      "preview": {
+        "path": "assets/minimaps/010001105.740df2272e01.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001105.png",
+        "gitBlob": "740df2272e01f577c271c368948a31d0f9601f76",
+        "bytes": 8100
+      }
+    },
+    "10001106": {
+      "image": {
+        "path": "assets/maps/3250e0d7182b2a5ce42982044d7211a1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3250e0d7182b2a5ce42982044d7211a1.webp",
+        "gitBlob": "779b72fa2c7e3d3e99db3c5dbcdaa4c92f719569",
+        "bytes": 298614
+      },
+      "preview": {
+        "path": "assets/minimaps/010001106.1bc5e60f3f54.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010001106.png",
+        "gitBlob": "1bc5e60f3f54c66d53589b3b3351704bb14efed3",
+        "bytes": 6171
+      }
+    },
+    "10002000": {
+      "image": {
+        "path": "assets/maps/93f41fc2034fcaf4f6444dfd0f8e695b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/93f41fc2034fcaf4f6444dfd0f8e695b.webp",
+        "gitBlob": "e95e298074d2e87d43ec8006d33fd764cbcb51cd",
+        "bytes": 1550144
+      },
+      "preview": {
+        "path": "assets/minimaps/010002000.2e3c8247fe46.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002000.png",
+        "gitBlob": "2e3c8247fe4643d6f80f8c57bd1bb9f0143c37b8",
+        "bytes": 57238
+      }
+    },
+    "10002001": {
+      "image": {
+        "path": "assets/maps/ecd92c915cfc91164485425caaf4dbd1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ecd92c915cfc91164485425caaf4dbd1.webp",
+        "gitBlob": "adc875b67f948f27c67e1098f800eb861c77c4c4",
+        "bytes": 104568
+      }
+    },
+    "10002002": {
+      "image": {
+        "path": "assets/maps/c427950928a75f504312ce9b34ac9509.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c427950928a75f504312ce9b34ac9509.webp",
+        "gitBlob": "b305f7e1b25db812c4db5616dfb650a417264b8a",
+        "bytes": 114346
+      }
+    },
+    "10002003": {
+      "image": {
+        "path": "assets/maps/dfc665fa333dd3b82473daff89b183a7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dfc665fa333dd3b82473daff89b183a7.webp",
+        "gitBlob": "64eaf5d4d84534bb63bb063a8e4a60a029c3727a",
+        "bytes": 152274
+      }
+    },
+    "10002004": {
+      "image": {
+        "path": "assets/maps/5cf49cee8b0f094c3f01a29cec72dc0a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5cf49cee8b0f094c3f01a29cec72dc0a.webp",
+        "gitBlob": "24b5ec0ceccae928c25714623f036f2498d97e7d",
+        "bytes": 249698
+      },
+      "preview": {
+        "path": "assets/minimaps/010002004.506bd49e3c17.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002004.png",
+        "gitBlob": "506bd49e3c17addd9e604c45ecf01cbfe7ab8afe",
+        "bytes": 6986
+      }
+    },
+    "10002005": {
+      "image": {
+        "path": "assets/maps/31c0b89d716c6d045923491ee64db463.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/31c0b89d716c6d045923491ee64db463.webp",
+        "gitBlob": "f8f5b0d466842229f34439b4589d35a9f194a090",
+        "bytes": 118752
+      }
+    },
+    "10002010": {
+      "image": {
+        "path": "assets/maps/c9c7b743e2e039f0da795942db84755a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c9c7b743e2e039f0da795942db84755a.webp",
+        "gitBlob": "59a7c5aacb6530a14ce9bb844676dc77c890b420",
+        "bytes": 435174
+      },
+      "preview": {
+        "path": "assets/minimaps/010002010.a629524ca499.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002010.png",
+        "gitBlob": "a629524ca4994fca613db8546b5269250b67c005",
+        "bytes": 14339
+      }
+    },
+    "10002020": {
+      "image": {
+        "path": "assets/maps/5b642ba98f6f9d8e7843006bf67efa3a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5b642ba98f6f9d8e7843006bf67efa3a.webp",
+        "gitBlob": "ae28ec6cc3c5fee8b57c560f505e68d6a7ec6341",
+        "bytes": 637960
+      },
+      "preview": {
+        "path": "assets/minimaps/010002020.70377bdcf1f3.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002020.png",
+        "gitBlob": "70377bdcf1f339446504595c0afe106d690e2e9f",
+        "bytes": 19152
+      }
+    },
+    "10002021": {
+      "image": {
+        "path": "assets/maps/0fffc7db232bb343dc9ff0421028439f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0fffc7db232bb343dc9ff0421028439f.webp",
+        "gitBlob": "5d61ee555e60351b815b9182e9931deb09a31b33",
+        "bytes": 417302
+      },
+      "preview": {
+        "path": "assets/minimaps/010002021.a50dbfebcee3.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002021.png",
+        "gitBlob": "a50dbfebcee3a800ac2043f88669efa5a265f179",
+        "bytes": 13123
+      }
+    },
+    "10002022": {
+      "image": {
+        "path": "assets/maps/de5d1401cd28f8fbe7c122d08040d554.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/de5d1401cd28f8fbe7c122d08040d554.webp",
+        "gitBlob": "d9d8c5befeed17ed114d28d7a0b3817190664742",
+        "bytes": 244324
+      },
+      "preview": {
+        "path": "assets/minimaps/010002022.a49b6a6a47aa.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002022.png",
+        "gitBlob": "a49b6a6a47aa7545b60fd560e302b124c32dcd58",
+        "bytes": 9971
+      }
+    },
+    "10002023": {
+      "image": {
+        "path": "assets/maps/ff9574d6c49193080c7bbf2e89b2647c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ff9574d6c49193080c7bbf2e89b2647c.webp",
+        "gitBlob": "3c1740e193a413e3a44e45d4ec8f792a546854c7",
+        "bytes": 445400
+      },
+      "preview": {
+        "path": "assets/minimaps/010002023.ed45235de0f2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002023.png",
+        "gitBlob": "ed45235de0f2eb823235f2cd03b1de7b6b851caf",
+        "bytes": 13456
+      }
+    },
+    "10002024": {
+      "image": {
+        "path": "assets/maps/b272f0214eced4db42c7c8b4f50f5fce.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b272f0214eced4db42c7c8b4f50f5fce.webp",
+        "gitBlob": "f28f142235207297c4e0b7229d60e4b915c89202",
+        "bytes": 247766
+      },
+      "preview": {
+        "path": "assets/minimaps/010002024.df4165c97258.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002024.png",
+        "gitBlob": "df4165c97258c46f47fb585055a9cebc36d6da54",
+        "bytes": 10034
+      }
+    },
+    "10002025": {
+      "image": {
+        "path": "assets/maps/28a4bbd54f93b54dc6b0ad6a43140472.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/28a4bbd54f93b54dc6b0ad6a43140472.webp",
+        "gitBlob": "dd4aece0797da1f9a5922b38514d8607a641b274",
+        "bytes": 518064
+      },
+      "preview": {
+        "path": "assets/minimaps/010002025.c89836fa0fe8.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002025.png",
+        "gitBlob": "c89836fa0fe8a039ce44bdffda500b7376b7c301",
+        "bytes": 15647
+      }
+    },
+    "10002026": {
+      "image": {
+        "path": "assets/maps/c10cef6cf6cf08c79b6b4a602bb4a804.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c10cef6cf6cf08c79b6b4a602bb4a804.webp",
+        "gitBlob": "21783e377338a5c46b97abf0e377ffb7d5ccfe38",
+        "bytes": 563692
+      },
+      "preview": {
+        "path": "assets/minimaps/010002026.aa70db80a2d7.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002026.png",
+        "gitBlob": "aa70db80a2d710501d9e17a02930f3c40ffbee7f",
+        "bytes": 16843
+      }
+    },
+    "10002027": {
+      "image": {
+        "path": "assets/maps/e1dcbc41f43743131bb08892971c0860.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e1dcbc41f43743131bb08892971c0860.webp",
+        "gitBlob": "3534892ef50283b9947adb753177db39fb26f1e8",
+        "bytes": 384362
+      },
+      "preview": {
+        "path": "assets/minimaps/010002027.01d9e80d8d8b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002027.png",
+        "gitBlob": "01d9e80d8d8b56d43688721d600deb5afcd9c1b5",
+        "bytes": 11525
+      }
+    },
+    "10002030": {
+      "image": {
+        "path": "assets/maps/42652f5ab8be3c8e59b999b588ae7dd9.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/42652f5ab8be3c8e59b999b588ae7dd9.webp",
+        "gitBlob": "f33222f244393bc62d97c057ead700bb4716c703",
+        "bytes": 867438
+      },
+      "preview": {
+        "path": "assets/minimaps/010002030.7b1551bb4e17.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002030.png",
+        "gitBlob": "7b1551bb4e17f2ac66567924fd2682f82f331530",
+        "bytes": 29220
+      }
+    },
+    "10002031": {
+      "image": {
+        "path": "assets/maps/b9781a3877f35e37dd3c971445c73f5b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b9781a3877f35e37dd3c971445c73f5b.webp",
+        "gitBlob": "9fae306b2fdeae1e90fc4a490508f123b36b3e5b",
+        "bytes": 198554
+      },
+      "preview": {
+        "path": "assets/minimaps/010002031.082c853ae372.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002031.png",
+        "gitBlob": "082c853ae372fee0b0a2041b9d9d2b8eec5ae498",
+        "bytes": 8945
+      }
+    },
+    "10002032": {
+      "image": {
+        "path": "assets/maps/35deb66028f1d4ce057f6749ef088440.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/35deb66028f1d4ce057f6749ef088440.webp",
+        "gitBlob": "1ad39a28cfd56bc296bef723bd26920e3b572800",
+        "bytes": 211526
+      },
+      "preview": {
+        "path": "assets/minimaps/010002032.311ef3948cb2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002032.png",
+        "gitBlob": "311ef3948cb2d4e0b7b13fc9a636958b13d6ea8b",
+        "bytes": 9084
+      }
+    },
+    "10002033": {
+      "image": {
+        "path": "assets/maps/974465afefd017b4c2aaa007e33dc09d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/974465afefd017b4c2aaa007e33dc09d.webp",
+        "gitBlob": "3ddfa3a5705c3022e6334ad5b8e422672ce84829",
+        "bytes": 203302
+      },
+      "preview": {
+        "path": "assets/minimaps/010002033.692134d15f47.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002033.png",
+        "gitBlob": "692134d15f472e5a78d996de1470548387284e41",
+        "bytes": 8713
+      }
+    },
+    "10002034": {
+      "image": {
+        "path": "assets/maps/f163baf2699644884b76709cdf596e4c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f163baf2699644884b76709cdf596e4c.webp",
+        "gitBlob": "9fb8ff7a8e29ed98b2337bb4ba7f43ab556fa47a",
+        "bytes": 208222
+      },
+      "preview": {
+        "path": "assets/minimaps/010002034.2fff92658191.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002034.png",
+        "gitBlob": "2fff92658191e0664d27fd81c241812b564438a4",
+        "bytes": 9123
+      }
+    },
+    "10002040": {
+      "image": {
+        "path": "assets/maps/ecb4b71e0141424937901cefe396ad42.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ecb4b71e0141424937901cefe396ad42.webp",
+        "gitBlob": "1572235b2c694d5eea6456be6351e6840b686c60",
+        "bytes": 209472
+      },
+      "preview": {
+        "path": "assets/minimaps/010002040.8643dce8060b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002040.png",
+        "gitBlob": "8643dce8060b2a3fbb812a2f64624aba88c29456",
+        "bytes": 6562
+      }
+    },
+    "10002041": {
+      "image": {
+        "path": "assets/maps/de4871437cf025288b347f6e69f1a289.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/de4871437cf025288b347f6e69f1a289.webp",
+        "gitBlob": "9dcefb9f1156f91c47fe2d281a62b3bbcecf546a",
+        "bytes": 406448
+      },
+      "preview": {
+        "path": "assets/minimaps/010002041.c0b38088907f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002041.png",
+        "gitBlob": "c0b38088907fd6f3b580eda18b9495a053458bd0",
+        "bytes": 13530
+      }
+    },
+    "10002042": {
+      "image": {
+        "path": "assets/maps/78548c0491c08c18d26103aa04c324ce.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/78548c0491c08c18d26103aa04c324ce.webp",
+        "gitBlob": "5af35599da97d902b55b4dad30411067c6017eed",
+        "bytes": 254282
+      },
+      "preview": {
+        "path": "assets/minimaps/010002042.12e99c162978.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002042.png",
+        "gitBlob": "12e99c1629780d9ee3e244823a5ae1bca8e05e44",
+        "bytes": 8583
+      }
+    },
+    "10002043": {
+      "image": {
+        "path": "assets/maps/624070c3ed36f4bb34afb938ee929e47.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/624070c3ed36f4bb34afb938ee929e47.webp",
+        "gitBlob": "5eeb3f64a576775fb4f2f53ccf4db61e8806b3be",
+        "bytes": 246010
+      },
+      "preview": {
+        "path": "assets/minimaps/010002043.b224fcbdf401.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002043.png",
+        "gitBlob": "b224fcbdf401022ffada7d3a362ba4a3052096ae",
+        "bytes": 7711
+      }
+    },
+    "10002044": {
+      "image": {
+        "path": "assets/maps/791a32b72d20d72dd4ff8c989d7e30cb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/791a32b72d20d72dd4ff8c989d7e30cb.webp",
+        "gitBlob": "c3a73e913a8454f716e190b5c32b7186766f8524",
+        "bytes": 309176
+      },
+      "preview": {
+        "path": "assets/minimaps/010002044.2f885030294d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002044.png",
+        "gitBlob": "2f885030294d133ffc497d36b8f0522e197c76e6",
+        "bytes": 11127
+      }
+    },
+    "10002050": {
+      "image": {
+        "path": "assets/maps/30fa9e757b266e610d61e28ee62b999b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/30fa9e757b266e610d61e28ee62b999b.webp",
+        "gitBlob": "f7f3e00ff120e1a0631077685d290a43e628df58",
+        "bytes": 396482
+      },
+      "preview": {
+        "path": "assets/minimaps/010002050.dbeef4a4a26a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002050.png",
+        "gitBlob": "dbeef4a4a26a1b25be6007788227ab7865a3ccdc",
+        "bytes": 13157
+      }
+    },
+    "10002060": {
+      "image": {
+        "path": "assets/maps/7b77b1d184ae138ca615c054027ba748.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7b77b1d184ae138ca615c054027ba748.webp",
+        "gitBlob": "dc99c9cb5933e24d368b23fb41ed77482de3d010",
+        "bytes": 409098
+      },
+      "preview": {
+        "path": "assets/minimaps/010002060.bc6e7d7b313d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002060.png",
+        "gitBlob": "bc6e7d7b313d49702337c7f7ff4c7948f2e23f5f",
+        "bytes": 13295
+      }
+    },
+    "10002061": {
+      "image": {
+        "path": "assets/maps/60f4200d832405b9edf6eab34cb97068.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/60f4200d832405b9edf6eab34cb97068.webp",
+        "gitBlob": "c9362eace09bec2566a07364fcb86f43058293f2",
+        "bytes": 617742
+      },
+      "preview": {
+        "path": "assets/minimaps/010002061.ad90a842265d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002061.png",
+        "gitBlob": "ad90a842265dd67da0db6f2097370d9789308ab3",
+        "bytes": 18901
+      }
+    },
+    "10002062": {
+      "image": {
+        "path": "assets/maps/84fd1193781ddf2d01d35f174c6b568c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/84fd1193781ddf2d01d35f174c6b568c.webp",
+        "gitBlob": "1ee72f1905420ea645a0d6f2109a6064411cd527",
+        "bytes": 498188
+      },
+      "preview": {
+        "path": "assets/minimaps/010002062.e285346221d2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002062.png",
+        "gitBlob": "e285346221d2d01866b61e9bb029e2b170bc06c3",
+        "bytes": 15869
+      }
+    },
+    "10002070": {
+      "image": {
+        "path": "assets/maps/edf1da34a43c92eb775e67fd3be55b2a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/edf1da34a43c92eb775e67fd3be55b2a.webp",
+        "gitBlob": "6210ba26010edd167a8db57c7da2ad166bb2d088",
+        "bytes": 1258614
+      },
+      "preview": {
+        "path": "assets/minimaps/010002070.c4c0489db5a9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002070.png",
+        "gitBlob": "c4c0489db5a911c979c43490092e577978354d75",
+        "bytes": 43928
+      }
+    },
+    "10002071": {
+      "image": {
+        "path": "assets/maps/c27a06ee651e0408d87d26dceb3820c6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c27a06ee651e0408d87d26dceb3820c6.webp",
+        "gitBlob": "5a0f0b60c039f746924efcfc13062811f04172b2",
+        "bytes": 370178
+      },
+      "preview": {
+        "path": "assets/minimaps/010002071.f2cf916bfcd9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002071.png",
+        "gitBlob": "f2cf916bfcd9166eabd6b9de19a15f743c5583f0",
+        "bytes": 17369
+      }
+    },
+    "10002072": {
+      "image": {
+        "path": "assets/maps/9ef536e4c894aad54b4498a78ac988bc.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9ef536e4c894aad54b4498a78ac988bc.webp",
+        "gitBlob": "32a27e8fd68baac5d011ec6ef1af2388c9f3055a",
+        "bytes": 253578
+      },
+      "preview": {
+        "path": "assets/minimaps/010002072.f4a079dba1ae.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002072.png",
+        "gitBlob": "f4a079dba1ae6403fc14c7f0b57404ec6d2db63e",
+        "bytes": 10927
+      }
+    },
+    "10002073": {
+      "image": {
+        "path": "assets/maps/bdaeaf160725c85e6828526129e01aba.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bdaeaf160725c85e6828526129e01aba.webp",
+        "gitBlob": "6f841a3fd85ba1c9f045276756cfd9b180e096a4",
+        "bytes": 225828
+      },
+      "preview": {
+        "path": "assets/minimaps/010002073.2579bcc9e4fb.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002073.png",
+        "gitBlob": "2579bcc9e4fbd44261ba97a43303c32ab520fee1",
+        "bytes": 9862
+      }
+    },
+    "10002074": {
+      "image": {
+        "path": "assets/maps/c4a0fefd80f06862e813f94d4b66a84d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c4a0fefd80f06862e813f94d4b66a84d.webp",
+        "gitBlob": "e699c8d75d04cb137393f028d2c06e726ff12570",
+        "bytes": 243478
+      },
+      "preview": {
+        "path": "assets/minimaps/010002074.95585bbbe015.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002074.png",
+        "gitBlob": "95585bbbe015ea472b7c0fb3bea96eff0d5b8542",
+        "bytes": 10006
+      }
+    },
+    "10002075": {
+      "image": {
+        "path": "assets/maps/c28629fe0177e626812b334d5f0a2c6c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c28629fe0177e626812b334d5f0a2c6c.webp",
+        "gitBlob": "7dc2ae7ab61ab4da8bce27d1d5fed7fcb218f226",
+        "bytes": 200976
+      },
+      "preview": {
+        "path": "assets/minimaps/010002075.14a114f75ceb.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002075.png",
+        "gitBlob": "14a114f75ceb8c8f2cf65692864bab44dd37f1b5",
+        "bytes": 7963
+      }
+    },
+    "10002076": {
+      "image": {
+        "path": "assets/maps/97dc3d64b475b4e7a5f084e5a7efbc1f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/97dc3d64b475b4e7a5f084e5a7efbc1f.webp",
+        "gitBlob": "fb98df82dfb8d2470e81a976c0306243bc2365e0",
+        "bytes": 220824
+      },
+      "preview": {
+        "path": "assets/minimaps/010002076.6445e43287e2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002076.png",
+        "gitBlob": "6445e43287e207c8ab12679a7f85394053e4892f",
+        "bytes": 8886
+      }
+    },
+    "10002080": {
+      "image": {
+        "path": "assets/maps/dbd02ca6beea85000f54ae5645fae08e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dbd02ca6beea85000f54ae5645fae08e.webp",
+        "gitBlob": "c41e3f0ab6952f6dd37f06f67a33cb1265f48e3a",
+        "bytes": 273876
+      },
+      "preview": {
+        "path": "assets/minimaps/010002080.1c9b17473723.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002080.png",
+        "gitBlob": "1c9b1747372399953b5b8d943df00ee041b0521a",
+        "bytes": 10310
+      }
+    },
+    "10002081": {
+      "image": {
+        "path": "assets/maps/c72fbdd126d4a4c2c7d1ec2b98bf3787.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c72fbdd126d4a4c2c7d1ec2b98bf3787.webp",
+        "gitBlob": "106cd2381eca1450fa3e95263d5ea04b112ea38e",
+        "bytes": 352970
+      },
+      "preview": {
+        "path": "assets/minimaps/010002081.4647baf31f47.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002081.png",
+        "gitBlob": "4647baf31f4759c59ff523fadec7d411a1e69c62",
+        "bytes": 13629
+      }
+    },
+    "10002082": {
+      "image": {
+        "path": "assets/maps/d7df878584a677ab9aee4e5310b4fd2d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d7df878584a677ab9aee4e5310b4fd2d.webp",
+        "gitBlob": "0ca73866787426f28a2ffaeb557eeb58a8345437",
+        "bytes": 268042
+      },
+      "preview": {
+        "path": "assets/minimaps/010002082.d3fb4db4231a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002082.png",
+        "gitBlob": "d3fb4db4231a59b279248d04a7f176022b8020c5",
+        "bytes": 10434
+      }
+    },
+    "10002083": {
+      "image": {
+        "path": "assets/maps/5cb090955fa7b9417c6753776b32b38e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5cb090955fa7b9417c6753776b32b38e.webp",
+        "gitBlob": "24cfe1834895fda4410fee52b52b8f4d52050bf2",
+        "bytes": 263446
+      },
+      "preview": {
+        "path": "assets/minimaps/010002083.0e997304ec14.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002083.png",
+        "gitBlob": "0e997304ec149d7c82ee61e47916e92c7b414e7d",
+        "bytes": 9879
+      }
+    },
+    "10002090": {
+      "image": {
+        "path": "assets/maps/80dafd7a18e3a277957fcb17f29bbc15.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/80dafd7a18e3a277957fcb17f29bbc15.webp",
+        "gitBlob": "30785459edbf8547d2d2af90a56060bccde55fe0",
+        "bytes": 260850
+      },
+      "preview": {
+        "path": "assets/minimaps/010002090.de04efebea69.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002090.png",
+        "gitBlob": "de04efebea69b6b4ade4af8332001885a77259a2",
+        "bytes": 9429
+      }
+    },
+    "10002091": {
+      "image": {
+        "path": "assets/maps/d2b02c7462cde568cfc0fa5a72a93798.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d2b02c7462cde568cfc0fa5a72a93798.webp",
+        "gitBlob": "56669f9d481422de615c0ffaafffe27e7b3d07f1",
+        "bytes": 314644
+      },
+      "preview": {
+        "path": "assets/minimaps/010002091.42609bcedad1.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010002091.png",
+        "gitBlob": "42609bcedad1d2a5113368467919cbc161bfb6f3",
+        "bytes": 11785
+      }
+    },
+    "10003000": {
+      "image": {
+        "path": "assets/maps/3d75b4f2934259ac0d03b805fa6b048e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3d75b4f2934259ac0d03b805fa6b048e.webp",
+        "gitBlob": "e0f4b828b3c64ecf9369a8bd90c5354353ec8e95",
+        "bytes": 1836396
+      },
+      "preview": {
+        "path": "assets/minimaps/010003000.f59af8dbfec6.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003000.png",
+        "gitBlob": "f59af8dbfec620f703812fb068900cea5d3ace54",
+        "bytes": 49268
+      }
+    },
+    "10003001": {
+      "image": {
+        "path": "assets/maps/e7222c42f8c235fc8aa12f1a36cb3b2a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e7222c42f8c235fc8aa12f1a36cb3b2a.webp",
+        "gitBlob": "802e11cc4f46864a3ac77aac0099173600cd726e",
+        "bytes": 110914
+      }
+    },
+    "10003002": {
+      "image": {
+        "path": "assets/maps/a701da49d3fca4865ed4bdcf0d756239.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a701da49d3fca4865ed4bdcf0d756239.webp",
+        "gitBlob": "0c096adf96aff74b46a9155e00f1ad126cd16381",
+        "bytes": 106340
+      }
+    },
+    "10003003": {
+      "image": {
+        "path": "assets/maps/f47243fd590676a7f2f8a4a8cfd91fc6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f47243fd590676a7f2f8a4a8cfd91fc6.webp",
+        "gitBlob": "ba5bad522613b6158096bd1b28579b4c923e3594",
+        "bytes": 160002
+      }
+    },
+    "10003004": {
+      "image": {
+        "path": "assets/maps/f534606b494d0157dc6f470407c6967d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f534606b494d0157dc6f470407c6967d.webp",
+        "gitBlob": "f50245b9fdad41dfb475e8985652f9bf3d661302",
+        "bytes": 89080
+      }
+    },
+    "10003005": {
+      "image": {
+        "path": "assets/maps/9b04bbed53c95d2130cb8ee4f8b58efb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9b04bbed53c95d2130cb8ee4f8b58efb.webp",
+        "gitBlob": "3f8e555eee29b2fd3676250456217a484ba34cd3",
+        "bytes": 104744
+      }
+    },
+    "10003006": {
+      "image": {
+        "path": "assets/maps/0a848162ec48768fb55388bf4ecdc0a3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0a848162ec48768fb55388bf4ecdc0a3.webp",
+        "gitBlob": "88dfb82977a9db0913dd323d6cd4b7fc56db27de",
+        "bytes": 125292
+      }
+    },
+    "10003007": {
+      "image": {
+        "path": "assets/maps/d757f200aec9def71d73c1566e6aa87b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d757f200aec9def71d73c1566e6aa87b.webp",
+        "gitBlob": "f2e53dc14a791a41ac4b0411e95596e84a612093",
+        "bytes": 216930
+      },
+      "preview": {
+        "path": "assets/minimaps/010003007.0deafc589438.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003007.png",
+        "gitBlob": "0deafc589438d369f13ee4f1a9816bbcca661196",
+        "bytes": 6506
+      }
+    },
+    "10003008": {
+      "image": {
+        "path": "assets/maps/a796f175e4953fd543f1ccee87025874.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a796f175e4953fd543f1ccee87025874.webp",
+        "gitBlob": "a1852efb1ff863a8f99fd9d1a517576a7c05d2c6",
+        "bytes": 158720
+      },
+      "preview": {
+        "path": "assets/minimaps/010003008.5354d452b457.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003008.png",
+        "gitBlob": "5354d452b4573e43252f68c3e6fc7067f39afbdf",
+        "bytes": 4739
+      }
+    },
+    "10003010": {
+      "image": {
+        "path": "assets/maps/a87926a171a19ae325864d3a12199b36.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a87926a171a19ae325864d3a12199b36.webp",
+        "gitBlob": "385d327903e90b0a41454212685e618386a0b09f",
+        "bytes": 1469756
+      },
+      "preview": {
+        "path": "assets/minimaps/010003010.c18d3be2ca02.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003010.png",
+        "gitBlob": "c18d3be2ca02e7bfa6b487600c963962d062ab67",
+        "bytes": 39738
+      }
+    },
+    "10003011": {
+      "image": {
+        "path": "assets/maps/7e1aef5420945a3471c8103efe879f92.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7e1aef5420945a3471c8103efe879f92.webp",
+        "gitBlob": "dd7dccfca3599823a724d22e1d372fad08bbf2f9",
+        "bytes": 256230
+      },
+      "preview": {
+        "path": "assets/minimaps/010003011.2ecce15b7415.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003011.png",
+        "gitBlob": "2ecce15b7415060086db335f74b5dc88c0cf853c",
+        "bytes": 6944
+      }
+    },
+    "10003020": {
+      "image": {
+        "path": "assets/maps/77f4eb8d35baee4ea34a0247aa6fbd1b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/77f4eb8d35baee4ea34a0247aa6fbd1b.webp",
+        "gitBlob": "26bf09870d3fce3b8fe619fb3e45188f1272a95c",
+        "bytes": 1137948
+      },
+      "preview": {
+        "path": "assets/minimaps/010003020.a2e3a1fba72a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003020.png",
+        "gitBlob": "a2e3a1fba72af52cc7e8aca000aeb1c3f6e7cf6f",
+        "bytes": 32756
+      }
+    },
+    "10003030": {
+      "image": {
+        "path": "assets/maps/511851dbeb30f61a87cae933c4534f9f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/511851dbeb30f61a87cae933c4534f9f.webp",
+        "gitBlob": "7d45abfa089eb380591bc4aa8829fdf968522f0a",
+        "bytes": 860240
+      },
+      "preview": {
+        "path": "assets/minimaps/010003030.82ede44b9907.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003030.png",
+        "gitBlob": "82ede44b9907da7bee8c801953e83eb343a397e8",
+        "bytes": 25129
+      }
+    },
+    "10003040": {
+      "image": {
+        "path": "assets/maps/2443d73fdf47d9cd4c2cebb4b07a05c2.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2443d73fdf47d9cd4c2cebb4b07a05c2.webp",
+        "gitBlob": "cc9bd9462158453a0766feb17cda0095b5a3edd4",
+        "bytes": 1294176
+      },
+      "preview": {
+        "path": "assets/minimaps/010003040.b7ea194752da.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003040.png",
+        "gitBlob": "b7ea194752da71513a579c1ed09898ebd2800604",
+        "bytes": 37721
+      }
+    },
+    "10003050": {
+      "image": {
+        "path": "assets/maps/b3bf745e7e289fe5c13c0d87bd0cf81e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b3bf745e7e289fe5c13c0d87bd0cf81e.webp",
+        "gitBlob": "bc716726b8cae164d748ab10615d1abb1a0d4c6b",
+        "bytes": 988170
+      },
+      "preview": {
+        "path": "assets/minimaps/010003050.a6e2f75d376d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003050.png",
+        "gitBlob": "a6e2f75d376d9e4e6231402bd1517fe0517a87b4",
+        "bytes": 29491
+      }
+    },
+    "10003051": {
+      "image": {
+        "path": "assets/maps/d1a172908a42bf04336394be3be730f5.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d1a172908a42bf04336394be3be730f5.webp",
+        "gitBlob": "c7f9b8a96a03daa2d4b3e492a9ad1e043f941b6a",
+        "bytes": 739672
+      },
+      "preview": {
+        "path": "assets/minimaps/010003051.1ba8967a99e5.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003051.png",
+        "gitBlob": "1ba8967a99e56bc980c4fadd1a16d4b0e04dc72b",
+        "bytes": 24447
+      }
+    },
+    "10003052": {
+      "image": {
+        "path": "assets/maps/b4049eec796ddd899716bec35b9a118c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b4049eec796ddd899716bec35b9a118c.webp",
+        "gitBlob": "2630021ba4e96b22686cde6d75813897bdec8810",
+        "bytes": 775494
+      },
+      "preview": {
+        "path": "assets/minimaps/010003052.f2cf4fc8778b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003052.png",
+        "gitBlob": "f2cf4fc8778ba221817d44782d47daba16530e95",
+        "bytes": 26033
+      }
+    },
+    "10003060": {
+      "image": {
+        "path": "assets/maps/ab61a1c3a61632a1e25903047373b16e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ab61a1c3a61632a1e25903047373b16e.webp",
+        "gitBlob": "7c7015759ac0cbd44bed169cf1c30535bfb0434c",
+        "bytes": 116590
+      }
+    },
+    "10003061": {
+      "image": {
+        "path": "assets/maps/d9e41ecd9f974e6a0bb5b614db47832c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d9e41ecd9f974e6a0bb5b614db47832c.webp",
+        "gitBlob": "014f97bd1f607c8f150ee4a23b1d156e2e99efc7",
+        "bytes": 686142
+      },
+      "preview": {
+        "path": "assets/minimaps/010003061.cf0d79025487.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003061.png",
+        "gitBlob": "cf0d79025487c2425926f8a224dc14078fa7299e",
+        "bytes": 19965
+      }
+    },
+    "10003062": {
+      "image": {
+        "path": "assets/maps/bdd3f4a9effa2756d5b701ee9fc7f6c1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bdd3f4a9effa2756d5b701ee9fc7f6c1.webp",
+        "gitBlob": "bf1ad5d8e5b8191ddaa005571aa46df28b5d05fc",
+        "bytes": 606244
+      },
+      "preview": {
+        "path": "assets/minimaps/010003062.11417f6fb17a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003062.png",
+        "gitBlob": "11417f6fb17a973646ec7b93d5dd26c39c6d5fd2",
+        "bytes": 20928
+      }
+    },
+    "10003063": {
+      "image": {
+        "path": "assets/maps/e6187d8ff5ddaf6c604f1a8bb444f84c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e6187d8ff5ddaf6c604f1a8bb444f84c.webp",
+        "gitBlob": "4fb6a7d97b9c5436e46c8933b9781334355a6c18",
+        "bytes": 673994
+      },
+      "preview": {
+        "path": "assets/minimaps/010003063.d87cd8fc7425.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003063.png",
+        "gitBlob": "d87cd8fc7425d877185ed2bcea854e965624dbeb",
+        "bytes": 19394
+      }
+    },
+    "10003064": {
+      "image": {
+        "path": "assets/maps/7a7cab32278648a10e3ed4834a182072.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7a7cab32278648a10e3ed4834a182072.webp",
+        "gitBlob": "42bb3413e0b6a63de626970ff839b12f260f725c",
+        "bytes": 731394
+      },
+      "preview": {
+        "path": "assets/minimaps/010003064.61e981c61858.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003064.png",
+        "gitBlob": "61e981c618585759b0fe7440ebc775673df5667a",
+        "bytes": 20122
+      }
+    },
+    "10003065": {
+      "image": {
+        "path": "assets/maps/49f060574632e6bf32970a416af0075a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/49f060574632e6bf32970a416af0075a.webp",
+        "gitBlob": "4faaf24342c57f3f6f6a3830dd2cbe12a0bfffec",
+        "bytes": 726124
+      },
+      "preview": {
+        "path": "assets/minimaps/010003065.8957f41f7f5a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003065.png",
+        "gitBlob": "8957f41f7f5a8f9c2db30e18e5b78bc87e51a928",
+        "bytes": 19954
+      }
+    },
+    "10003066": {
+      "image": {
+        "path": "assets/maps/82e7cf222638e530f3a4f0ca85fc406f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/82e7cf222638e530f3a4f0ca85fc406f.webp",
+        "gitBlob": "1a0289a15f1712f6df019c0e05cc661980e508ae",
+        "bytes": 692926
+      },
+      "preview": {
+        "path": "assets/minimaps/010003066.1ba3d7b964a9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003066.png",
+        "gitBlob": "1ba3d7b964a92aa9deb92b9c1b851775fb01fe7d",
+        "bytes": 19857
+      }
+    },
+    "10003067": {
+      "image": {
+        "path": "assets/maps/72808944911c75462d6aafe02ef1ecf2.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72808944911c75462d6aafe02ef1ecf2.webp",
+        "gitBlob": "168b609e901bc62946e53e561aedce347e71d5ad",
+        "bytes": 711172
+      },
+      "preview": {
+        "path": "assets/minimaps/010003067.2f9acb825e1f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003067.png",
+        "gitBlob": "2f9acb825e1fae5039efd1b5a14738bf4eb75123",
+        "bytes": 19262
+      }
+    },
+    "10003068": {
+      "image": {
+        "path": "assets/maps/5f398d14e702e3af63d8b74fe0391020.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5f398d14e702e3af63d8b74fe0391020.webp",
+        "gitBlob": "06a4059398cb29b22028ce2899610198ef8246e7",
+        "bytes": 699932
+      },
+      "preview": {
+        "path": "assets/minimaps/010003068.7db16aebfbf6.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003068.png",
+        "gitBlob": "7db16aebfbf66b9b57b1ef7aaaaa12179007bcc9",
+        "bytes": 19321
+      }
+    },
+    "10003070": {
+      "image": {
+        "path": "assets/maps/75cadba2900f5b76b7582ab69585f026.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/75cadba2900f5b76b7582ab69585f026.webp",
+        "gitBlob": "4386abf0b1138c9fbeff5321e0e6373e86256296",
+        "bytes": 1014992
+      },
+      "preview": {
+        "path": "assets/minimaps/010003070.361a7b5565a5.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003070.png",
+        "gitBlob": "361a7b5565a5a0f8c6334b8fff41d1aa1cff068b",
+        "bytes": 25881
+      }
+    },
+    "10003080": {
+      "image": {
+        "path": "assets/maps/0508b3d608578a9ae42aa6e9c9a8413f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0508b3d608578a9ae42aa6e9c9a8413f.webp",
+        "gitBlob": "8ebf983cf15961544abd4a9919e12deb955b67a9",
+        "bytes": 904094
+      },
+      "preview": {
+        "path": "assets/minimaps/010003080.e672ddbf67c3.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003080.png",
+        "gitBlob": "e672ddbf67c3cfc7f9ce9553a8431df146fc764f",
+        "bytes": 23912
+      }
+    },
+    "10003081": {
+      "image": {
+        "path": "assets/maps/826cadacc4d6709d692ec98ac3399a89.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/826cadacc4d6709d692ec98ac3399a89.webp",
+        "gitBlob": "3eadfca4e38806b0d179b78031b76a7a76c9e17b",
+        "bytes": 270080
+      },
+      "preview": {
+        "path": "assets/minimaps/010003081.1f73f517f9ad.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003081.png",
+        "gitBlob": "1f73f517f9addcb04e7a18b262292156644cad47",
+        "bytes": 7184
+      }
+    },
+    "10003090": {
+      "image": {
+        "path": "assets/maps/0bb8f242ae341fba677cecd17467ff8c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0bb8f242ae341fba677cecd17467ff8c.webp",
+        "gitBlob": "cc4afeba6531d91488f2340f2ab63af1ed82d2b1",
+        "bytes": 492682
+      },
+      "preview": {
+        "path": "assets/minimaps/010003090.53ff3d4ffbe0.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003090.png",
+        "gitBlob": "53ff3d4ffbe00ff216eb12bc2d905f4d4c8f6edc",
+        "bytes": 15415
+      }
+    },
+    "10003091": {
+      "image": {
+        "path": "assets/maps/9375732d73211d0f19a709ac458300a9.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9375732d73211d0f19a709ac458300a9.webp",
+        "gitBlob": "f4b288f090152993507ccc2e301b85aae55ab64f",
+        "bytes": 616964
+      },
+      "preview": {
+        "path": "assets/minimaps/010003091.9742101ee45b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003091.png",
+        "gitBlob": "9742101ee45b0f98d23f2c2f27e0810823c8c611",
+        "bytes": 18784
+      }
+    },
+    "10003092": {
+      "image": {
+        "path": "assets/maps/c1e0657436e669bff4cd5dfe2a2f1b24.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c1e0657436e669bff4cd5dfe2a2f1b24.webp",
+        "gitBlob": "764dc71466a23dc58725bc40e9b94973d866bd78",
+        "bytes": 478250
+      },
+      "preview": {
+        "path": "assets/minimaps/010003092.e1387b322c74.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003092.png",
+        "gitBlob": "e1387b322c74edcf69af4bb392e18627107f2805",
+        "bytes": 15612
+      }
+    },
+    "10003093": {
+      "image": {
+        "path": "assets/maps/033d5dd726e01e1a81659d7e980fadc9.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/033d5dd726e01e1a81659d7e980fadc9.webp",
+        "gitBlob": "2938ed0be389d84f866510146ffcd9fe3283006f",
+        "bytes": 845092
+      },
+      "preview": {
+        "path": "assets/minimaps/010003093.41f1affe4652.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003093.png",
+        "gitBlob": "41f1affe46528973c969faff56e38519740a7f99",
+        "bytes": 28466
+      }
+    },
+    "10003094": {
+      "image": {
+        "path": "assets/maps/06513ac557bd2d66255dcc428b49f841.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06513ac557bd2d66255dcc428b49f841.webp",
+        "gitBlob": "31a1990afd9d7207c93dc1e6e5967400f2d982d6",
+        "bytes": 757300
+      },
+      "preview": {
+        "path": "assets/minimaps/010003094.2a7fa11fbc3f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003094.png",
+        "gitBlob": "2a7fa11fbc3f26384b4aded8010dcd5d95a2c569",
+        "bytes": 25146
+      }
+    },
+    "10003095": {
+      "image": {
+        "path": "assets/maps/f04d9bba46f6707f4b2e87680fe5a07c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f04d9bba46f6707f4b2e87680fe5a07c.webp",
+        "gitBlob": "0d618530b088d9bd1229f644e7f47c4badecf699",
+        "bytes": 550652
+      },
+      "preview": {
+        "path": "assets/minimaps/010003095.848589a53786.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003095.png",
+        "gitBlob": "848589a537863f3a299c25f6d83b6d29f559316d",
+        "bytes": 19000
+      }
+    },
+    "10003096": {
+      "image": {
+        "path": "assets/maps/e5d07ef9b2c91b63b2364a2a17856d15.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e5d07ef9b2c91b63b2364a2a17856d15.webp",
+        "gitBlob": "80560ffa5da58785106d8510a289063da6fc7951",
+        "bytes": 445356
+      },
+      "preview": {
+        "path": "assets/minimaps/010003096.5c8018a0233c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003096.png",
+        "gitBlob": "5c8018a0233c73b97d0edd00c9c1854fcefea715",
+        "bytes": 15045
+      }
+    },
+    "10003097": {
+      "image": {
+        "path": "assets/maps/751d839cc88b42c952368e6f0a2ffd93.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/751d839cc88b42c952368e6f0a2ffd93.webp",
+        "gitBlob": "665c8191a49a8d3404ea0ea499ffdd5b6a9e2180",
+        "bytes": 471906
+      },
+      "preview": {
+        "path": "assets/minimaps/010003097.9120ea2b7e16.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003097.png",
+        "gitBlob": "9120ea2b7e16ceb79a4d288841a5a42537fd571f",
+        "bytes": 15948
+      }
+    },
+    "10003098": {
+      "image": {
+        "path": "assets/maps/df4a7dd1228523d57a51e2326b5e5043.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/df4a7dd1228523d57a51e2326b5e5043.webp",
+        "gitBlob": "743acc9bf97c36dd7a3492187e53f27162ff02b6",
+        "bytes": 23536
+      }
+    },
+    "10003100": {
+      "image": {
+        "path": "assets/maps/a390df75fb6c81cafb633285ef5eb57c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a390df75fb6c81cafb633285ef5eb57c.webp",
+        "gitBlob": "b77408c75db17303762e811745efae8b9e2574e4",
+        "bytes": 1745990
+      },
+      "preview": {
+        "path": "assets/minimaps/010003100.93302e2dbd55.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003100.png",
+        "gitBlob": "93302e2dbd55561e5939021ac0dde0eb0d5cae27",
+        "bytes": 57088
+      }
+    },
+    "10003101": {
+      "image": {
+        "path": "assets/maps/4431158eb8ef1d40f043b607a8c56524.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4431158eb8ef1d40f043b607a8c56524.webp",
+        "gitBlob": "21f13a878746f21ff46c64a9a1216f7db011b939",
+        "bytes": 442262
+      },
+      "preview": {
+        "path": "assets/minimaps/010003101.e9fcc95e9331.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003101.png",
+        "gitBlob": "e9fcc95e9331f84fa89578c4ffc387c8b3dfd00e",
+        "bytes": 15673
+      }
+    },
+    "10003102": {
+      "image": {
+        "path": "assets/maps/3a0901667e3ad07dc7cd9afc2d06b6e0.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3a0901667e3ad07dc7cd9afc2d06b6e0.webp",
+        "gitBlob": "69da8183e688d995d8d1bc14fa2688ae5f4ef35a",
+        "bytes": 413986
+      },
+      "preview": {
+        "path": "assets/minimaps/010003102.5a39572d04cb.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003102.png",
+        "gitBlob": "5a39572d04cb4b5202bfd6dff71665c9e41959f7",
+        "bytes": 13000
+      }
+    },
+    "10003103": {
+      "image": {
+        "path": "assets/maps/c6965290d5783d15c3857cf61f5811a0.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c6965290d5783d15c3857cf61f5811a0.webp",
+        "gitBlob": "4577ba84fb5fdd1a9433506a412e27c62a4c5bf8",
+        "bytes": 756552
+      },
+      "preview": {
+        "path": "assets/minimaps/010003103.17bf995df526.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003103.png",
+        "gitBlob": "17bf995df526122ba92c81eb03d998dcd892b313",
+        "bytes": 28827
+      }
+    },
+    "10003104": {
+      "image": {
+        "path": "assets/maps/7b50f120cdf3b01bfd4e6339d13936ef.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7b50f120cdf3b01bfd4e6339d13936ef.webp",
+        "gitBlob": "e8806c65e1934ec4e369524a0b3b1d49760c2e6a",
+        "bytes": 942204
+      },
+      "preview": {
+        "path": "assets/minimaps/010003104.e25eb31ffc7f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003104.png",
+        "gitBlob": "e25eb31ffc7f81ecb3177fb21a114648bad9cf87",
+        "bytes": 35476
+      }
+    },
+    "10003105": {
+      "image": {
+        "path": "assets/maps/a53ffd4a3d32a0bbbb6bbae74d2bc878.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a53ffd4a3d32a0bbbb6bbae74d2bc878.webp",
+        "gitBlob": "b27ba33201977c10984d0c25acec51ae19f15efe",
+        "bytes": 413018
+      },
+      "preview": {
+        "path": "assets/minimaps/010003105.c13cfd9ac27b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003105.png",
+        "gitBlob": "c13cfd9ac27b34a158fb730aaa801565357ba8fe",
+        "bytes": 12850
+      }
+    },
+    "10003106": {
+      "image": {
+        "path": "assets/maps/f7a0e6764affcd6c116a2f2753498acb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f7a0e6764affcd6c116a2f2753498acb.webp",
+        "gitBlob": "8d232878167f9d0e31e5439781dc6a76ba305c04",
+        "bytes": 827484
+      },
+      "preview": {
+        "path": "assets/minimaps/010003106.620e6e2397c2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003106.png",
+        "gitBlob": "620e6e2397c2ae65d5588e24586456d4ae61f018",
+        "bytes": 30174
+      }
+    },
+    "10003107": {
+      "image": {
+        "path": "assets/maps/54b6d536db05cc18fc436be4ebe43d7c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/54b6d536db05cc18fc436be4ebe43d7c.webp",
+        "gitBlob": "73db3cb5efdf9d10b36b48da8bfeb5462bbc06eb",
+        "bytes": 528330
+      },
+      "preview": {
+        "path": "assets/minimaps/010003107.0544e6ec319a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003107.png",
+        "gitBlob": "0544e6ec319aa7a0de28b7562ab9461cff147d81",
+        "bytes": 15822
+      }
+    },
+    "10003108": {
+      "image": {
+        "path": "assets/maps/f85b73b544ffce2c107867452c8d71fc.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f85b73b544ffce2c107867452c8d71fc.webp",
+        "gitBlob": "59c3894f419134f51e2b737918c54f6280224f5a",
+        "bytes": 707500
+      },
+      "preview": {
+        "path": "assets/minimaps/010003108.ea98db2dc290.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003108.png",
+        "gitBlob": "ea98db2dc2908277c429468a362be0149ee856f7",
+        "bytes": 27345
+      }
+    },
+    "10003109": {
+      "image": {
+        "path": "assets/maps/af66414f99c7df9314073b1aa3859984.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/af66414f99c7df9314073b1aa3859984.webp",
+        "gitBlob": "5be7cd7b17b7e2a69a0de77565e6f7324fdba366",
+        "bytes": 412228
+      },
+      "preview": {
+        "path": "assets/minimaps/010003109.1f4a3bfcabc0.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003109.png",
+        "gitBlob": "1f4a3bfcabc056ee823a4f0cf9137fb22a11c724",
+        "bytes": 12864
+      }
+    },
+    "10003110": {
+      "image": {
+        "path": "assets/maps/a307fcf0138dbedde0e11d151e3c6e47.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a307fcf0138dbedde0e11d151e3c6e47.webp",
+        "gitBlob": "66cfb6bf3b7c2c933597f0f81d0f7baa571502c3",
+        "bytes": 358724
+      },
+      "preview": {
+        "path": "assets/minimaps/010003110.f6dd131597dc.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003110.png",
+        "gitBlob": "f6dd131597dc42ccb821e2af78d07c36af3f6777",
+        "bytes": 10590
+      }
+    },
+    "10003111": {
+      "image": {
+        "path": "assets/maps/acd0254b2e65a3131c7b86c1390db887.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/acd0254b2e65a3131c7b86c1390db887.webp",
+        "gitBlob": "4866821eba256159ac1f00287f1e893b236d79b9",
+        "bytes": 346678
+      },
+      "preview": {
+        "path": "assets/minimaps/010003111.b2f3f87cd64a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010003111.png",
+        "gitBlob": "b2f3f87cd64ab24e408f310a2d15c378d32cd120",
+        "bytes": 10359
+      }
+    },
+    "10003112": {
+      "image": {
+        "path": "assets/maps/bec6cbb173c2bd12210172951b2afcd5.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bec6cbb173c2bd12210172951b2afcd5.webp",
+        "gitBlob": "3f2de86e6e5bba4d1734211b68baddaa6100367f",
+        "bytes": 25074
+      }
+    },
+    "10004000": {
+      "image": {
+        "path": "assets/maps/eb577815e5e2d83a0a36ac34c5eede25.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/eb577815e5e2d83a0a36ac34c5eede25.webp",
+        "gitBlob": "b73f3569b08ad7650afcdc869080dadd2c931e41",
+        "bytes": 1365480
+      },
+      "preview": {
+        "path": "assets/minimaps/010004000.b4c3756d01aa.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004000.png",
+        "gitBlob": "b4c3756d01aade4a75e715926b7d16d8bf44c2f9",
+        "bytes": 46501
+      }
+    },
+    "10004001": {
+      "image": {
+        "path": "assets/maps/3357f1e3beec05e49bc8a187e68451f4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3357f1e3beec05e49bc8a187e68451f4.webp",
+        "gitBlob": "77f85c5481fc9ba70284029df27d973040c8009e",
+        "bytes": 104398
+      }
+    },
+    "10004002": {
+      "image": {
+        "path": "assets/maps/c303d31df4c252c43d8dc19839a0c582.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c303d31df4c252c43d8dc19839a0c582.webp",
+        "gitBlob": "75be604b80753ecb49c027ccabbe1fdf315a2820",
+        "bytes": 108422
+      }
+    },
+    "10004003": {
+      "image": {
+        "path": "assets/maps/c9f4da6efd2abd86ccdfec1b73a46cbf.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c9f4da6efd2abd86ccdfec1b73a46cbf.webp",
+        "gitBlob": "7f31f89939d90b265362038e54f26aad3815605a",
+        "bytes": 125558
+      }
+    },
+    "10004010": {
+      "image": {
+        "path": "assets/maps/72a737de46a2b1d30e70bdd9064ba2e4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72a737de46a2b1d30e70bdd9064ba2e4.webp",
+        "gitBlob": "f61519771379ad02bbbafd8cd1b74d21f1d4d53f",
+        "bytes": 935390
+      },
+      "preview": {
+        "path": "assets/minimaps/010004010.8caf1eda79ca.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004010.png",
+        "gitBlob": "8caf1eda79caf1b8096b6f3ae751571ec0244e45",
+        "bytes": 20962
+      }
+    },
+    "10004020": {
+      "image": {
+        "path": "assets/maps/74ab9534468225f3e4aa6f40cd8850b3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/74ab9534468225f3e4aa6f40cd8850b3.webp",
+        "gitBlob": "1b99c772b797d15132c0b9af124f0c47ae7b555d",
+        "bytes": 1071760
+      },
+      "preview": {
+        "path": "assets/minimaps/010004020.e0616b58d92b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004020.png",
+        "gitBlob": "e0616b58d92b97694e133acf848a286ccad2a5a6",
+        "bytes": 25358
+      }
+    },
+    "10004021": {
+      "image": {
+        "path": "assets/maps/3804249a6d622eeb6a37f62327677f22.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3804249a6d622eeb6a37f62327677f22.webp",
+        "gitBlob": "d6cd01fa78f50245f3409202c896c44138de04bc",
+        "bytes": 754144
+      },
+      "preview": {
+        "path": "assets/minimaps/010004021.af816df71020.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004021.png",
+        "gitBlob": "af816df710204b9c20ed687c9bfc71ba071e3000",
+        "bytes": 20973
+      }
+    },
+    "10004022": {
+      "image": {
+        "path": "assets/maps/66c9e69a3486ff03c550b13f64cd862a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66c9e69a3486ff03c550b13f64cd862a.webp",
+        "gitBlob": "0ac615dba78031bec6d411a85f461c4ac988c458",
+        "bytes": 842842
+      },
+      "preview": {
+        "path": "assets/minimaps/010004022.02fb9b80fbaf.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004022.png",
+        "gitBlob": "02fb9b80fbafd09c14b5ba9a0425e72a10391e65",
+        "bytes": 25168
+      }
+    },
+    "10004023": {
+      "image": {
+        "path": "assets/maps/ae016bc257a065d0c4dba508853fe30d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ae016bc257a065d0c4dba508853fe30d.webp",
+        "gitBlob": "ac6a90f78a2677c3248be6fee9cd0c40b4384601",
+        "bytes": 755088
+      },
+      "preview": {
+        "path": "assets/minimaps/010004023.0392840971db.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004023.png",
+        "gitBlob": "0392840971db69fff47dc2337821c214f81d8390",
+        "bytes": 20043
+      }
+    },
+    "10004030": {
+      "image": {
+        "path": "assets/maps/4ad2a2ef883615bea28bbcbc65026de2.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4ad2a2ef883615bea28bbcbc65026de2.webp",
+        "gitBlob": "29cdf9b0c5c66cb57dc22f14d7afc81a8bc41237",
+        "bytes": 1139422
+      },
+      "preview": {
+        "path": "assets/minimaps/010004030.f2d15b811275.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004030.png",
+        "gitBlob": "f2d15b811275d0caa9b7fac9732c041ab0404616",
+        "bytes": 32142
+      }
+    },
+    "10004040": {
+      "image": {
+        "path": "assets/maps/66f3d1c37ae92746dfd061798d89b66a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66f3d1c37ae92746dfd061798d89b66a.webp",
+        "gitBlob": "ec94ba9ca6c89f7f36ef293c1a72bdf22fe8958a",
+        "bytes": 1041758
+      },
+      "preview": {
+        "path": "assets/minimaps/010004040.2b2519112b99.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004040.png",
+        "gitBlob": "2b2519112b99fcbea3d6a1a7599057e5d71ca31f",
+        "bytes": 23793
+      }
+    },
+    "10004042": {
+      "image": {
+        "path": "assets/maps/7a484fb907817cc124b43cc1ca33376d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7a484fb907817cc124b43cc1ca33376d.webp",
+        "gitBlob": "7935dfc9619bfbb97614808e10c60020aa7cfa39",
+        "bytes": 461232
+      },
+      "preview": {
+        "path": "assets/minimaps/010004042.38aed3b14b99.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004042.png",
+        "gitBlob": "38aed3b14b99a2dbd3fea69f79bbbc06c689fe52",
+        "bytes": 10592
+      }
+    },
+    "10004050": {
+      "image": {
+        "path": "assets/maps/42900c5d86d03adbee12c9878ef6ef48.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/42900c5d86d03adbee12c9878ef6ef48.webp",
+        "gitBlob": "7de96cd20be51f80ee65914393b5aa1ca4ceb0e8",
+        "bytes": 679032
+      },
+      "preview": {
+        "path": "assets/minimaps/010004050.c0a6a5222b36.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004050.png",
+        "gitBlob": "c0a6a5222b36e3306c8946773eced2050e75a37a",
+        "bytes": 16915
+      }
+    },
+    "10004051": {
+      "image": {
+        "path": "assets/maps/f1ee4cc9fd3a136f152c7b1d0d7a9353.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f1ee4cc9fd3a136f152c7b1d0d7a9353.webp",
+        "gitBlob": "ff558ea5afa6e0e76fc8e44c60c7958e26eda942",
+        "bytes": 694224
+      },
+      "preview": {
+        "path": "assets/minimaps/010004051.0fec2a70a8de.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004051.png",
+        "gitBlob": "0fec2a70a8decd9a7ae4fd7791f86dc71f4ea96d",
+        "bytes": 16873
+      }
+    },
+    "10004052": {
+      "image": {
+        "path": "assets/maps/67a9301293100677da48ee51b64013ba.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/67a9301293100677da48ee51b64013ba.webp",
+        "gitBlob": "1a045e78264d6bdc310b37e46fc713c1134fae81",
+        "bytes": 695284
+      },
+      "preview": {
+        "path": "assets/minimaps/010004052.0a54aa0c0029.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004052.png",
+        "gitBlob": "0a54aa0c0029c0f0670f76adfce3bca868645be1",
+        "bytes": 16051
+      }
+    },
+    "10004053": {
+      "image": {
+        "path": "assets/maps/9621fa75bfee1d148a9f2911f78d1f86.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9621fa75bfee1d148a9f2911f78d1f86.webp",
+        "gitBlob": "0a05571ce918791b8008e5282ad135f729288bbf",
+        "bytes": 743946
+      },
+      "preview": {
+        "path": "assets/minimaps/010004053.bfe1a3222a27.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004053.png",
+        "gitBlob": "bfe1a3222a279e558bb87e6c2bec97ee554314a4",
+        "bytes": 18550
+      }
+    },
+    "10004054": {
+      "image": {
+        "path": "assets/maps/fa714004a6c98977d07de691197fdaca.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fa714004a6c98977d07de691197fdaca.webp",
+        "gitBlob": "4bb4b5edd4f435a1acac156ccb242d13cb8b1cc0",
+        "bytes": 529806
+      },
+      "preview": {
+        "path": "assets/minimaps/010004054.aed091091693.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004054.png",
+        "gitBlob": "aed091091693d7fc301af30d4f7d3d98c9f03e3e",
+        "bytes": 14775
+      }
+    },
+    "10004055": {
+      "image": {
+        "path": "assets/maps/743faf83d57097ad3bcecf4e54eae797.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/743faf83d57097ad3bcecf4e54eae797.webp",
+        "gitBlob": "a709de8ef98e17a30e5db79f32f87395ed4bd546",
+        "bytes": 417230
+      },
+      "preview": {
+        "path": "assets/minimaps/010004055.a1a91a989a6d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004055.png",
+        "gitBlob": "a1a91a989a6d64d584bf2cd823d11977c7b862d5",
+        "bytes": 11353
+      }
+    },
+    "10004056": {
+      "image": {
+        "path": "assets/maps/719e45fdcd7c2a410b9667aa94d9451b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/719e45fdcd7c2a410b9667aa94d9451b.webp",
+        "gitBlob": "cb7a33e0ab8cae673644630805600b729880762b",
+        "bytes": 693494
+      },
+      "preview": {
+        "path": "assets/minimaps/010004056.2453ddfc1e81.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004056.png",
+        "gitBlob": "2453ddfc1e81458c9e500bf9500eb1299bf54c0f",
+        "bytes": 20732
+      }
+    },
+    "10004057": {
+      "image": {
+        "path": "assets/maps/083e1215c9c0adcbaf7a9d1ea922293f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/083e1215c9c0adcbaf7a9d1ea922293f.webp",
+        "gitBlob": "5930863f0b68c287e356abc7156ba76ddf941303",
+        "bytes": 343898
+      },
+      "preview": {
+        "path": "assets/minimaps/010004057.874873516ff6.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004057.png",
+        "gitBlob": "874873516ff68d1ca99f38ffcb5e9edea1699004",
+        "bytes": 10241
+      }
+    },
+    "10004060": {
+      "image": {
+        "path": "assets/maps/cbecd48d6aa64c71812a806b2d98ae88.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/cbecd48d6aa64c71812a806b2d98ae88.webp",
+        "gitBlob": "8a0cdb3d763e6a30ffc718a6e4c66c844e2619a3",
+        "bytes": 598434
+      },
+      "preview": {
+        "path": "assets/minimaps/010004060.d5dd777b5976.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004060.png",
+        "gitBlob": "d5dd777b597654b1e09d2b1cdee6da01b598f0fc",
+        "bytes": 17512
+      }
+    },
+    "10004070": {
+      "image": {
+        "path": "assets/maps/963c2a57c3e37987f9104a85e7722f42.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/963c2a57c3e37987f9104a85e7722f42.webp",
+        "gitBlob": "4724f3416cf4a743c6e416874728241761e7d198",
+        "bytes": 588682
+      },
+      "preview": {
+        "path": "assets/minimaps/010004070.40b3063a0746.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004070.png",
+        "gitBlob": "40b3063a07460818b433dfe3742820a9c72ee7b3",
+        "bytes": 16623
+      }
+    },
+    "10004080": {
+      "image": {
+        "path": "assets/maps/05a0d56de9e86dd74c4390746c1c6ba1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/05a0d56de9e86dd74c4390746c1c6ba1.webp",
+        "gitBlob": "1ee002770c374cbfa4580eff6a6fd6ad2792731f",
+        "bytes": 572434
+      },
+      "preview": {
+        "path": "assets/minimaps/010004080.475b5b59e485.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004080.png",
+        "gitBlob": "475b5b59e48534006d46743a7ad52eb7c7b307b8",
+        "bytes": 16384
+      }
+    },
+    "10004090": {
+      "image": {
+        "path": "assets/maps/d95419306c5679e4075342011a2bc472.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d95419306c5679e4075342011a2bc472.webp",
+        "gitBlob": "1ae60f13c389055e693084e8279a32f581a48a3b",
+        "bytes": 1477068
+      },
+      "preview": {
+        "path": "assets/minimaps/010004090.626e577a6998.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004090.png",
+        "gitBlob": "626e577a6998c934510b999920ac50b970af62ad",
+        "bytes": 46812
+      }
+    },
+    "10004091": {
+      "image": {
+        "path": "assets/maps/f7b0ed2454de91eea2c17b078f4c78b3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f7b0ed2454de91eea2c17b078f4c78b3.webp",
+        "gitBlob": "543ffa4f45ab2ede99e42e557f4fbe889b9213e5",
+        "bytes": 383844
+      },
+      "preview": {
+        "path": "assets/minimaps/010004091.d9b039cf4a2e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004091.png",
+        "gitBlob": "d9b039cf4a2e07e19bdb181fdb117c9230d98523",
+        "bytes": 9111
+      }
+    },
+    "10004100": {
+      "image": {
+        "path": "assets/maps/e068784acef3e436bc6601e61791baf9.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e068784acef3e436bc6601e61791baf9.webp",
+        "gitBlob": "29e8af9ec711c05ab12ecf70f965b2aa5d0868f4",
+        "bytes": 983646
+      },
+      "preview": {
+        "path": "assets/minimaps/010004100.b08130b19d1e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004100.png",
+        "gitBlob": "b08130b19d1e8469058cd5b9eb3dac54084f971c",
+        "bytes": 31497
+      }
+    },
+    "10004101": {
+      "image": {
+        "path": "assets/maps/8f0f114451f7637296142620e9cdcb2b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8f0f114451f7637296142620e9cdcb2b.webp",
+        "gitBlob": "6d6990aa03cd6e2a51d6a21e6ed1e1897aaf23a3",
+        "bytes": 598524
+      },
+      "preview": {
+        "path": "assets/minimaps/010004101.8b19e1af9c93.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004101.png",
+        "gitBlob": "8b19e1af9c937fdeaafe5e67f2391148caf60062",
+        "bytes": 16057
+      }
+    },
+    "10004102": {
+      "image": {
+        "path": "assets/maps/2ffa455ba65800f06e19f0a9930a3a4b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2ffa455ba65800f06e19f0a9930a3a4b.webp",
+        "gitBlob": "13c84f1d651a8e117f36ab5d5d74c8c15666b30e",
+        "bytes": 695420
+      },
+      "preview": {
+        "path": "assets/minimaps/010004102.6302de446206.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004102.png",
+        "gitBlob": "6302de4462068638d2cb90407fffa5f42337d36e",
+        "bytes": 18464
+      }
+    },
+    "10004110": {
+      "image": {
+        "path": "assets/maps/15168c2cf43aa3406922a1984c03f6a7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/15168c2cf43aa3406922a1984c03f6a7.webp",
+        "gitBlob": "87e23417764515fe3fa9503f4c52abef2129f70b",
+        "bytes": 658056
+      },
+      "preview": {
+        "path": "assets/minimaps/010004110.1e69d8e6b43c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004110.png",
+        "gitBlob": "1e69d8e6b43cf81c82827367bd516df3396c6b92",
+        "bytes": 18972
+      }
+    },
+    "10004111": {
+      "image": {
+        "path": "assets/maps/0842c235b97ce59dee2c55925c9ded6d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0842c235b97ce59dee2c55925c9ded6d.webp",
+        "gitBlob": "393829b32d6483cc3d1c469b260734a1bc70ce86",
+        "bytes": 703830
+      },
+      "preview": {
+        "path": "assets/minimaps/010004111.f02bc5764b2b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004111.png",
+        "gitBlob": "f02bc5764b2bb26f2beb906bedd7d3ab5a4bf004",
+        "bytes": 19482
+      }
+    },
+    "10004112": {
+      "image": {
+        "path": "assets/maps/b46f86ce3f9a8687d676b1e1c081f54c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b46f86ce3f9a8687d676b1e1c081f54c.webp",
+        "gitBlob": "80b5f2657cd4aedd8cbe4d7fa4ff5b0a2e1b02c4",
+        "bytes": 698558
+      },
+      "preview": {
+        "path": "assets/minimaps/010004112.0ba5d892a88e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004112.png",
+        "gitBlob": "0ba5d892a88e0b756948228f574045b4b46924ea",
+        "bytes": 17469
+      }
+    },
+    "10004113": {
+      "image": {
+        "path": "assets/maps/6e6ef6d60ddb15ca031d8711d40f6f5f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6e6ef6d60ddb15ca031d8711d40f6f5f.webp",
+        "gitBlob": "6b302ac1f1e440f2213cb4ccb2c0e48c55a57eb3",
+        "bytes": 612212
+      },
+      "preview": {
+        "path": "assets/minimaps/010004113.ab69b26eb4ad.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004113.png",
+        "gitBlob": "ab69b26eb4ad42c1e295ba24882add9300f030de",
+        "bytes": 16075
+      }
+    },
+    "10004114": {
+      "image": {
+        "path": "assets/maps/1761bac39339a881ba0fb056649041f6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1761bac39339a881ba0fb056649041f6.webp",
+        "gitBlob": "a02cb882d82873658e86c94d0e438db4bb9bda8d",
+        "bytes": 626040
+      },
+      "preview": {
+        "path": "assets/minimaps/010004114.6ec36343375f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004114.png",
+        "gitBlob": "6ec36343375fa0cf16f0f0c924282e88d2a6325f",
+        "bytes": 15567
+      }
+    },
+    "10004115": {
+      "image": {
+        "path": "assets/maps/fe7276f6f0b6c4a508c7124a304644fc.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fe7276f6f0b6c4a508c7124a304644fc.webp",
+        "gitBlob": "853b3ac856575873b8904007ee53a73c0b2d80d0",
+        "bytes": 740116
+      },
+      "preview": {
+        "path": "assets/minimaps/010004115.904674c9adb2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004115.png",
+        "gitBlob": "904674c9adb2f900cb1b18f3b9def7de8895a716",
+        "bytes": 18392
+      }
+    },
+    "10004120": {
+      "image": {
+        "path": "assets/maps/871b5ffd15dd166bd3d1a721dfa5b17c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/871b5ffd15dd166bd3d1a721dfa5b17c.webp",
+        "gitBlob": "dc6a5471bea059bf47f377646a2cd89e483a83f5",
+        "bytes": 775680
+      },
+      "preview": {
+        "path": "assets/minimaps/010004120.d2fe1ff8d31a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004120.png",
+        "gitBlob": "d2fe1ff8d31a3c3ebdccb2c09dee5e5cda0b2fa8",
+        "bytes": 21865
+      }
+    },
+    "10004121": {
+      "image": {
+        "path": "assets/maps/1ba814860052dcda4a53b5dacb47170c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1ba814860052dcda4a53b5dacb47170c.webp",
+        "gitBlob": "8743f7556b78d174ac22d0200735421e0b598d4d",
+        "bytes": 703716
+      },
+      "preview": {
+        "path": "assets/minimaps/010004121.3c3a26b5b871.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004121.png",
+        "gitBlob": "3c3a26b5b87110292096370409319230d1515709",
+        "bytes": 18286
+      }
+    },
+    "10004130": {
+      "image": {
+        "path": "assets/maps/a6ae760bb54f4ebb96022400ec7d15d4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a6ae760bb54f4ebb96022400ec7d15d4.webp",
+        "gitBlob": "49ea030ef3436c1d69009c42259aaad60f7a4392",
+        "bytes": 576632
+      },
+      "preview": {
+        "path": "assets/minimaps/010004130.55b34fc4687b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004130.png",
+        "gitBlob": "55b34fc4687b052c866eceb74947a3bf923a0285",
+        "bytes": 14577
+      }
+    },
+    "10004131": {
+      "image": {
+        "path": "assets/maps/6244e62f697bb8ea7c5239cd57dc1403.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6244e62f697bb8ea7c5239cd57dc1403.webp",
+        "gitBlob": "b159289cb7d4985df1880c25bb76adf0564cbc8b",
+        "bytes": 817252
+      },
+      "preview": {
+        "path": "assets/minimaps/010004131.8a8ba8b022e4.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004131.png",
+        "gitBlob": "8a8ba8b022e4acbb6cd6117c25857e592aeb25a2",
+        "bytes": 20775
+      }
+    },
+    "10004132": {
+      "image": {
+        "path": "assets/maps/d544eab8d2a388a98b7039c561407811.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d544eab8d2a388a98b7039c561407811.webp",
+        "gitBlob": "d9599d305c60ae83bd239b48012ad491223f4921",
+        "bytes": 451974
+      },
+      "preview": {
+        "path": "assets/minimaps/010004132.047fcd635ffc.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004132.png",
+        "gitBlob": "047fcd635ffc8a561e7c84e616ceb2305cb3fcbb",
+        "bytes": 11189
+      }
+    },
+    "10004133": {
+      "image": {
+        "path": "assets/maps/8b858475b3c0a4b9dd9c3b98fae5ff44.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8b858475b3c0a4b9dd9c3b98fae5ff44.webp",
+        "gitBlob": "a5f38e3855c4aa89b1933fdecf8792d64c7e0942",
+        "bytes": 656212
+      },
+      "preview": {
+        "path": "assets/minimaps/010004133.227b8abca31c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004133.png",
+        "gitBlob": "227b8abca31ca38843a80ec8b536236ffbcf1afc",
+        "bytes": 17370
+      }
+    },
+    "10004134": {
+      "image": {
+        "path": "assets/maps/3a4895f4c809606e21ce598007887a41.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3a4895f4c809606e21ce598007887a41.webp",
+        "gitBlob": "277211d6a007d82d5aa1faabb47ebd46c5a7a8ce",
+        "bytes": 426606
+      },
+      "preview": {
+        "path": "assets/minimaps/010004134.21aacd40f89d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004134.png",
+        "gitBlob": "21aacd40f89dff6a81f3ac929bc6a91156c71cc9",
+        "bytes": 11904
+      }
+    },
+    "10004135": {
+      "image": {
+        "path": "assets/maps/4b7f480ed84592dff428eeacae805030.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4b7f480ed84592dff428eeacae805030.webp",
+        "gitBlob": "0cbade671c2f81efbe8ae043caf2662cb44c265d",
+        "bytes": 468188
+      },
+      "preview": {
+        "path": "assets/minimaps/010004135.8000870da9bc.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004135.png",
+        "gitBlob": "8000870da9bc4654a990a1a47aa0cb95abb77978",
+        "bytes": 13236
+      }
+    },
+    "10004136": {
+      "image": {
+        "path": "assets/maps/851d4398374b01cea2882a8393872c06.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/851d4398374b01cea2882a8393872c06.webp",
+        "gitBlob": "79fc236a13e72bbecc4a98073d4b154ebfc2bff4",
+        "bytes": 423486
+      },
+      "preview": {
+        "path": "assets/minimaps/010004136.33262c974d4f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004136.png",
+        "gitBlob": "33262c974d4f6b4f72d7f31db2da694b71550481",
+        "bytes": 11979
+      }
+    },
+    "10004137": {
+      "image": {
+        "path": "assets/maps/e026d7adbeaf80fdd857b5c1c63051c7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e026d7adbeaf80fdd857b5c1c63051c7.webp",
+        "gitBlob": "892202cc09323e1661ff272d2147182bc693dfd5",
+        "bytes": 534656
+      },
+      "preview": {
+        "path": "assets/minimaps/010004137.e467aaf11a57.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004137.png",
+        "gitBlob": "e467aaf11a57a159a8b7c3e790445303f2d73423",
+        "bytes": 15492
+      }
+    },
+    "10004138": {
+      "image": {
+        "path": "assets/maps/3fb3802375bebc8f1ecc408dc2017994.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3fb3802375bebc8f1ecc408dc2017994.webp",
+        "gitBlob": "cbcabc35cf8362643d986f2e6df5c512405abc38",
+        "bytes": 463158
+      },
+      "preview": {
+        "path": "assets/minimaps/010004138.8b88c8aa92fd.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004138.png",
+        "gitBlob": "8b88c8aa92fdc7f57f907213e68f0f84417d6c15",
+        "bytes": 15229
+      }
+    },
+    "10004140": {
+      "image": {
+        "path": "assets/maps/15adfc82aa7afd5be9936b9c33b82916.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/15adfc82aa7afd5be9936b9c33b82916.webp",
+        "gitBlob": "b45009666b8fdb62b207bca90be63efddbe20b08",
+        "bytes": 314978
+      },
+      "preview": {
+        "path": "assets/minimaps/010004140.056e0147803c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004140.png",
+        "gitBlob": "056e0147803c5262fd61148491525ca52e42368f",
+        "bytes": 8859
+      }
+    },
+    "10004141": {
+      "image": {
+        "path": "assets/maps/844b9350ea249ca5ae5060001f770243.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/844b9350ea249ca5ae5060001f770243.webp",
+        "gitBlob": "330113789b591f4b35a1e2ae9c07c652bf0f3085",
+        "bytes": 320606
+      },
+      "preview": {
+        "path": "assets/minimaps/010004141.7be6dc93c2e2.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004141.png",
+        "gitBlob": "7be6dc93c2e26cff568738ff0f993607250d4a59",
+        "bytes": 9540
+      }
+    },
+    "10004142": {
+      "image": {
+        "path": "assets/maps/e33c384d7e7725f48745b84284dfe46a.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e33c384d7e7725f48745b84284dfe46a.webp",
+        "gitBlob": "9dcc441b6f9974abc16f82d3913c5c90296885ca",
+        "bytes": 301480
+      },
+      "preview": {
+        "path": "assets/minimaps/010004142.8bd2994f21e8.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010004142.png",
+        "gitBlob": "8bd2994f21e8aba7fa461023c850adb74d43def1",
+        "bytes": 8613
+      }
+    },
+    "10005000": {
+      "image": {
+        "path": "assets/maps/ba6d7e0d175d281c110391314b8edce4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba6d7e0d175d281c110391314b8edce4.webp",
+        "gitBlob": "08df532c175756c8cff730a54243b731f5c5c275",
+        "bytes": 614400
+      },
+      "preview": {
+        "path": "assets/minimaps/010005000.4b90719fb1e9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005000.png",
+        "gitBlob": "4b90719fb1e95f2b8ef5ddb30a50af6acb767e5b",
+        "bytes": 17182
+      }
+    },
+    "10005001": {
+      "image": {
+        "path": "assets/maps/0cf60ba22ed199a71106021a200c0c53.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0cf60ba22ed199a71106021a200c0c53.webp",
+        "gitBlob": "7654bd32ac761b8cd1fb8b9d2692da0cc5329cc1",
+        "bytes": 142606
+      }
+    },
+    "10005002": {
+      "image": {
+        "path": "assets/maps/4ceea025bb4687997ef75920b5b03cad.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4ceea025bb4687997ef75920b5b03cad.webp",
+        "gitBlob": "0c903d97714c5a18cea10f07b1fb73e197c0428b",
+        "bytes": 137326
+      }
+    },
+    "10005003": {
+      "image": {
+        "path": "assets/maps/787ca4dc505b8f66ed0019ccce0737c0.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/787ca4dc505b8f66ed0019ccce0737c0.webp",
+        "gitBlob": "a43892b8744dc2b16dc066585845186e0a2fe5af",
+        "bytes": 139024
+      }
+    },
+    "10005010": {
+      "image": {
+        "path": "assets/maps/380a313101f1922c5e3a5424e557e6f3.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/380a313101f1922c5e3a5424e557e6f3.webp",
+        "gitBlob": "979758b6546f6908ed1f49d5f20b2d1567e06c4c",
+        "bytes": 986558
+      },
+      "preview": {
+        "path": "assets/minimaps/010005010.36a39ffce960.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005010.png",
+        "gitBlob": "36a39ffce96051290763ad5e285ede9157a8bcf3",
+        "bytes": 28581
+      }
+    },
+    "10005011": {
+      "image": {
+        "path": "assets/maps/c508840c85fbddc60079415ea65e2dd6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c508840c85fbddc60079415ea65e2dd6.webp",
+        "gitBlob": "7a5788db34fa82f63a78c297ec2af88366bce9c1",
+        "bytes": 896154
+      },
+      "preview": {
+        "path": "assets/minimaps/010005011.3b80878757bb.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005011.png",
+        "gitBlob": "3b80878757bb8af273c9054e126f03fdc12ac86b",
+        "bytes": 18733
+      }
+    },
+    "10005012": {
+      "image": {
+        "path": "assets/maps/3149de71176ad23340929cede4128cc5.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3149de71176ad23340929cede4128cc5.webp",
+        "gitBlob": "398951810798ce0affe19dc50c7d8173927aefbc",
+        "bytes": 663066
+      },
+      "preview": {
+        "path": "assets/minimaps/010005012.a7ee078106c7.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005012.png",
+        "gitBlob": "a7ee078106c7b2b3749dacc2cbff5585a68c357b",
+        "bytes": 16967
+      }
+    },
+    "10005020": {
+      "image": {
+        "path": "assets/maps/39c5e6006387d3c78fd71938a90afae7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/39c5e6006387d3c78fd71938a90afae7.webp",
+        "gitBlob": "808a719f2fb4cc3cd9aed7832ca31a4e2f6bbc08",
+        "bytes": 1036392
+      },
+      "preview": {
+        "path": "assets/minimaps/010005020.ad8f792b0d2d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005020.png",
+        "gitBlob": "ad8f792b0d2d24028cd2251a92ce314b8ca69e49",
+        "bytes": 29393
+      }
+    },
+    "10005030": {
+      "image": {
+        "path": "assets/maps/e2a78cadcd81c8cb7fe6589cd808ef34.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e2a78cadcd81c8cb7fe6589cd808ef34.webp",
+        "gitBlob": "65fa3de1c547b4152bcea90318d6ca18a9ffcab8",
+        "bytes": 680934
+      },
+      "preview": {
+        "path": "assets/minimaps/010005030.333ccc285908.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005030.png",
+        "gitBlob": "333ccc285908d08d276a86634920d9e00b5f6b2b",
+        "bytes": 18344
+      }
+    },
+    "10005031": {
+      "image": {
+        "path": "assets/maps/032eb7100a697198cdaf28fb76551ad1.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/032eb7100a697198cdaf28fb76551ad1.webp",
+        "gitBlob": "1ebd7ee854387d4390d61d3f8ad5511f3bf09760",
+        "bytes": 373066
+      },
+      "preview": {
+        "path": "assets/minimaps/010005031.31b9fbd54d52.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005031.png",
+        "gitBlob": "31b9fbd54d52afd4b162972b5fa93828e51cf760",
+        "bytes": 10183
+      }
+    },
+    "10005040": {
+      "image": {
+        "path": "assets/maps/b47a59c693d0006bc6263a4d0c7375df.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b47a59c693d0006bc6263a4d0c7375df.webp",
+        "gitBlob": "d009842b7cfacbd3ce20b64319e8f4d5015264a5",
+        "bytes": 272368
+      },
+      "preview": {
+        "path": "assets/minimaps/010005040.080c9c33f50d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005040.png",
+        "gitBlob": "080c9c33f50d1907f207b2a8a5824ebef8ba89d6",
+        "bytes": 7671
+      }
+    },
+    "10005041": {
+      "image": {
+        "path": "assets/maps/a2e3deb91cc1246ef166cf766454efd0.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a2e3deb91cc1246ef166cf766454efd0.webp",
+        "gitBlob": "478c1690c03b7b60ebe022cc6b5f85152b7a44af",
+        "bytes": 357330
+      },
+      "preview": {
+        "path": "assets/minimaps/010005041.4aca678dd256.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005041.png",
+        "gitBlob": "4aca678dd256754a65638f39245e4165a99c989b",
+        "bytes": 11193
+      }
+    },
+    "10005042": {
+      "image": {
+        "path": "assets/maps/39374c43d8e40831f7463003b5aa18ae.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/39374c43d8e40831f7463003b5aa18ae.webp",
+        "gitBlob": "2b68e93455576da548c9d9f5f37d1b5c7ca7f90f",
+        "bytes": 335252
+      },
+      "preview": {
+        "path": "assets/minimaps/010005042.0532c3a818b9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005042.png",
+        "gitBlob": "0532c3a818b9608e0ebeb266f43123be81feb3a8",
+        "bytes": 10416
+      }
+    },
+    "10005043": {
+      "image": {
+        "path": "assets/maps/f0253322e62717ad58fe049fbc874837.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f0253322e62717ad58fe049fbc874837.webp",
+        "gitBlob": "5a1b6abb2e92d61a8ee71bce25c0fe831e641656",
+        "bytes": 500694
+      },
+      "preview": {
+        "path": "assets/minimaps/010005043.db0a02d06d2e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005043.png",
+        "gitBlob": "db0a02d06d2ec666e109763a39cd600293ce2c19",
+        "bytes": 13669
+      }
+    },
+    "10005044": {
+      "image": {
+        "path": "assets/maps/094582de39dce975aaa516b5d87e01cb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/094582de39dce975aaa516b5d87e01cb.webp",
+        "gitBlob": "4e962000e34d3ffe4af0c3942f44e08824761d9f",
+        "bytes": 590926
+      },
+      "preview": {
+        "path": "assets/minimaps/010005044.f7e58a5789ee.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005044.png",
+        "gitBlob": "f7e58a5789ee1d51c197e0c362ca02b10bc21bc3",
+        "bytes": 17266
+      }
+    },
+    "10005045": {
+      "image": {
+        "path": "assets/maps/6c20ede392ac3e719c453c1497b806e4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6c20ede392ac3e719c453c1497b806e4.webp",
+        "gitBlob": "c87a1f8dbd696690e6d7e1165f965215cac80a0e",
+        "bytes": 324644
+      },
+      "preview": {
+        "path": "assets/minimaps/010005045.d728734538a9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005045.png",
+        "gitBlob": "d728734538a91806668803d35b7145ed5f9449ba",
+        "bytes": 10839
+      }
+    },
+    "10005046": {
+      "image": {
+        "path": "assets/maps/c0808fcda66fa93b14c6c3c124d00d64.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c0808fcda66fa93b14c6c3c124d00d64.webp",
+        "gitBlob": "a845620eb0bdabaaf65fd5f3c696425868cae554",
+        "bytes": 418640
+      },
+      "preview": {
+        "path": "assets/minimaps/010005046.67959f1d5d13.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005046.png",
+        "gitBlob": "67959f1d5d13806bd26120a25b8c5624831f96ec",
+        "bytes": 13885
+      }
+    },
+    "10005050": {
+      "image": {
+        "path": "assets/maps/690e14de934f667fa1d4a4f44765c6b7.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/690e14de934f667fa1d4a4f44765c6b7.webp",
+        "gitBlob": "ad3e6e91eea69aae15a2a6cb496b7dd8ab351e4e",
+        "bytes": 392530
+      },
+      "preview": {
+        "path": "assets/minimaps/010005050.c440739e3390.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005050.png",
+        "gitBlob": "c440739e33907021caf2a276e0f53f7204923f55",
+        "bytes": 10920
+      }
+    },
+    "10005051": {
+      "image": {
+        "path": "assets/maps/dae1a4c29c4022727ea06caeb7369d00.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dae1a4c29c4022727ea06caeb7369d00.webp",
+        "gitBlob": "7e70ec923d487b188452e349ce00360756835a76",
+        "bytes": 513550
+      },
+      "preview": {
+        "path": "assets/minimaps/010005051.7abe1ca0aa5e.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005051.png",
+        "gitBlob": "7abe1ca0aa5e06bc8dabbe53e2d3718433422c85",
+        "bytes": 13525
+      }
+    },
+    "10005052": {
+      "image": {
+        "path": "assets/maps/7f547a6cae2f98e43a98c060ed69e1cb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7f547a6cae2f98e43a98c060ed69e1cb.webp",
+        "gitBlob": "e442cd29a8331c0e5f547efbd9ffcbc789d748c7",
+        "bytes": 548192
+      },
+      "preview": {
+        "path": "assets/minimaps/010005052.686414482eba.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005052.png",
+        "gitBlob": "686414482eba764ef8ee419066ccd119c7daf58a",
+        "bytes": 12995
+      }
+    },
+    "10005053": {
+      "image": {
+        "path": "assets/maps/8a623f433de0e3ff9b4af64a431dae93.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8a623f433de0e3ff9b4af64a431dae93.webp",
+        "gitBlob": "af7c1a0da558cbe7540651d0a0fdde11c09ed0c9",
+        "bytes": 554312
+      },
+      "preview": {
+        "path": "assets/minimaps/010005053.13177e238ad1.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005053.png",
+        "gitBlob": "13177e238ad11ac78d0ddd93bfa5a18ea1620d94",
+        "bytes": 12081
+      }
+    },
+    "10005054": {
+      "image": {
+        "path": "assets/maps/db9b27518128f8eeb28ccfe54ff2a32e.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/db9b27518128f8eeb28ccfe54ff2a32e.webp",
+        "gitBlob": "ca2279f23f4f45b5412484c2f5af68c60d05e319",
+        "bytes": 1261050
+      },
+      "preview": {
+        "path": "assets/minimaps/010005054.bfa9da8d230a.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005054.png",
+        "gitBlob": "bfa9da8d230a96efe7d78276cd526ca59cef6c6e",
+        "bytes": 26116
+      }
+    },
+    "10005060": {
+      "image": {
+        "path": "assets/maps/3b7e4760f2e12da4c72aad39a865c38f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3b7e4760f2e12da4c72aad39a865c38f.webp",
+        "gitBlob": "493f1c2f1a60ad4a724aaaf60b99cfe48df61961",
+        "bytes": 312450
+      },
+      "preview": {
+        "path": "assets/minimaps/010005060.da3087fbba48.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005060.png",
+        "gitBlob": "da3087fbba48a322a89c1062349e0bebdf435f55",
+        "bytes": 13051
+      }
+    },
+    "10005061": {
+      "image": {
+        "path": "assets/maps/2ea602cff71846b96a2417386459dde4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2ea602cff71846b96a2417386459dde4.webp",
+        "gitBlob": "64fd4ee83109cd9dac44a2fa9bc6166c7c19ae36",
+        "bytes": 372104
+      },
+      "preview": {
+        "path": "assets/minimaps/010005061.1945e6dd54f5.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005061.png",
+        "gitBlob": "1945e6dd54f594af8b794e818eb940418d3a4660",
+        "bytes": 12305
+      }
+    },
+    "10005062": {
+      "image": {
+        "path": "assets/maps/83ce0bf7bcbc020023ce650a5c1eb26c.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/83ce0bf7bcbc020023ce650a5c1eb26c.webp",
+        "gitBlob": "8a747e12dc078de8ad3ebe843b9bc336988facf9",
+        "bytes": 532630
+      },
+      "preview": {
+        "path": "assets/minimaps/010005062.b044ddae8212.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005062.png",
+        "gitBlob": "b044ddae8212d57bb83775769ca4728a34ca4a1d",
+        "bytes": 18927
+      }
+    },
+    "10005063": {
+      "image": {
+        "path": "assets/maps/06a312653839ef989d8a80a354cb6f34.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06a312653839ef989d8a80a354cb6f34.webp",
+        "gitBlob": "7ec5a1bedd5770ebc15eb56db908d957b9bcf919",
+        "bytes": 436098
+      },
+      "preview": {
+        "path": "assets/minimaps/010005063.02657d6e61d7.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005063.png",
+        "gitBlob": "02657d6e61d702d04561ce85a085cb7daa596a69",
+        "bytes": 16634
+      }
+    },
+    "10005064": {
+      "image": {
+        "path": "assets/maps/557fa4f2cc669a855822ccb5016c8040.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/557fa4f2cc669a855822ccb5016c8040.webp",
+        "gitBlob": "a3e7836c7f5a6a3345ac589c945263add31bc1e4",
+        "bytes": 317858
+      },
+      "preview": {
+        "path": "assets/minimaps/010005064.0b3d36c7633c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005064.png",
+        "gitBlob": "0b3d36c7633cc2f3f92cbc4c75669bcd781c1fbf",
+        "bytes": 9553
+      }
+    },
+    "10005065": {
+      "image": {
+        "path": "assets/maps/583e153a53fcc9b8d3886b71a786d186.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/583e153a53fcc9b8d3886b71a786d186.webp",
+        "gitBlob": "9a6f7d8b6f30037708aedc519fee8fb7bbfba04e",
+        "bytes": 524018
+      },
+      "preview": {
+        "path": "assets/minimaps/010005065.eff207c303ee.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005065.png",
+        "gitBlob": "eff207c303eee230e1b4f700e39a1866dcd425ac",
+        "bytes": 17637
+      }
+    },
+    "10005066": {
+      "image": {
+        "path": "assets/maps/ba15598b5c8929c913feafecdfc45859.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba15598b5c8929c913feafecdfc45859.webp",
+        "gitBlob": "463f9e6be0b023be7ac3c7cabcaa37632a45b411",
+        "bytes": 423340
+      },
+      "preview": {
+        "path": "assets/minimaps/010005066.0fa31a503d59.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005066.png",
+        "gitBlob": "0fa31a503d5963956229d55bb55e452e0550d159",
+        "bytes": 14945
+      }
+    },
+    "10005067": {
+      "image": {
+        "path": "assets/maps/4804e8c192ac57b7432b8a40c0642216.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4804e8c192ac57b7432b8a40c0642216.webp",
+        "gitBlob": "4c120ebb3a8df6bac797df44fc179092a7f01276",
+        "bytes": 563548
+      },
+      "preview": {
+        "path": "assets/minimaps/010005067.b36f90e83216.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005067.png",
+        "gitBlob": "b36f90e83216247746af8974a585c5a9b259b10d",
+        "bytes": 20397
+      }
+    },
+    "10005070": {
+      "image": {
+        "path": "assets/maps/80300d2c4777df68d6f0ffafb01dcbb4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/80300d2c4777df68d6f0ffafb01dcbb4.webp",
+        "gitBlob": "a4631733ce464d9f8730b7fca1a9c6f321ae9283",
+        "bytes": 845268
+      },
+      "preview": {
+        "path": "assets/minimaps/010005070.a74a4dc2aca7.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005070.png",
+        "gitBlob": "a74a4dc2aca7e4e1ad4deb66d86a7d1eb054b76d",
+        "bytes": 28765
+      }
+    },
+    "10005071": {
+      "image": {
+        "path": "assets/maps/090de31e29dd091f776addb591308dfb.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/090de31e29dd091f776addb591308dfb.webp",
+        "gitBlob": "f2c1192b814895a3d840aa6a0e1379ede296122c",
+        "bytes": 330588
+      },
+      "preview": {
+        "path": "assets/minimaps/010005071.f33d8f060255.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005071.png",
+        "gitBlob": "f33d8f0602554bdea3f7d645b7c45368d1052c58",
+        "bytes": 12408
+      }
+    },
+    "10005072": {
+      "image": {
+        "path": "assets/maps/91035f301ecfb27b8e01353d52d73725.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/91035f301ecfb27b8e01353d52d73725.webp",
+        "gitBlob": "fecdc0670fd309991704800d0b8d28eafa65ebd4",
+        "bytes": 272520
+      },
+      "preview": {
+        "path": "assets/minimaps/010005072.e0b9705f87b6.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005072.png",
+        "gitBlob": "e0b9705f87b690b8dcfdf6b393a6db574c8dc875",
+        "bytes": 9610
+      }
+    },
+    "10005073": {
+      "image": {
+        "path": "assets/maps/823a58afdd4788b3459a3de1189a7f43.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/823a58afdd4788b3459a3de1189a7f43.webp",
+        "gitBlob": "5fdb84f85644320e2ff63272955257902419d51c",
+        "bytes": 279482
+      },
+      "preview": {
+        "path": "assets/minimaps/010005073.2d59d354029c.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005073.png",
+        "gitBlob": "2d59d354029c644880690c153d3970358f2a17c1",
+        "bytes": 9260
+      }
+    },
+    "10005074": {
+      "image": {
+        "path": "assets/maps/d3a37af43252b7e25a56ab540ee39d5f.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d3a37af43252b7e25a56ab540ee39d5f.webp",
+        "gitBlob": "79bba928a0617682e8e1e3cabc0fd759b6d90878",
+        "bytes": 304512
+      },
+      "preview": {
+        "path": "assets/minimaps/010005074.4372058d6ff9.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005074.png",
+        "gitBlob": "4372058d6ff9b81f5b6404df638c1f57c72f88ac",
+        "bytes": 10542
+      }
+    },
+    "10005075": {
+      "image": {
+        "path": "assets/maps/6007fc906c038c3a906d739e41b69952.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6007fc906c038c3a906d739e41b69952.webp",
+        "gitBlob": "e7c6348763bdeca8ea320689c26ea2e3d20bb55b",
+        "bytes": 332884
+      },
+      "preview": {
+        "path": "assets/minimaps/010005075.0d5abcf5bc95.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005075.png",
+        "gitBlob": "0d5abcf5bc958681f35145422e0d0f94be248d3b",
+        "bytes": 10205
+      }
+    },
+    "10005076": {
+      "image": {
+        "path": "assets/maps/48133581b3195a21b2b692a8aa32c006.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/48133581b3195a21b2b692a8aa32c006.webp",
+        "gitBlob": "6796b94520c7ceebabcd7eba0c31eb8d96010049",
+        "bytes": 939336
+      },
+      "preview": {
+        "path": "assets/minimaps/010005076.7ac01d198d10.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005076.png",
+        "gitBlob": "7ac01d198d10a48cbb4e9a9f157e2b15e8936ccb",
+        "bytes": 38775
+      }
+    },
+    "10005077": {
+      "image": {
+        "path": "assets/maps/2cd72e14b6da4f6cc0a44e18e27a4cf2.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2cd72e14b6da4f6cc0a44e18e27a4cf2.webp",
+        "gitBlob": "3cbc648aeac365d6a3bbd0da4f2f0283d6bf6187",
+        "bytes": 610166
+      },
+      "preview": {
+        "path": "assets/minimaps/010005077.9d849146b19d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005077.png",
+        "gitBlob": "9d849146b19d56141a15e7eaa5c43b371540332f",
+        "bytes": 23949
+      }
+    },
+    "10005078": {
+      "image": {
+        "path": "assets/maps/1fab279b6bde27508f1e676bc5d06950.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1fab279b6bde27508f1e676bc5d06950.webp",
+        "gitBlob": "501eda177c320eece89082c6aa11816fe7f0cde2",
+        "bytes": 215172
+      },
+      "preview": {
+        "path": "assets/minimaps/010005078.88cc2c1609b4.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005078.png",
+        "gitBlob": "88cc2c1609b4f383478eaf9553b67bc4909d0d5e",
+        "bytes": 7508
+      }
+    },
+    "10005080": {
+      "image": {
+        "path": "assets/maps/bd5ee6257c367be5d86f6bbb6cfae5c2.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bd5ee6257c367be5d86f6bbb6cfae5c2.webp",
+        "gitBlob": "27ccc286e07800c66f7326f0ba2b648bc2fb222e",
+        "bytes": 278092
+      },
+      "preview": {
+        "path": "assets/minimaps/010005080.9f20be6c64bc.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005080.png",
+        "gitBlob": "9f20be6c64bcb6a8b350cd2c4e697fe9a3946815",
+        "bytes": 10119
+      }
+    },
+    "10005090": {
+      "image": {
+        "path": "assets/maps/a02eb6e84380ee65e7c66d6a01b7510b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a02eb6e84380ee65e7c66d6a01b7510b.webp",
+        "gitBlob": "d1f20295a2128aa0b26cccef5faf468daa630602",
+        "bytes": 558066
+      },
+      "preview": {
+        "path": "assets/minimaps/010005090.3203c481db09.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005090.png",
+        "gitBlob": "3203c481db09b68b91ec055e7e3a9d3074fcdca6",
+        "bytes": 19834
+      }
+    },
+    "10005091": {
+      "image": {
+        "path": "assets/maps/b23f3e7dc343278beba99c756046d827.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b23f3e7dc343278beba99c756046d827.webp",
+        "gitBlob": "bb20f58463eb67d14b8c8a15c1b5eece1e145728",
+        "bytes": 470888
+      },
+      "preview": {
+        "path": "assets/minimaps/010005091.d6b239432616.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005091.png",
+        "gitBlob": "d6b2394326164dd3d53e14f00e343bbf1de53e58",
+        "bytes": 11399
+      }
+    },
+    "10005100": {
+      "image": {
+        "path": "assets/maps/62cedffc2b5df92324f985859b3c00f6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/62cedffc2b5df92324f985859b3c00f6.webp",
+        "gitBlob": "c4a5b0e350003d51399f9c873d6b330abbaa40c2",
+        "bytes": 308330
+      },
+      "preview": {
+        "path": "assets/minimaps/010005100.5fc7cda6af56.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005100.png",
+        "gitBlob": "5fc7cda6af5683b52ca6527970f231863a7de064",
+        "bytes": 13599
+      }
+    },
+    "10005101": {
+      "image": {
+        "path": "assets/maps/52e20121d5b26b27762374febfefd766.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/52e20121d5b26b27762374febfefd766.webp",
+        "gitBlob": "de47e168e64cde58fb6385ad0d9b7a51c864df08",
+        "bytes": 421888
+      },
+      "preview": {
+        "path": "assets/minimaps/010005101.1818060fbdce.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005101.png",
+        "gitBlob": "1818060fbdce61e8b5e2fff2c67becd6b76510fc",
+        "bytes": 9090
+      }
+    },
+    "10005102": {
+      "image": {
+        "path": "assets/maps/71970101631c9b4c4e514a78b34d169d.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/71970101631c9b4c4e514a78b34d169d.webp",
+        "gitBlob": "56d6523b574ecb3b61ef8b0bc66b160cb24a91d2",
+        "bytes": 406214
+      },
+      "preview": {
+        "path": "assets/minimaps/010005102.362ba5ff6d9b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005102.png",
+        "gitBlob": "362ba5ff6d9b1b9cd0e4b2d76279cdc65019fd8c",
+        "bytes": 10002
+      }
+    },
+    "10005103": {
+      "image": {
+        "path": "assets/maps/a4adaa4f4db0c48c593866d81508d6ad.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a4adaa4f4db0c48c593866d81508d6ad.webp",
+        "gitBlob": "2da6da967766e7c1391b2287bf3cd886109a6a6a",
+        "bytes": 545570
+      },
+      "preview": {
+        "path": "assets/minimaps/010005103.2781858693c7.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005103.png",
+        "gitBlob": "2781858693c78bb17ac114655c4bba3d0eb1aadf",
+        "bytes": 13956
+      }
+    },
+    "10005104": {
+      "image": {
+        "path": "assets/maps/3ea4c2518d55697ab6e80688afbca891.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3ea4c2518d55697ab6e80688afbca891.webp",
+        "gitBlob": "f03dd496554424120845850e92316fb5ff571c20",
+        "bytes": 449720
+      },
+      "preview": {
+        "path": "assets/minimaps/010005104.20151ea0ce7b.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005104.png",
+        "gitBlob": "20151ea0ce7bd81fde4570872b82c04cfb236cef",
+        "bytes": 11891
+      }
+    },
+    "10005105": {
+      "image": {
+        "path": "assets/maps/6bd1405903b36eae885452a4505ff076.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6bd1405903b36eae885452a4505ff076.webp",
+        "gitBlob": "7ec6aab5b504b5959a8a2917faf8aeb7702b8604",
+        "bytes": 329076
+      },
+      "preview": {
+        "path": "assets/minimaps/010005105.b501bb79e419.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010005105.png",
+        "gitBlob": "b501bb79e419bc18e19978cb9f781db982002e65",
+        "bytes": 9731
+      }
+    },
+    "10006121": {
+      "image": {
+        "path": "assets/maps/607af420f8e3f8aed880296d2adb132b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/607af420f8e3f8aed880296d2adb132b.webp",
+        "gitBlob": "e8575d84a664539ad0d48d0b9dd97efd4127322b",
+        "bytes": 169462
+      },
+      "preview": {
+        "path": "assets/minimaps/010006121.2441b3f7bbce.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010006121.png",
+        "gitBlob": "2441b3f7bbce699148499fb1280476d60995190d",
+        "bytes": 5057
+      }
+    },
+    "10007000": {
+      "image": {
+        "path": "assets/maps/332f8fbafdc35b106d61c50ef4a8bcae.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/332f8fbafdc35b106d61c50ef4a8bcae.webp",
+        "gitBlob": "6e2bafe61031b1d9b893329a9b873316d5d8643a",
+        "bytes": 574764
+      },
+      "preview": {
+        "path": "assets/minimaps/010007000.b00b1e0e734d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007000.png",
+        "gitBlob": "b00b1e0e734dad1fd52c9ecc333e537a2e7ff967",
+        "bytes": 17153
+      }
+    },
+    "10007010": {
+      "image": {
+        "path": "assets/maps/9dff7a74a7134e69e37db5385ce1c0f4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9dff7a74a7134e69e37db5385ce1c0f4.webp",
+        "gitBlob": "e941b55c25e6cf65610f4001fbb2e3b88a45a223",
+        "bytes": 878044
+      },
+      "preview": {
+        "path": "assets/minimaps/010007010.52a563c301c3.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007010.png",
+        "gitBlob": "52a563c301c3d1e167c5d745e7813a320107de05",
+        "bytes": 23711
+      }
+    },
+    "10007020": {
+      "image": {
+        "path": "assets/maps/bbdb2be6d899e5e1bbc374a807fce3a6.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bbdb2be6d899e5e1bbc374a807fce3a6.webp",
+        "gitBlob": "198a0afeddfb7b857cc2e156cc3bed2d93a18ed0",
+        "bytes": 845372
+      },
+      "preview": {
+        "path": "assets/minimaps/010007020.5892b7757f93.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007020.png",
+        "gitBlob": "5892b7757f9315e8d289967217ef5cf6c440161c",
+        "bytes": 25339
+      }
+    },
+    "10007021": {
+      "image": {
+        "path": "assets/maps/27e95cc9cf1a4faf49058b423ceb3c28.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/27e95cc9cf1a4faf49058b423ceb3c28.webp",
+        "gitBlob": "6706f7e070663081525b81a4c85e032ad5728c4f",
+        "bytes": 466266
+      },
+      "preview": {
+        "path": "assets/minimaps/010007021.1f0745db180f.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007021.png",
+        "gitBlob": "1f0745db180fd6659cc9419b742aeeb401234459",
+        "bytes": 15268
+      }
+    },
+    "10007030": {
+      "image": {
+        "path": "assets/maps/72e989a5539bd0852c57e1ccdfe0cba0.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72e989a5539bd0852c57e1ccdfe0cba0.webp",
+        "gitBlob": "4b4a2b04cf65b9f8d22322c5c3b40ff69ae76c5d",
+        "bytes": 807214
+      },
+      "preview": {
+        "path": "assets/minimaps/010007030.0a30594e5858.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007030.png",
+        "gitBlob": "0a30594e585849536ec78791963dfa56d6cb505a",
+        "bytes": 22981
+      }
+    },
+    "10007031": {
+      "image": {
+        "path": "assets/maps/fe530ef6c1d8550082ea47282a4a1ab4.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fe530ef6c1d8550082ea47282a4a1ab4.webp",
+        "gitBlob": "ee7bc66491904373437811c4260b63563c22c693",
+        "bytes": 359138
+      },
+      "preview": {
+        "path": "assets/minimaps/010007031.e78a14c8645d.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007031.png",
+        "gitBlob": "e78a14c8645d3472ec85b6419d56f1db5c98c59d",
+        "bytes": 9777
+      }
+    },
+    "10007040": {
+      "image": {
+        "path": "assets/maps/7e2c25288e48b0813c41a52273d4bd1b.webp",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7e2c25288e48b0813c41a52273d4bd1b.webp",
+        "gitBlob": "0755b2c7422158d3df542bf8ad34c931ecb12e44",
+        "bytes": 631004
+      },
+      "preview": {
+        "path": "assets/minimaps/010007040.583ced7556ba.png",
+        "source": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/maps/010007040.png",
+        "gitBlob": "583ced7556ba84c7ed61b5f35f29301b11ba87ca",
+        "bytes": 17507
+      }
+    }
+  }
+}

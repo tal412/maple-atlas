@@ -22,6 +22,13 @@
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
     const marker = $('#mc-local-exit'), select = $('#mc-local-select');
     let current, edge, zoom = 1, ready = false;
+    const loader=MapleMapImages.createLoader({image,timeoutMs:20000,onState:state=>{
+      ready=state==='ready';stage.hidden=!ready;$('#mc-local-feedback').hidden=ready;
+      $('#mc-local-retry').hidden=state!=='error';
+      $('#mc-local-state').textContent=state==='error'?'The map image could not load. Check your connection and try again.':'Loading game map…';
+      if(ready){$('#mc-local-fit').disabled=false;layout();}
+      else{marker.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
+    }});
     function layout(focus = false) {
       if (!ready || !dialog.open) return;
       const fit = Math.min((viewport.clientWidth - 48) / image.naturalWidth, (viewport.clientHeight - 48) / image.naturalHeight, 1);
@@ -56,7 +63,7 @@
       stage.hidden = true; marker.hidden = true;
       $('#mc-local-title').textContent = map.name;
       $('#mc-local-state').textContent = 'Loading game map…';
-      $('#mc-local-state').hidden = false;
+      $('#mc-local-feedback').hidden = false;
       $('#mc-local-scale').textContent = 'Fit';
       for (const button of root.querySelectorAll('[data-local-zoom]')) button.disabled = true;
       $('#mc-local-source').href = 'https://osmsdataexplorer.com/?tab=maps&id=' + String(id).padStart(9, '0');
@@ -65,19 +72,11 @@
       choose(map.portals.findIndex(portal => String(portal.to) === String(next)));
       if (!dialog.open) dialog.showModal();
       image.alt = map.name + ' — original game map';
-      image.src = map.image;
+      loader.load([map.localImage,map.image]);
       viewport.scrollTo(0, 0);
     }
-    image.onload = () => {
-      ready = true; stage.hidden = false; $('#mc-local-state').hidden = true;
-      $('#mc-local-fit').disabled = false;
-      layout();
-    };
-    image.onerror = () => {
-      ready = false; stage.hidden = true; marker.hidden = true;
-      $('#mc-local-state').hidden = false;
-      $('#mc-local-state').textContent = 'This map image could not load. Reopen it to retry, or view the source below.';
-    };
+    $('#mc-local-retry').onclick=()=>loader.retry();
+    dialog.addEventListener('close',()=>{loader.cancel();ready=false;stage.hidden=true;});
     select.onchange = () => choose(select.value === '' ? -1 : Number(select.value));
     $('#mc-local-close').onclick = () => dialog.close();
     dialog.onclick = event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } };

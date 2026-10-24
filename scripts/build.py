@@ -56,8 +56,12 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = read("map-labels.js") + "\n" + read("map-gestures.js") + "\n" + read("local-maps.js") + "\n" + read("quest-flow.js") + "\n" + read("runtime.js")
+    runtime = read("map-labels.js") + "\n" + read("map-gestures.js") + "\n" + read("map-images.js") + "\n" + read("local-maps.js") + "\n" + read("quest-flow.js") + "\n" + read("runtime.js")
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
+    assets = json.loads((project / 'data/map-assets.json').read_text())['maps']
+    for m in data['maps']:
+        m['localImage'] = './' + assets[m['id']]['image']['path']
+        m['localMinimap'] = './' + assets[m['id']]['preview']['path'] if 'preview' in assets[m['id']] else None
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     palette = json.loads((project / 'data/night-palette.json').read_text())

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the published map bundle against the pinned portal audit."""
 import json
+import hashlib
 import re
 from collections import Counter, deque
 from pathlib import Path
@@ -9,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 world = json.loads((ROOT / 'data/world.json').read_text())
 proof = json.loads((ROOT / 'docs/data/validated-portal-graph.json').read_text())
 image_audit = json.loads((ROOT / 'data/map-image-audit.json').read_text())
+asset_manifest = json.loads((ROOT / 'data/map-assets.json').read_text())
 maps = {m['id']: m for m in world['maps']}
 anchors = {s['primary']: s for s in world['spots']}
 assert len(maps) == len(world['maps']) == 246
@@ -17,6 +19,8 @@ assert sum(bool(s.get('schematic')) for s in anchors.values()) == 3
 assert sum(len(m['portals']) for m in maps.values()) == 457
 assert not proof['arrivalProblems'] and not proof['ambiguousArrivalNames']
 assert not image_audit['errors'] and set(image_audit['maps']) == set(maps)
+assert set(asset_manifest['maps']) == set(maps)
+assert asset_manifest['sourceCommit'] == image_audit['sourceCommit']
 
 def edge_tuple(edge):
     return (str(edge['to']), edge['name'], edge['arrival'], edge['type'])
@@ -27,6 +31,15 @@ for ident, m in maps.items():
     assert re.fullmatch(r'https://cdn\.jsdelivr\.net/gh/ohmi69/osms_datamine_dashboard@[0-9a-f]{40}/data/maps/[0-9a-f]{32}\.webp', m['image']), ('Invalid map image', ident)
     if m['minimap']:
         assert m['minimap'].endswith('/data/current/images/maps/' + ident.zfill(9) + '.png'), ('Wrong minimap', ident)
+    assets = asset_manifest['maps'][ident]
+    assert ('preview' in assets) == bool(m['minimap']), ('Wrong preview coverage', ident)
+    for kind, asset in assets.items():
+        assert asset['source'] == m['image' if kind == 'image' else 'minimap']
+        assert re.fullmatch(r'assets/(maps|minimaps)/[a-zA-Z0-9.]+\.(webp|png)', asset['path']), ('Unsafe asset path', ident)
+        content = (ROOT / 'docs' / asset['path']).read_bytes()
+        assert len(content) == asset['bytes'], ('Wrong asset length', ident, kind)
+        assert hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest() == asset['gitBlob'], ('Changed game image', ident, kind)
+        assert (content[:8] == b'\x89PNG\r\n\x1a\n' if kind == 'preview' else content[:4] == b'RIFF' and content[8:12] == b'WEBP'), ('Invalid image signature', ident, kind)
     assert Counter(map(edge_tuple, m['portals'])) == Counter(map(edge_tuple, proof['byMap'][ident]['portals'])), ident
     for edge in m['portals']:
         assert 0 <= edge['x'] <= image['width'] and 0 <= edge['y'] <= image['height'], ('Portal outside game image', ident, edge)
@@ -95,3 +108,4 @@ assert 'nearbyNPCs' not in page
 assert '<meta name="color-scheme" content="light dark">' in page
 assert '@media(prefers-color-scheme:dark)' in page and 'MapleGestures.create' in page
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')
+print('PASS: all 464 hosted map assets match their pinned source Git blobs.')

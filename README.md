@@ -19,6 +19,8 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 - `src/app.css`, `src/fullscreen.css`, `src/mobile.css`: interface and browser sizing.
 - `src/storage.js`: IndexedDB persistence, migration and save error handling.
 - `src/local-maps.js`: readable directions and zoomable original game-map viewer.
+- `src/map-images.js`: first-party map image loading, fallback, timeouts and retry.
+- `data/map-assets.json`: pinned source hashes for the 464 hosted map assets.
 - `src/map-labels.js`: stable label placement during map motion.
 - `src/map-gestures.js`: one-finger pan and anchored pinch zoom.
 - `src/quest-flow.js`: one next quest per NPC, recorded prerequisites and journal handoffs.
@@ -50,6 +52,7 @@ node tests/local-maps.test.cjs
 node tests/storage.test.cjs
 node tests/map-gestures.test.cjs
 node tests/quest-flow.test.cjs
+node tests/map-images.test.cjs
 # After committing your changes:
 python3 scripts/deploy.py
 # Review /dev/ before releasing:
@@ -71,9 +74,9 @@ The map uses a reviewed Classic World data snapshot. Atlas positions, map conten
 
 Location and quest progress are entered manually. Progress is stored in this browser's IndexedDB database, with no account, server synchronization or game connection. Clearing browser data removes that progress. Quest cards start collapsed; expand one to see requirements, rewards and progress controls. Only one next quest per NPC appears in the journal and place lists. Recorded quest prerequisites must be marked completed before later steps appear; skipping does not satisfy them. Active quests take priority, followed by level-appropriate continuations, with level and ID providing a stable order for independent quests. The journal follows unlocked handoffs to other NPCs. Completed/skipped quests stay in collapsed history so their status can be corrected. Quest associations and level checks do not validate every in-game prerequisite.
 
-Every one of the 246 location records includes a full-resolution game map, with 218 minimaps for lightweight previews. Open a local map from a place or route step; choose an exit, zoom, fit the map or focus the recorded portal. Portal overlays use the source image pixel coordinates and never invent an internal walking path. Full-resolution images load on demand. Their dimensions and all 457 portal coordinates are checked in `data/map-image-audit.json`.
+Every one of the 246 location records includes a full-resolution game map, with 218 minimaps for lightweight previews. All 464 exact image files are hosted alongside the app in `docs/assets/`. Preview PNGs total about 3.9 MB across the entire catalog; only the selected preview and visible/nearby route previews load. Maps without a minimap show an open-map button without downloading a full image for the card. Open a local map from a place or route step; choose an exit, zoom, fit the map or focus the recorded portal. Portal overlays use the source image pixel coordinates and never invent an internal walking path. Full-resolution images load on demand. Their dimensions and all 457 portal coordinates are checked in `data/map-image-audit.json`.
 
-Game sprites and local map images are referenced from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Roboto, Lucide and sprite images load from external CDNs; the application is not fully offline. The atlas illustration and route geometry are included in the source.
+Game sprites and local map images come from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Map images load from this site first, using immutable source-hash filenames; the original image CDN is a fallback. Requests have bounded timeouts, failures hide the broken image, and the full-map viewer offers an explicit retry. `python3 scripts/vendor-map-images.py` restores missing or changed assets and verifies their Git blob hashes. Builds require no image download. Roboto, Lucide and sprite images still load from external CDNs; the application is not fully offline. The atlas illustration and route geometry are included in the source.
 
 ## Verify a change
 
@@ -87,6 +90,7 @@ node tests/local-maps.test.cjs
 node tests/storage.test.cjs
 node tests/map-gestures.test.cjs
 node tests/quest-flow.test.cjs
+node tests/map-images.test.cjs
 ```
 
 The validator checks all 457 included directed portal pairs against the pinned source audit, road/route endpoint agreement, known routes and sprite coverage. The illustrated atlas has 64 published community anchors and three clearly marked schematic forest points; 179 other map records remain available through search and connections without invented map coordinates. Portal activation conditions and complete transport coverage still require in-game verification.

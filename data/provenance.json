@@ -107,6 +107,13 @@
     "fullMapImages": 246,
     "minimaps": 218,
     "coordinates": "Exported portal x/y are pixels in the full-resolution map image, matching the source explorer renderer.",
-    "renderer": "https://github.com/ohmi69/osms_datamine_dashboard/blob/a44f101bffa8272164ca47484ab18c078dcab0a0/tabs/maps/MapPortalOverlay.js"
+    "renderer": "https://github.com/ohmi69/osms_datamine_dashboard/blob/a44f101bffa8272164ca47484ab18c078dcab0a0/tabs/maps/MapPortalOverlay.js",
+    "hosting": {
+      "manifest": "data/map-assets.json",
+      "path": "docs/assets/",
+      "maps": 246,
+      "minimaps": 218,
+      "verification": "Every hosted image is a byte-for-byte match for its Git blob in the pinned source commit. Runtime uses same-origin assets first and the original CDN as fallback."
+    }
   }
 }
