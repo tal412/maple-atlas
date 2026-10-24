@@ -56,24 +56,31 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = read("map-labels.js") + "\n" + read("local-maps.js") + "\n" + read("runtime.js")
+    runtime = read("map-labels.js") + "\n" + read("map-gestures.js") + "\n" + read("local-maps.js") + "\n" + read("runtime.js")
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
-    app = template.replace("<!-- MAPLE_WORLD -->", ocean_art(read("world.svg")))
+    palette = json.loads((project / 'data/night-palette.json').read_text())
+    art = ocean_art(read('world.svg'))
+    art = re.sub(r'#[0-9a-fA-F]{6}\b', lambda m: 'var(--art-' + m[0][1:] + ',' + m[0] + ')', art)
+    night_css = '@media(prefers-color-scheme:dark){#maple-atlas-concept{' + ''.join('--art-' + key[1:] + ':' + value + ';' for key, value in palette.items()) + '}}'
+    app = template.replace("<!-- MAPLE_WORLD -->", art)
     app = app.replace('id="maple-atlas-concept"', f'id="maple-atlas-concept" data-channel="{channel}"', 1)
     channel_link = '<a class="mc-channel" href="../">Dev preview · Open main ↗</a>' if channel == 'dev' else '<a class="mc-channel" href="./dev/">Dev preview ↗</a>'
     app = app.replace('<small>Classic World</small>', '<small>Classic World</small>' + channel_link, 1)
+    if channel == 'dev':
+        app = app.replace('href="./dev/">Open dev preview', 'href="../">Dev preview · Open main')
     encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
-    css = read("app.css") + "\n" + read("fullscreen.css") + "\n.cursor-interaction{cursor:pointer}\n"
+    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
     page = """<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <meta name="description" content="Explore Classic World maps, NPCs, monsters and recorded portal routes. Track your MapleStory quest progress with Maple Atlas.">
   <meta name="theme-color" content="#f8fafd" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1e1f20" media="(prefers-color-scheme: dark)">

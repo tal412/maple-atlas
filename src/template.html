@@ -3,7 +3,13 @@
   <div class="mc-shell">
     <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><label class="mc-profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Level</span><input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
     <div class="mc-workspace">
+      <div class="mc-mobile-searchbar">
+        <button type="button" id="mc-mobile-search" aria-label="Search Maple Atlas"><img src="./favicon.svg" alt=""><span>Search Maple Atlas</span></button>
+        <button type="button" id="mc-mobile-profile" aria-label="Your character and level"><i data-lucide="user-round" aria-hidden="true"></i></button>
+      </div>
       <aside class="mc-panel">
+        <button type="button" id="mc-sheet-handle" class="mc-sheet-handle" aria-expanded="false" aria-controls="mc-detail"><span class="mc-grab" aria-hidden="true"></span><span class="mc-peek-copy"><strong id="mc-peek-title">Explore Victoria Island</strong><small id="mc-peek-subtitle">Find your next adventure</small></span><i data-lucide="chevron-up" aria-hidden="true"></i></button>
+        <div id="mc-route-home">
         <form class="mc-routeform" id="mc-form">
           <label class="mc-field"><span class="mc-letter">A</span><input id="mc-from" aria-label="Starting place" list="mc-towns" value="Lith Harbor" placeholder="Your current map"></label>
           <label class="mc-field"><span class="mc-letter">B</span><input id="mc-to" aria-label="Destination" list="mc-towns" value="Henesys" placeholder="Where to?"></label>
@@ -11,6 +17,7 @@
           <div class="mc-formactions"><button type="button" id="mc-pickstart" class="cursor-interaction">Pick start on map</button><button type="submit" class="mc-primary cursor-interaction">Show route</button></div>
           <div class="mc-route-summary" id="mc-caption" aria-live="polite">Select any numbered stop</div>
         </form>
+        </div>
         <div class="mc-status" id="mc-status" aria-live="polite">Location set manually · Change either field or select a place.</div>
         <div class="mc-tabs" aria-label="Map panel"><button type="button" data-panel="place" aria-pressed="true" class="cursor-interaction">What's here?</button><button type="button" data-panel="route" aria-pressed="false" class="cursor-interaction">Directions</button><button type="button" data-panel="progress" aria-pressed="false" class="cursor-interaction">Progress</button></div>
         <div class="mc-detail" id="mc-detail" aria-live="polite"></div>
@@ -26,12 +33,18 @@
         <div id="mc-markers"></div>
         <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Quests for you</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button></div>
         <div class="mc-zooms"><button type="button" id="mc-plus" aria-label="Zoom in" class="cursor-interaction"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-minus" aria-label="Zoom out" class="cursor-interaction"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" id="mc-fit" aria-label="Fit island" class="cursor-interaction"><i data-lucide="maximize" aria-hidden="true"></i></button></div>
+        <div class="mc-mobile-mapactions"><button type="button" id="mc-mobile-locate" aria-label="Show my starting location"><i data-lucide="locate-fixed" aria-hidden="true"></i></button><button type="button" id="mc-mobile-directions" aria-label="Plan a route"><i data-lucide="route" aria-hidden="true"></i></button></div>
+        <div id="mc-map-notice" role="status" hidden></div>
         <div class="mc-mapfooter"><span>Original map art · Game sprites © Nexon</span><span id="mc-zoom">100%</span></div>
       </div>
+      <nav class="mc-mobile-nav" aria-label="Main navigation"><button type="button" data-mobile-panel="place" aria-pressed="true"><span><i data-lucide="map" aria-hidden="true"></i></span>Explore</button><button type="button" data-mobile-panel="route" aria-pressed="false"><span><i data-lucide="route" aria-hidden="true"></i></span>Directions</button><button type="button" data-mobile-panel="progress" aria-pressed="false"><span><i data-lucide="bookmark" aria-hidden="true"></i></span>You</button></nav>
     </div>
     <div class="mc-bottom"><span>Recorded portal routes · Community atlas positions · Data checked Oct 24, 2026</span><span id="mc-save-status" role="status">Progress stays in this browser</span></div>
   </div>
 
+  <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title"><header><h2 id="mc-search-title">Find a place</h2><button type="button" data-close-dialog="mc-search-dialog" aria-label="Close search"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-search-input"><i data-lucide="search" aria-hidden="true"></i><input id="mc-search-input" type="search" placeholder="City, forest, shop…" aria-label="Search locations" autocomplete="off"></label><div id="mc-search-results"></div></dialog>
+  <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
+  <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title"><header><h2 id="mc-profile-title">Your character</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-character-level"><span>Character level<small>Find quests for your level</small></span><input id="mc-mobile-level" type="number" min="1" max="100" value="18" aria-label="Character level"></label><p>Appearance follows your device’s light or dark theme.</p><button type="button" id="mc-mobile-journal" class="mc-primary">Open quest journal</button><a id="mc-mobile-channel" class="mc-mobile-channel" href="./dev/">Open dev preview ↗</a></dialog>
   <dialog id="mc-local-dialog" aria-labelledby="mc-local-title">
     <header class="mc-local-header"><div><div class="mc-eyebrow">Local game map</div><h2 id="mc-local-title"></h2></div><button type="button" id="mc-local-close" aria-label="Close local map"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <div class="mc-local-controls"><label>Show portal to<select id="mc-local-select" aria-label="Portal destination"></select></label><button type="button" id="mc-local-focus" data-local-zoom>Focus exit</button></div>

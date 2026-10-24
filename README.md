@@ -16,10 +16,12 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 ## Source layout
 
 - `src/template.html`: application markup and world insertion point.
-- `src/app.css`, `src/fullscreen.css`: interface and browser sizing.
+- `src/app.css`, `src/fullscreen.css`, `src/mobile.css`: interface and browser sizing.
 - `src/storage.js`: IndexedDB persistence, migration and save error handling.
 - `src/local-maps.js`: readable directions and zoomable original game-map viewer.
 - `src/map-labels.js`: stable label placement during map motion.
+- `src/map-gestures.js`: one-finger pan and anchored pinch zoom.
+- `data/night-palette.json`: system dark-mode colors for the original illustrated map.
 - `src/favicon.svg`: original maple-leaf map pin icon.
 - `src/runtime.js`: interactions, routing, map positioning and progress.
 - `src/world.svg`: original vector map illustration.
@@ -45,6 +47,7 @@ python3 scripts/validate.py
 node tests/map-labels.test.cjs
 node tests/local-maps.test.cjs
 node tests/storage.test.cjs
+node tests/map-gestures.test.cjs
 # After committing your changes:
 python3 scripts/deploy.py
 # Review /dev/ before releasing:
@@ -55,6 +58,10 @@ git switch dev
 ```
 
 For a local development-channel build, use `python3 scripts/build.py --channel dev`. Main uses the existing `maple-atlas` IndexedDB database; dev uses `maple-atlas-dev`, so preview testing does not change main progress. Research, local mobile QA pages and backend drafts are ignored and never published.
+
+## Mobile and appearance
+
+On phones, the map opens with a compact search bar, discovery chips and a collapsed bottom sheet. Search for a place, tap a map marker, or open Directions to choose a start and destination. The bottom navigation opens Explore, Directions or your quest journal; character level is inside the profile button. Pan with one finger and pinch to zoom. The interface and original atlas artwork automatically follow device light/dark appearance, including changes while the app is open. Original game images retain their source colors.
 
 ## Data and behavior
 
@@ -76,6 +83,7 @@ node --check src/storage.js
 node tests/map-labels.test.cjs
 node tests/local-maps.test.cjs
 node tests/storage.test.cjs
+node tests/map-gestures.test.cjs
 ```
 
 The validator checks all 457 included directed portal pairs against the pinned source audit, road/route endpoint agreement, known routes and sprite coverage. The illustrated atlas has 64 published community anchors and three clearly marked schematic forest points; 179 other map records remain available through search and connections without invented map coordinates. Portal activation conditions and complete transport coverage still require in-game verification.

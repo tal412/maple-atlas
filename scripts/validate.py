@@ -39,6 +39,9 @@ for ident, m in maps.items():
     assert m['spot'] == (anchors[ident]['id'] if ident in anchors else None), ('Misplaced map', ident)
 
 art = (ROOT / 'src/world.svg').read_text()
+palette = json.loads((ROOT / 'data/night-palette.json').read_text())
+assert set(re.findall(r'#[0-9a-fA-F]{6}\b', art)) <= set(palette), 'Missing night colors'
+assert all(re.fullmatch(r'#[0-9a-fA-F]{6}', value) for value in palette.values())
 for key, path in world['artRoutes'].items():
     source, target = key.split(':')
     assert any(str(e['to']) == target for e in maps[source]['portals']) or any(str(e['to']) == source for e in maps[target]['portals']), ('Invented road', key)
@@ -89,4 +92,6 @@ assert sum(bool(m['minimap']) for m in maps.values()) == 218
 assert 'maple-atlas-dev' in page and '!saved && !development' in page
 assert 'rel="icon"' in page and (ROOT / 'docs/favicon.svg').exists()
 assert 'nearbyNPCs' not in page
+assert '<meta name="color-scheme" content="light dark">' in page
+assert '@media(prefers-color-scheme:dark)' in page and 'MapleGestures.create' in page
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')
