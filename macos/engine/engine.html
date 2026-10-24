@@ -9,12 +9,13 @@
      arrive from the app as data URLs and never leave this Mac. -->
 <script src="./visual-client.js"></script>
 <script src="./visual-tracker.js"></script>
+<script src="./minimap-position.js"></script>
 <script>
 (function(){
   const notify=message=>{try{window.webkit?.messageHandlers?.atlas?.postMessage(message);}catch(_){}};
   const vision=MapleVisualClient.create({onProgress:message=>notify({type:'progress',message})});
   const tracker=MapleVisualTracker.create(),canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
-  let names=new Map(),busy=false;
+  let names=new Map(),busy=false,marks=null,scaleMemory=[];
   // The app reads only the in-game minimap, so scene references are ignored.
   // "strong" is recomputed with the matcher's own rule over the remaining candidates.
   function minimapOnly(result){
@@ -25,10 +26,19 @@
   async function ready(){
     const catalog=await vision.ready();
     names=new Map(catalog.maps.map(m=>[String(m.id),m.name]));
+    if(!marks)marks=await fetch('./data/portal-marks.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
     notify({type:'progress',message:'Map matcher ready · '+catalog.maps.length+' maps'});
     return {maps:catalog.maps.map(m=>({id:String(m.id),name:m.name}))};
   }
-  async function read(dataURL){
+  // Your dot's position in map coordinates (the portal data's frame), or why it is unknown.
+  // frameHeight: the full game window height in this frame's pixels (the frame is a crop).
+  function position(id,pixels,frameHeight){
+    const points=(marks?.[id]||[]).map(([x,y])=>({x,y}));
+    const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory});
+    scaleMemory=found.memory;
+    return Number.isFinite(found.x)?{x:found.x,y:found.y}:{reason:found.reason};
+  }
+  async function read(dataURL,frameHeight){
     if(busy)throw Error('A frame is already being matched.');
     busy=true;const started=performance.now();
     try{
@@ -37,12 +47,17 @@
       const scale=Math.min(1,960/Math.max(bitmap.width,bitmap.height));
       canvas.width=Math.max(16,Math.round(bitmap.width*scale));canvas.height=Math.max(16,Math.round(bitmap.height*scale));
       context.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+      // The matcher takes ownership of its pixel buffer, so the dot search gets its own copy.
+      const pixels=context.getImageData(0,0,canvas.width,canvas.height);
       const result=minimapOnly(await vision.match(context.getImageData(0,0,canvas.width,canvas.height)));
       const observation=tracker.read(result),match=observation.match,elapsed=Math.round(performance.now()-started);
       if(!match)return {phase:'searching',text:'Reading the minimap… Keep the in-game minimap visible inside the box.',elapsed};
       const name=names.get(String(match.id))||'Map '+match.id,kind='minimap';
       const base={id:String(match.id),name,inliers:match.inliers,kind,confidence:Math.min(100,Math.round(match.ratio*100)),elapsed};
-      if(observation.phase==='confirmed')return {...base,phase:'confirmed',text:name+' · '+match.inliers+' aligned landmarks'};
+      if(observation.phase==='confirmed'){
+        const where=position(String(match.id),pixels,Math.round((frameHeight||canvas.height/scale)*scale));
+        return {...base,phase:'confirmed',position:where.reason?null:where,positionNote:where.reason||null,text:name+' · '+match.inliers+' aligned landmarks'+(where.reason?'':' · you are on the map')};
+      }
       return {...base,phase:'candidate',text:'Checking the terrain… Keep walking to reveal more landmarks.'};
     }finally{busy=false;}
   }

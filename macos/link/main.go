@@ -19,11 +19,13 @@ import (
 )
 
 type command struct {
-	Cmd        string `json:"cmd"`
-	ID         string `json:"id"`
-	Confidence int    `json:"confidence"`
-	ObservedAt int64  `json:"observedAt"`
-	State      string `json:"state"`
+	Cmd        string  `json:"cmd"`
+	ID         string  `json:"id"`
+	Confidence int     `json:"confidence"`
+	ObservedAt int64   `json:"observedAt"`
+	State      string  `json:"state"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
 }
 
 func main() {
@@ -73,6 +75,10 @@ func main() {
 		case "location":
 			if current != nil {
 				current.sendLocation(c.ID, c.Confidence, c.ObservedAt)
+			}
+		case "position":
+			if current != nil {
+				current.sendPosition(c.ID, c.X, c.Y, c.ObservedAt)
 			}
 		case "tracking":
 			if current != nil {

@@ -17,6 +17,12 @@ Click **Choose game window…** and pick the game in macOS's own window picker. 
 
 The phone uses the website (`/dev/` by default; switch to Main in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
 
+## Your position and portal guidance
+
+On every confirmed minimap match, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".
+
+Dot, ring and title colors, the fit and the guidance wording are adapted from [Maple Route](https://github.com/maplerouteadmin-dev/maple-route) (MIT; its notice is in `src/minimap-position.js`). Map identity still comes from this project's landmark matcher, not from reading the map name.
+
 ## How it works
 
 ```

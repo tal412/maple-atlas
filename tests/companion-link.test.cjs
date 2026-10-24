@@ -86,6 +86,12 @@ function openChannel(peer,link,session,remoteRole){
  }
  const gathering=harness({Peer:GatheringPeer}),gatheringOffer=gathering.link.offer();await gatheringStarted;gathering.link.stop();await assert.rejects(gatheringOffer,/cancelled/);assert.equal(gathering.last().phase,'disconnected');assert.equal(gathering.clock.tasks.size,0);assert.equal(Peer.last.listener,null);
  const mismatch=harness();await mismatch.link.offer();const mismatchPeer=Peer.last;mismatchPeer.channel.readyState='open';mismatchPeer.channel.onopen();const hello=mismatchPeer.channel.messages.find(m=>m.kind==='hello');mismatchPeer.channel.onmessage({data:JSON.stringify({...hello,v:99,role:'phone'})});assert.equal(mismatch.last().reason,'version');assert(!mismatch.link.connected);
+ const positions=[],tracked=harness({onPosition:v=>positions.push(v)});await tracked.link.answer(offerCode);const trackedPeer=Peer.last;
+ const trackedChannel=trackedPeer.createDataChannel('maple-atlas');trackedPeer.ondatachannel({channel:trackedChannel});const {deliver:toTracked}=openChannel(trackedPeer,tracked.link,offer.session,'pc');
+ const at={kind:'position',id:'1',x:3400,y:940,seq:10,observedAt:initial};
+ toTracked(at);toTracked(at);toTracked({...at,seq:11,id:'missing'});toTracked({...at,seq:12,x:'5'});toTracked({...at,seq:13,y:Infinity});toTracked({...at,seq:14,x:2e6});
+ assert.equal(positions.length,1,'Only valid, new positions for known maps are accepted');assert.deepEqual({id:positions[0].id,x:positions[0].x,y:positions[0].y},{id:'1',x:3400,y:940});
+ toTracked({...at,seq:15,x:3500});assert.equal(positions.length,2);tracked.link.stop();
  // Single-scan pairing with the native Mac app (ICE-lite host + QR secret).
  const golden='MA2FCVKVKVKVKVKVKTLJHJAAAJQARAWEQZRDBQWEY3EMVTGO2DJNJVWY3LON5YHC4TTOR2XMMJSAADQ4FI4EMVDCOB7IZGVIW3CNFYHO7UFRSJZVINIV63L3RGL2LMQCBAKAAAAEMBZAAAQEAYEAUDAOCAJBIFQYDIOB4';
  const goldenSdp=['v=0','m=application 9 UDP/DTLS/SCTP webrtc-datachannel','a=candidate:1 1 udp 2122260223 10.0.0.2 12345 typ host','a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=fingerprint:sha-256 '+fp,'a=setup:actpass','a=mid:0',''].join('\r\n');
@@ -107,5 +113,5 @@ function openChannel(peer,link,session,remoteRole){
  toPhone({kind:'bye',v:2,session:'0'.repeat(16)});assert(joined.link.connected,'A goodbye for another session is ignored');
  toPhone({kind:'bye',v:2,session:offer.session});assert.equal(joined.last().phase,'disconnected');assert.match(joined.last().message,/Mac disconnected/);assert.equal(joined.clock.tasks.size,0);
  const late=harness();await late.link.answer(nativeCode);late.clock.advance(25000);assert.equal(late.last().reason,'timeout');assert.match(late.last().message,/Mac/);
- console.log('PASS: compact MA2 codes (IPv4, IPv6, mDNS, rejection), Mac app single-scan (golden code, QR link, HMAC auth, bye), explicit scan/response states, stable repeated scans, two-way confirmation, no false connected state, heartbeat loss/recovery, timeout/expiry/failure, replay rejection and cleanup');
+ console.log('PASS: compact MA2 codes (IPv4, IPv6, mDNS, rejection), Mac app single-scan (golden code, QR link, HMAC auth, bye), live positions, explicit scan/response states, stable repeated scans, two-way confirmation, no false connected state, heartbeat loss/recovery, timeout/expiry/failure, replay rejection and cleanup');
 })().catch(e=>{console.error(e);process.exitCode=1;});

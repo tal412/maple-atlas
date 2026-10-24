@@ -259,6 +259,13 @@ private struct TrackingSection: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                LabeledContent("Your position") {
+                    if let position = model.lastPosition {
+                        Text("x \(Int(position.x)), y \(Int(position.y))").monospacedDigit()
+                    } else {
+                        Text("Dot not found on the minimap").foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }

@@ -59,6 +59,8 @@ final class CompanionModel {
     private(set) var isTracking = false
     private(set) var readingText = "Not tracking"
     private(set) var lastConfirmed: ConfirmedMap?
+    /// Latest player position on the confirmed map, in the portal data's coordinates.
+    private(set) var lastPosition: EngineReading.Position?
 
     // MARK: Diagnostics
     private(set) var logLines: [String] = []
@@ -399,8 +401,8 @@ final class CompanionModel {
             let frame = try await Task.detached { try capture.frame(region: region, previewOnly: false) }.value
             guard !Task.isCancelled else { return }
             previewImage = frame.preview
-            guard let jpeg = frame.minimapJPEG else { return }
-            let reading = try await engine.read(jpeg)
+            guard let png = frame.minimapImage else { return }
+            let reading = try await engine.read(png, frameHeight: frame.frameHeight)
             guard !Task.isCancelled else { return }
             apply(reading)
         } catch EngineHost.EngineError.busy {
@@ -421,9 +423,14 @@ final class CompanionModel {
             lastConfirmed = ConfirmedMap(
                 id: id, name: name, inliers: reading.inliers, confidence: reading.confidence,
                 kind: reading.kind, at: .now)
-            readingText = (isPhoneConnected ? "Following on phone · " : "Minimap match · ") + name
+            lastPosition = reading.position
+            let place = reading.position == nil ? "" : " · your dot found"
+            readingText = (isPhoneConnected ? "Following on phone · " : "Minimap match · ") + name + place
             if isPhoneConnected {
                 helper?.send(.location(id: id, confidence: reading.confidence ?? 0, observedAt: .now))
+                if let position = reading.position {
+                    helper?.send(.position(id: id, x: Int(position.x.rounded()), y: Int(position.y.rounded()), observedAt: .now))
+                }
             }
             return
         }

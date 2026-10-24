@@ -57,6 +57,8 @@ enum HelperCommand {
     case stop
     case tracking(state: String)
     case location(id: String, confidence: Int, observedAt: Date)
+    /// The player's position on that map, in the portal data's coordinates.
+    case position(id: String, x: Int, y: Int, observedAt: Date)
 
     var payload: [String: Any] {
         switch self {
@@ -68,6 +70,11 @@ enum HelperCommand {
                 "cmd": "location",
                 "id": id,
                 "confidence": max(0, min(100, confidence)),
+                "observedAt": Int64((observedAt.timeIntervalSince1970 * 1000).rounded()),
+            ]
+        case .position(let id, let x, let y, let observedAt):
+            [
+                "cmd": "position", "id": id, "x": x, "y": y,
                 "observedAt": Int64((observedAt.timeIntervalSince1970 * 1000).rounded()),
             ]
         }

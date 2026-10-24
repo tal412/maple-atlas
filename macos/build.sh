@@ -59,6 +59,19 @@ INDEX_BIN="$(/usr/bin/plutil -extract data raw -o - "$INDEX_JSON" 2>/dev/null \
 INDEX_BIN="${INDEX_BIN#./}"
 [[ "$INDEX_BIN" == data/*.bin ]] || { echo "error: unexpected data field in visual-index.json: $INDEX_BIN" >&2; exit 1; }
 copy "docs/$INDEX_BIN" "$INDEX_BIN"
+copy src/minimap-position.js minimap-position.js
+# Visible portal positions per map, for placing the player dot (see src/minimap-position.js).
+/usr/bin/python3 - "$REPO/data/world.json" "$ENGINE/data/portal-marks.json" <<'PY'
+import json, sys
+world = json.load(open(sys.argv[1]))
+marks = {}
+for m in world["maps"]:
+    points = [[float(p["x"]), float(p["y"])] for p in m.get("portals", [])
+              if int(p.get("type", 0)) == 2 and p.get("x") is not None and p.get("y") is not None]
+    if points:
+        marks[str(m["id"])] = points
+json.dump(marks, open(sys.argv[2], "w"), separators=(",", ":"))
+PY
 
 step "Writing Info.plist"
 cat > "$CONTENTS/Info.plist" <<PLIST

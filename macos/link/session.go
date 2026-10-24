@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"strings"
 	"sync"
@@ -377,6 +378,22 @@ func (s *session) sendLocation(id string, confidence int, observedAt int64) bool
 		return false
 	}
 	ok := s.sendLocked(map[string]any{"kind": "location", "id": id, "confidence": confidence, "observedAt": observedAt, "seq": s.seq})
+	if ok {
+		s.seq++
+	}
+	return ok
+}
+
+// sendPosition reports the player's dot on the current map, in the portal data's
+// coordinates. The phone accepts it only for the map it was last told about.
+func (s *session) sendPosition(id string, x, y float64, observedAt int64) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.verified || s.phase != "connected" || id == "" || observedAt <= 0 || math.IsNaN(x) || math.IsNaN(y) ||
+		math.Abs(x) > 1e6 || math.Abs(y) > 1e6 {
+		return false
+	}
+	ok := s.sendLocked(map[string]any{"kind": "position", "id": id, "x": math.Round(x), "y": math.Round(y), "observedAt": observedAt, "seq": s.seq})
 	if ok {
 		s.seq++
 	}

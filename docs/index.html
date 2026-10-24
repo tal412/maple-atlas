@@ -203,7 +203,7 @@
 #maple-atlas-concept .mc-local-instruction {font-size:13px;line-height:1.5;margin:12px 24px 16px;color:var(--mc-muted);}
 #maple-atlas-concept #mc-local-viewport {position:relative;flex:1;min-height:0;padding:24px;overflow:auto;overscroll-behavior:contain;background:#192e39;display:flex;flex-direction:column;}
 #maple-atlas-concept #mc-local-stage {position:relative;flex-shrink:0;margin:auto;}
-#maple-atlas-concept #mc-local-stage[hidden],#maple-atlas-concept #mc-local-exit[hidden] {display:none;}
+#maple-atlas-concept #mc-local-stage[hidden],#maple-atlas-concept #mc-local-exit[hidden],#maple-atlas-concept #mc-local-you[hidden] {display:none;}
 #maple-atlas-concept #mc-local-image {display:block;width:100%;height:auto;image-rendering:pixelated;}
 #maple-atlas-concept #mc-local-feedback {margin:auto;max-width:400px;text-align:center;}
 #maple-atlas-concept #mc-local-feedback[hidden],#maple-atlas-concept #mc-local-retry[hidden] {display:none;}
@@ -211,6 +211,10 @@
 #maple-atlas-concept #mc-local-retry {margin-top:16px;padding:12px 20px;background:var(--mc-paper);}
 #maple-atlas-concept #mc-local-exit {position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border:4px solid white;border-radius:50%;background:#0b57d0a6;box-shadow:0 0 0 2px #0b57d0;pointer-events:none;}
 #maple-atlas-concept #mc-local-exit span {position:absolute;bottom:34px;left:50%;transform:translateX(-50%);padding:5px 10px;background:#0b57d0;border:2px solid white;border-radius:10px;color:#fff;font-size:12px;font-weight:500;}
+/* Live player dot, gold like the in-game minimap marker. */
+#maple-atlas-concept #mc-local-you {position:absolute;transform:translate(-50%,-50%);width:20px;height:20px;border:3px solid white;border-radius:50%;background:#f0c419;box-shadow:0 0 0 2px #8a6500,0 0 0 8px #f0c41940;pointer-events:none;transition:left .4s ease,top .4s ease;}
+#maple-atlas-concept #mc-local-you span {position:absolute;top:26px;left:50%;transform:translateX(-50%);padding:4px 8px;background:#3d2e00;border:2px solid white;border-radius:10px;color:#fff;font-size:12px;font-weight:500;}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept #mc-local-you{transition:none}}
 #maple-atlas-concept .mc-local-footer {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;}
 #maple-atlas-concept .mc-local-footer a {font-size:11px;color:var(--mc-blue);}
 #maple-atlas-concept .mc-local-zoom {display:flex;align-items:center;gap:8px;}
@@ -230,6 +234,10 @@
   #maple-atlas-concept .mc-local-footer {padding:8px 16px;gap:8px;flex-wrap:wrap;justify-content:center;}
   #maple-atlas-concept .mc-local-footer a {order:2;flex-basis:100%;text-align:center;}
 }
+
+/* Live portal guidance from the companion's minimap reading. */
+#maple-atlas-concept .mc-live-hint {display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;padding:6px 12px;border-radius:14px;background:light-dark(#fff4cc,#3d2e00);color:light-dark(#5c4300,#ffe08a);font-weight:500;font-size:13px;}
+#maple-atlas-concept .mc-live-hint::before {content:'';width:10px;height:10px;border-radius:50%;background:#f0c419;box-shadow:0 0 0 2px #8a6500;}
 
 html,body { margin:0 !important; padding:0 !important; height:100%; overflow:hidden; }
 #maple-atlas-concept .mc-shell { height:100dvh; display:flex; flex-direction:column; }
@@ -690,7 +698,7 @@ body {background:light-dark(#d7e9e9,#142937);}
     <p id="mc-local-instruction" class="mc-local-instruction"></p>
     <div id="mc-local-viewport" tabindex="0" role="region" aria-label="Scrollable game map">
       <div id="mc-local-feedback"><p id="mc-local-state" role="status">Loading game map…</p><button type="button" id="mc-local-retry" hidden>Retry image</button></div>
-      <div id="mc-local-stage" hidden><img id="mc-local-image" alt="" decoding="async" referrerpolicy="no-referrer"><span id="mc-local-exit" role="img" hidden><span>Exit</span></span></div>
+      <div id="mc-local-stage" hidden><img id="mc-local-image" alt="" decoding="async" referrerpolicy="no-referrer"><span id="mc-local-exit" role="img" hidden><span>Exit</span></span><span id="mc-local-you" role="img" aria-label="Your position" hidden><span>You</span></span></div>
     </div>
     <footer class="mc-local-footer"><a id="mc-local-source" target="_blank" rel="noopener">Game art © Nexon · Source ↗</a><div class="mc-local-zoom"><button type="button" id="mc-local-minus" data-local-zoom aria-label="Zoom out local map"><i data-lucide="minus" aria-hidden="true"></i></button><span id="mc-local-scale">Fit</span><button type="button" id="mc-local-plus" data-local-zoom aria-label="Zoom in local map"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-local-fit" data-local-zoom aria-label="Fit local map"><i data-lucide="maximize" aria-hidden="true"></i></button></div></footer>
   </dialog>
@@ -943,14 +951,14 @@ window.mapleStorageReady.then(() => {
     const $ = selector => root.querySelector(selector);
     const dialog = $('#mc-local-dialog'), image = $('#mc-local-image');
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
-    const marker = $('#mc-local-exit'), select = $('#mc-local-select');
-    let current, edge, zoom = 1, ready = false;
+    const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
+    let current, edge, zoom = 1, ready = false, player = null;
     const loader=MapleMapImages.createLoader({image,timeoutMs:20000,onState:state=>{
       ready=state==='ready';stage.hidden=!ready;$('#mc-local-feedback').hidden=ready;
       $('#mc-local-retry').hidden=state!=='error';
       $('#mc-local-state').textContent=state==='error'?'The map image could not load. Check your connection and try again.':'Loading game map…';
       if(ready){$('#mc-local-fit').disabled=false;layout();}
-      else{marker.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
+      else{marker.hidden=true;you.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
     }});
     function layout(focus = false) {
       if (!ready || !dialog.open) return;
@@ -966,16 +974,26 @@ window.mapleStorageReady.then(() => {
           viewport.scrollTop = stage.offsetTop + point.y * stage.offsetHeight - viewport.clientHeight / 2;
         }
       }
+      // Live position from the companion, in the same pixel coordinates as the portals.
+      const here = current && player?.id === String(current.id) ? position(player, image.naturalWidth, image.naturalHeight) : null;
+      you.hidden = !here;
+      if (here) { you.style.left = here.x * 100 + '%'; you.style.top = here.y * 100 + '%'; }
       $('#mc-local-scale').textContent = Math.round(fit * zoom * 100) + '%';
       $('#mc-local-minus').disabled = zoom <= 1;
       $('#mc-local-plus').disabled = zoom >= 12;
       $('#mc-local-focus').disabled = !point;
     }
+    // The portal instruction, plus live guidance from your dot toward the selected portal.
+    function describe() {
+      const destination = edge ? get(edge.to)?.name : '';
+      const live = edge && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, {x: Number(edge.x), y: Number(edge.y)}) : null;
+      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : '') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+    }
     function choose(index) {
       edge = current.portals[index];
       select.value = edge ? String(index) : '';
       const destination = edge ? get(edge.to)?.name : '';
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+      describe();
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
@@ -983,7 +1001,7 @@ window.mapleStorageReady.then(() => {
       const map = get(id);
       if (!map?.image) return;
       current = map; zoom = 1; ready = false;
-      stage.hidden = true; marker.hidden = true;
+      stage.hidden = true; marker.hidden = true; you.hidden = true;
       $('#mc-local-title').textContent = map.name;
       $('#mc-local-state').textContent = 'Loading game map…';
       $('#mc-local-feedback').hidden = false;
@@ -1009,7 +1027,9 @@ window.mapleStorageReady.then(() => {
     $('#mc-local-fit').onclick = () => { zoom = 1; layout(); viewport.scrollTo(0, 0); };
     $('#mc-local-focus').onclick = () => { zoom = Math.max(zoom, 4); layout(true); };
     new ResizeObserver(() => layout()).observe(viewport);
-    return {open};
+    // value: {id, x, y} or null. Shown when it is for the map on screen.
+    function setPlayer(value) { player = value ? {id: String(value.id), x: value.x, y: value.y} : null; if (current) describe(); layout(); }
+    return {open, setPlayer, get openId() { return dialog.open && current ? String(current.id) : null; }};
   }
   const api = {instruction, position, create};
   scope.MapleLocalMaps = api;
@@ -1656,7 +1676,7 @@ window.mapleStorageReady.then(() => {
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
-  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
+  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
     let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,phase='idle';
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
     let savedOffer=null,savedAnswer=null,finishing=false,cancelGather=null,local=null,native=null;
@@ -1718,6 +1738,8 @@ window.mapleStorageReady.then(() => {
           }
           if(role!=='phone'||!verified||phase!=='connected')return;
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
+          // The player's dot on that map, in the portal data's coordinates (from the Mac app).
+          else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
           else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
         }catch(_){}
       };
@@ -1823,6 +1845,179 @@ window.mapleStorageReady.then(() => {
   scope.MapleCompanionDevice={detect};if(typeof module!=='undefined')module.exports=scope.MapleCompanionDevice;
 })(globalThis);
 
+/* Player position from the in-game minimap, and plain-language portal guidance.
+ *
+ * Adapted from Maple Route (https://github.com/maplerouteadmin-dev/maple-route,
+ * src/minimap.js and src/screen.js at 5f92b69). Its colors were sampled from real
+ * MapleStory Classic World screenshots. Changes: one browser/Node module, minimap-only,
+ * and positions use the same coordinates as this project's portal data.
+ *
+ * MIT License
+ * Copyright (c) 2026 Maple Route contributors
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following
+ * conditions: The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+(function(scope){
+  // Works on ImageData-like objects ({width, height, data: RGBA bytes}).
+  const isPanelBlue=(r,g,b)=>r>=120&&r<=190&&g>=160&&g<=215&&b>=180&&b<=235&&b-r>=30&&g-r>=15;
+  const isPlayerYellow=(r,g,b)=>r>=225&&g>=185&&b<=110&&r>g;
+  const isPortalTeal=(r,g,b)=>b-r>=45&&g-r>=30&&b>=g&&b>=95&&r<140;
+  const isFrameLight=(r,g,b)=>r>220&&g>220&&b>220&&Math.max(r,g,b)-Math.min(r,g,b)<18;
+
+  function allRuns(flags,maxGap=0){
+    const runs=[];let start=-1,last=-1;
+    for(let i=0;i<=flags.length;i++){if(i<flags.length&&flags[i]){if(start<0||i-last-1>maxGap){if(start>=0)runs.push([start,last]);start=i;}last=i;}}
+    if(start>=0)runs.push([start,last]);return runs;
+  }
+  function longestRun(flags,maxGap=0){let best=null;for(const run of allRuns(flags,maxGap))if(!best||run[1]-run[0]>best[1]-best[0])best=run;return best;}
+
+  // The pale-blue strip holding the region emblem and the "street / map" title.
+  // frameHeight is the full game frame height in this image's pixels (the image is a crop).
+  function findTitleBand(image,{frameHeight=image.height}={}){
+    const {width,data}=image,height=frameHeight,regionW=width,regionH=image.height;
+    const rowHits=new Array(regionH).fill(0);
+    for(let y=0;y<regionH;y++)for(let x=0;x<regionW;x++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))rowHits[y]++;}
+    // A pale sky can share the blue; every blue stretch is tried top-down until one is title-shaped.
+    for(const [y0,y1] of allRuns(rowHits.map(count=>count>Math.max(30,regionW*.05)),3)){
+      const bandH=y1-y0+1;if(bandH<height*.025||bandH>height*.14)continue;
+      const columns=[];
+      for(let x=0;x<regionW;x++){let hits=0;for(let y=y0;y<=y1;y++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))hits++;}columns.push(hits>bandH*.3);}
+      const cols=longestRun(columns,4);
+      if(!cols||cols[1]-cols[0]<bandH*1.8)continue;
+      if(cols[0]===0&&cols[1]>=regionW-1)continue; // a sky spans the region; the title strip ends at its window
+      const textX=cols[0],right=cols[1],x=Math.max(0,textX-Math.round(bandH*.97));
+      return {x,y:y0,w:right-x+1,h:bandH,textX};
+    }
+    return null;
+  }
+  function components(mask,w,h){
+    const seen=new Uint8Array(w*h),found=[];
+    for(let start=0;start<mask.length;start++){
+      if(!mask[start]||seen[start])continue;
+      const stack=[start];seen[start]=1;let count=0,sx=0,sy=0,minX=w,maxX=0,minY=h,maxY=0;
+      while(stack.length){
+        const p=stack.pop(),x=p%w,y=(p-x)/w;count++;sx+=x;sy+=y;
+        if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;const q=ny*w+nx;if(mask[q]&&!seen[q]){seen[q]=1;stack.push(q);}}
+      }
+      found.push({count,x:sx/count,y:sy/count,w:maxX-minX+1,h:maxY-minY+1});
+    }
+    return found;
+  }
+  // The map picture inside its thin light frame, under the title strip; null when collapsed.
+  function minimapBody(image,band){
+    const {width,height,data}=image;
+    const light=(x,y)=>{const i=(y*width+x)*4;return isFrameLight(data[i],data[i+1],data[i+2]);};
+    const rowLight=(y,x0,x1)=>{let n=0;for(let x=x0;x<=x1;x++)if(light(x,y))n++;return n/(x1-x0+1);};
+    const colLight=(x,y0,y1)=>{let n=0;for(let y=y0;y<=y1;y++)if(light(x,y))n++;return n/(y1-y0+1);};
+    const sx0=band.x+Math.round(band.w*.05),sx1=Math.min(width-1,band.x+Math.round(band.w*.95));
+    let y=band.y+band.h,frameTop=-1;
+    for(const end=Math.min(height-1,y+Math.round(band.h*1.1));y<=end;y++)if(rowLight(y,sx0,sx1)>.85){frameTop=y;break;}
+    if(frameTop<0)return null;
+    while(y<height&&rowLight(y,sx0,sx1)>.85)y++;
+    const top=y;let bottom=-1;
+    for(y=top+Math.max(4,Math.round(band.h*.3));y<height;y++)if(rowLight(y,sx0,sx1)>.85){bottom=y-1;break;}
+    if(bottom<0||bottom-top<band.h*.4)return null;
+    const reach=Math.round(band.h*.4);let left=band.x,right=Math.min(width-1,band.x+band.w-1);
+    for(let x=Math.max(0,band.x-reach);x<=band.x+reach;x++)if(colLight(x,top,bottom)>.8)left=x+1;
+    for(let x=Math.min(width-1,band.x+band.w-1+reach);x>=band.x+band.w-1-reach;x--)if(colLight(x,top,bottom)>.8)right=x-1;
+    return right-left<band.h?null:{x:left,y:top,w:right-left+1,h:bottom-top+1};
+  }
+  // The player's yellow dot and the teal portal rings inside the minimap picture.
+  function findMarkers(image,band){
+    const body=minimapBody(image,band),unit=band.h;
+    if(!body)return {body:null,unit,player:null,portals:[],collapsed:true};
+    const yellow=new Uint8Array(body.w*body.h),teal=new Uint8Array(body.w*body.h);
+    for(let y=0;y<body.h;y++)for(let x=0;x<body.w;x++){
+      const i=((body.y+y)*image.width+body.x+x)*4,r=image.data[i],g=image.data[i+1],b=image.data[i+2];
+      if(isPlayerYellow(r,g,b))yellow[y*body.w+x]=1;if(isPortalTeal(r,g,b))teal[y*body.w+x]=1;
+    }
+    const dot=components(yellow,body.w,body.h)
+      .filter(c=>c.w>=unit*.07&&c.h>=unit*.07&&c.w<=unit*.25&&c.h<=unit*.25&&c.count/(c.w*c.h)>=.45&&Math.max(c.w,c.h)/Math.min(c.w,c.h)<=1.6)
+      .sort((a,b)=>b.count-a.count)[0];
+    const portals=components(teal,body.w,body.h).filter(c=>c.count>=unit*unit*.0035&&c.w<=unit*.35&&c.h<=unit*.35).map(c=>({x:body.x+c.x,y:body.y+c.y}));
+    return {body,unit,player:dot?{x:body.x+dot.x,y:body.y+dot.y}:null,portals,collapsed:false};
+  }
+  // Picture size relative to the title strip; resizing the minimap changes its zoom.
+  const minimapLayout=(band,body)=>body?{w:body.w/band.h,h:body.h/band.h}:null;
+  function recallScale(memory,layout){
+    if(!layout||!Array.isArray(memory))return null;
+    const close=(a,b)=>Math.abs(a-b)<=Math.max(a,b)*.06;
+    return memory.find(entry=>close(entry.w,layout.w)&&close(entry.h,layout.h))?.scale??null;
+  }
+  function rememberScale(memory,layout,scale){
+    if(!layout||!Number.isFinite(scale))return memory??[];
+    const list=Array.isArray(memory)?[...memory]:[],known=list.findIndex(entry=>recallScale([entry],layout)!==null);
+    if(known>=0)list[known]={...list[known],scale:list[known].scale*.8+scale*.2};else list.unshift({...layout,scale});
+    return list.slice(0,8);
+  }
+  // Scale/offset that maps portal coordinates onto the detected rings. The minimap scrolls with
+  // the player, so the offset changes every frame; the scale is constant for one minimap size.
+  function fitMinimap(rings,marks,unit,hint=null){
+    const world=marks.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+    if(!rings.length||!world.length)return null;
+    const tolerance=Math.max(4,unit*.12);
+    const score=(s,ox,oy)=>{let inliers=0,error=0;for(const ring of rings){let best=Infinity;for(const portal of world){const d=Math.abs(ring.x-(s*portal.x+ox))+Math.abs(ring.y-(s*portal.y+oy));if(d<best)best=d;}if(best<=tolerance){inliers++;error+=best;}}return {scale:s,ox,oy,inliers,error};};
+    let best=null;const consider=fit=>{if(fit.inliers&&(!best||fit.inliers>best.inliers||(fit.inliers===best.inliers&&fit.error<best.error)))best=fit;};
+    const minS=unit*.0003,maxS=unit*.012;
+    for(let i=0;i<rings.length;i++)for(let j=0;j<rings.length;j++){
+      if(i===j||rings[j].x<=rings[i].x)continue;
+      for(const a of world)for(const b of world){
+        if(b.x<=a.x)continue;const s=(rings[j].x-rings[i].x)/(b.x-a.x);
+        if(s<minS||s>maxS)continue;if(hint?.scale&&Math.abs(s/unit-hint.scale)>hint.scale*.12)continue;
+        consider(score(s,rings[i].x-s*a.x,rings[i].y-s*a.y));
+      }
+    }
+    if(hint?.scale&&(!best||best.inliers<2)){const s=hint.scale*unit;for(const ring of rings)for(const portal of world)consider(score(s,ring.x-s*portal.x,ring.y-s*portal.y));}
+    if(!best||best.inliers<2&&!hint?.scale)return null; // one ring alone cannot fix the scale
+    return {...best,scalePerUnit:best.scale/unit};
+  }
+  const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});
+
+  // Player position in map coordinates from one minimap crop. Needs the dot plus two rings,
+  // or one ring once a scale was learned for this minimap size. `memory` is returned updated.
+  function locate(image,marks,{frameHeight=image.height,memory=[]}={}){
+    const band=findTitleBand(image,{frameHeight});
+    if(!band)return {reason:'no-minimap',memory};
+    const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);
+    if(markers.collapsed)return {reason:'collapsed',memory};
+    if(!markers.player)return {reason:'no-dot',memory};
+    if(!marks?.length)return {reason:'no-portal-data',memory};
+    const known=recallScale(memory,layout);
+    const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);
+    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',memory};
+    const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;
+    if(world.x<Math.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};
+    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
+  }
+  // Plain-language hint from the player's position to a portal. One game screen is roughly
+  // 1000 map units wide, which keeps distances meaningful without promising precision.
+  function guidance(player,portal){
+    if(!player||!Number.isFinite(portal?.x))return null;
+    const dx=portal.x-player.x,dy=Number.isFinite(portal.y)?portal.y-player.y:0,near=Math.abs(dx)<90&&Math.abs(dy)<120;
+    const side=dx>0?'right':'left',distance=Math.abs(dx)<450?'a few steps':Math.abs(dx)<1100?'about one screen':'about '+Math.max(2,Math.round(Math.abs(dx)/1000))+' screens';
+    const vertical=dy<-120?'up':dy>120?'down':'';
+    const text=near?'You are at the portal':Math.abs(dx)<90?(vertical==='up'?'The portal is above you, climb up':'The portal is below you, drop down'):'Head '+side+', '+distance+(vertical==='up'?', then climb up':vertical==='down'?', then drop down':'');
+    return {dx,dy,near,side:Math.abs(dx)<90?null:side,vertical:vertical||null,text};
+  }
+  // Visible portals (type 2) are the ones drawn as rings on the minimap.
+  const coordinate=v=>v!==null&&v!==''&&Number.isFinite(Number(v));
+  const marksFor=map=>(map?.portals||[]).filter(p=>Number(p.type)===2&&coordinate(p.x)&&coordinate(p.y)).map(p=>({x:Number(p.x),y:Number(p.y)}));
+  const api={findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
+  scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;
+})(globalThis);
+
 /* Short, session-only visual history. Scores are evidence, not probabilities. */
 (function(scope){
  function create(){
@@ -1871,7 +2066,7 @@ window.mapleStorageReady.then(() => {
 (function(scope){
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the local reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
-  function create({root,visualMaps,onLocation,onConnection,device}){
+  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),qr=$('#mc-pair-qr'),input=$('#mc-pair-input'),output=$('#mc-pair-output');
     const video=$('#mc-reader-video'),selection=$('#mc-reader-selection'),scanVideo=$('#mc-scan-video'),readerState=$('#mc-reader-state');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData,canShareScreen:!!navigator.mediaDevices?.getDisplayMedia});
@@ -1915,7 +2110,7 @@ window.mapleStorageReady.then(() => {
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
       lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
-    },onReading:state=>{
+    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onReading:state=>{
       lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The device connection is working. Resume screen sharing and visual tracking on your computer.':'The device connection is working. Keep the minimap or scenery visible while the computer identifies your map.');onConnection(state==='paused'?'stale':'searching');
     },onState:value=>{
       paint(value);
@@ -2182,10 +2377,21 @@ window.mapleStorageReady.then(() => {
   $$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());
   function openProfile(){$('#mc-mobile-level').value=state.level;$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
-  let liveLocation=null,liveFresh=false;
+  let liveLocation=null,liveFresh=false,livePosition=null,liveHint='';
+  // Portal on the live map that leads to the next stop of the active route.
+  function nextPortal(){
+    if(!state.routeActive||!livePosition)return null;
+    const i=state.route.indexOf(livePosition.id);if(i<0||i>=state.route.length-1)return null;
+    return get(livePosition.id)?.portals.find(e=>String(e.to)===state.route[i+1]&&Number.isFinite(Number(e.x)))||null;
+  }
+  function hintText(){
+    const portal=nextPortal();if(!portal||!livePosition||!liveFresh||Date.now()-livePosition.at>6000)return '';
+    return MapleMinimapPosition.guidance(livePosition,{x:Number(portal.x),y:Number(portal.y)})?.text||'';
+  }
+  function clearPosition(){livePosition=null;liveHint='';localMaps.setPlayer(null);}
   MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onLocation:value=>{
     const m=get(value.id)||visualMaps.get(value.id);if(!m)return;
-    const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;liveLocation=value.id;liveFresh=true;
+    const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;if(liveLocation!==value.id)clearPosition();liveLocation=value.id;liveFresh=true;
     $('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Live · '+m.name;
     $('#mc-status').textContent='Visual map match · '+m.name;
     if(!changed){if(!wasFresh&&state.panel==='route')detail();return;}
@@ -2195,8 +2401,16 @@ window.mapleStorageReady.then(() => {
     if(state.routeActive)plan();
     const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
     render();camera();
+  },onPosition:value=>{
+    if(value.id!==liveLocation)return;
+    const m=get(value.id)||visualMaps.get(value.id);
+    livePosition={id:value.id,x:value.x,y:value.y,at:Date.now()};localMaps.setPlayer(livePosition);
+    const hint=hintText();
+    $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
+    if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
   },onConnection:phase=>{
-    const wasFresh=liveFresh;
+    const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
+    if(['failed','disconnected'].includes(phase))clearPosition();
     $('#mc-companion-badge').hidden=false;
     if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
     if(phase==='searching'){liveFresh=false;$('#mc-companion-badge').textContent='Finding your location…';$('#mc-status').textContent='Waiting for a reliable visual match · Last location retained';}
@@ -2227,7 +2441,7 @@ window.mapleStorageReady.then(() => {
       const n=state.route.length-1;
       box.innerHTML='<div class="mc-eyebrow">Your route</div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':n+' map changes · Fewest recorded portals')+'</div>'+(n>=0?'<ol class="mc-steplist">'+state.route.map((id,i)=>{
         const p=get(id),next=state.route[i+1],edge=p.portals.find(e=>String(e.to)===next),badge=i===0?'A':i===n?'B':i;
-        return '<li'+(i===state.step?' aria-current="step"':'')+'><span class="mc-step-badge">'+badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(p.name)+'</button><p>'+esc(edge?MapleLocalMaps.instruction(edge,get(next)?.name):'You have arrived.')+'</p>'+mapPreview(p,next)+'</li>';
+        return '<li'+(i===state.step?' aria-current="step"':'')+'><span class="mc-step-badge">'+badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(p.name)+'</button><p>'+esc(edge?MapleLocalMaps.instruction(edge,get(next)?.name):'You have arrived.')+'</p>'+(liveHint&&id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')+mapPreview(p,next)+'</li>';
       }).join('')+'</ol>'+(liveFresh&&state.from===liveLocation?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')+'<div class="mc-secondary" style="margin-top:10px">'+(liveFresh&&state.from===liveLocation?'Screen detected':'Manual position')+' · '+esc(get(state.route[state.step]).name)+'</div>':'<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>');
       box.insertAdjacentHTML('afterbegin','<button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button>');
       $('#mc-edit-route').onclick=openRoute;

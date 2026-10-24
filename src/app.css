@@ -191,7 +191,7 @@
 #maple-atlas-concept .mc-local-instruction {font-size:13px;line-height:1.5;margin:12px 24px 16px;color:var(--mc-muted);}
 #maple-atlas-concept #mc-local-viewport {position:relative;flex:1;min-height:0;padding:24px;overflow:auto;overscroll-behavior:contain;background:#192e39;display:flex;flex-direction:column;}
 #maple-atlas-concept #mc-local-stage {position:relative;flex-shrink:0;margin:auto;}
-#maple-atlas-concept #mc-local-stage[hidden],#maple-atlas-concept #mc-local-exit[hidden] {display:none;}
+#maple-atlas-concept #mc-local-stage[hidden],#maple-atlas-concept #mc-local-exit[hidden],#maple-atlas-concept #mc-local-you[hidden] {display:none;}
 #maple-atlas-concept #mc-local-image {display:block;width:100%;height:auto;image-rendering:pixelated;}
 #maple-atlas-concept #mc-local-feedback {margin:auto;max-width:400px;text-align:center;}
 #maple-atlas-concept #mc-local-feedback[hidden],#maple-atlas-concept #mc-local-retry[hidden] {display:none;}
@@ -199,6 +199,10 @@
 #maple-atlas-concept #mc-local-retry {margin-top:16px;padding:12px 20px;background:var(--mc-paper);}
 #maple-atlas-concept #mc-local-exit {position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border:4px solid white;border-radius:50%;background:#0b57d0a6;box-shadow:0 0 0 2px #0b57d0;pointer-events:none;}
 #maple-atlas-concept #mc-local-exit span {position:absolute;bottom:34px;left:50%;transform:translateX(-50%);padding:5px 10px;background:#0b57d0;border:2px solid white;border-radius:10px;color:#fff;font-size:12px;font-weight:500;}
+/* Live player dot, gold like the in-game minimap marker. */
+#maple-atlas-concept #mc-local-you {position:absolute;transform:translate(-50%,-50%);width:20px;height:20px;border:3px solid white;border-radius:50%;background:#f0c419;box-shadow:0 0 0 2px #8a6500,0 0 0 8px #f0c41940;pointer-events:none;transition:left .4s ease,top .4s ease;}
+#maple-atlas-concept #mc-local-you span {position:absolute;top:26px;left:50%;transform:translateX(-50%);padding:4px 8px;background:#3d2e00;border:2px solid white;border-radius:10px;color:#fff;font-size:12px;font-weight:500;}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept #mc-local-you{transition:none}}
 #maple-atlas-concept .mc-local-footer {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;}
 #maple-atlas-concept .mc-local-footer a {font-size:11px;color:var(--mc-blue);}
 #maple-atlas-concept .mc-local-zoom {display:flex;align-items:center;gap:8px;}
@@ -218,3 +222,7 @@
   #maple-atlas-concept .mc-local-footer {padding:8px 16px;gap:8px;flex-wrap:wrap;justify-content:center;}
   #maple-atlas-concept .mc-local-footer a {order:2;flex-basis:100%;text-align:center;}
 }
+
+/* Live portal guidance from the companion's minimap reading. */
+#maple-atlas-concept .mc-live-hint {display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;padding:6px 12px;border-radius:14px;background:light-dark(#fff4cc,#3d2e00);color:light-dark(#5c4300,#ffe08a);font-weight:500;font-size:13px;}
+#maple-atlas-concept .mc-live-hint::before {content:'';width:10px;height:10px;border-radius:50%;background:#f0c419;box-shadow:0 0 0 2px #8a6500;}

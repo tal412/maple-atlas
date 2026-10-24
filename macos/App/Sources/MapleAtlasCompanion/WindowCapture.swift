@@ -15,7 +15,10 @@ import UniformTypeIdentifiers
 final class GameCapture: NSObject {
     struct Frame: Sendable {
         let preview: CGImage
-        let minimapJPEG: String?
+        /// The minimap crop as a PNG data URL (exact colors for the dot and portal rings).
+        let minimapImage: String?
+        /// Full window height in the crop's pixels, which sizes the minimap title strip.
+        let frameHeight: Int
     }
 
     enum CaptureError: LocalizedError {
@@ -41,7 +44,6 @@ final class GameCapture: NSObject {
 
     nonisolated static let matchMaxSide: CGFloat = 960
     nonisolated static let previewMaxSide: CGFloat = 640
-    nonisolated static let jpegQuality: CGFloat = 0.85
 
     /// Shows the system picker, limited to single windows.
     func presentPicker() {
@@ -72,9 +74,13 @@ final class GameCapture: NSObject {
     nonisolated func frame(region: CGRect, previewOnly: Bool) throws -> Frame {
         guard let image = sink.latest else { throw CaptureError.noFrameYet }
         let preview = Self.downscaled(image, maxSide: Self.previewMaxSide)
-        guard !previewOnly else { return Frame(preview: preview, minimapJPEG: nil) }
+        guard !previewOnly else { return Frame(preview: preview, minimapImage: nil, frameHeight: image.height) }
         let minimap = Self.cropped(image, to: region) ?? image
-        return Frame(preview: preview, minimapJPEG: try Self.jpegDataURL(from: Self.downscaled(minimap, maxSide: Self.matchMaxSide)))
+        let scaled = Self.downscaled(minimap, maxSide: Self.matchMaxSide)
+        let factor = Double(scaled.width) / Double(max(1, minimap.width))
+        return Frame(
+            preview: preview, minimapImage: try Self.pngDataURL(from: scaled),
+            frameHeight: Int((Double(image.height) * factor).rounded()))
     }
 
     fileprivate func start(with filter: SCContentFilter) {
@@ -168,13 +174,13 @@ final class GameCapture: NSObject {
         return context.makeImage() ?? image
     }
 
-    nonisolated private static func jpegDataURL(from image: CGImage) throws -> String {
+    nonisolated private static func pngDataURL(from image: CGImage) throws -> String {
         let data = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil)
+        guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil)
         else { throw CaptureError.encodingFailed }
-        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: jpegQuality] as CFDictionary)
+        CGImageDestinationAddImage(destination, image, nil)
         guard CGImageDestinationFinalize(destination) else { throw CaptureError.encodingFailed }
-        return "data:image/jpeg;base64," + (data as Data).base64EncodedString()
+        return "data:image/png;base64," + (data as Data).base64EncodedString()
     }
 }
 

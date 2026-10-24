@@ -20,14 +20,14 @@
     const $ = selector => root.querySelector(selector);
     const dialog = $('#mc-local-dialog'), image = $('#mc-local-image');
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
-    const marker = $('#mc-local-exit'), select = $('#mc-local-select');
-    let current, edge, zoom = 1, ready = false;
+    const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
+    let current, edge, zoom = 1, ready = false, player = null;
     const loader=MapleMapImages.createLoader({image,timeoutMs:20000,onState:state=>{
       ready=state==='ready';stage.hidden=!ready;$('#mc-local-feedback').hidden=ready;
       $('#mc-local-retry').hidden=state!=='error';
       $('#mc-local-state').textContent=state==='error'?'The map image could not load. Check your connection and try again.':'Loading game map…';
       if(ready){$('#mc-local-fit').disabled=false;layout();}
-      else{marker.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
+      else{marker.hidden=true;you.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
     }});
     function layout(focus = false) {
       if (!ready || !dialog.open) return;
@@ -43,16 +43,26 @@
           viewport.scrollTop = stage.offsetTop + point.y * stage.offsetHeight - viewport.clientHeight / 2;
         }
       }
+      // Live position from the companion, in the same pixel coordinates as the portals.
+      const here = current && player?.id === String(current.id) ? position(player, image.naturalWidth, image.naturalHeight) : null;
+      you.hidden = !here;
+      if (here) { you.style.left = here.x * 100 + '%'; you.style.top = here.y * 100 + '%'; }
       $('#mc-local-scale').textContent = Math.round(fit * zoom * 100) + '%';
       $('#mc-local-minus').disabled = zoom <= 1;
       $('#mc-local-plus').disabled = zoom >= 12;
       $('#mc-local-focus').disabled = !point;
     }
+    // The portal instruction, plus live guidance from your dot toward the selected portal.
+    function describe() {
+      const destination = edge ? get(edge.to)?.name : '';
+      const live = edge && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, {x: Number(edge.x), y: Number(edge.y)}) : null;
+      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : '') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+    }
     function choose(index) {
       edge = current.portals[index];
       select.value = edge ? String(index) : '';
       const destination = edge ? get(edge.to)?.name : '';
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+      describe();
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
@@ -60,7 +70,7 @@
       const map = get(id);
       if (!map?.image) return;
       current = map; zoom = 1; ready = false;
-      stage.hidden = true; marker.hidden = true;
+      stage.hidden = true; marker.hidden = true; you.hidden = true;
       $('#mc-local-title').textContent = map.name;
       $('#mc-local-state').textContent = 'Loading game map…';
       $('#mc-local-feedback').hidden = false;
@@ -86,7 +96,9 @@
     $('#mc-local-fit').onclick = () => { zoom = 1; layout(); viewport.scrollTo(0, 0); };
     $('#mc-local-focus').onclick = () => { zoom = Math.max(zoom, 4); layout(true); };
     new ResizeObserver(() => layout()).observe(viewport);
-    return {open};
+    // value: {id, x, y} or null. Shown when it is for the map on screen.
+    function setPlayer(value) { player = value ? {id: String(value.id), x: value.x, y: value.y} : null; if (current) describe(); layout(); }
+    return {open, setPlayer, get openId() { return dialog.open && current ? String(current.id) : null; }};
   }
   const api = {instruction, position, create};
   scope.MapleLocalMaps = api;

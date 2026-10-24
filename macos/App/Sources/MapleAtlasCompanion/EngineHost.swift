@@ -11,9 +11,18 @@ struct EngineReading: Decodable, Sendable {
     let confidence: Int?
     let text: String?
     let elapsed: Double?
+    /// The player's dot on the map (portal-data coordinates), when the minimap showed it.
+    let position: Position?
+    /// Why no position was found ("no-dot", "few-portals", …).
+    let positionNote: String?
+
+    struct Position: Decodable, Sendable, Equatable {
+        let x: Double
+        let y: Double
+    }
 
     private enum CodingKeys: String, CodingKey {
-        case phase, id, name, inliers, kind, confidence, text, elapsed
+        case phase, id, name, inliers, kind, confidence, text, elapsed, position, positionNote
     }
 
     init(from decoder: Decoder) throws {
@@ -33,6 +42,8 @@ struct EngineReading: Decodable, Sendable {
         confidence = (try? c.decodeIfPresent(Double.self, forKey: .confidence)).map { Int($0.rounded()) }
         text = try? c.decodeIfPresent(String.self, forKey: .text)
         elapsed = try? c.decodeIfPresent(Double.self, forKey: .elapsed)
+        position = try? c.decodeIfPresent(Position.self, forKey: .position)
+        positionNote = try? c.decodeIfPresent(String.self, forKey: .positionNote)
     }
 }
 
@@ -109,13 +120,13 @@ final class EngineHost: NSObject {
     }
 
     /// Runs one `atlasEngine.read`. Calls never overlap; a concurrent call throws `.busy`.
-    func read(_ dataURL: String) async throws -> EngineReading {
+    func read(_ dataURL: String, frameHeight: Int) async throws -> EngineReading {
         guard !reading else { throw EngineError.busy }
         reading = true
         defer { reading = false }
-        let script = "return JSON.stringify(await window.atlasEngine.read(frame));"
+        let script = "return JSON.stringify(await window.atlasEngine.read(frame, frameHeight));"
         let result = try await webView.callAsyncJavaScript(
-            script, arguments: ["frame": dataURL], contentWorld: .page)
+            script, arguments: ["frame": dataURL, "frameHeight": frameHeight], contentWorld: .page)
         guard let json = result as? String,
               let reading = try? JSONDecoder().decode(EngineReading.self, from: Data(json.utf8))
         else { throw EngineError.badResult }

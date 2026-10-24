@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'visual-tracker', 'visual-client', 'companion-ui', 'offline', 'runtime'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'visual-tracker', 'visual-client', 'companion-ui', 'offline', 'runtime'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
