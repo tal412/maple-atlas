@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""Build docs/index.html from the portable src/ and data/ snapshot."""
+
+from __future__ import annotations
+
+import json
+import re
+import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
+from pathlib import Path
+
+
+PROJECT = Path(__file__).resolve().parents[1]
+LUCIDE_URL = "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"
+
+
+
+class MarkupAudit(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids: set[str] = set()
+        self.duplicates: set[str] = set()
+        self.iframes = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        ident = attributes.get("id")
+        if ident:
+            if ident in self.ids:
+                self.duplicates.add(ident)
+            self.ids.add(ident)
+        if tag == "iframe":
+            self.iframes += 1
+
+    handle_startendtag = handle_starttag
+
+
+def ocean_art(source: str) -> str:
+    art = re.sub(r"^<\?xml[^>]*>\s*", "", source.strip())
+    ET.fromstring(art)
+    if not re.match(r"<g\b", art):
+        raise ValueError("World artwork must be the reviewed SVG group.")
+    for layer in ("sea", "ripples"):
+        pattern = rf'<rect\b[^>]*fill="url\(#mva-{layer}\)"[^>]*/>'
+        matches = re.findall(pattern, art)
+        if len(matches) != 1:
+            raise ValueError(f"Expected one {layer} ocean rectangle.")
+        original = matches[0]
+        if "data-ocean=" not in original:
+            art = art.replace(original, original.replace("<rect ", '<rect data-ocean="true" ', 1), 1)
+    return art
+
+
+def build(project: Path = PROJECT) -> Path:
+    src = project / "src"
+    read = lambda name: (src / name).read_text(encoding="utf-8")
+    template = read("template.html")
+    runtime = read("runtime.js")
+    data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
+    if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
+        raise ValueError("Expected exactly one world and one data insertion point.")
+    app = template.replace("<!-- MAPLE_WORLD -->", ocean_art(read("world.svg")))
+    encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+    runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
+    if re.search(r"</script", runtime, re.I):
+        raise ValueError("Runtime contains an unsafe inline script terminator.")
+    css = read("app.css") + "\n" + read("fullscreen.css") + "\n.cursor-interaction{cursor:pointer}\n"
+    page = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Explore Classic World maps, NPCs, monsters and recorded portal routes. Track your MapleStory quest progress with Maple Atlas.">
+  <meta name="theme-color" content="#f8fafd" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e1f20" media="(prefers-color-scheme: dark)">
+  <title>Maple Atlas</title>
+  <style>
+""" + css + """  </style>
+</head>
+<body>
+""" + app + "\n<script>\n" + read("storage.js") + "\n</script>\n" + '<script src="' + LUCIDE_URL + '"></script>\n<script>\n' + "window.mapleStorageReady.then(() => {\n" + runtime + "\n});\n</script>\n</body>\n</html>\n"
+    audit = MarkupAudit()
+    audit.feed(page)
+    if audit.duplicates or audit.iframes:
+        raise ValueError(f"Invalid output: duplicate IDs {sorted(audit.duplicates)}, iframes {audit.iframes}")
+    if not {"maple-atlas-concept", "mc-world", "mc-route", "mc-markers"}.issubset(audit.ids):
+        raise ValueError("Required application elements are missing.")
+    if "__INLINE_MAP_DATA__" in page or "<!-- MAPLE_WORLD -->" in page:
+        raise ValueError("An unresolved build placeholder remains.")
+    docs = project / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    output = docs / "index.html"
+    output.write_text(page, encoding="utf-8")
+    (docs / ".nojekyll").write_text("", encoding="utf-8")
+    print(f"Built {output.relative_to(project)}: {len(page.encode('utf-8')):,} bytes; {len(audit.ids)} unique IDs; no iframe.")
+    return output
+
+
+if __name__ == "__main__":
+    build()

@@ -1,0 +1,35 @@
+<div id="maple-atlas-concept">
+  
+  <div class="mc-shell">
+    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><label class="mc-profile">Level <input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
+    <div class="mc-workspace">
+      <aside class="mc-panel">
+        <form class="mc-routeform" id="mc-form">
+          <label class="mc-field"><span class="mc-letter">A</span><input id="mc-from" aria-label="Starting place" list="mc-towns" value="Lith Harbor" placeholder="Your current map"></label>
+          <label class="mc-field"><span class="mc-letter">B</span><input id="mc-to" aria-label="Destination" list="mc-towns" value="Henesys" placeholder="Where to?"></label>
+          <datalist id="mc-towns"><option>Lith Harbor</option><option>Henesys</option><option>Kerning City</option><option>Ellinia</option><option>Perion</option><option>Sleepywood</option><option>Florina Beach</option></datalist>
+          <div class="mc-formactions"><button type="button" id="mc-pickstart" class="cursor-interaction">Pick start on map</button><button type="submit" class="mc-primary cursor-interaction">Show route</button></div>
+          <div class="mc-route-summary" id="mc-caption" aria-live="polite">Select any numbered stop</div>
+        </form>
+        <div class="mc-status" id="mc-status" aria-live="polite">Location set manually · Change either field or select a place.</div>
+        <div class="mc-tabs" aria-label="Map panel"><button type="button" data-panel="place" aria-pressed="true" class="cursor-interaction">What's here?</button><button type="button" data-panel="route" aria-pressed="false" class="cursor-interaction">Directions</button><button type="button" data-panel="progress" aria-pressed="false" class="cursor-interaction">Progress</button></div>
+        <div class="mc-detail" id="mc-detail" aria-live="polite"></div>
+      </aside>
+      <div class="mc-map" id="mc-map" aria-label="Interactive concept atlas of Victoria Island">
+        <svg class="mc-atlas" id="mc-svg" role="img" aria-label="Original vector illustration of Victoria Island with actual map nodes and recorded portal connections"><g id="mc-world">
+<!-- MAPLE_WORLD -->
+<path id="mc-network" fill="none" stroke="var(--mc-ink)" stroke-width="1" opacity=".18" vector-effect="non-scaling-stroke"/>
+<path id="mc-routehalo" fill="none" stroke="var(--mc-paper)" stroke-width="8" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+          <path id="mc-route" fill="none" stroke="var(--mc-blue)" stroke-width="4" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle id="mc-traveler" r="6" fill="var(--mc-blue)" stroke="var(--mc-paper)" stroke-width="3" visibility="hidden"/>
+        </g></svg>
+        <div id="mc-markers"></div>
+        <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Quests for you</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button></div>
+        <div class="mc-zooms"><button type="button" id="mc-plus" aria-label="Zoom in" class="cursor-interaction"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-minus" aria-label="Zoom out" class="cursor-interaction"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" id="mc-fit" aria-label="Fit island" class="cursor-interaction"><i data-lucide="maximize" aria-hidden="true"></i></button></div>
+        <div class="mc-mapfooter"><span>Original map art · Game sprites © Nexon</span><span id="mc-zoom">100%</span></div>
+      </div>
+    </div>
+    <div class="mc-bottom"><span>Recorded portal routes · Community atlas positions · Data checked Oct 24, 2026</span><span id="mc-save-status" role="status">Progress stays in this browser</span></div>
+  </div>
+  
+</div>

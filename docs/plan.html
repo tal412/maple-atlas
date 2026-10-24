@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="The product, experience, data and implementation plan for Maple Atlas: a map-first Classic World companion.">
+  <title>Maple Atlas — Product & implementation plan</title>
+  <style>
+    :root{color-scheme:light dark;--bg:light-dark(#f8faf8,#101513);--surface:light-dark(#fff,#19221d);--soft:light-dark(#eaf3ed,#23382c);--ink:light-dark(#182c21,#e5eee7);--muted:light-dark(#53675a,#b7c9bc);--accent:light-dark(#12653e,#8ed5aa);--on-accent:light-dark(#fff,#07391f);--line:light-dark(#d8e3da,#3a4e40);--warm:light-dark(#fff2d5,#40351e)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent);text-underline-offset:.2em}a:focus-visible{outline:3px solid var(--accent);outline-offset:5px}main{max-width:1120px;margin:auto;padding:32px clamp(18px,5vw,64px) 72px}header{padding:28px 0 36px;border-bottom:1px solid var(--line)}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}h1{font-size:clamp(36px,6vw,66px);line-height:1.06;letter-spacing:-.045em;max-width:850px;margin:18px 0 24px}h2{font-size:clamp(25px,3.4vw,34px);line-height:1.2;letter-spacing:-.025em;margin:0 0 18px}h3{font-size:18px;line-height:1.35;margin:0 0 8px}p{margin:0 0 15px}.lead{font-size:clamp(18px,2.4vw,23px);line-height:1.55;max-width:850px;color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;border-radius:28px;padding:10px 22px;text-decoration:none;font-weight:650;background:var(--accent);color:var(--on-accent)}.button.secondary{background:var(--soft);color:var(--accent)}.meta{font-size:13px;color:var(--muted);margin-top:24px}section{padding:38px 0;border-bottom:1px solid var(--line)}.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}.card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:22px}.card p:last-child{margin-bottom:0}.note{padding:18px 22px;background:var(--warm);border-radius:18px;margin:20px 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.stat{padding:20px;background:var(--soft);border-radius:22px}.stat b{display:block;font-size:36px;line-height:1.1;letter-spacing:-.04em}.stat span{font-size:13px;display:block;margin-top:8px;color:var(--muted)}.zoom{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0}.zoom-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;overflow:hidden}.zoom-art{height:130px;background:var(--soft);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.zoom-art svg{width:100%;height:100%}.zoom-body{padding:18px}.zoom-body p{font-size:14px;color:var(--muted);margin:8px 0 0}.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--accent)}.flow{display:flex;gap:9px;flex-wrap:wrap;margin:20px 0}.flow span{padding:8px 13px;border-radius:12px;background:var(--soft);font-size:14px}.flow b{align-self:center;color:var(--muted)}ul,ol{padding-left:22px;margin:12px 0 0}li{margin:8px 0}table{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}th,td{text-align:left;vertical-align:top;padding:14px 12px;border-bottom:1px solid var(--line)}th{background:var(--soft);font-weight:650}td:first-child{font-weight:600;width:18%}code{font-size:.91em;background:var(--soft);border-radius:5px;padding:2px 5px;overflow-wrap:anywhere}.small{font-size:13px;color:var(--muted)}footer{padding-top:28px;color:var(--muted);font-size:14px}.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.timeline .card{padding:18px}.timeline p{font-size:14px;color:var(--muted)}.timeline .label{display:block;margin-bottom:10px}@media(max-width:720px){main{padding-top:12px}.two,.zoom{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.zoom-card{display:grid;grid-template-columns:110px 1fr}.zoom-art{height:100%;min-height:125px}.zoom-body{padding:16px}.stats{gap:8px}.stat{padding:16px 12px}.stat b{font-size:30px}table{font-size:12px}th,td{padding:11px 6px}}@media(max-width:380px){.timeline{grid-template-columns:1fr}.stat span{font-size:11px}.stat b{font-size:27px}}@media print{body{background:#fff;color:#182c21}main{padding:0;max-width:none}.actions{display:none}section,.card{break-inside:avoid}a{color:#12653e}.zoom-art{print-color-adjust:exact}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Maple Atlas · Product direction</div>
+    <h1>The Maple world,<br>ready to navigate.</h1>
+    <p class="lead">Open the map. Pick where you are, choose where you want to go, and discover useful stops along the actual sequence of maps.</p>
+    <div class="actions"><a class="button" href="index.html">Open interactive prototype</a><a class="button secondary" href="#delivery">See the delivery plan</a></div>
+    <p class="meta">Planning snapshot · 24 October 2026 · Victoria Island first · Independent fan companion</p>
+  </header>
+
+  <section aria-labelledby="direction">
+    <h2 id="direction">1. Build around the map</h2>
+    <p>Classic World’s grand launch was October 21, 2026, following Founder’s Access on October 6. Target that public release explicitly, rather than mixing modern MapleStory or older private-server data. See the <a href="https://www.nexon.com/maplestory/news/general/46506/grand-launch-release-notes">official release notes</a> and <a href="https://store.steampowered.com/oldnews/?appgroupname=MapleStory&amp;appids=216150&amp;enddate=1793516400&amp;feed=steam_community_announcements">official Steam announcement feed</a>.</p>
+    <p><a href="https://mapleclassic.xyz/">Mapleclassic.xyz</a> already combines valuable map, monster, NPC, quest and routing tools. Retain that connected information. Rebuild the experience around a persistent, full-screen map, with search and context floating above it.</p>
+    <div class="two">
+      <article class="card"><h3>Desktop</h3><p>A compact From/To panel sits at the upper left. Selecting a place opens a side sheet; selecting directions changes that sheet into the route itinerary. The map stays visible. Search accepts cities, individual maps, NPCs, monsters and quests, with disambiguated results.</p></article>
+      <article class="card"><h3>Mobile</h3><p>Use a top search field, reachable map controls and a bottom sheet with collapsed, half and expanded states. Pinch to zoom; tap a marker to inspect; choose “Start here,” “Directions” or “Add stop.” Preserve the selected place when the sheet changes height.</p></article>
+    </div>
+    <p class="note">“Live” means responsive routes and progress updates. Location is selected manually; the app does not read the running game or track the character automatically.</p>
+  </section>
+
+  <section aria-labelledby="zoom">
+    <h2 id="zoom">2. One visual language, three levels of detail</h2>
+    <p>Use original SVG artwork that respects Maple geography: recognizable coastlines, towns, forests and regional relationships. Material 3 surfaces, typography, rounded sheets, clear selection states and restrained motion keep controls legible. Character artwork remains authentic PNG sprites, not generic character icons.</p>
+    <div class="zoom" aria-label="Planned semantic zoom progression; diagrams are schematic, not geographic maps">
+      <article class="zoom-card"><div class="zoom-art" aria-hidden="true"><svg viewBox="0 0 260 130"><path d="M49 86Q24 53 70 28Q102 8 139 32Q194 15 216 55Q236 97 187 111Q124 127 84 106Z" fill="none" stroke="currentColor" stroke-width="2" opacity=".28"/><path d="M61 79Q107 95 131 64T200 51" fill="none" stroke="currentColor" stroke-width="3" opacity=".4"/><g fill="currentColor"><circle cx="61" cy="79" r="6"/><circle cx="131" cy="64" r="6"/><circle cx="200" cy="51" r="6"/></g></svg></div><div class="zoom-body"><span class="label">Overview</span><h3>Choose a destination</h3><p>Towns, major routes and your planned journey. Hide minor labels until useful.</p></div></article>
+      <article class="zoom-card"><div class="zoom-art" aria-hidden="true"><svg viewBox="0 0 260 130"><path d="M25 94L76 76L127 88L166 46L229 34M127 88L194 111" fill="none" stroke="currentColor" stroke-width="3" opacity=".4"/><g fill="currentColor"><circle cx="25" cy="94" r="5"/><circle cx="76" cy="76" r="5"/><circle cx="127" cy="88" r="7"/><circle cx="166" cy="46" r="5"/><circle cx="229" cy="34" r="5"/><circle cx="194" cy="111" r="5"/></g></svg></div><div class="zoom-body"><span class="label">Region & fields</span><h3>See every transition</h3><p>Named maps, branches and selectable route steps. Expand hidden corridors.</p></div></article>
+      <article class="zoom-card"><div class="zoom-art" aria-hidden="true"><svg viewBox="0 0 260 130"><g fill="none" stroke="currentColor" stroke-width="3" opacity=".35"><path d="M20 105H240M25 65H101M143 40H233M68 65V105M181 40V105"/></g><g fill="currentColor"><rect x="37" y="82" width="10" height="23" rx="4"/><rect x="204" y="82" width="10" height="23" rx="4"/><circle cx="84" cy="58" r="6"/><circle cx="167" cy="33" r="6"/></g></svg></div><div class="zoom-body"><span class="label">Local map · planned</span><h3>Find the right portal</h3><p>Verified platforms, NPC positions and entrances, using separate local coordinates.</p></div></article>
+    </div>
+    <p class="small">These three diagrams explain the planned zoom behavior; they are not map data. Local terrain views require verified local assets or independently authored, validated geometry.</p>
+    <p>“What’s here?” opens NPCs, monsters, quests and connected places. Show sprite, name, level where applicable, source status and an action. Shops can appear as recorded places now; inventory, prices and item recommendations wait for verified shop data. Never treat recorded spawn points as live monster counts.</p>
+  </section>
+
+  <section aria-labelledby="routes">
+    <h2 id="routes">3. Directions that explain the journey</h2>
+    <p>Users can type endpoints or set them by clicking places. Draw one continuous highlighted route over the same geometry as the visible roads; keep branches subdued. Selecting any route step reveals its contents and incoming/outgoing portal. Show the full intermediate sequence even when a corridor is collapsed visually.</p>
+    <div class="flow" aria-label="Navigation interaction flow"><span>Choose start</span><b aria-hidden="true">→</b><span>Choose destination</span><b aria-hidden="true">→</b><span>Inspect steps</span><b aria-hidden="true">→</b><span>Mark arrival</span></div>
+    <p>The verified export route from Lith Harbor to Henesys contains ten maps and nine transitions, including all three Thicket Around the Beach maps, 3-Way Road-Split and the western Henesys fields. Count portal transitions initially. Offer estimated time or cheapest travel only after timings, fares and restrictions have evidence.</p>
+    <p>Keep edges directed. Preserve alternative portals between the same maps and their named arrivals. Unknown access conditions must remain visible; unavailable destinations should produce a clear explanation. “I’m here now” advances the itinerary manually and recalculates from that map.</p>
+  </section>
+
+  <section aria-labelledby="personal">
+    <h2 id="personal">4. Make discovery personal</h2>
+    <p>Each character gets a name, level, class and separate quest journal: Not started, In progress, Completed or Skipped. Changes are reversible. Save locally first, with export/import; optional account sync comes later. Completion is user-entered, never inferred from visiting a map.</p>
+    <p>A “For you” layer ranks useful nearby quests, objectives and stops using eligibility, prerequisites, class, player goals and added travel. Explain each suggestion: “Hunt objective on your route” or “Requires level 20.” Minimum level alone cannot establish eligibility.</p>
+    <p>Loot recommendations need verified monster-to-item links, class relevance and ownership preferences. Store recommendations need verified inventory. Unknown drop rates stay unknown. Let users add a suggested stop, preview the extra transitions and remove it before starting.</p>
+  </section>
+
+  <section aria-labelledby="truth">
+    <h2 id="truth">5. Keep geography and evidence separate</h2>
+    <div class="stats"><div class="stat"><b>64</b><span>published community atlas anchors</span></div><div class="stat"><b>246</b><span>current fixture map records</span></div><div class="stat"><b>457</b><span>directed portal pairs</span></div></div>
+    <p>The fixture combines pinned <a href="https://github.com/ohmi69/osms_datamine_dashboard/tree/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current">OSMS export records</a> with <a href="https://maplestory.quest/world">community atlas positions</a>. All included type 1/2/3 portal destinations and named arrivals validate; activation conditions are not playtested. Other portal types and destinations outside this fixture remain excluded.</p>
+    <p>There are 182 maps without published atlas anchors. Preserve them in search and routing. Three forest positions used to connect collapsed corridors are explicitly schematic. They do not become verified anchors. The return-town field <code>homeId</code> is not physical containment; the earlier coordinate inheritance error is fixed.</p>
+    <p>Model confidence per field: exported record, community position, inferred association or playtested fact. Atlas anchors are approximate community placements, not verified official client coordinates. Quest records may exist before availability; similarly named NPCs require ID-level review. See the <a href="data/reliability-summary.json">public reliability summary</a> and <a href="data/validated-portal-graph.json">validated portal graph</a>.</p>
+  </section>
+
+  <section aria-labelledby="architecture">
+    <h2 id="architecture">6. A practical production architecture</h2>
+    <p>Build with React and TypeScript. Use <a href="https://leafletjs.com/examples/crs-simple/crs-simple.html">Leaflet CRS.Simple</a> for the non-geographic canvas and an SVG overlay for original world art. Keep world coordinates, artwork coordinates and local portal coordinates distinct through explicit adapters. Three.js adds little unless a later feature genuinely needs 3D.</p>
+    <p>Use <a href="https://base-ui.com/react/overview/about">Base UI</a> for accessible React behavior, with owned Material 3 design tokens and styling. It supplies primitives, not the visual design. Avoid depending on Material Web for the foundation while its <a href="https://github.com/material-components/material-web">official repository states maintenance mode</a>.</p>
+    <div class="flow" aria-label="Data ingestion pipeline"><span>Pinned sources</span><b aria-hidden="true">→</b><span>Normalize + validate</span><b aria-hidden="true">→</b><span>Versioned data bundle</span><b aria-hidden="true">→</b><span>Search + route + UI</span></div>
+    <p>The published app is a static frontend on GitHub Pages. Character level, selected places and quest statuses are saved locally with <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB">IndexedDB</a>. No backend or account is required. Clearing site data clears local progress; a different device has its own save.</p>
+    <p>Core entities: Map, AtlasAnchor, Portal, NPC, Monster, Quest, Item, ShopInventory, Character and QuestProgress. Use stable IDs; retain source version and confidence. A Portal stores source/destination IDs, arrival names, alternatives, conditions and nullable costs. An anchor stores its coordinate system and provenance independently.</p>
+    <p>Run ingestion as a reproducible job: pin exports, normalize, check joins, diff releases, review anomalies, publish an immutable bundle. Start with directed breadth-first search; introduce weighted routing only when costs are defensible. Load details and sprites lazily, cache the shell, and retain a usable textual itinerary offline. Confirm reuse terms before distributing game assets at production scale.</p>
+  </section>
+
+  <section aria-labelledby="delivery-heading" id="delivery">
+    <h2 id="delivery-heading">7. Deliver a focused Victoria MVP</h2>
+    <p>Estimate: six to eight weeks for a small team with product/design, frontend and data engineering coverage. Data verification is the main scheduling uncertainty.</p>
+    <div class="timeline"><article class="card"><span class="label">Weeks 1–2</span><h3>Foundation</h3><p>Lock release scope, audit entities, define tokens, redraw world art and implement responsive map/search.</p></article><article class="card"><span class="label">Weeks 3–4</span><h3>Navigation</h3><p>Directed routes, portal details, corridors, sprites, place inspection and keyboard/mobile interaction.</p></article><article class="card"><span class="label">Weeks 5–6</span><h3>Personal use</h3><p>Character profiles, local quest progress, explainable recommendations and representative in-game route checks.</p></article><article class="card"><span class="label">Weeks 7–8</span><h3>Release buffer</h3><p>Accessibility, performance, release diffs, offline behavior and unresolved data corrections.</p></article></div>
+    <table><thead><tr><th>Area</th><th>Interactive prototype</th><th>Production target</th></tr></thead><tbody><tr><td>Map & routing</td><td>Original vector art, selectable nodes, pan/zoom and exported portal routes.</td><td>Polished gestures, semantic zoom, complete coverage validation and access-aware routing.</td></tr><tr><td>Place details</td><td>Recorded NPCs/monsters with real sprites, quest associations and connections.</td><td>Verified local positions, shop inventories and complete prerequisite logic.</td></tr><tr><td>Progress</td><td>Manual quest statuses, level filtering and persistent IndexedDB saves on this device.</td><td>Separate characters, import/export and recovery.</td></tr></tbody></table>
+    <p class="small">Account sync, social features, automated game tracking, other continents and advanced route optimization are outside this initial MVP.</p>
+  </section>
+
+  <section aria-labelledby="acceptance">
+    <h2 id="acceptance">8. Define “ready” with observable checks</h2>
+    <ul>
+      <li>Every route step resolves to a real map and directed portal; arrival names match. Hidden corridors expand into the exact underlying sequence.</li>
+      <li>Original art and route overlays share geometry. Decorative crossings never create graph junctions; schematic positions remain identified.</li>
+      <li>Every visible NPC/monster sprite joins by ID. Missing images show an honest fallback, never another creature.</li>
+      <li>At 320 px, controls remain reachable; keyboard, focus, screen-reader labels, contrast and reduced motion are checked.</li>
+      <li>Progress survives reload, stays isolated by character and can be undone. Unknown requirements never become false “available” badges.</li>
+      <li>Test the ten-map Lith–Henesys route, a hidden-map destination, reverse routes, disconnected destinations and export changes. Validate representative routes in-game before claiming runtime reliability.</li>
+    </ul>
+  </section>
+  <footer><p>Maple Atlas is an independent concept. MapleStory game names, data and character artwork belong to their respective owners. The original vector interface illustrates the product direction; source records and authored geometry have different levels of certainty.</p><a href="index.html">Return to the interactive map →</a></footer>
+</main>
+</body>
+</html>

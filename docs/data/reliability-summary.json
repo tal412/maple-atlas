@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-24",
+  "verdict": "Included portal references and named arrivals pass export validation. Runtime access, complete transport coverage, and exact geographic placement remain unverified.",
+  "sources": {
+    "originalDataminePublisher": "https://osmsdataexplorer.com/",
+    "pinnedDatamine": {
+      "commit": "a44f101bffa8272164ca47484ab18c078dcab0a0",
+      "maps": "https://raw.githubusercontent.com/ohmi69/osms_datamine_dashboard/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/maps.json",
+      "monsters": "https://raw.githubusercontent.com/ohmi69/osms_datamine_dashboard/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/monsters.json",
+      "quests": "https://raw.githubusercontent.com/ohmi69/osms_datamine_dashboard/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/quests.json",
+      "portals": "https://raw.githubusercontent.com/ohmi69/osms_datamine_dashboard/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/portals.json",
+      "lookups": "https://raw.githubusercontent.com/ohmi69/osms_datamine_dashboard/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/lookups.json",
+      "localBytesMatchPinnedGitBlobs": true
+    },
+    "currentAtlasEndpoint": "https://maplestory.quest/api/world/Victoria%20Island",
+    "atlasMethodology": "https://maplestory.quest/world",
+    "sourceLimitations": "https://maplestory.quest/about"
+  },
+  "currentScope": {
+    "mapRecords": 246,
+    "publishedCommunityAtlasAnchors": 64,
+    "mapsWithoutPublishedAtlasAnchor": 182,
+    "directedInterMapPairs": 457,
+    "eligibleNumericPortalTypes": [
+      1,
+      2,
+      3
+    ],
+    "schematicCorridorPositions": 3,
+    "sourceCommit": "a44f101bffa8272164ca47484ab18c078dcab0a0"
+  },
+  "portalValidation": {
+    "allEligibleRecordsWithinFixture": 732,
+    "byType": {
+      "1": 294,
+      "2": 389,
+      "3": 49
+    },
+    "intraMapRecords": 202,
+    "intraMapByType": {
+      "1": 178,
+      "2": 12,
+      "3": 12
+    },
+    "interMapRecords": 530,
+    "interMapByType": {
+      "2": 377,
+      "1": 116,
+      "3": 37
+    },
+    "uniqueDirectedInterMapPairs": 457,
+    "normalType2UniqueDirectedPairs": 357,
+    "additionalPairsFromTypes1And3": 100,
+    "primaryToPrimaryDirectedPairs": 124,
+    "normalType2PrimaryToPrimaryDirectedPairs": 123,
+    "additionalPrimaryPairsFromTypes1And3": 1,
+    "primaryToPrimaryUndirectedPairs": 62,
+    "pairsWithMultipleSourcePortals": 43,
+    "arrivalNamesMissing": 0,
+    "arrivalNamesAmbiguous": 0,
+    "outsideFixtureRecords": 133,
+    "otherTypeRecords": 53
+  },
+  "exampleRoute": {
+    "from": "10000000",
+    "to": "10001000",
+    "mapIds": [
+      "10000000",
+      "10000010",
+      "10000011",
+      "10000012",
+      "10000013",
+      "10000020",
+      "10001030",
+      "10001020",
+      "10001010",
+      "10001000"
+    ],
+    "names": [
+      "Lith Harbor",
+      "Right Around Lith Harbor",
+      "Thicket Around the Beach I",
+      "Thicket Around the Beach II",
+      "Thicket Around the Beach III",
+      "3-Way Road-Split",
+      "Forest West of Henesys",
+      "A Hill West of Henesys",
+      "Henesys Hunting Ground I",
+      "Henesys"
+    ],
+    "transitions": 9,
+    "method": "Directed unweighted BFS using all type1/2/3 inter-map pairs",
+    "allStepsHaveNamedArrival": true
+  },
+  "corrections": [
+    {
+      "issue": "Return-town affiliation was used as physical containment.",
+      "status": "Fixed. Only a spot primary map receives that published artwork anchor. homeId is return-town metadata; no inherited coordinates."
+    },
+    {
+      "issue": "A type-2-only filter omitted valid exported portal variants.",
+      "status": "Expanded from 357 to 457 directed inter-map pairs using types 1, 2 and 3, preserving multiple source portal alternatives."
+    }
+  ],
+  "coordinates": {
+    "publishedAnchors": "Third-party published atlas artwork anchors, not independently verified official client world-map coordinates.",
+    "unplacedMaps": "Retained as searchable and routable records; do not imply a geographic location.",
+    "schematicCorridors": "Three additional forest positions are explicitly authored schematic positions, not published atlas anchors. Full intermediate map sequences remain available.",
+    "localPortalCoordinates": "Local game-map coordinates are separate from world artwork coordinates."
+  },
+  "corridors": {
+    "primaryMaps": 64,
+    "schematicInteriorMaps": 3,
+    "directedCorridors": 12,
+    "undirectedCorridors": 6,
+    "uniqueSharedSegments": 6,
+    "validation": {
+      "allConsecutivePortalPairsExist": true,
+      "allNamedArrivalsVerified": true,
+      "allInteriorsLackPublishedAtlasAnchors": true,
+      "allSequencesShortestSubjectToNoInteriorPrimary": true,
+      "allReverseSequencesIdenticalReversal": true,
+      "allEndpointsExactPublishedPrimaryAnchors": true,
+      "nonEndpointCurveCrossingsWith62DirectCurves": [],
+      "samplesPerCurve": 201
+    },
+    "caveat": "Published atlas anchors are third-party. Three newly drawn interior anchors are explicitly schematic. Portal presence and matched arrival names do not verify runtime conditions, transport costs, or access gates."
+  },
+  "geometryValidationLimits": "Sampled curve-intersection checks establish properties of authored artwork only; they do not establish exact in-game paths or runtime reachability.",
+  "availability": {
+    "automaticGameLocation": false,
+    "liveMonsterCounts": false,
+    "shopInventoryVerified": false,
+    "questEligibilityFullyVerified": false,
+    "runtimePortalConditionsVerified": false,
+    "exactTravelSeconds": null,
+    "exactFares": null
+  },
+  "exclusions": {
+    "outsideFixturePortalRecords": 133,
+    "otherNumericTypeRecords": 53,
+    "note": "Outside-fixture maps, special scripts and other portal types require separate research. A client record does not guarantee current public availability."
+  },
+  "caveats": [
+    "Export-validated connection graph, not runtime-playtested navigation. Named arrivals exist for every included portal record.",
+    "Exact costs, timings, quest gates, class/level restrictions and activation conditions are not established by these portal records. Use unknown, not zero, for costs/timing.",
+    "Types1 and3 were previously hidden only because the preview filtered for type2. They are valid exported numeric portal variants with verified destination records; visual/activation semantics have not been independently verified here.",
+    "Top-level name/arrival/type choose a deterministic representative (prefer2, then1, then3). alternatives preserves EVERY source portal; exact intra-map choice needs local position and restrictions.",
+    "Intra-map teleports are retained separately and should not count as world-map transitions.",
+    "Outside-fixture destinations and types other than1/2/3 are explicit exclusions; this is not a claim of complete game transport coverage.",
+    "No homeId or return-town coordinate inheritance is used."
+  ],
+  "artAndDataRights": "Game data and character artwork belong to their respective owners, including Nexon. Public availability does not establish a redistribution license or supported API contract."
+}

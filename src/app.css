@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
+    #maple-atlas-concept { --mc-ink:light-dark(#213831,#e1eae5); --mc-muted:light-dark(#627269,#acbdb2); --mc-paper:light-dark(#fffefa,#202e29); --mc-soft:light-dark(#f4f5ef,#293b32); --mc-edge:light-dark(#dce3da,#405247); --mc-blue:light-dark(#2564de,#83acff); --mc-orange:light-dark(#a44c20,#ffb889); --mc-water:light-dark(#d7e9e9,#213e43); --mc-land:light-dark(#e2e7c5,#4b6047); --mc-forest:light-dark(#bad2a8,#375444); --mc-sand:light-dark(#e6d9b3,#7b7051); --mc-road:light-dark(#fff4cc,#b5a77c); --mc-shadow:light-dark(#1935291a,#00000038); font:14px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:var(--mc-ink); color-scheme:light dark; }
+    #maple-atlas-concept { --mc-ink:light-dark(#1f1f1f,#e3e3e3); --mc-muted:light-dark(#444746,#c4c7c5); --mc-paper:light-dark(#f8fafd,#1e1f20); --mc-soft:light-dark(#edf2fa,#282a2c); --mc-edge:light-dark(#c4c7c5,#444746); --mc-blue:light-dark(#0b57d0,#a8c7fa); font-family:'Roboto',Arial,sans-serif; }
+    #maple-atlas-concept * { box-sizing:border-box; }
+    #maple-atlas-concept button,#maple-atlas-concept input,#maple-atlas-concept select { font:inherit; color:inherit; }
+    #maple-atlas-concept button { border:1px solid var(--mc-edge); background:var(--mc-paper); border-radius:20px; min-height:40px; padding:8px 14px; font-weight:500; }
+    #maple-atlas-concept button:disabled { opacity:.45; }
+    #maple-atlas-concept button:hover:not(:disabled) { background:var(--mc-soft); }
+    #maple-atlas-concept .mc-shell { background:var(--mc-paper); overflow:hidden; position:relative; }
+    #maple-atlas-concept .mc-header { min-height:58px; display:flex; align-items:center; gap:10px; padding:12px 112px 12px 18px; border-bottom:1px solid var(--mc-edge); flex-wrap:wrap; }
+    #maple-atlas-concept .mc-logo { display:flex; align-items:center; gap:8px; font-size:18px; font-weight:650; letter-spacing:-.6px; }
+    #maple-atlas-concept .mc-logo i { color:var(--mc-orange); }
+    #maple-atlas-concept .mc-header small { font-size:11px; color:var(--mc-muted); }
+    #maple-atlas-concept .mc-profile { margin-left:auto; display:flex; gap:6px; align-items:center; font-size:12px; }
+    #maple-atlas-concept .mc-profile input { width:48px; padding:5px; border:1px solid var(--mc-edge); background:var(--mc-soft); border-radius:6px; }
+    #maple-atlas-concept .mc-workspace { position:relative; min-height:670px; }
+    #maple-atlas-concept .mc-panel { position:absolute; top:16px; left:16px; width:276px; max-height:calc(100% - 64px); overflow:auto; background:var(--mc-paper); z-index:3; padding:16px; border:1px solid var(--mc-edge); border-radius:16px; box-shadow:0 5px 24px var(--mc-shadow); }
+    #maple-atlas-concept .mc-routeform { display:grid; gap:8px; }
+    #maple-atlas-concept .mc-field { display:flex; align-items:center; gap:8px; border:0; background:var(--mc-soft); border-radius:28px; padding:12px; }
+    #maple-atlas-concept .mc-letter { flex-shrink:0; display:grid; place-items:center; height:22px; width:22px; font-size:11px; font-weight:650; border:1px solid var(--mc-blue); color:var(--mc-blue); border-radius:50%; }
+    #maple-atlas-concept .mc-field input { background:transparent; border:0; min-width:0; width:100%; padding:0; outline-offset:5px; }
+    #maple-atlas-concept .mc-formactions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; }
+    #maple-atlas-concept .mc-formactions button { width:100%; min-width:0; min-height:48px; border-radius:24px; font-size:12px; white-space:normal; padding:8px; }
+    #maple-atlas-concept .mc-status { color:var(--mc-muted); font-size:11px; margin:8px 0 15px; min-height:30px; }
+    #maple-atlas-concept .mc-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; width:100%; border-bottom:1px solid var(--mc-edge); margin-bottom:16px; }
+    #maple-atlas-concept .mc-tabs button { width:100%; min-width:0; min-height:48px; padding:8px 2px; border:0; border-radius:0; background:transparent; font-size:12px; color:var(--mc-muted); }
+    #maple-atlas-concept .mc-tabs button[aria-pressed=true] { color:var(--mc-blue); box-shadow:0 2px var(--mc-blue); }
+    #maple-atlas-concept .mc-detail h3 { font-size:24px; line-height:1.15; margin:0 0 4px; letter-spacing:-.8px; font-weight:650; }
+    #maple-atlas-concept .mc-eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:1.4px; color:var(--mc-muted); margin-bottom:6px; }
+    #maple-atlas-concept .mc-secondary { color:var(--mc-muted); font-size:12px; }
+    #maple-atlas-concept .mc-placeactions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; margin:15px 0; }
+    #maple-atlas-concept .mc-placeactions button { width:100%; min-width:0; min-height:48px; border-radius:24px; padding:8px; font-size:12px; }
+    #maple-atlas-concept button.mc-primary { background:var(--mc-blue); color:light-dark(#ffffff,#10264b); border-color:transparent; }
+    #maple-atlas-concept button.mc-primary:hover { filter:brightness(.95); background:var(--mc-blue); }
+    #maple-atlas-concept .mc-category { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; width:100%; margin-bottom:12px; }
+    #maple-atlas-concept .mc-category button { width:100%; min-width:0; font-size:11px; min-height:48px; border-radius:24px; padding:8px 3px; }
+    #maple-atlas-concept .mc-category button[aria-pressed=true] { background:var(--mc-soft); border-color:var(--mc-ink); }
+    #maple-atlas-concept .mc-row { padding:11px 0; border-bottom:1px solid var(--mc-edge); display:flex; gap:9px; align-items:flex-start; }
+    #maple-atlas-concept .mc-row strong { display:block; font-weight:600; font-size:13px; }
+    #maple-atlas-concept .mc-row small { display:block; color:var(--mc-muted); font-size:11px; margin-top:3px; }
+    #maple-atlas-concept .mc-row button { margin-left:auto; min-height:30px; padding:5px 7px; font-size:11px; flex-shrink:0; }
+    #maple-atlas-concept .mc-row .mc-symbol { height:28px; width:28px; border-radius:8px; display:grid; place-items:center; flex-shrink:0; background:var(--mc-soft); color:var(--mc-orange); }
+    #maple-atlas-concept .mc-map { position:absolute; inset:0; min-width:0; height:100%; background:var(--mc-water); overflow:hidden; touch-action:none; }
+    #maple-atlas-concept .mc-map svg.mc-atlas { display:block; width:100%; height:100%; }
+    #maple-atlas-concept .mc-maptools { position:absolute; top:16px; left:308px; display:flex; gap:6px; flex-wrap:wrap; max-width:calc(100% - 328px); z-index:2; }
+    #maple-atlas-concept .mc-maptools button { box-shadow:0 3px 14px var(--mc-shadow); font-size:12px; border:0; }
+    #maple-atlas-concept .mc-maptools button[aria-pressed=true] { background:light-dark(#d3e3fd,#0842a0); color:light-dark(#041e49,#d3e3fd); }
+    #maple-atlas-concept .mc-place { position:absolute; transform:translate(-50%,-20px); display:flex; flex-direction:column; align-items:center; background:transparent; border:0; padding:8px; border-radius:8px; min-width:44px; max-width:150px; box-shadow:none; white-space:nowrap; }
+    #maple-atlas-concept .mc-place:hover { background:transparent !important; }
+    #maple-atlas-concept .mc-place .mc-dot { height:13px; width:13px; border:3px solid var(--mc-paper); border-radius:50%; background:var(--mc-ink); box-shadow:0 0 0 1px var(--mc-ink); margin-bottom:5px; }
+    #maple-atlas-concept .mc-place .mc-tag { font-size:12px; font-weight:600; background:var(--mc-paper); padding:3px 7px; border-radius:6px; box-shadow:0 2px 8px var(--mc-shadow); }
+    #maple-atlas-concept .mc-place[data-selected=true] .mc-tag { color:light-dark(#fff,#10264b); background:var(--mc-blue); }
+    #maple-atlas-concept .mc-place[data-endpoint=true] .mc-dot { width:24px; height:24px; background:var(--mc-blue); color:light-dark(#fff,#10264b); display:grid; place-items:center; font-size:10px; border-width:2px; }
+    #maple-atlas-concept .mc-place .mc-badge { position:absolute; top:0; right:0; font-size:10px; background:var(--mc-orange); color:light-dark(#fff,#2c1d12); padding:1px 5px; border-radius:9px; }
+    #maple-atlas-concept .mc-zooms { position:absolute; right:14px; bottom:55px; display:grid; gap:5px; z-index:2; }
+    #maple-atlas-concept .mc-zooms button { width:38px; height:38px; display:grid; place-items:center; box-shadow:0 3px 14px var(--mc-shadow); padding:5px; }
+    #maple-atlas-concept .mc-mapfooter { position:absolute; bottom:0; left:0; right:0; padding:10px 14px; display:flex; gap:10px; justify-content:space-between; font-size:11px; background:var(--mc-paper); color:var(--mc-muted); }
+    #maple-atlas-concept .mc-mapcaption { position:absolute; bottom:48px; left:308px; background:var(--mc-paper); padding:9px 12px; border-radius:10px; font-size:12px; box-shadow:0 3px 14px var(--mc-shadow); max-width:calc(100% - 380px); }
+    #maple-atlas-concept .mc-steplist { list-style:none; margin:12px 0; padding:0; }
+    #maple-atlas-concept .mc-steplist li { border-left:2px solid var(--mc-blue); padding:8px 0 8px 13px; font-size:13px; }
+    #maple-atlas-concept .mc-steplist li small { display:block; color:var(--mc-muted); font-size:11px; }
+    #maple-atlas-concept .mc-bottom { border-top:1px solid var(--mc-edge); padding:8px 16px; font-size:11px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; color:var(--mc-muted); }
+    #maple-atlas-concept .mc-empty { padding:18px 0; color:var(--mc-muted); }
+    #maple-atlas-concept .mc-screenreader { position:absolute; width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+    #maple-atlas-concept .mc-panel {width:296px;border-radius:24px;}
+    #maple-atlas-concept .mc-maptools {left:328px;max-width:calc(100% - 348px);}
+    #maple-atlas-concept .mc-mapcaption {left:328px;max-width:calc(100% - 390px);}
+    #maple-atlas-concept .mc-place {width:44px;height:44px;min-width:44px;max-width:44px;min-height:44px;padding:0;border-radius:50%;transform:translate(-50%,-50%);display:block;z-index:1;}
+    #maple-atlas-concept .mc-place .mc-tag {position:absolute;left:22px;top:42px;display:none;width:max-content;max-width:240px;line-height:16px;white-space:normal;overflow:visible;text-overflow:clip;pointer-events:none;}
+    #maple-atlas-concept .mc-place.mc-showlabel .mc-tag {display:block;}
+    #maple-atlas-concept .mc-place .mc-dot {position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:14px;width:14px;border:2px solid var(--mc-paper);margin:0;background:light-dark(#d7ab42,#e4c071);box-shadow:0 0 0 1px light-dark(#8e773e,#5d4b23);font-size:10px;}
+    #maple-atlas-concept .mc-place[data-route=true] .mc-dot {width:22px;height:22px;background:var(--mc-blue);color:light-dark(#fff,#10264b);display:grid;place-items:center;box-shadow:0 0 0 1px var(--mc-blue);}
+    #maple-atlas-concept .mc-place[data-selected=true] {z-index:2;}
+    #maple-atlas-concept .mc-place[data-selected=true] .mc-dot {box-shadow:0 0 0 4px light-dark(#d3e3fd,#0842a0);}
+    #maple-atlas-concept .mc-quest {padding:12px 0;border-bottom:1px solid var(--mc-edge);}
+    #maple-atlas-concept .mc-quest strong {display:block;font-size:14px;font-weight:500;}
+    #maple-atlas-concept .mc-quest small {display:block;font-size:12px;color:var(--mc-muted);margin-top:4px;}
+    #maple-atlas-concept .mc-quest select {margin-top:8px;min-height:38px;padding:7px 9px;border:1px solid var(--mc-edge);border-radius:10px;background:var(--mc-soft);max-width:100%;}
+    #maple-atlas-concept .mc-datahint {font-size:12px;color:var(--mc-muted);padding:12px 0;}
+    #maple-atlas-concept .mc-source {display:block;margin-top:12px;font-size:11px;color:var(--mc-blue);}
+    #maple-atlas-concept .mc-sprite {display:grid;place-items:center;width:48px;height:50px;flex:0 0 48px;}
+    #maple-atlas-concept .mc-sprite img {display:block;max-width:48px;max-height:50px;object-fit:contain;image-rendering:pixelated;}
+    #maple-atlas-concept .mc-expand {margin-top:15px;width:100%;}
+    #maple-atlas-concept .mc-steplist li {padding:5px 0 8px 8px;}
+    #maple-atlas-concept .mc-steplist button {background:transparent;border:0;border-radius:8px;padding:5px;text-align:left;min-height:30px;font-size:12px;width:100%;}
+    @media(max-width:700px) { #maple-atlas-concept .mc-workspace {min-height:930px;} #maple-atlas-concept .mc-panel{display:contents;} #maple-atlas-concept .mc-routeform {position:absolute;z-index:3;top:12px;left:12px;right:12px;padding:10px;background:var(--mc-paper);border-radius:14px;box-shadow:0 4px 20px var(--mc-shadow);} #maple-atlas-concept .mc-status {display:none;} #maple-atlas-concept .mc-tabs {position:absolute;z-index:4;top:540px;left:12px;right:12px;padding:15px 16px 8px;margin:0;background:var(--mc-paper);border-radius:18px 18px 0 0;} #maple-atlas-concept .mc-detail{position:absolute;z-index:3;top:596px;left:12px;right:12px;bottom:40px;overflow:auto;padding:12px 16px;background:var(--mc-paper);border-radius:0 0 16px 16px;} #maple-atlas-concept .mc-maptools {top:190px;left:12px;max-width:calc(100% - 24px);} #maple-atlas-concept .mc-mapcaption{display:none;} #maple-atlas-concept .mc-zooms{top:252px;bottom:auto;} #maple-atlas-concept .mc-profile{display:none;} #maple-atlas-concept .mc-field input{font-size:16px;} }
+    @media(max-width:700px) {#maple-atlas-concept .mc-tabs {width:auto;} }
+    @media(pointer:coarse) {#maple-atlas-concept button {min-height:48px;} #maple-atlas-concept .mc-zooms button {width:48px;height:48px;} }
+  
+    #maple-atlas-concept .mc-route-summary {font-size:11px;color:var(--mc-muted);padding:4px 2px 0;overflow-wrap:anywhere;}
+    #maple-atlas-concept .mc-quest-heading {display:flex;gap:10px;align-items:center;}
+    #maple-atlas-concept .mc-quest-heading>div {min-width:0;}
+    #maple-atlas-concept .mc-quest-objectives,#maple-atlas-concept .mc-quest-rewards {margin-top:10px;}
+    #maple-atlas-concept .mc-quest-item {display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;min-width:0;}
+    #maple-atlas-concept .mc-quest-item .mc-sprite {width:32px;height:36px;flex-basis:32px;}
+    #maple-atlas-concept .mc-quest-item .mc-sprite img {max-width:32px;max-height:36px;}
+    #maple-atlas-concept .mc-row>div {min-width:0;overflow-wrap:anywhere;}
+    #maple-atlas-concept .mc-nearby button {margin:7px 0 0;min-height:40px;padding:8px 12px;}
+    #maple-atlas-concept .mc-place[data-schematic=true]:not([data-route=true]) .mc-dot {border-radius:3px;transform:translate(-50%,-50%) rotate(45deg);}
+    #maple-atlas-concept .mc-quest select {min-height:44px;}
+    @media(max-width:700px) {
+      #maple-atlas-concept .mc-header {padding:10px 12px;flex-wrap:nowrap;}
+      #maple-atlas-concept .mc-header .mc-profile {display:flex;font-size:11px;}
+      #maple-atlas-concept .mc-header small {display:none;}
+      #maple-atlas-concept .mc-maptools {top:232px;}
+      #maple-atlas-concept .mc-zooms {top:282px;}
+    }
+
+
+    #maple-atlas-concept .mc-sheet-toggle {display:none;}
+    @media(max-width:700px) {
+      #maple-atlas-concept .mc-sheet-toggle {display:block;margin-left:auto;font-size:12px;min-height:40px;padding:6px 12px;}
+      #maple-atlas-concept .mc-profile {margin-left:0;}
+      #maple-atlas-concept .mc-header {gap:6px;}
+      #maple-atlas-concept .mc-logo {font-size:16px;}
+      #maple-atlas-concept:not(.mc-sheet-open) .mc-detail {display:none;}
+      #maple-atlas-concept:not(.mc-sheet-open) .mc-tabs {top:auto;bottom:12px;border-radius:18px;border-bottom:0;}
+      #maple-atlas-concept .mc-field {padding:9px 10px;}
+      #maple-atlas-concept .mc-routeform {gap:6px;}
+      #maple-atlas-concept .mc-maptools {top:212px;}
+      #maple-atlas-concept .mc-zooms {top:262px;}
+    }
+
+    @media(max-width:700px) {
+      #maple-atlas-concept .mc-tabs {height:56px;padding:4px 12px;}
+      #maple-atlas-concept .mc-mapfooter {display:none;}
+    }
+
+    #maple-atlas-concept {--mc-control-gap:8px;--mc-action-space:12px;--mc-section-space:16px;}
+    #maple-atlas-concept .mc-routeform {gap:var(--mc-control-gap);}
+    #maple-atlas-concept .mc-formactions {gap:var(--mc-control-gap);margin-block:4px;}
+    #maple-atlas-concept .mc-route-summary {padding:0 2px;}
+    #maple-atlas-concept .mc-status {margin:var(--mc-action-space) 0 var(--mc-section-space);}
+    #maple-atlas-concept .mc-placeactions {gap:var(--mc-control-gap);margin-block:var(--mc-section-space);}
+    #maple-atlas-concept .mc-category {gap:var(--mc-control-gap);margin-bottom:var(--mc-section-space);}
+    #maple-atlas-concept .mc-tabs {gap:var(--mc-control-gap);}
+    @media(max-width:700px) {
+      #maple-atlas-concept .mc-routeform {padding:12px;}
+    }

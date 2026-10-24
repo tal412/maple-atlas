@@ -1,0 +1,104 @@
+{
+  "retrievedAt": "2026-10-24T10:30:02.366679+00:00",
+  "repo": "https://github.com/ohmi69/osms_datamine_dashboard",
+  "commit": "a44f101bffa8272164ca47484ab18c078dcab0a0",
+  "sourceMetadata": {
+    "npcs": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/maps.json",
+    "monsters": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/monsters.json"
+  },
+  "verification": {
+    "method": "IDs joined to current OSMS thumbnail metadata; each exact PNG path exists in the complete pinned Git tree. Representative CDN downloads verified PNG signature and matching Git blob SHA-1.",
+    "allPathsPresentInPinnedTree": true,
+    "directlyFetchedSamples": [
+      {
+        "kind": "npc",
+        "id": "202",
+        "name": "Chief Stan",
+        "width": 51,
+        "height": 73,
+        "bytes": 4551,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "npc",
+        "id": "100",
+        "name": "John",
+        "width": 67,
+        "height": 67,
+        "bytes": 3875,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "npc",
+        "id": "206",
+        "name": "Bruce",
+        "width": 49,
+        "height": 78,
+        "bytes": 4574,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "npc",
+        "id": "235",
+        "name": "Community Board",
+        "width": 126,
+        "height": 161,
+        "bytes": 25158,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "monster",
+        "id": "3",
+        "name": "Blue Snail",
+        "width": 35,
+        "height": 34,
+        "bytes": 1053,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "monster",
+        "id": "7",
+        "name": "Slime",
+        "width": 70,
+        "height": 51,
+        "bytes": 1957,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "monster",
+        "id": "8",
+        "name": "Pig",
+        "width": 67,
+        "height": 46,
+        "bytes": 1856,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      },
+      {
+        "kind": "monster",
+        "id": "9",
+        "name": "Orange Mushroom",
+        "width": 64,
+        "height": 55,
+        "bytes": 1941,
+        "pngSignatureValid": true,
+        "matchesPinnedGitBlob": true
+      }
+    ]
+  },
+  "rights": "Game artwork attributed to Nexon. No open redistribution license established; these are public research/preview image URLs.",
+  "notes": [
+    "Use PNG URLs directly in img src; preserve aspect ratio with object-fit:contain and image-rendering:pixelated.",
+    "All URLs use approved jsDelivr origin and a pinned commit.",
+    "Images are exact exported game sprites, not generated replacements.",
+    "A missing request should show the character name and an unavailable-image state, not substitute a different sprite."
+  ],
+  "worldSource": "OSMS current export + MapleStory Quest atlas anchors",
+  "worldSnapshot": "2026-10-24"
+}
