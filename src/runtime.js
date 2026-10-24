@@ -30,6 +30,9 @@
   function sprite(kind,item){const src=DATA.sprites[kind]?.[String(item.id)];return src?'<span class="mc-sprite"><img src="'+esc(src)+'" alt="'+esc(item.name)+' game sprite" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'<span class="mc-sprite" aria-hidden="true"></span>';}
   function icons(){if(globalThis.lucide)lucide.createIcons({attrs:{width:18,height:18}});}
   const localMaps=MapleLocalMaps.create({root,get});
+  const questFlow=MapleQuestFlow.create(DATA.quests),expandedQuests=new Set();
+  let questHistoryOpen=false;
+  const currentQuests=()=>questFlow.current(state.status,state.level);
   function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" aria-label="View local map of '+esc(m.name)+'"><img src="'+esc(m.minimap||m.image)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
   function find(text){const v=text.toLowerCase().trim();if(!v)return null;const exact=DATA.maps.filter(m=>m.name.toLowerCase()===v);if(exact.length===1)return exact[0];const matches=DATA.maps.filter(m=>m.name.toLowerCase().includes(v));return matches.length===1?matches[0]:null;}
   function plan(){
@@ -39,14 +42,15 @@
   }
   function relevantQuests(m){
     const names=new Set(m.npcs.map(n=>n.name));const mobs=new Set(m.monsters.map(n=>Number(n.id)));
-    return DATA.quests.filter(q=>names.has(q.npc)||q.objectives.some(o=>o.type==='mob'&&mobs.has(Number(o.id)))).map(q=>({...q,here:names.has(q.npc)?'NPC association':'Hunt objective here'})).sort((a,b)=>Number(a.level>state.level)-Number(b.level>state.level)||a.level-b.level);
+    return currentQuests().filter(q=>names.has(q.npc)||q.objectives.some(o=>o.type==='mob'&&mobs.has(Number(o.id)))).map(q=>({...q,here:names.has(q.npc)?'NPC association':'Hunt objective here'})).sort((a,b)=>Number(a.level>state.level)-Number(b.level>state.level)||a.level-b.level);
   }
-  function questRows(qs){return qs.map(q=>{
+  function questRows(qs,empty='No next quests here yet. Earlier steps may need completing elsewhere.'){return qs.map(q=>{
     const status=state.status[q.id]||'not-started';const reward=[q.exp?q.exp.toLocaleString()+' EXP':'',q.mesos?q.mesos.toLocaleString()+' mesos':''].filter(Boolean).join(' · ');
-    const objectives=q.objectives.map(o=>'<div class="mc-quest-item">'+(['mob','item'].includes(o.type)?sprite(o.type==='mob'?'monster':'item',o):'')+'<span>'+esc(o.name)+' × '+o.count+'</span></div>').join('');
+    const objectives=q.objectives.map(o=>'<div class="mc-quest-item">'+(['mob','item'].includes(o.type)?sprite(o.type==='mob'?'monster':'item',o):'')+'<span>'+(o.type==='quest'?'Complete '+esc(o.name):esc(o.name)+' × '+o.count)+'</span></div>').join('');
     const rewards=(q.items||[]).map(o=>'<div class="mc-quest-item">'+sprite('item',o)+'<span>'+esc(o.name)+' × '+o.count+(o.guaranteed?'':' <small>Possible reward</small>')+'</span></div>').join('');
-    return '<div class="mc-quest"><div class="mc-quest-heading">'+(q.npcId?sprite('npc',{id:q.npcId,name:q.npc}):'')+'<div><strong>'+esc(q.name)+'</strong><small>'+esc(q.npc||'Quest record')+' · Lv. '+q.level+'+</small></div></div><small>'+esc(q.here||'Quest journal')+' · '+(q.level>state.level?'Below level requirement':'Check remaining requirements')+'</small>'+(objectives?'<div class="mc-quest-objectives">'+objectives+'</div>':'')+((reward||rewards)?'<div class="mc-quest-rewards"><small>Rewards'+(reward?' · '+reward:'')+'</small>'+rewards+'</div>':'')+'<select aria-label="Progress for '+esc(q.name)+'" data-quest="'+q.id+'">'+[['not-started','Not started'],['in-progress','In progress'],['completed','Completed'],['skipped','Skipped']].map(([v,n])=>'<option value="'+v+'" '+(status===v?'selected':'')+'>'+n+'</option>').join('')+'</select></div>';
-  }).join('')||'<div class="mc-empty">No matching quest records in this export.</div>';}
+    const label={'not-started':'Not started','in-progress':'In progress',completed:'Completed',skipped:'Skipped'}[status];
+    return '<details class="mc-quest" data-quest-card="'+q.id+'"'+(expandedQuests.has(q.id)?' open':'')+'><summary class="mc-quest-heading">'+(q.npcId?sprite('npc',{id:q.npcId,name:q.npc}):'')+'<span class="mc-quest-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(q.npc||'Quest record')+' · Lv. '+q.level+'+</small><small class="mc-quest-state">'+label+'</small></span>'+icon('chevron-down')+'</summary><div class="mc-quest-body"><small>'+esc(q.here||'Quest journal')+' · '+(q.level>state.level?'Requires level '+q.level:'Check remaining requirements in game')+'</small>'+(objectives?'<div class="mc-quest-objectives"><strong>Requirements</strong>'+objectives+'</div>':'')+((reward||rewards)?'<div class="mc-quest-rewards"><strong>Rewards'+(reward?' · '+reward:'')+'</strong>'+rewards+'</div>':'')+'<select aria-label="Progress for '+esc(q.name)+'" data-quest="'+q.id+'">'+[['not-started','Not started'],['in-progress','In progress'],['completed','Completed'],['skipped','Skipped']].map(([v,n])=>'<option value="'+v+'" '+(status===v?'selected':'')+'>'+n+'</option>').join('')+'</select></div></details>';
+  }).join('')||'<div class="mc-empty">'+esc(empty)+'</div>';}
   function notice(message){clearTimeout(noticeTimer);$('#mc-map-notice').textContent=message;$('#mc-map-notice').hidden=false;noticeTimer=setTimeout(()=>{$('#mc-map-notice').hidden=true;},4500);}
   function mobileChrome(){
     const selected=get(state.selected),open=root.classList.contains('mc-sheet-open');
@@ -112,7 +116,9 @@
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const tracked=DATA.quests.filter(q=>state.status[q.id]);
-      box.innerHTML='<div class="mc-eyebrow">Your character</div><h3>Quest journal</h3><div class="mc-secondary">'+Object.values(state.status).filter(x=>x==='completed').length+' completed · Manually tracked</div><div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>'+questRows(tracked.length?tracked:DATA.quests.filter(q=>q.npc==='Olaf'));
+      const next=questFlow.journal(state.status,state.level);
+      const history=tracked.filter(q=>['completed','skipped'].includes(state.status[q.id]));
+      box.innerHTML='<div class="mc-eyebrow">Your character</div><h3>Quest journal</h3><div class="mc-secondary">'+Object.values(state.status).filter(x=>x==='completed').length+' completed · One next quest per NPC</div><div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>'+questRows(next,'No next quests for your tracked NPCs. Explore the map, or review your history below.')+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'');
     }else{
       const a=anchor(m.id),members=a?a.members.map(get).filter(Boolean):[];
       const categories=[['monsters','Monsters'],['npcs','NPCs'],['quests','Quests'],['connections','Places']];
@@ -134,7 +140,9 @@
     }
     $$('[data-localmap]').forEach(b=>b.onclick=()=>localMaps.open(b.dataset.localmap,b.dataset.next));
     $$('[data-inspect]').forEach(b=>b.onclick=()=>inspect(b.dataset.inspect));
-    $$('[data-quest]').forEach(s=>s.onchange=()=>{state.status[s.dataset.quest]=s.value;$('#mc-status').textContent='Progress updated · Change the status anytime to undo.';detail();markers();save();});mobileChrome();icons();
+    $$('[data-quest-card]').forEach(d=>d.ontoggle=()=>{if(!d.isConnected)return;if(d.open)expandedQuests.add(d.dataset.questCard);else expandedQuests.delete(d.dataset.questCard);});
+    const history=$('.mc-quest-history');if(history)history.ontoggle=()=>{if(history.isConnected)questHistoryOpen=history.open;};
+    $$('[data-quest]').forEach(s=>s.onchange=()=>{state.status[s.dataset.quest]=s.value;if(['completed','skipped'].includes(s.value))expandedQuests.delete(s.dataset.quest);$('#mc-status').textContent='Progress updated · Change the status anytime to undo.';detail();markers();save();});mobileChrome();icons();
   }
   function inspect(id){if(!get(id))return;hasInspected=true;state.selected=String(id);state.panel='place';state.expanded=false;if(mobile.matches){const a=anchor(id);if(a){state.focus=a.id;state.dx=0;state.dy=0;state.zoom=1;}}setSheet(true);detail();markers();save();}
   function setStart(m){const picking=state.pick;state.from=String(m.id);$('#mc-from').value=m.name;$('#mc-status').textContent='Starting at '+m.name+' · Set manually';state.pick=false;$('#mc-pickstart').textContent='Pick start on map';if(state.routeActive)plan();render();save();if(mobile.matches){if(picking)openRoute();else notice('Starting at '+m.name);}}

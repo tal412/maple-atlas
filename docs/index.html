@@ -84,7 +84,7 @@
     #maple-atlas-concept .mc-place[data-route=true] .mc-dot {width:22px;height:22px;background:var(--mc-blue);color:light-dark(#fff,#10264b);display:grid;place-items:center;box-shadow:0 0 0 1px var(--mc-blue);}
     #maple-atlas-concept .mc-place[data-selected=true] {z-index:2;}
     #maple-atlas-concept .mc-place[data-selected=true] .mc-dot {box-shadow:0 0 0 4px light-dark(#d3e3fd,#0842a0);}
-    #maple-atlas-concept .mc-quest {padding:12px 0;border-bottom:1px solid var(--mc-edge);}
+    #maple-atlas-concept .mc-quest {padding:0;border-bottom:1px solid var(--mc-edge);}
     #maple-atlas-concept .mc-quest strong {display:block;font-size:14px;font-weight:500;}
     #maple-atlas-concept .mc-quest small {display:block;font-size:12px;color:var(--mc-muted);margin-top:4px;}
     #maple-atlas-concept .mc-quest select {margin-top:8px;min-height:38px;padding:7px 9px;border:1px solid var(--mc-edge);border-radius:10px;background:var(--mc-soft);max-width:100%;}
@@ -100,8 +100,20 @@
     @media(pointer:coarse) {#maple-atlas-concept button {min-height:48px;} #maple-atlas-concept .mc-zooms button {width:48px;height:48px;} }
 
     #maple-atlas-concept .mc-route-summary {font-size:11px;color:var(--mc-muted);padding:4px 2px 0;overflow-wrap:anywhere;}
-    #maple-atlas-concept .mc-quest-heading {display:flex;gap:10px;align-items:center;}
-    #maple-atlas-concept .mc-quest-heading>div {min-width:0;}
+    #maple-atlas-concept .mc-quest-heading {display:flex;gap:10px;align-items:center;padding:14px 0;min-height:76px;cursor:pointer;list-style:none;border-radius:12px;}
+    #maple-atlas-concept .mc-quest-heading::-webkit-details-marker,#maple-atlas-concept .mc-quest-history>summary::-webkit-details-marker {display:none;}
+    #maple-atlas-concept .mc-quest-copy {flex:1;min-width:0;}
+    #maple-atlas-concept .mc-quest-heading>svg {flex:0 0 18px;color:var(--mc-muted);}
+    #maple-atlas-concept .mc-quest[open]>.mc-quest-heading>svg,#maple-atlas-concept .mc-quest-history[open]>summary>svg {transform:rotate(180deg);}
+    #maple-atlas-concept .mc-quest-heading:focus-visible,#maple-atlas-concept .mc-quest-history>summary:focus-visible {outline:2px solid var(--mc-blue);outline-offset:2px;}
+    #maple-atlas-concept .mc-quest small.mc-quest-state {font-size:11px;color:var(--mc-blue);}
+    #maple-atlas-concept .mc-quest-body {padding:0 0 16px;}
+    #maple-atlas-concept .mc-quest-body strong {font-size:12px;line-height:1.5;}
+    #maple-atlas-concept .mc-quest-history {margin-top:20px;}
+    #maple-atlas-concept .mc-quest-history>summary {display:flex;align-items:center;gap:8px;min-height:48px;cursor:pointer;list-style:none;font-size:13px;font-weight:500;}
+    #maple-atlas-concept .mc-quest-history>summary>span {margin-left:auto;padding:3px 8px;border-radius:12px;background:var(--mc-soft);}
+    #maple-atlas-concept .mc-quest-history>summary>svg {width:18px;height:18px;color:var(--mc-muted);}
+    #maple-atlas-concept .mc-quest-history>p {font-size:12px;color:var(--mc-muted);margin:0 0 8px;}
     #maple-atlas-concept .mc-quest-objectives,#maple-atlas-concept .mc-quest-rewards {margin-top:10px;}
     #maple-atlas-concept .mc-quest-item {display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;min-width:0;}
     #maple-atlas-concept .mc-quest-item .mc-sprite {width:32px;height:36px;flex-basis:32px;}
@@ -733,6 +745,39 @@ window.mapleStorageReady.then(() => {
   if (typeof module !== 'undefined') module.exports = api;
 })(globalThis);
 
+(function(scope) {
+  const npcKey=q=>q.npcId?'id:'+q.npcId:q.npc?'name:'+q.npc:'quest:'+q.id;
+  function create(quests) {
+    const byId=new Map(quests.map(q=>[String(q.id),q]));
+    const prerequisites=new Map(quests.map(q=>[String(q.id),new Set(q.objectives.filter(o=>o.type==='quest').map(o=>String(o.id)))]));
+    for(const q of quests)if(q.next&&byId.has(String(q.next)))prerequisites.get(String(q.next)).add(String(q.id));
+    const compare=(a,b)=>a.level-b.level||String(a.id).localeCompare(String(b.id),undefined,{numeric:true});
+    function remaining(q,status) {return [...prerequisites.get(String(q.id))].filter(id=>status[id]!=='completed');}
+    function current(status,level) {
+      const groups=new Map();
+      // A skipped quest is not a completed prerequisite. A later step stays hidden.
+      for(const q of quests){
+        if(['completed','skipped'].includes(status[q.id])||remaining(q,status).length)continue;
+        const key=npcKey(q);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(q);
+      }
+      return [...groups.values()].map(qs=>qs.sort((a,b)=>
+        Number(status[b.id]==='in-progress')-Number(status[a.id]==='in-progress')||
+        Number(a.level>level)-Number(b.level>level)||
+        Number(prerequisites.get(String(b.id)).size>0)-Number(prerequisites.get(String(a.id)).size>0)||compare(a,b)
+      )[0]).sort(compare);
+    }
+    function journal(status,level,starter='Olaf') {
+      const tracked=quests.filter(q=>Object.hasOwn(status,q.id));
+      const groups=new Set((tracked.length?tracked:quests.filter(q=>q.npc===starter)).map(npcKey));
+      return current(status,level).filter(q=>groups.has(npcKey(q))||
+        [...prerequisites.get(String(q.id))].some(id=>status[id]==='completed'));
+    }
+    return {npcKey,current,journal,remaining};
+  }
+  const api={create,npcKey};scope.MapleQuestFlow=api;
+  if(typeof module!=='undefined')module.exports=api;
+})(globalThis);
+
 (()=>{
   const root=document.getElementById('maple-atlas-concept');
   const $=s=>root.querySelector(s), $$=s=>[...root.querySelectorAll(s)];
@@ -765,6 +810,9 @@ window.mapleStorageReady.then(() => {
   function sprite(kind,item){const src=DATA.sprites[kind]?.[String(item.id)];return src?'<span class="mc-sprite"><img src="'+esc(src)+'" alt="'+esc(item.name)+' game sprite" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'<span class="mc-sprite" aria-hidden="true"></span>';}
   function icons(){if(globalThis.lucide)lucide.createIcons({attrs:{width:18,height:18}});}
   const localMaps=MapleLocalMaps.create({root,get});
+  const questFlow=MapleQuestFlow.create(DATA.quests),expandedQuests=new Set();
+  let questHistoryOpen=false;
+  const currentQuests=()=>questFlow.current(state.status,state.level);
   function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" aria-label="View local map of '+esc(m.name)+'"><img src="'+esc(m.minimap||m.image)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span>'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
   function find(text){const v=text.toLowerCase().trim();if(!v)return null;const exact=DATA.maps.filter(m=>m.name.toLowerCase()===v);if(exact.length===1)return exact[0];const matches=DATA.maps.filter(m=>m.name.toLowerCase().includes(v));return matches.length===1?matches[0]:null;}
   function plan(){
@@ -774,14 +822,15 @@ window.mapleStorageReady.then(() => {
   }
   function relevantQuests(m){
     const names=new Set(m.npcs.map(n=>n.name));const mobs=new Set(m.monsters.map(n=>Number(n.id)));
-    return DATA.quests.filter(q=>names.has(q.npc)||q.objectives.some(o=>o.type==='mob'&&mobs.has(Number(o.id)))).map(q=>({...q,here:names.has(q.npc)?'NPC association':'Hunt objective here'})).sort((a,b)=>Number(a.level>state.level)-Number(b.level>state.level)||a.level-b.level);
+    return currentQuests().filter(q=>names.has(q.npc)||q.objectives.some(o=>o.type==='mob'&&mobs.has(Number(o.id)))).map(q=>({...q,here:names.has(q.npc)?'NPC association':'Hunt objective here'})).sort((a,b)=>Number(a.level>state.level)-Number(b.level>state.level)||a.level-b.level);
   }
-  function questRows(qs){return qs.map(q=>{
+  function questRows(qs,empty='No next quests here yet. Earlier steps may need completing elsewhere.'){return qs.map(q=>{
     const status=state.status[q.id]||'not-started';const reward=[q.exp?q.exp.toLocaleString()+' EXP':'',q.mesos?q.mesos.toLocaleString()+' mesos':''].filter(Boolean).join(' · ');
-    const objectives=q.objectives.map(o=>'<div class="mc-quest-item">'+(['mob','item'].includes(o.type)?sprite(o.type==='mob'?'monster':'item',o):'')+'<span>'+esc(o.name)+' × '+o.count+'</span></div>').join('');
+    const objectives=q.objectives.map(o=>'<div class="mc-quest-item">'+(['mob','item'].includes(o.type)?sprite(o.type==='mob'?'monster':'item',o):'')+'<span>'+(o.type==='quest'?'Complete '+esc(o.name):esc(o.name)+' × '+o.count)+'</span></div>').join('');
     const rewards=(q.items||[]).map(o=>'<div class="mc-quest-item">'+sprite('item',o)+'<span>'+esc(o.name)+' × '+o.count+(o.guaranteed?'':' <small>Possible reward</small>')+'</span></div>').join('');
-    return '<div class="mc-quest"><div class="mc-quest-heading">'+(q.npcId?sprite('npc',{id:q.npcId,name:q.npc}):'')+'<div><strong>'+esc(q.name)+'</strong><small>'+esc(q.npc||'Quest record')+' · Lv. '+q.level+'+</small></div></div><small>'+esc(q.here||'Quest journal')+' · '+(q.level>state.level?'Below level requirement':'Check remaining requirements')+'</small>'+(objectives?'<div class="mc-quest-objectives">'+objectives+'</div>':'')+((reward||rewards)?'<div class="mc-quest-rewards"><small>Rewards'+(reward?' · '+reward:'')+'</small>'+rewards+'</div>':'')+'<select aria-label="Progress for '+esc(q.name)+'" data-quest="'+q.id+'">'+[['not-started','Not started'],['in-progress','In progress'],['completed','Completed'],['skipped','Skipped']].map(([v,n])=>'<option value="'+v+'" '+(status===v?'selected':'')+'>'+n+'</option>').join('')+'</select></div>';
-  }).join('')||'<div class="mc-empty">No matching quest records in this export.</div>';}
+    const label={'not-started':'Not started','in-progress':'In progress',completed:'Completed',skipped:'Skipped'}[status];
+    return '<details class="mc-quest" data-quest-card="'+q.id+'"'+(expandedQuests.has(q.id)?' open':'')+'><summary class="mc-quest-heading">'+(q.npcId?sprite('npc',{id:q.npcId,name:q.npc}):'')+'<span class="mc-quest-copy"><strong>'+esc(q.name)+'</strong><small>'+esc(q.npc||'Quest record')+' · Lv. '+q.level+'+</small><small class="mc-quest-state">'+label+'</small></span>'+icon('chevron-down')+'</summary><div class="mc-quest-body"><small>'+esc(q.here||'Quest journal')+' · '+(q.level>state.level?'Requires level '+q.level:'Check remaining requirements in game')+'</small>'+(objectives?'<div class="mc-quest-objectives"><strong>Requirements</strong>'+objectives+'</div>':'')+((reward||rewards)?'<div class="mc-quest-rewards"><strong>Rewards'+(reward?' · '+reward:'')+'</strong>'+rewards+'</div>':'')+'<select aria-label="Progress for '+esc(q.name)+'" data-quest="'+q.id+'">'+[['not-started','Not started'],['in-progress','In progress'],['completed','Completed'],['skipped','Skipped']].map(([v,n])=>'<option value="'+v+'" '+(status===v?'selected':'')+'>'+n+'</option>').join('')+'</select></div></details>';
+  }).join('')||'<div class="mc-empty">'+esc(empty)+'</div>';}
   function notice(message){clearTimeout(noticeTimer);$('#mc-map-notice').textContent=message;$('#mc-map-notice').hidden=false;noticeTimer=setTimeout(()=>{$('#mc-map-notice').hidden=true;},4500);}
   function mobileChrome(){
     const selected=get(state.selected),open=root.classList.contains('mc-sheet-open');
@@ -847,7 +896,9 @@ window.mapleStorageReady.then(() => {
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const tracked=DATA.quests.filter(q=>state.status[q.id]);
-      box.innerHTML='<div class="mc-eyebrow">Your character</div><h3>Quest journal</h3><div class="mc-secondary">'+Object.values(state.status).filter(x=>x==='completed').length+' completed · Manually tracked</div><div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>'+questRows(tracked.length?tracked:DATA.quests.filter(q=>q.npc==='Olaf'));
+      const next=questFlow.journal(state.status,state.level);
+      const history=tracked.filter(q=>['completed','skipped'].includes(state.status[q.id]));
+      box.innerHTML='<div class="mc-eyebrow">Your character</div><h3>Quest journal</h3><div class="mc-secondary">'+Object.values(state.status).filter(x=>x==='completed').length+' completed · One next quest per NPC</div><div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>'+questRows(next,'No next quests for your tracked NPCs. Explore the map, or review your history below.')+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'');
     }else{
       const a=anchor(m.id),members=a?a.members.map(get).filter(Boolean):[];
       const categories=[['monsters','Monsters'],['npcs','NPCs'],['quests','Quests'],['connections','Places']];
@@ -869,7 +920,9 @@ window.mapleStorageReady.then(() => {
     }
     $$('[data-localmap]').forEach(b=>b.onclick=()=>localMaps.open(b.dataset.localmap,b.dataset.next));
     $$('[data-inspect]').forEach(b=>b.onclick=()=>inspect(b.dataset.inspect));
-    $$('[data-quest]').forEach(s=>s.onchange=()=>{state.status[s.dataset.quest]=s.value;$('#mc-status').textContent='Progress updated · Change the status anytime to undo.';detail();markers();save();});mobileChrome();icons();
+    $$('[data-quest-card]').forEach(d=>d.ontoggle=()=>{if(!d.isConnected)return;if(d.open)expandedQuests.add(d.dataset.questCard);else expandedQuests.delete(d.dataset.questCard);});
+    const history=$('.mc-quest-history');if(history)history.ontoggle=()=>{if(history.isConnected)questHistoryOpen=history.open;};
+    $$('[data-quest]').forEach(s=>s.onchange=()=>{state.status[s.dataset.quest]=s.value;if(['completed','skipped'].includes(s.value))expandedQuests.delete(s.dataset.quest);$('#mc-status').textContent='Progress updated · Change the status anytime to undo.';detail();markers();save();});mobileChrome();icons();
   }
   function inspect(id){if(!get(id))return;hasInspected=true;state.selected=String(id);state.panel='place';state.expanded=false;if(mobile.matches){const a=anchor(id);if(a){state.focus=a.id;state.dx=0;state.dy=0;state.zoom=1;}}setSheet(true);detail();markers();save();}
   function setStart(m){const picking=state.pick;state.from=String(m.id);$('#mc-from').value=m.name;$('#mc-status').textContent='Starting at '+m.name+' · Set manually';state.pick=false;$('#mc-pickstart').textContent='Pick start on map';if(state.routeActive)plan();render();save();if(mobile.matches){if(picking)openRoute();else notice('Starting at '+m.name);}}
