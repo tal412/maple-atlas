@@ -5,6 +5,7 @@
   const mobile=matchMedia('(max-width:700px)');
   let hasInspected=false,noticeTimer=0;
   const maps=new Map(DATA.maps.map(m=>[String(m.id),m]));
+  const visualMaps=new Map(DATA.visualMaps.map(m=>[String(m.id),m]));
   const spots=new Map(DATA.spots.map(s=>[String(s.id),s]));
   const get=id=>maps.get(String(id));
   const anchor=id=>spots.get(get(id)?.spot);
@@ -29,7 +30,7 @@
   function icon(name){return '<i data-lucide="'+name+'" aria-hidden="true"></i>';}
   function sprite(kind,item){const src=DATA.sprites[kind]?.[String(item.id)];return src?'<span class="mc-sprite"><img src="'+esc(src)+'" alt="'+esc(item.name)+' game sprite" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>':'<span class="mc-sprite" aria-hidden="true"></span>';}
   function icons(){if(globalThis.lucide)lucide.createIcons({attrs:{width:18,height:18}});}
-  const localMaps=MapleLocalMaps.create({root,get});
+  const localMaps=MapleLocalMaps.create({root,get:id=>get(id)||(visualMaps.has(String(id))?{...visualMaps.get(String(id)),localImage:visualMaps.get(String(id)).image,portals:[]}:null)});
   const previewImages=MapleMapImages.previews({root,get});
   const questFlow=MapleQuestFlow.create(DATA.quests),expandedQuests=new Set();
   let questHistoryOpen=false;
@@ -90,9 +91,31 @@
   $$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());
   function openProfile(){$('#mc-mobile-level').value=state.level;$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
+  let liveLocation=null,liveFresh=false;
+  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onInspect:id=>get(id)?inspect(id):localMaps.open(id),onLocation:value=>{
+    const m=get(value.id)||visualMaps.get(value.id);if(!m)return;
+    const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;liveLocation=value.id;liveFresh=true;
+    $('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Live · '+m.name;
+    $('#mc-status').textContent='Visual map match · '+m.name;
+    if(!changed){if(!wasFresh&&state.panel==='route')detail();return;}
+    if(!get(value.id)){state.routeActive=false;state.route=[];state.fitAll=true;render();$('#mc-status').textContent='Visual map match · '+m.name+' · Outside route coverage';localMaps.open(value.id);return;}
+    if($('#mc-local-dialog').open)$('#mc-local-dialog').close();
+    state.from=String(m.id);state.selected=String(m.id);hasInspected=true;$('#mc-from').value=m.name;
+    if(state.routeActive)plan();
+    const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
+    render();camera();
+  },onConnection:phase=>{
+    const wasFresh=liveFresh;
+    $('#mc-companion-badge').hidden=false;
+    if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Location paused · Check PC';$('#mc-status').textContent='Last detected location · Waiting for visible map landmarks';}
+    if(phase==='searching'){liveFresh=false;$('#mc-companion-badge').textContent='Finding your location…';$('#mc-status').textContent='Waiting for a reliable visual match · Last location retained';}
+    if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
+    if(phase==='disconnected'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Companion disconnected';$('#mc-status').textContent='Location set manually · Companion is disconnected';}
+    if(wasFresh&&!liveFresh&&state.panel==='route')detail();
+  }});
   $('#mc-mobile-journal').onclick=()=>{$('#mc-profile-dialog').close();state.panel='progress';setSheet(true);detail();camera();save();};
   $('#mc-mobile-directions').onclick=openRoute;
-  $('#mc-mobile-locate').onclick=()=>{const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+' · Set manually');}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
+  $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   $('#mc-clear-route').onclick=()=>{state.route=[];state.routeActive=false;state.panel='place';state.fitAll=true;state.focus=null;state.zoom=1.3;state.dx=0;state.dy=0;hasInspected=false;$('#mc-route-dialog').close();setSheet(false);render();save();};
   $$('[data-mobile-panel]').forEach(b=>b.onclick=()=>{
     if(b.dataset.mobilePanel==='route'&&!state.routeActive){openRoute();return;}
@@ -111,7 +134,7 @@
       box.innerHTML='<div class="mc-eyebrow">Your route</div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':n+' map changes · Fewest recorded portals')+'</div>'+(n>=0?'<ol class="mc-steplist">'+state.route.map((id,i)=>{
         const p=get(id),next=state.route[i+1],edge=p.portals.find(e=>String(e.to)===next),badge=i===0?'A':i===n?'B':i;
         return '<li'+(i===state.step?' aria-current="step"':'')+'><span class="mc-step-badge">'+badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(p.name)+'</button><p>'+esc(edge?MapleLocalMaps.instruction(edge,get(next)?.name):'You have arrived.')+'</p>'+mapPreview(p,next)+'</li>';
-      }).join('')+'</ol><button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button><div class="mc-secondary" style="margin-top:10px">Manual position · '+esc(get(state.route[state.step]).name)+'</div>':'<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>');
+      }).join('')+'</ol>'+(liveFresh&&state.from===liveLocation?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')+'<div class="mc-secondary" style="margin-top:10px">'+(liveFresh&&state.from===liveLocation?'Screen detected':'Manual position')+' · '+esc(get(state.route[state.step]).name)+'</div>':'<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>');
       box.insertAdjacentHTML('afterbegin','<button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button>');
       $('#mc-edit-route').onclick=openRoute;
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
@@ -205,7 +228,7 @@
   function syncFields(){ $('#mc-level').value=state.level;$('#mc-mobile-level').value=state.level;$('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');
-  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();plan();setSheet(!mobile.matches);render();$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections · No live game tracking':'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
+  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();plan();setSheet(!mobile.matches);render();$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections'+(liveFresh&&state.from===liveLocation?' · Screen detected start':' · Starting place set manually'):'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
   $('#mc-from').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};$('#mc-to').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};
   $('#mc-pickstart').onclick=()=>{state.pick=!state.pick;$('#mc-pickstart').textContent=state.pick?'Select a point…':'Pick start on map';$('#mc-status').textContent=state.pick?'Click any map point to set your current location.':'Location set manually';if(mobile.matches&&state.pick){$('#mc-route-dialog').close();setSheet(false);camera();notice('Tap a map point to set your starting location.');}};
   $$('.mc-tabs button').forEach(b=>b.onclick=()=>{state.panel=b.dataset.panel;setSheet(true);detail();camera();save();});

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "catalog-10003080",
+    "file": "catalog-10003080.rgba.gz",
+    "width": 360,
+    "height": 365,
+    "expected": "10003080",
+    "ambiguous": false
+  },
+  {
+    "name": "catalog-80002006",
+    "file": "catalog-80002006.rgba.gz",
+    "width": 360,
+    "height": 372,
+    "expected": "80002006",
+    "ambiguous": true
+  },
+  {
+    "name": "scene-10003080",
+    "file": "scene-10003080.rgba.gz",
+    "width": 960,
+    "height": 600,
+    "expected": "10003080",
+    "ambiguous": false
+  }
+]

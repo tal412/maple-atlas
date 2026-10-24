@@ -122,6 +122,51 @@ assert 'rel="icon"' in page and (ROOT / 'docs/favicon.svg').exists()
 assert 'nearbyNPCs' not in page
 assert '<meta name="color-scheme" content="light dark">' in page
 assert '@media(prefers-color-scheme:dark)' in page and 'MapleGestures.create' in page
+
+# Recognition uses a larger reference inventory than the illustrated route map.
+# Keep every vector tied to a verified image, without claiming route coverage.
+visual_sources = json.loads((ROOT / 'data/visual-sources.json').read_text())
+visual = json.loads((ROOT / 'docs/data/visual-index.json').read_text())
+source_maps = {m['id']: m for m in visual_sources['maps']}
+assert len(source_maps) == len(visual['maps']) == 336
+assert visual['sourceCommit'] == visual_sources['sourceCommit'] == asset_manifest['sourceCommit']
+assert visual['unavailable'] == visual_sources['unavailable'] and len(visual['unavailable']) == 12
+assert set(source_maps) | {m['id'] for m in visual['unavailable']} == {e['id'] for e in catalog['entities'] if e['type'] == 'map'}
+for m in visual['maps']:
+    source = source_maps[m['id']]
+    assert m['name'] == source['name'] and m['inAtlas'] == (m['id'] in maps)
+    for kind in ('image', 'preview'):
+        asset = source[kind]
+        assert m[kind] == './' + (asset or source['image'])['path']
+        if not asset:
+            continue
+        assert re.fullmatch(r'assets/(maps|minimaps|recognition)/[a-zA-Z0-9.]+\.(webp|png)', asset['path'])
+        assert visual['sourceCommit'] in asset['source']
+        content = (ROOT / 'docs' / asset['path']).read_bytes()
+        assert len(content) == asset['bytes'], ('Visual reference length', m['id'], kind)
+        assert hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest() == asset['gitBlob'], ('Visual reference changed', m['id'], kind)
+assert re.fullmatch(r'\./data/visual-[a-f0-9]{16}\.bin', visual['data'])
+vectors = (ROOT / 'docs' / visual['data'][2:]).read_bytes()
+assert len(vectors) == visual['bytes'] and hashlib.sha256(vectors).hexdigest() == visual['sha256']
+offset = 0
+for record in visual['records']:
+    source = source_maps[record['id']]
+    asset = (source['preview'] or source['image']) if record['kind'] == 'minimap' else source['image']
+    assert record['source'] == asset['gitBlob'] and record['offset'] == offset
+    assert 12 <= record['count'] <= 1200
+    offset += record['count'] * 40
+assert offset == len(vectors)
+assert set(source_maps) - {r['id'] for r in visual['records']} == {'900000003'}
+for name in ('vision-worker.js', 'visual-matcher.js'):
+    assert (ROOT / 'src' / name).read_bytes() == (ROOT / 'docs' / name).read_bytes()
+versions = json.loads((ROOT / 'docs/vendor/companion/versions.json').read_text())
+assert hashlib.sha256((ROOT / 'docs/vendor/vision/opencv.js').read_bytes()).hexdigest() == versions['visionSha256']
+for name, digest in versions['files'].items():
+    assert hashlib.sha256((ROOT / 'docs/vendor/companion' / name).read_bytes()).hexdigest() == digest
+service_worker = (ROOT / 'docs/sw.js').read_text()
+assert visual['data'][2:] in service_worker and '__OFFLINE_FILES__' not in service_worker
+assert 'Tesseract' not in page and 'MapleVisualClient' in page
+print('PASS: 336 image-backed locations, 335 vectorized maps; every reference and vector bundle matches its pinned hash.')
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')
 print('PASS: all 464 hosted map assets match their pinned source Git blobs.')
 print('PASS: 9,355 unique catalog entities; same-origin versioned search bundle; no live-price claims.')

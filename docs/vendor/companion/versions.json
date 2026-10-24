@@ -1,0 +1,11 @@
+{
+  "@techstark/opencv-js": "4.12.0-release.1",
+  "qrcode": "1.5.4",
+  "jsqr": "1.4.0",
+  "visionSha256": "bd0c3e6448043de04f6a64a12cb7b759f78c3ab8f7c35c9f2e0f71c88bb17103",
+  "files": {
+    "jsqr.LICENSE": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+    "qr.js": "1b465ad1ee4f6b558d1914a1f205ce155ebdbaa99c1819d702299e9abf30c4ce",
+    "qrcode.LICENSE": "8df47c6ad9ac2c41eb9b2a72def9908959da0ede8dadd56c7b249c1bdb0c5ce6"
+  }
+}

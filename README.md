@@ -98,11 +98,11 @@ Run `node tests/search.test.cjs` for ranking, category/relationship/value checks
 
 The map uses a reviewed Classic World data snapshot. Atlas positions, map contents and recorded portal links are distinct datasets; a map without a reviewed atlas position is not placed at its return town. Routes depend on the recorded graph and do not promise support for every scripted portal, taxi, ship, scroll or eligibility condition.
 
-Location and quest progress are entered manually. Progress is stored in this browser's IndexedDB database, with no account, server synchronization or game connection. Clearing browser data removes that progress. Quest cards start collapsed; expand one to see requirements, rewards and progress controls. Only one next quest per NPC appears in the journal and place lists. Recorded quest prerequisites must be marked completed before later steps appear; skipping does not satisfy them. Active quests take priority, followed by level-appropriate continuations, with level and ID providing a stable order for independent quests. The journal follows unlocked handoffs to other NPCs. Completed/skipped quests stay in collapsed history so their status can be corrected. Quest associations and level checks do not validate every in-game prerequisite.
+Location can be entered manually or received from the optional visual companion. Quest progress is entered manually. Progress is stored in this browser's IndexedDB database, with no account or server synchronization. Clearing browser data removes that progress. Quest cards start collapsed; expand one to see requirements, rewards and progress controls. Only one next quest per NPC appears in the journal and place lists. Recorded quest prerequisites must be marked completed before later steps appear; skipping does not satisfy them. Active quests take priority, followed by level-appropriate continuations, with level and ID providing a stable order for independent quests. The journal follows unlocked handoffs to other NPCs. Completed/skipped quests stay in collapsed history so their status can be corrected. Quest associations and level checks do not validate every in-game prerequisite.
 
 Every one of the 246 location records includes a full-resolution game map, with 218 minimaps for lightweight previews. All 464 exact image files are hosted alongside the app in `docs/assets/`. Preview PNGs total about 3.9 MB across the entire catalog; only the selected preview and visible/nearby route previews load. Maps without a minimap show an open-map button without downloading a full image for the card. Open a local map from a place or route step; choose an exit, zoom, fit the map or focus the recorded portal. Portal overlays use the source image pixel coordinates and never invent an internal walking path. Full-resolution images load on demand. Their dimensions and all 457 portal coordinates are checked in `data/map-image-audit.json`.
 
-Game sprites and local map images come from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Map images load from this site first, using immutable source-hash filenames; the original image CDN is a fallback. Requests have bounded timeouts, failures hide the broken image, and the full-map viewer offers an explicit retry. `python3 scripts/vendor-map-images.py` restores missing or changed assets and verifies their Git blob hashes. Builds require no image download. Roboto, Lucide and sprite images still load from external CDNs; the application is not fully offline. The atlas illustration and route geometry are included in the source.
+Game sprites and local map images come from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Map images load from this site first, using immutable source-hash filenames; the original image CDN is a fallback. Requests have bounded timeouts, failures hide the broken image, and the full-map viewer offers an explicit retry. `python3 scripts/vendor-map-images.py` restores missing or changed assets and verifies their Git blob hashes. Builds require no image download. Roboto, Lucide and the visual matcher are self-hosted. Game sprites can still require their source CDN; market and item-detail refreshes require internet. The atlas illustration and route geometry are included in the source.
 
 ## Verify a change
 
@@ -120,3 +120,59 @@ node tests/map-images.test.cjs
 ```
 
 The validator checks all 457 included directed portal pairs against the pinned source audit, road/route endpoint agreement, known routes and sprite coverage. The illustrated atlas has 64 published community anchors and three clearly marked schematic forest points; 179 other map records remain available through search and connections without invented map coordinates. Portal activation conditions and complete transport coverage still require in-game verification.
+
+
+## Visual location companion (dev preview)
+
+Open Live companion from **Connect phone** on desktop or **Your character → Live companion** on mobile.
+
+1. PC: choose **Use this PC**. Phone: choose **Use this phone** and scan the PC QR.
+2. PC: scan the response displayed on the phone. If the PC has no camera, use a QR image or copy/paste the response through your own transfer method. Pairing needs both directions; there is no room-code server.
+3. PC: **Share game window → Start visual tracking**. The whole window is searched; optionally drag around the minimap to reduce irrelevant content. A title is not required.
+4. Walk between locations. Two consistent strong observations, or sufficient new landmarks across several partial views, confirm a map. The phone follows the detected location and recalculates a recorded route when that map is within route coverage. Outside that coverage, it opens the original local map without inventing an atlas position.
+5. **Disconnect and stop sharing**, browser Stop sharing, or closing/reloading ends the relevant capture/session. Unreadable views send a finding-location state immediately. Missing updates also mark the last location stale.
+
+**Try image recognition** checks a chosen screenshot/photo entirely on the current device, without pairing or uploading it. Green circles show geometrically verified landmarks. This static test does not set a live player position.
+
+The source inventory has 336 maps with images, 335 with usable landmarks, and 12 additional catalog names with no image reference. White Room has no distinctive landmarks. The index contains both minimap and full-scene descriptors. It identifies map IDs; it does not yet track the exact player dot, verify quest completion, or read account data. Repeated event maps can be visually indistinguishable. The reader keeps those uncertain. Full-scene recognition depends on reference coverage, scale and visible landmarks; use the minimap when scenery is insufficient.
+
+The pipeline uses ORB binary descriptors with their reference coordinates, a local locality-sensitive search index, Hamming-distance matching, a RANSAC geometric check, separation from competing maps, and a short in-memory observation history. Repeated ambiguous frames cannot manufacture confidence. A second image scale is checked when necessary. OpenCV executes in a dedicated Web Worker; one frame is analyzed at a time. No OCR, cloud AI, account login, extension, game-memory access or simulated game inputs are used. This is an independent fan tool, not approved by Nexon; it cannot promise ban-free use.
+
+The first visual download is about 43 MB. In **Pairing help & offline use**, **Download offline essentials** saves the application, search catalog, QR tools, visual vectors and matching runtime in this browser's Cache Storage. Existing browser IndexedDB stores quest progress and dated market records. Session identifiers, WebRTC keys, screenshots and visual observations are never written to either store. Pairing uses an encrypted WebRTC data channel with `iceServers: []`; the QR/manual exchange supplies the offer/answer and host candidates. Only map IDs, a geometric match ratio, status, sequence numbers and timestamps cross the channel. Both pages must remain open on the same reachable local network. Guest isolation, firewalls, VPNs, browser restrictions, screen lock and background suspension can prevent or interrupt the connection. No relay fallback is configured.
+
+### Rebuilding and checking the visual index
+
+Normal builds use committed artifacts. To regenerate dependencies, run `npm ci --ignore-scripts && npm run vendor`. To rebuild map descriptors:
+
+```sh
+python3 -m venv .openai/vision-env
+.openai/vision-env/bin/pip install -r scripts/requirements-vision.txt
+.openai/vision-env/bin/python scripts/visual-index.py --download
+python3 scripts/build.py --channel dev
+node tests/visual-matcher.test.cjs
+node tests/visual-tracker.test.cjs
+node tests/companion-link.test.cjs
+node tests/offline.test.cjs
+```
+
+`data/visual-sources.json` pins every source image to the OSMS export commit and Git blob hash. `scripts/visual-index.py --sources` regenerates that inventory only when the pinned raw export is present in the ignored research directory. The binary index has a content-hashed filename, byte length and SHA-256 checked by the worker before use. The uploaded photograph used during development stays outside the published files.
+
+The October 24, 2026 test run used the same matcher as the browser worker:
+
+| Input | Confidently correct | Uncertain/rejected | Confidently wrong |
+| --- | ---: | ---: | ---: |
+| 336 cropped reference views | 288 | 48 | 0 |
+| 8 cropped full game scenes | 7 | 1 | 0 |
+| 1 real monitor photo, tested whole and in four crops | 5 | 0 | 0 |
+| Wall-only crop, solid image, random noise | 0 | 3 | 0 |
+
+These are controlled reference-image tests plus one real photo, not a measured accuracy rate across live gameplay. Similar Free Market rooms account for many uncertain results. The supplied photo of Construction Site North of Kerning City also passed in the actual browser UI with 203 geometrically aligned landmarks. Map titles were not read. Walking, moving overlays, different game settings and device performance still need real-play testing.
+
+Reproduce the public-image benchmark with the pinned Python environment above:
+
+```sh
+.openai/vision-env/bin/python scripts/benchmark-vision.py
+node scripts/benchmark-vision.cjs
+```
+
+It prepares 336 map crops, eight scene crops and two negative images, and writes the results under ignored `.openai/vision-benchmark/`. Use `--photo /path/to/photo.jpg --expected MAP_ID` to add a private image locally. The standard test suite also checks vector integrity, three representative image cases, temporal confirmation, stale-location handling, data-channel validation and offline cache behavior.

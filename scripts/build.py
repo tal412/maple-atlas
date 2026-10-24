@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PROJECT = Path(__file__).resolve().parents[1]
-LUCIDE_URL = "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"
+LUCIDE_URL = "./vendor/lucide.js"
 
 
 
@@ -57,8 +57,10 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'market-data', 'search-ui', 'runtime'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'market-data', 'search-ui', 'companion-link', 'visual-tracker', 'visual-client', 'companion-ui', 'offline', 'runtime'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
+    visual = json.loads((project / 'docs/data/visual-index.json').read_text())
+    data['visualMaps'] = visual['maps']
     catalog = (project / 'data/search-catalog.json').read_bytes()
     search_name = 'search-' + hashlib.sha256(catalog).hexdigest()[:16] + '.json'
     data['searchCatalog'] = './data/' + search_name
@@ -83,7 +85,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
-    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
+    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + read('companion.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
     page = """<!doctype html>
 <html lang="en">
 <head>
@@ -122,6 +124,13 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     (docs / 'favicon.svg').write_text(read('favicon.svg'), encoding='utf-8')
     if channel == 'dev':
         output.write_text(page.replace('<title>Maple Atlas</title>', '<title>Maple Atlas · Dev</title>'), encoding='utf-8')
+    offline_files = ['index.html', 'favicon.svg', 'vendor/lucide.js', 'vendor/roboto-latin.woff2', 'data/' + search_name]
+    offline_files += ['vendor/companion/qr.js', 'vendor/vision/opencv.js', 'vision-worker.js', 'visual-matcher.js', 'data/visual-index.json', visual['data'][2:]]
+    for name in ['vision-worker.js', 'visual-matcher.js']:
+        (docs / name).write_text(read(name))
+    cache_version = hashlib.sha256((docs / 'vendor/companion/versions.json').read_bytes() + visual['sha256'].encode() + read('visual-matcher.js').encode() + read('vision-worker.js').encode() + (docs / 'vendor/lucide.js').read_bytes() + (docs / 'vendor/roboto-latin.woff2').read_bytes()).hexdigest()[:12]
+    worker = read('service-worker.js').replace('__CACHE_NAME__', json.dumps('maple-atlas-offline-' + channel + '-' + cache_version)).replace('__OFFLINE_FILES__', json.dumps(offline_files)).replace('__CHANNEL__', json.dumps(channel))
+    (docs / 'sw.js').write_text(worker)
     print(f"Built {output.relative_to(project)}: {len(page.encode('utf-8')):,} bytes; {len(audit.ids)} unique IDs; no iframe.")
     return output
 

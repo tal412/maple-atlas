@@ -1,0 +1,15 @@
+{
+  "name": "maple-atlas-build-tools",
+  "private": true,
+  "scripts": {
+    "vendor": "node scripts/vendor-companion.cjs"
+  },
+  "devDependencies": {
+    "@fontsource-variable/roboto": "5.2.8",
+    "@techstark/opencv-js": "4.12.0-release.1",
+    "esbuild": "0.25.12",
+    "jsqr": "1.4.0",
+    "lucide": "1.17.0",
+    "qrcode": "1.5.4"
+  }
+}
