@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import re
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
@@ -51,15 +52,18 @@ def ocean_art(source: str) -> str:
     return art
 
 
-def build(project: Path = PROJECT) -> Path:
+def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = read("runtime.js")
+    runtime = read("map-labels.js") + "\n" + read("local-maps.js") + "\n" + read("runtime.js")
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     app = template.replace("<!-- MAPLE_WORLD -->", ocean_art(read("world.svg")))
+    app = app.replace('id="maple-atlas-concept"', f'id="maple-atlas-concept" data-channel="{channel}"', 1)
+    channel_link = '<a class="mc-channel" href="../">Dev preview · Open main ↗</a>' if channel == 'dev' else '<a class="mc-channel" href="./dev/">Dev preview ↗</a>'
+    app = app.replace('<small>Classic World</small>', '<small>Classic World</small>' + channel_link, 1)
     encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
     if re.search(r"</script", runtime, re.I):
@@ -74,6 +78,7 @@ def build(project: Path = PROJECT) -> Path:
   <meta name="theme-color" content="#f8fafd" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1e1f20" media="(prefers-color-scheme: dark)">
   <title>Maple Atlas</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <style>
 """ + css + """  </style>
 </head>
@@ -92,9 +97,14 @@ def build(project: Path = PROJECT) -> Path:
     output = docs / "index.html"
     output.write_text(page, encoding="utf-8")
     (docs / ".nojekyll").write_text("", encoding="utf-8")
+    (docs / 'favicon.svg').write_text(read('favicon.svg'), encoding='utf-8')
+    if channel == 'dev':
+        output.write_text(page.replace('<title>Maple Atlas</title>', '<title>Maple Atlas · Dev</title>'), encoding='utf-8')
     print(f"Built {output.relative_to(project)}: {len(page.encode('utf-8')):,} bytes; {len(audit.ids)} unique IDs; no iframe.")
     return output
 
 
 if __name__ == "__main__":
-    build()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--channel', choices=('main', 'dev'), default='main')
+    build(channel=parser.parse_args().channel)

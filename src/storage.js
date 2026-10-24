@@ -9,12 +9,13 @@
     }
   };
   const app = document.getElementById('maple-atlas-concept');
+  const development = app.dataset.channel === 'dev';
   app.inert = true;
   status('Opening local progress…');
   let database;
   let writeQueue = Promise.resolve();
   const open = new Promise((resolve, reject) => {
-    const request = indexedDB.open('maple-atlas', 1);
+    const request = indexedDB.open(development ? 'maple-atlas-dev' : 'maple-atlas', 1);
     request.onupgradeneeded = () => request.result.createObjectStore(store);
     request.onsuccess = () => {
       database = request.result;
@@ -48,7 +49,7 @@
     }
   };
   window.mapleStorageReady = transaction('readonly', db => db.get(record)).then(async saved => {
-    if (!saved) {
+    if (!saved && !development) {
       try { saved = JSON.parse(localStorage.getItem(oldKey) || 'null'); } catch (_) {}
       if (saved?.modelContent?.preview === 'maple-atlas-data-v2') {
         await transaction('readwrite', db => db.put(saved, record));

@@ -1,0 +1,76 @@
+name: Publish main and dev
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out stable release
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: stable
+          persist-credentials: false
+      - name: Check out development preview
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          path: preview
+          persist-credentials: false
+      - name: Validate and build both channels
+        shell: bash
+        run: |
+          set -euo pipefail
+          for folder in stable preview; do
+            cd "$GITHUB_WORKSPACE/$folder"
+            channel=main
+            if [ "$folder" = preview ]; then channel=dev; fi
+            python3 scripts/build.py --channel "$channel"
+            python3 scripts/validate.py
+            for script in src/*.js; do node --check "$script"; done
+            for test in tests/*.test.cjs; do node "$test"; done
+          done
+      - name: Assemble site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site/dev
+          cp -R stable/docs/. site/
+          cp -R preview/docs/. site/dev/
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          for folder, target in [('stable', 'site'), ('preview', 'site/dev')]:
+              revision = subprocess.check_output(['git', '-C', folder, 'rev-parse', 'HEAD'], text=True).strip()
+              pathlib.Path(target, 'version.json').write_text(json.dumps({'branch': 'main' if folder == 'stable' else 'dev', 'revision': revision}))
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy both channels
+        id: deployment
+        uses: actions/deploy-pages@v4

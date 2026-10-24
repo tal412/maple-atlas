@@ -1,7 +1,7 @@
 <div id="maple-atlas-concept">
 
   <div class="mc-shell">
-    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><label class="mc-profile">Level <input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
+    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><label class="mc-profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Level</span><input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
     <div class="mc-workspace">
       <aside class="mc-panel">
         <form class="mc-routeform" id="mc-form">
@@ -32,4 +32,14 @@
     <div class="mc-bottom"><span>Recorded portal routes · Community atlas positions · Data checked Oct 24, 2026</span><span id="mc-save-status" role="status">Progress stays in this browser</span></div>
   </div>
 
+  <dialog id="mc-local-dialog" aria-labelledby="mc-local-title">
+    <header class="mc-local-header"><div><div class="mc-eyebrow">Local game map</div><h2 id="mc-local-title"></h2></div><button type="button" id="mc-local-close" aria-label="Close local map"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <div class="mc-local-controls"><label>Show portal to<select id="mc-local-select" aria-label="Portal destination"></select></label><button type="button" id="mc-local-focus" data-local-zoom>Focus exit</button></div>
+    <p id="mc-local-instruction" class="mc-local-instruction"></p>
+    <div id="mc-local-viewport" tabindex="0" role="region" aria-label="Scrollable game map">
+      <div id="mc-local-state" role="status">Loading game map…</div>
+      <div id="mc-local-stage" hidden><img id="mc-local-image" alt="" decoding="async" referrerpolicy="no-referrer"><span id="mc-local-exit" role="img" hidden><span>Exit</span></span></div>
+    </div>
+    <footer class="mc-local-footer"><a id="mc-local-source" target="_blank" rel="noopener">Game art © Nexon · Source ↗</a><div class="mc-local-zoom"><button type="button" id="mc-local-minus" data-local-zoom aria-label="Zoom out local map"><i data-lucide="minus" aria-hidden="true"></i></button><span id="mc-local-scale">Fit</span><button type="button" id="mc-local-plus" data-local-zoom aria-label="Zoom in local map"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-local-fit" data-local-zoom aria-label="Fit local map"><i data-lucide="maximize" aria-hidden="true"></i></button></div></footer>
+  </dialog>
 </div>

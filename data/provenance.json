@@ -100,5 +100,13 @@
     "A missing request should show the character name and an unavailable-image state, not substitute a different sprite."
   ],
   "worldSource": "OSMS current export + MapleStory Quest atlas anchors",
-  "worldSnapshot": "2026-10-24"
+  "worldSnapshot": "2026-10-24",
+  "mapImages": {
+    "commit": "a44f101bffa8272164ca47484ab18c078dcab0a0",
+    "manifest": "https://github.com/ohmi69/osms_datamine_dashboard/blob/a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/map_manifest.json",
+    "fullMapImages": 246,
+    "minimaps": 218,
+    "coordinates": "Exported portal x/y are pixels in the full-resolution map image, matching the source explorer renderer.",
+    "renderer": "https://github.com/ohmi69/osms_datamine_dashboard/blob/a44f101bffa8272164ca47484ab18c078dcab0a0/tabs/maps/MapPortalOverlay.js"
+  }
 }

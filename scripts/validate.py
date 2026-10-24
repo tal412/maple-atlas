@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 world = json.loads((ROOT / 'data/world.json').read_text())
 proof = json.loads((ROOT / 'docs/data/validated-portal-graph.json').read_text())
+image_audit = json.loads((ROOT / 'data/map-image-audit.json').read_text())
 maps = {m['id']: m for m in world['maps']}
 anchors = {s['primary']: s for s in world['spots']}
 assert len(maps) == len(world['maps']) == 246
@@ -15,13 +16,22 @@ assert len(anchors) == len(world['spots']) == 67
 assert sum(bool(s.get('schematic')) for s in anchors.values()) == 3
 assert sum(len(m['portals']) for m in maps.values()) == 457
 assert not proof['arrivalProblems'] and not proof['ambiguousArrivalNames']
+assert not image_audit['errors'] and set(image_audit['maps']) == set(maps)
 
 def edge_tuple(edge):
     return (str(edge['to']), edge['name'], edge['arrival'], edge['type'])
 
 for ident, m in maps.items():
+    image = image_audit['maps'][ident]
+    assert image['url'] == m['image'] and image['bytes'] > 0, ('Wrong audited image', ident)
+    assert re.fullmatch(r'https://cdn\.jsdelivr\.net/gh/ohmi69/osms_datamine_dashboard@[0-9a-f]{40}/data/maps/[0-9a-f]{32}\.webp', m['image']), ('Invalid map image', ident)
+    if m['minimap']:
+        assert m['minimap'].endswith('/data/current/images/maps/' + ident.zfill(9) + '.png'), ('Wrong minimap', ident)
     assert Counter(map(edge_tuple, m['portals'])) == Counter(map(edge_tuple, proof['byMap'][ident]['portals'])), ident
     for edge in m['portals']:
+        assert 0 <= edge['x'] <= image['width'] and 0 <= edge['y'] <= image['height'], ('Portal outside game image', ident, edge)
+        recorded = next(e for e in proof['byMap'][ident]['portals'] if edge_tuple(e) == edge_tuple(edge))
+        assert any(edge['x'] == p['localX'] and edge['y'] == p['localY'] for p in recorded['alternatives']), ('Wrong portal image coordinates', ident, edge)
         destination = str(edge['to'])
         assert destination in maps, (ident, destination)
         if ident in anchors and destination in anchors:
@@ -75,4 +85,8 @@ for path in [ROOT / 'docs/index.html', ROOT / 'docs/plan.html', *ROOT.glob('docs
     text = path.read_text()
     assert not re.search(r'/Users/|/private/|sk-[A-Za-z0-9]{20}|ghp_[A-Za-z0-9]+|maple-atlas-api', text), ('Private build data', path)
 assert page.count('window.mapleStorageReady.then') == 1
-print('PASS: 246 maps, 457 source-matched portal pairs, 67 anchors, 68 shared road curves; route regressions, sprites and static publication checks.')
+assert sum(bool(m['minimap']) for m in maps.values()) == 218
+assert 'maple-atlas-dev' in page and '!saved && !development' in page
+assert 'rel="icon"' in page and (ROOT / 'docs/favicon.svg').exists()
+assert 'nearbyNPCs' not in page
+print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')

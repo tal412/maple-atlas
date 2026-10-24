@@ -1,0 +1,1483 @@
+{
+  "checked": "2026-10-24",
+  "sourceCommit": "a44f101bffa8272164ca47484ab18c078dcab0a0",
+  "maps": {
+    "10000000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/395db7d03cb5d4bec0d020c1f1fe6b4f.webp",
+      "width": 6490,
+      "height": 2131,
+      "bytes": 1671588
+    },
+    "10000001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66c472839041e7d573a0a757151c2fc6.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 104156
+    },
+    "10000002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/219a8d029e484eb36baf528d834eaccf.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 118854
+    },
+    "10000003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/246a91b3ad2cd28d92ea25c9a510ff3a.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 101602
+    },
+    "10000010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fab834850c67b631633f719fa0ed777a.webp",
+      "width": 3520,
+      "height": 1193,
+      "bytes": 764102
+    },
+    "10000011": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/50476be7b48c618c6706997bddc9e416.webp",
+      "width": 2980,
+      "height": 2225,
+      "bytes": 827708
+    },
+    "10000012": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/10e0d86c6f03521da2d96466748c0455.webp",
+      "width": 2170,
+      "height": 2327,
+      "bytes": 620496
+    },
+    "10000013": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9cea03efb9c613020696d484080254cd.webp",
+      "width": 1810,
+      "height": 1595,
+      "bytes": 409882
+    },
+    "10000020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d6561e47426d936ea7f98ca62baa715f.webp",
+      "width": 5320,
+      "height": 2735,
+      "bytes": 2281760
+    },
+    "10000021": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06a698c7419387638e69cf9e5adef40f.webp",
+      "width": 3610,
+      "height": 1505,
+      "bytes": 787240
+    },
+    "10000022": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c31f590f78043bb4161b85d533a936a5.webp",
+      "width": 4060,
+      "height": 1805,
+      "bytes": 858008
+    },
+    "10001000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b6a1b13b416eb17f7609c2cfebc1393a.webp",
+      "width": 7120,
+      "height": 1365,
+      "bytes": 1734936
+    },
+    "10001001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/891e495a260163d9a6369e5e34ca82fe.webp",
+      "width": 1630,
+      "height": 1186,
+      "bytes": 261668
+    },
+    "10001002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/da137f50814532bc16edaf416f878bb3.webp",
+      "width": 1990,
+      "height": 1355,
+      "bytes": 372250
+    },
+    "10001003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7da41c7fdcf3f2b7ea9baeb9346571ea.webp",
+      "width": 4150,
+      "height": 1025,
+      "bytes": 581726
+    },
+    "10001004": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5e52ab0e71ba3e199252aa95cb548a57.webp",
+      "width": 1810,
+      "height": 2045,
+      "bytes": 420162
+    },
+    "10001005": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/10d0416dbc3e5d19edaecc1f26be9ac3.webp",
+      "width": 1630,
+      "height": 1385,
+      "bytes": 220094
+    },
+    "10001006": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/966e6b44dd00116482c30c5b5032a265.webp",
+      "width": 1630,
+      "height": 1445,
+      "bytes": 187988
+    },
+    "10001007": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ac3a375190fafa98db61112bc6d201ae.webp",
+      "width": 2085,
+      "height": 1005,
+      "bytes": 218192
+    },
+    "10001008": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5db5b5670830b0daa0b06c7cd13c366b.webp",
+      "width": 1630,
+      "height": 1117,
+      "bytes": 184190
+    },
+    "10001010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1055ad9d0f80c843fd7d61a7bf8024a9.webp",
+      "width": 2440,
+      "height": 2105,
+      "bytes": 516254
+    },
+    "10001011": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/420f0baea69182b79178bb6abbfd4a5c.webp",
+      "width": 1990,
+      "height": 1941,
+      "bytes": 446618
+    },
+    "10001012": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f9338ac62b10d6c321a9dacc50f82342.webp",
+      "width": 1990,
+      "height": 1745,
+      "bytes": 468468
+    },
+    "10001020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d587df44787714b2021f2f2c48418d28.webp",
+      "width": 3880,
+      "height": 2267,
+      "bytes": 1024224
+    },
+    "10001021": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1931e149ae973b7e8e75c3917b74eda4.webp",
+      "width": 2710,
+      "height": 1325,
+      "bytes": 423612
+    },
+    "10001030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0126ce824e3f3bc1ae4c8a5f6f7cdb97.webp",
+      "width": 4420,
+      "height": 2165,
+      "bytes": 1246988
+    },
+    "10001040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a0ade2275c71930b5d185edb758c954f.webp",
+      "width": 5950,
+      "height": 1056,
+      "bytes": 1100500
+    },
+    "10001041": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5d39bf30b57f35a84d7d35448f16ba0a.webp",
+      "width": 1523,
+      "height": 1029,
+      "bytes": 144578
+    },
+    "10001042": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c6c79e8caa6c9f2d9b2e4149b3d9a684.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 113776
+    },
+    "10001043": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bae45ede1a3efa2b379cf2e036c3ff4c.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 92688
+    },
+    "10001044": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6fe40f7c1c3bdb494ccacad3dabf3eca.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 128686
+    },
+    "10001045": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c833f641dfd00c8b450c53823dd629c8.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 129692
+    },
+    "10001050": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5b218aa4282b869049fc1e4dac08f971.webp",
+      "width": 5050,
+      "height": 1056,
+      "bytes": 939104
+    },
+    "10001051": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/95fbff5d3173eaa016dc79d1e1ba2f8d.webp",
+      "width": 1524,
+      "height": 847,
+      "bytes": 127364
+    },
+    "10001052": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0b116ab7f930c105a0c58dc25496c06f.webp",
+      "width": 3970,
+      "height": 2665,
+      "bytes": 900564
+    },
+    "10001060": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0378ef8c07d3e200e6e97082b0a7821e.webp",
+      "width": 2890,
+      "height": 1835,
+      "bytes": 606420
+    },
+    "10001070": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f508766f19a72b0c7373668b02ecbe49.webp",
+      "width": 2530,
+      "height": 1055,
+      "bytes": 540410
+    },
+    "10001080": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba58ca8886b9faeb9af62b1f3cedd951.webp",
+      "width": 4870,
+      "height": 2465,
+      "bytes": 1932272
+    },
+    "10001081": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/324269712b1430ef03ef1849c2719d67.webp",
+      "width": 3160,
+      "height": 1265,
+      "bytes": 627446
+    },
+    "10001082": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5c478375701cd0ae719e2b5ce7eca976.webp",
+      "width": 3880,
+      "height": 1817,
+      "bytes": 968710
+    },
+    "10001090": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/eb6bf353f00442e72923e1b81784fbd1.webp",
+      "width": 3610,
+      "height": 1985,
+      "bytes": 1358184
+    },
+    "10001100": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1a0ff864b824cce74f07b587db1d4edc.webp",
+      "width": 3970,
+      "height": 1805,
+      "bytes": 1152436
+    },
+    "10001101": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1ce85aea56715d0abed52707e6491c5a.webp",
+      "width": 1630,
+      "height": 1844,
+      "bytes": 327778
+    },
+    "10001102": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/04ab79620fc06f539141db0b53c1a725.webp",
+      "width": 1720,
+      "height": 1477,
+      "bytes": 349636
+    },
+    "10001103": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/952b039e531fc6d27113af784487b706.webp",
+      "width": 1810,
+      "height": 1318,
+      "bytes": 335720
+    },
+    "10001104": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/833254b43424a35175ef0ecffd688af4.webp",
+      "width": 1720,
+      "height": 1343,
+      "bytes": 305478
+    },
+    "10001105": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9ee4f835ff5540eb9d063a949a2499f7.webp",
+      "width": 1990,
+      "height": 1387,
+      "bytes": 424322
+    },
+    "10001106": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3250e0d7182b2a5ce42982044d7211a1.webp",
+      "width": 1630,
+      "height": 1200,
+      "bytes": 298614
+    },
+    "10002000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/93f41fc2034fcaf4f6444dfd0f8e695b.webp",
+      "width": 2844,
+      "height": 5201,
+      "bytes": 1550144
+    },
+    "10002001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ecd92c915cfc91164485425caaf4dbd1.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 104568
+    },
+    "10002002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c427950928a75f504312ce9b34ac9509.webp",
+      "width": 1524,
+      "height": 700,
+      "bytes": 114346
+    },
+    "10002003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dfc665fa333dd3b82473daff89b183a7.webp",
+      "width": 1179,
+      "height": 1318,
+      "bytes": 152274
+    },
+    "10002004": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5cf49cee8b0f094c3f01a29cec72dc0a.webp",
+      "width": 1196,
+      "height": 2156,
+      "bytes": 249698
+    },
+    "10002005": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/31c0b89d716c6d045923491ee64db463.webp",
+      "width": 1181,
+      "height": 1303,
+      "bytes": 118752
+    },
+    "10002010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c9c7b743e2e039f0da795942db84755a.webp",
+      "width": 1751,
+      "height": 2526,
+      "bytes": 435174
+    },
+    "10002020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5b642ba98f6f9d8e7843006bf67efa3a.webp",
+      "width": 2260,
+      "height": 3309,
+      "bytes": 637960
+    },
+    "10002021": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0fffc7db232bb343dc9ff0421028439f.webp",
+      "width": 1846,
+      "height": 2529,
+      "bytes": 417302
+    },
+    "10002022": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/de5d1401cd28f8fbe7c122d08040d554.webp",
+      "width": 1180,
+      "height": 3100,
+      "bytes": 244324
+    },
+    "10002023": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ff9574d6c49193080c7bbf2e89b2647c.webp",
+      "width": 1846,
+      "height": 2394,
+      "bytes": 445400
+    },
+    "10002024": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b272f0214eced4db42c7c8b4f50f5fce.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 247766
+    },
+    "10002025": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/28a4bbd54f93b54dc6b0ad6a43140472.webp",
+      "width": 1846,
+      "height": 2384,
+      "bytes": 518064
+    },
+    "10002026": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c10cef6cf6cf08c79b6b4a602bb4a804.webp",
+      "width": 1846,
+      "height": 2384,
+      "bytes": 563692
+    },
+    "10002027": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e1dcbc41f43743131bb08892971c0860.webp",
+      "width": 1576,
+      "height": 2270,
+      "bytes": 384362
+    },
+    "10002030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/42652f5ab8be3c8e59b999b588ae7dd9.webp",
+      "width": 3423,
+      "height": 2934,
+      "bytes": 867438
+    },
+    "10002031": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b9781a3877f35e37dd3c971445c73f5b.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 198554
+    },
+    "10002032": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/35deb66028f1d4ce057f6749ef088440.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 211526
+    },
+    "10002033": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/974465afefd017b4c2aaa007e33dc09d.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 203302
+    },
+    "10002034": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f163baf2699644884b76709cdf596e4c.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 208222
+    },
+    "10002040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ecb4b71e0141424937901cefe396ad42.webp",
+      "width": 1720,
+      "height": 4673,
+      "bytes": 209472
+    },
+    "10002041": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/de4871437cf025288b347f6e69f1a289.webp",
+      "width": 1630,
+      "height": 4988,
+      "bytes": 406448
+    },
+    "10002042": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/78548c0491c08c18d26103aa04c324ce.webp",
+      "width": 1900,
+      "height": 3220,
+      "bytes": 254282
+    },
+    "10002043": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/624070c3ed36f4bb34afb938ee929e47.webp",
+      "width": 2170,
+      "height": 2390,
+      "bytes": 246010
+    },
+    "10002044": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/791a32b72d20d72dd4ff8c989d7e30cb.webp",
+      "width": 1630,
+      "height": 4610,
+      "bytes": 309176
+    },
+    "10002050": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/30fa9e757b266e610d61e28ee62b999b.webp",
+      "width": 1981,
+      "height": 2202,
+      "bytes": 396482
+    },
+    "10002060": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7b77b1d184ae138ca615c054027ba748.webp",
+      "width": 1916,
+      "height": 2006,
+      "bytes": 409098
+    },
+    "10002061": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/60f4200d832405b9edf6eab34cb97068.webp",
+      "width": 1687,
+      "height": 2775,
+      "bytes": 617742
+    },
+    "10002062": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/84fd1193781ddf2d01d35f174c6b568c.webp",
+      "width": 1687,
+      "height": 2374,
+      "bytes": 498188
+    },
+    "10002070": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/edf1da34a43c92eb775e67fd3be55b2a.webp",
+      "width": 2181,
+      "height": 6957,
+      "bytes": 1258614
+    },
+    "10002071": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c27a06ee651e0408d87d26dceb3820c6.webp",
+      "width": 1170,
+      "height": 4540,
+      "bytes": 370178
+    },
+    "10002072": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9ef536e4c894aad54b4498a78ac988bc.webp",
+      "width": 1090,
+      "height": 3580,
+      "bytes": 253578
+    },
+    "10002073": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bdaeaf160725c85e6828526129e01aba.webp",
+      "width": 1090,
+      "height": 2980,
+      "bytes": 225828
+    },
+    "10002074": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c4a0fefd80f06862e813f94d4b66a84d.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 243478
+    },
+    "10002075": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c28629fe0177e626812b334d5f0a2c6c.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 200976
+    },
+    "10002076": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/97dc3d64b475b4e7a5f084e5a7efbc1f.webp",
+      "width": 1090,
+      "height": 2980,
+      "bytes": 220824
+    },
+    "10002080": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dbd02ca6beea85000f54ae5645fae08e.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 273876
+    },
+    "10002081": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c72fbdd126d4a4c2c7d1ec2b98bf3787.webp",
+      "width": 1170,
+      "height": 2920,
+      "bytes": 352970
+    },
+    "10002082": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d7df878584a677ab9aee4e5310b4fd2d.webp",
+      "width": 1170,
+      "height": 2920,
+      "bytes": 268042
+    },
+    "10002083": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5cb090955fa7b9417c6753776b32b38e.webp",
+      "width": 1090,
+      "height": 2920,
+      "bytes": 263446
+    },
+    "10002090": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/80dafd7a18e3a277957fcb17f29bbc15.webp",
+      "width": 2415,
+      "height": 867,
+      "bytes": 260850
+    },
+    "10002091": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d2b02c7462cde568cfc0fa5a72a93798.webp",
+      "width": 1700,
+      "height": 1550,
+      "bytes": 314644
+    },
+    "10003000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3d75b4f2934259ac0d03b805fa6b048e.webp",
+      "width": 5410,
+      "height": 2293,
+      "bytes": 1836396
+    },
+    "10003001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e7222c42f8c235fc8aa12f1a36cb3b2a.webp",
+      "width": 1293,
+      "height": 770,
+      "bytes": 110914
+    },
+    "10003002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a701da49d3fca4865ed4bdcf0d756239.webp",
+      "width": 1300,
+      "height": 750,
+      "bytes": 106340
+    },
+    "10003003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f47243fd590676a7f2f8a4a8cfd91fc6.webp",
+      "width": 1524,
+      "height": 1067,
+      "bytes": 160002
+    },
+    "10003004": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f534606b494d0157dc6f470407c6967d.webp",
+      "width": 1300,
+      "height": 700,
+      "bytes": 89080
+    },
+    "10003005": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9b04bbed53c95d2130cb8ee4f8b58efb.webp",
+      "width": 1301,
+      "height": 700,
+      "bytes": 104744
+    },
+    "10003006": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0a848162ec48768fb55388bf4ecdc0a3.webp",
+      "width": 1300,
+      "height": 890,
+      "bytes": 125292
+    },
+    "10003007": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d757f200aec9def71d73c1566e6aa87b.webp",
+      "width": 1460,
+      "height": 1193,
+      "bytes": 216930
+    },
+    "10003008": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a796f175e4953fd543f1ccee87025874.webp",
+      "width": 1630,
+      "height": 1161,
+      "bytes": 158720
+    },
+    "10003010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a87926a171a19ae325864d3a12199b36.webp",
+      "width": 4780,
+      "height": 2224,
+      "bytes": 1469756
+    },
+    "10003011": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7e1aef5420945a3471c8103efe879f92.webp",
+      "width": 1630,
+      "height": 1545,
+      "bytes": 256230
+    },
+    "10003020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/77f4eb8d35baee4ea34a0247aa6fbd1b.webp",
+      "width": 3250,
+      "height": 2260,
+      "bytes": 1137948
+    },
+    "10003030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/511851dbeb30f61a87cae933c4534f9f.webp",
+      "width": 2800,
+      "height": 2016,
+      "bytes": 860240
+    },
+    "10003040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2443d73fdf47d9cd4c2cebb4b07a05c2.webp",
+      "width": 3790,
+      "height": 2525,
+      "bytes": 1294176
+    },
+    "10003050": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b3bf745e7e289fe5c13c0d87bd0cf81e.webp",
+      "width": 3250,
+      "height": 2045,
+      "bytes": 988170
+    },
+    "10003051": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d1a172908a42bf04336394be3be730f5.webp",
+      "width": 2530,
+      "height": 2090,
+      "bytes": 739672
+    },
+    "10003052": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b4049eec796ddd899716bec35b9a118c.webp",
+      "width": 2800,
+      "height": 2090,
+      "bytes": 775494
+    },
+    "10003060": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ab61a1c3a61632a1e25903047373b16e.webp",
+      "width": 900,
+      "height": 700,
+      "bytes": 116590
+    },
+    "10003061": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d9e41ecd9f974e6a0bb5b614db47832c.webp",
+      "width": 4240,
+      "height": 1461,
+      "bytes": 686142
+    },
+    "10003062": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bdd3f4a9effa2756d5b701ee9fc7f6c1.webp",
+      "width": 2170,
+      "height": 2330,
+      "bytes": 606244
+    },
+    "10003063": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e6187d8ff5ddaf6c604f1a8bb444f84c.webp",
+      "width": 4240,
+      "height": 1461,
+      "bytes": 673994
+    },
+    "10003064": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7a7cab32278648a10e3ed4834a182072.webp",
+      "width": 4060,
+      "height": 1457,
+      "bytes": 731394
+    },
+    "10003065": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/49f060574632e6bf32970a416af0075a.webp",
+      "width": 4060,
+      "height": 1457,
+      "bytes": 726124
+    },
+    "10003066": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/82e7cf222638e530f3a4f0ca85fc406f.webp",
+      "width": 4240,
+      "height": 1459,
+      "bytes": 692926
+    },
+    "10003067": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72808944911c75462d6aafe02ef1ecf2.webp",
+      "width": 4060,
+      "height": 1458,
+      "bytes": 711172
+    },
+    "10003068": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/5f398d14e702e3af63d8b74fe0391020.webp",
+      "width": 4060,
+      "height": 1458,
+      "bytes": 699932
+    },
+    "10003070": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/75cadba2900f5b76b7582ab69585f026.webp",
+      "width": 2980,
+      "height": 2428,
+      "bytes": 1014992
+    },
+    "10003080": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0508b3d608578a9ae42aa6e9c9a8413f.webp",
+      "width": 3340,
+      "height": 2282,
+      "bytes": 904094
+    },
+    "10003081": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/826cadacc4d6709d692ec98ac3399a89.webp",
+      "width": 1500,
+      "height": 1605,
+      "bytes": 270080
+    },
+    "10003090": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0bb8f242ae341fba677cecd17467ff8c.webp",
+      "width": 3197,
+      "height": 1786,
+      "bytes": 492682
+    },
+    "10003091": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9375732d73211d0f19a709ac458300a9.webp",
+      "width": 3757,
+      "height": 1654,
+      "bytes": 616964
+    },
+    "10003092": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c1e0657436e669bff4cd5dfe2a2f1b24.webp",
+      "width": 3339,
+      "height": 1829,
+      "bytes": 478250
+    },
+    "10003093": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/033d5dd726e01e1a81659d7e980fadc9.webp",
+      "width": 4269,
+      "height": 2044,
+      "bytes": 845092
+    },
+    "10003094": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06513ac557bd2d66255dcc428b49f841.webp",
+      "width": 4028,
+      "height": 1975,
+      "bytes": 757300
+    },
+    "10003095": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f04d9bba46f6707f4b2e87680fe5a07c.webp",
+      "width": 2299,
+      "height": 1975,
+      "bytes": 550652
+    },
+    "10003096": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e5d07ef9b2c91b63b2364a2a17856d15.webp",
+      "width": 1906,
+      "height": 1975,
+      "bytes": 445356
+    },
+    "10003097": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/751d839cc88b42c952368e6f0a2ffd93.webp",
+      "width": 1947,
+      "height": 1975,
+      "bytes": 471906
+    },
+    "10003098": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/df4a7dd1228523d57a51e2326b5e5043.webp",
+      "width": 1524,
+      "height": 849,
+      "bytes": 23536
+    },
+    "10003100": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a390df75fb6c81cafb633285ef5eb57c.webp",
+      "width": 4780,
+      "height": 2900,
+      "bytes": 1745990
+    },
+    "10003101": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4431158eb8ef1d40f043b607a8c56524.webp",
+      "width": 1540,
+      "height": 2110,
+      "bytes": 442262
+    },
+    "10003102": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3a0901667e3ad07dc7cd9afc2d06b6e0.webp",
+      "width": 2530,
+      "height": 960,
+      "bytes": 413986
+    },
+    "10003103": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c6965290d5783d15c3857cf61f5811a0.webp",
+      "width": 1540,
+      "height": 3200,
+      "bytes": 756552
+    },
+    "10003104": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7b50f120cdf3b01bfd4e6339d13936ef.webp",
+      "width": 2260,
+      "height": 3100,
+      "bytes": 942204
+    },
+    "10003105": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a53ffd4a3d32a0bbbb6bbae74d2bc878.webp",
+      "width": 2530,
+      "height": 960,
+      "bytes": 413018
+    },
+    "10003106": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f7a0e6764affcd6c116a2f2753498acb.webp",
+      "width": 1630,
+      "height": 3830,
+      "bytes": 827484
+    },
+    "10003107": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/54b6d536db05cc18fc436be4ebe43d7c.webp",
+      "width": 4510,
+      "height": 1060,
+      "bytes": 528330
+    },
+    "10003108": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f85b73b544ffce2c107867452c8d71fc.webp",
+      "width": 1360,
+      "height": 3950,
+      "bytes": 707500
+    },
+    "10003109": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/af66414f99c7df9314073b1aa3859984.webp",
+      "width": 2530,
+      "height": 960,
+      "bytes": 412228
+    },
+    "10003110": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a307fcf0138dbedde0e11d151e3c6e47.webp",
+      "width": 2958,
+      "height": 1529,
+      "bytes": 358724
+    },
+    "10003111": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/acd0254b2e65a3131c7b86c1390db887.webp",
+      "width": 3131,
+      "height": 1412,
+      "bytes": 346678
+    },
+    "10003112": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bec6cbb173c2bd12210172951b2afcd5.webp",
+      "width": 1524,
+      "height": 849,
+      "bytes": 25074
+    },
+    "10004000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/eb577815e5e2d83a0a36ac34c5eede25.webp",
+      "width": 3520,
+      "height": 3247,
+      "bytes": 1365480
+    },
+    "10004001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3357f1e3beec05e49bc8a187e68451f4.webp",
+      "width": 1518,
+      "height": 700,
+      "bytes": 104398
+    },
+    "10004002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c303d31df4c252c43d8dc19839a0c582.webp",
+      "width": 900,
+      "height": 700,
+      "bytes": 108422
+    },
+    "10004003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c9f4da6efd2abd86ccdfec1b73a46cbf.webp",
+      "width": 1279,
+      "height": 700,
+      "bytes": 125558
+    },
+    "10004010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72a737de46a2b1d30e70bdd9064ba2e4.webp",
+      "width": 3880,
+      "height": 1443,
+      "bytes": 935390
+    },
+    "10004020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/74ab9534468225f3e4aa6f40cd8850b3.webp",
+      "width": 2980,
+      "height": 2119,
+      "bytes": 1071760
+    },
+    "10004021": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3804249a6d622eeb6a37f62327677f22.webp",
+      "width": 1990,
+      "height": 2307,
+      "bytes": 754144
+    },
+    "10004022": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66c9e69a3486ff03c550b13f64cd862a.webp",
+      "width": 1990,
+      "height": 2588,
+      "bytes": 842842
+    },
+    "10004023": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ae016bc257a065d0c4dba508853fe30d.webp",
+      "width": 2170,
+      "height": 2140,
+      "bytes": 755088
+    },
+    "10004030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4ad2a2ef883615bea28bbcbc65026de2.webp",
+      "width": 3520,
+      "height": 2455,
+      "bytes": 1139422
+    },
+    "10004040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/66f3d1c37ae92746dfd061798d89b66a.webp",
+      "width": 4150,
+      "height": 1594,
+      "bytes": 1041758
+    },
+    "10004041": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ad4932edbe3919990ad8b3a7d0bdb7e7.webp",
+      "width": 2980,
+      "height": 1645,
+      "bytes": 606630
+    },
+    "10004042": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7a484fb907817cc124b43cc1ca33376d.webp",
+      "width": 2350,
+      "height": 1352,
+      "bytes": 461232
+    },
+    "10004050": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/42900c5d86d03adbee12c9878ef6ef48.webp",
+      "width": 2260,
+      "height": 2406,
+      "bytes": 679032
+    },
+    "10004051": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f1ee4cc9fd3a136f152c7b1d0d7a9353.webp",
+      "width": 2260,
+      "height": 2158,
+      "bytes": 694224
+    },
+    "10004052": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/67a9301293100677da48ee51b64013ba.webp",
+      "width": 2260,
+      "height": 2152,
+      "bytes": 695284
+    },
+    "10004053": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9621fa75bfee1d148a9f2911f78d1f86.webp",
+      "width": 2260,
+      "height": 2406,
+      "bytes": 743946
+    },
+    "10004054": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fa714004a6c98977d07de691197fdaca.webp",
+      "width": 2260,
+      "height": 1768,
+      "bytes": 529806
+    },
+    "10004055": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/743faf83d57097ad3bcecf4e54eae797.webp",
+      "width": 2080,
+      "height": 1549,
+      "bytes": 417230
+    },
+    "10004056": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/719e45fdcd7c2a410b9667aa94d9451b.webp",
+      "width": 2260,
+      "height": 2185,
+      "bytes": 693494
+    },
+    "10004057": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/083e1215c9c0adcbaf7a9d1ea922293f.webp",
+      "width": 1630,
+      "height": 1686,
+      "bytes": 343898
+    },
+    "10004060": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/cbecd48d6aa64c71812a806b2d98ae88.webp",
+      "width": 2350,
+      "height": 2053,
+      "bytes": 598434
+    },
+    "10004070": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/963c2a57c3e37987f9104a85e7722f42.webp",
+      "width": 2350,
+      "height": 2112,
+      "bytes": 588682
+    },
+    "10004080": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/05a0d56de9e86dd74c4390746c1c6ba1.webp",
+      "width": 2350,
+      "height": 2068,
+      "bytes": 572434
+    },
+    "10004090": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d95419306c5679e4075342011a2bc472.webp",
+      "width": 2530,
+      "height": 3985,
+      "bytes": 1477068
+    },
+    "10004091": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f7b0ed2454de91eea2c17b078f4c78b3.webp",
+      "width": 1720,
+      "height": 1795,
+      "bytes": 383844
+    },
+    "10004100": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e068784acef3e436bc6601e61791baf9.webp",
+      "width": 3160,
+      "height": 2354,
+      "bytes": 983646
+    },
+    "10004101": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8f0f114451f7637296142620e9cdcb2b.webp",
+      "width": 1990,
+      "height": 2120,
+      "bytes": 598524
+    },
+    "10004102": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2ffa455ba65800f06e19f0a9930a3a4b.webp",
+      "width": 2440,
+      "height": 1945,
+      "bytes": 695420
+    },
+    "10004110": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/15168c2cf43aa3406922a1984c03f6a7.webp",
+      "width": 2620,
+      "height": 1855,
+      "bytes": 658056
+    },
+    "10004111": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0842c235b97ce59dee2c55925c9ded6d.webp",
+      "width": 3250,
+      "height": 1821,
+      "bytes": 703830
+    },
+    "10004112": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b46f86ce3f9a8687d676b1e1c081f54c.webp",
+      "width": 2800,
+      "height": 1881,
+      "bytes": 698558
+    },
+    "10004113": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6e6ef6d60ddb15ca031d8711d40f6f5f.webp",
+      "width": 2530,
+      "height": 1881,
+      "bytes": 612212
+    },
+    "10004114": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1761bac39339a881ba0fb056649041f6.webp",
+      "width": 2530,
+      "height": 1881,
+      "bytes": 626040
+    },
+    "10004115": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fe7276f6f0b6c4a508c7124a304644fc.webp",
+      "width": 2800,
+      "height": 1881,
+      "bytes": 740116
+    },
+    "10004120": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/871b5ffd15dd166bd3d1a721dfa5b17c.webp",
+      "width": 2440,
+      "height": 2233,
+      "bytes": 775680
+    },
+    "10004121": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1ba814860052dcda4a53b5dacb47170c.webp",
+      "width": 2440,
+      "height": 2529,
+      "bytes": 703716
+    },
+    "10004130": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a6ae760bb54f4ebb96022400ec7d15d4.webp",
+      "width": 1990,
+      "height": 1741,
+      "bytes": 576632
+    },
+    "10004131": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6244e62f697bb8ea7c5239cd57dc1403.webp",
+      "width": 2260,
+      "height": 2078,
+      "bytes": 817252
+    },
+    "10004132": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d544eab8d2a388a98b7039c561407811.webp",
+      "width": 1990,
+      "height": 1630,
+      "bytes": 451974
+    },
+    "10004133": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8b858475b3c0a4b9dd9c3b98fae5ff44.webp",
+      "width": 2710,
+      "height": 1532,
+      "bytes": 656212
+    },
+    "10004134": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3a4895f4c809606e21ce598007887a41.webp",
+      "width": 2260,
+      "height": 1337,
+      "bytes": 426606
+    },
+    "10004135": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4b7f480ed84592dff428eeacae805030.webp",
+      "width": 2260,
+      "height": 1325,
+      "bytes": 468188
+    },
+    "10004136": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/851d4398374b01cea2882a8393872c06.webp",
+      "width": 1900,
+      "height": 1344,
+      "bytes": 423486
+    },
+    "10004137": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e026d7adbeaf80fdd857b5c1c63051c7.webp",
+      "width": 1919,
+      "height": 1928,
+      "bytes": 534656
+    },
+    "10004138": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3fb3802375bebc8f1ecc408dc2017994.webp",
+      "width": 2070,
+      "height": 1782,
+      "bytes": 463158
+    },
+    "10004140": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/15adfc82aa7afd5be9936b9c33b82916.webp",
+      "width": 950,
+      "height": 2020,
+      "bytes": 314978
+    },
+    "10004141": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/844b9350ea249ca5ae5060001f770243.webp",
+      "width": 950,
+      "height": 1960,
+      "bytes": 320606
+    },
+    "10004142": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e33c384d7e7725f48745b84284dfe46a.webp",
+      "width": 950,
+      "height": 2319,
+      "bytes": 301480
+    },
+    "10005000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba6d7e0d175d281c110391314b8edce4.webp",
+      "width": 2710,
+      "height": 1489,
+      "bytes": 614400
+    },
+    "10005001": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/0cf60ba22ed199a71106021a200c0c53.webp",
+      "width": 1523,
+      "height": 890,
+      "bytes": 142606
+    },
+    "10005002": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4ceea025bb4687997ef75920b5b03cad.webp",
+      "width": 1524,
+      "height": 742,
+      "bytes": 137326
+    },
+    "10005003": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/787ca4dc505b8f66ed0019ccce0737c0.webp",
+      "width": 1524,
+      "height": 742,
+      "bytes": 139024
+    },
+    "10005010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/380a313101f1922c5e3a5424e557e6f3.webp",
+      "width": 1990,
+      "height": 3640,
+      "bytes": 986558
+    },
+    "10005011": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c508840c85fbddc60079415ea65e2dd6.webp",
+      "width": 1900,
+      "height": 2440,
+      "bytes": 896154
+    },
+    "10005012": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3149de71176ad23340929cede4128cc5.webp",
+      "width": 2080,
+      "height": 2215,
+      "bytes": 663066
+    },
+    "10005020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/39c5e6006387d3c78fd71938a90afae7.webp",
+      "width": 2350,
+      "height": 3523,
+      "bytes": 1036392
+    },
+    "10005030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/e2a78cadcd81c8cb7fe6589cd808ef34.webp",
+      "width": 2440,
+      "height": 2693,
+      "bytes": 680934
+    },
+    "10005031": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/032eb7100a697198cdaf28fb76551ad1.webp",
+      "width": 1720,
+      "height": 2693,
+      "bytes": 373066
+    },
+    "10005040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b47a59c693d0006bc6263a4d0c7375df.webp",
+      "width": 1630,
+      "height": 3835,
+      "bytes": 272368
+    },
+    "10005041": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a2e3deb91cc1246ef166cf766454efd0.webp",
+      "width": 1720,
+      "height": 3475,
+      "bytes": 357330
+    },
+    "10005042": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/39374c43d8e40831f7463003b5aa18ae.webp",
+      "width": 1900,
+      "height": 3775,
+      "bytes": 335252
+    },
+    "10005043": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/f0253322e62717ad58fe049fbc874837.webp",
+      "width": 2170,
+      "height": 2860,
+      "bytes": 500694
+    },
+    "10005044": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/094582de39dce975aaa516b5d87e01cb.webp",
+      "width": 2080,
+      "height": 3293,
+      "bytes": 590926
+    },
+    "10005045": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6c20ede392ac3e719c453c1497b806e4.webp",
+      "width": 1810,
+      "height": 2934,
+      "bytes": 324644
+    },
+    "10005046": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/c0808fcda66fa93b14c6c3c124d00d64.webp",
+      "width": 1990,
+      "height": 4555,
+      "bytes": 418640
+    },
+    "10005050": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/690e14de934f667fa1d4a4f44765c6b7.webp",
+      "width": 1630,
+      "height": 2995,
+      "bytes": 392530
+    },
+    "10005051": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/dae1a4c29c4022727ea06caeb7369d00.webp",
+      "width": 1630,
+      "height": 3000,
+      "bytes": 513550
+    },
+    "10005052": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7f547a6cae2f98e43a98c060ed69e1cb.webp",
+      "width": 1630,
+      "height": 3602,
+      "bytes": 548192
+    },
+    "10005053": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/8a623f433de0e3ff9b4af64a431dae93.webp",
+      "width": 1630,
+      "height": 2944,
+      "bytes": 554312
+    },
+    "10005054": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/db9b27518128f8eeb28ccfe54ff2a32e.webp",
+      "width": 2260,
+      "height": 3841,
+      "bytes": 1261050
+    },
+    "10005060": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3b7e4760f2e12da4c72aad39a865c38f.webp",
+      "width": 3340,
+      "height": 2560,
+      "bytes": 312450
+    },
+    "10005061": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2ea602cff71846b96a2417386459dde4.webp",
+      "width": 2980,
+      "height": 2500,
+      "bytes": 372104
+    },
+    "10005062": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/83ce0bf7bcbc020023ce650a5c1eb26c.webp",
+      "width": 3700,
+      "height": 2465,
+      "bytes": 532630
+    },
+    "10005063": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/06a312653839ef989d8a80a354cb6f34.webp",
+      "width": 3610,
+      "height": 2860,
+      "bytes": 436098
+    },
+    "10005064": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/557fa4f2cc669a855822ccb5016c8040.webp",
+      "width": 3610,
+      "height": 1480,
+      "bytes": 317858
+    },
+    "10005065": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/583e153a53fcc9b8d3886b71a786d186.webp",
+      "width": 3430,
+      "height": 3220,
+      "bytes": 524018
+    },
+    "10005066": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/ba15598b5c8929c913feafecdfc45859.webp",
+      "width": 3430,
+      "height": 2620,
+      "bytes": 423340
+    },
+    "10005067": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/4804e8c192ac57b7432b8a40c0642216.webp",
+      "width": 3430,
+      "height": 2740,
+      "bytes": 563548
+    },
+    "10005070": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/80300d2c4777df68d6f0ffafb01dcbb4.webp",
+      "width": 4060,
+      "height": 2740,
+      "bytes": 845268
+    },
+    "10005071": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/090de31e29dd091f776addb591308dfb.webp",
+      "width": 1810,
+      "height": 2860,
+      "bytes": 330588
+    },
+    "10005072": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/91035f301ecfb27b8e01353d52d73725.webp",
+      "width": 1720,
+      "height": 2620,
+      "bytes": 272520
+    },
+    "10005073": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/823a58afdd4788b3459a3de1189a7f43.webp",
+      "width": 1810,
+      "height": 2620,
+      "bytes": 279482
+    },
+    "10005074": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/d3a37af43252b7e25a56ab540ee39d5f.webp",
+      "width": 1720,
+      "height": 3400,
+      "bytes": 304512
+    },
+    "10005075": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6007fc906c038c3a906d739e41b69952.webp",
+      "width": 2440,
+      "height": 1960,
+      "bytes": 332884
+    },
+    "10005076": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/48133581b3195a21b2b692a8aa32c006.webp",
+      "width": 3069,
+      "height": 4630,
+      "bytes": 939336
+    },
+    "10005077": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/2cd72e14b6da4f6cc0a44e18e27a4cf2.webp",
+      "width": 2980,
+      "height": 3160,
+      "bytes": 610166
+    },
+    "10005078": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/1fab279b6bde27508f1e676bc5d06950.webp",
+      "width": 1540,
+      "height": 2080,
+      "bytes": 215172
+    },
+    "10005080": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bd5ee6257c367be5d86f6bbb6cfae5c2.webp",
+      "width": 1536,
+      "height": 1739,
+      "bytes": 278092
+    },
+    "10005090": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a02eb6e84380ee65e7c66d6a01b7510b.webp",
+      "width": 2350,
+      "height": 3400,
+      "bytes": 558066
+    },
+    "10005091": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/b23f3e7dc343278beba99c756046d827.webp",
+      "width": 1630,
+      "height": 2111,
+      "bytes": 470888
+    },
+    "10005100": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/62cedffc2b5df92324f985859b3c00f6.webp",
+      "width": 1810,
+      "height": 3220,
+      "bytes": 308330
+    },
+    "10005101": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/52e20121d5b26b27762374febfefd766.webp",
+      "width": 2440,
+      "height": 1420,
+      "bytes": 421888
+    },
+    "10005102": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/71970101631c9b4c4e514a78b34d169d.webp",
+      "width": 2260,
+      "height": 1900,
+      "bytes": 406214
+    },
+    "10005103": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/a4adaa4f4db0c48c593866d81508d6ad.webp",
+      "width": 2710,
+      "height": 1420,
+      "bytes": 545570
+    },
+    "10005104": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/3ea4c2518d55697ab6e80688afbca891.webp",
+      "width": 2350,
+      "height": 1480,
+      "bytes": 449720
+    },
+    "10005105": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/6bd1405903b36eae885452a4505ff076.webp",
+      "width": 1810,
+      "height": 1608,
+      "bytes": 329076
+    },
+    "10006121": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/607af420f8e3f8aed880296d2adb132b.webp",
+      "width": 1630,
+      "height": 1060,
+      "bytes": 169462
+    },
+    "10007000": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/332f8fbafdc35b106d61c50ef4a8bcae.webp",
+      "width": 3280,
+      "height": 1296,
+      "bytes": 574764
+    },
+    "10007010": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/9dff7a74a7134e69e37db5385ce1c0f4.webp",
+      "width": 4080,
+      "height": 1640,
+      "bytes": 878044
+    },
+    "10007020": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/bbdb2be6d899e5e1bbc374a807fce3a6.webp",
+      "width": 4085,
+      "height": 2340,
+      "bytes": 845372
+    },
+    "10007021": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/27e95cc9cf1a4faf49058b423ceb3c28.webp",
+      "width": 1680,
+      "height": 2040,
+      "bytes": 466266
+    },
+    "10007030": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/72e989a5539bd0852c57e1ccdfe0cba0.webp",
+      "width": 3280,
+      "height": 1640,
+      "bytes": 807214
+    },
+    "10007031": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/fe530ef6c1d8550082ea47282a4a1ab4.webp",
+      "width": 1682,
+      "height": 1660,
+      "bytes": 359138
+    },
+    "10007040": {
+      "url": "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@a44f101bffa8272164ca47484ab18c078dcab0a0/data/maps/7e2c25288e48b0813c41a52273d4bd1b.webp",
+      "width": 3280,
+      "height": 1840,
+      "bytes": 631004
+    }
+  },
+  "errors": []
+}
