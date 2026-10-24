@@ -32,8 +32,11 @@ def unique(values):
 
 
 world = json.loads((ROOT / 'data/world.json').read_text())
-lookups, raw_maps, items, monsters, quests, crafting, skills = (read(n) for n in
-    ['lookups', 'maps', 'items', 'monsters', 'quests', 'crafting', 'skills'])
+lookups, raw_maps, items, monsters, quests, crafting, skills, cash_shop = (read(n) for n in
+    ['lookups', 'maps', 'items', 'monsters', 'quests', 'crafting', 'skills', 'cash_shop'])
+api_snapshot = json.loads((ROOT / 'data/mcw-items.json').read_text())
+assert api_snapshot['region'] == 'MCW' and api_snapshot['version'] == '1'
+api_items = {str(i['id']): i for i in api_snapshot['items']}
 entities = {}
 
 
@@ -69,16 +72,29 @@ for m in monsters['monsters']:
         maps=unique(str(x['id']) for x in m.get('maps', [])))
 
 details = {str(i['id']): i for i in items['items'] + items['scrolls']}
-for ident, name in lookups['item_names'].items():
+cash_items = {str(i['id']): i for c in cash_shop['categories'] for i in c['items']}
+item_names = dict(lookups['item_names'])
+item_names.update({ident: i['name'] for ident, i in cash_items.items()})
+item_names.update({ident: i['name'] for ident, i in api_items.items()})
+for ident, name in item_names.items():
     i = details.get(ident, {})
+    cash = cash_items.get(ident)
+    api = api_items.get(ident, {})
+    kind = api.get('typeInfo', {})
     stats = i.get('stats', {})
     aliases = {'Work Gloves': ['wg'], 'Henesys': ['hene']}.get(name, [])
-    add('item', ident, name, category=i.get('category', 'Scroll' if 'success_rate' in i else 'Item'),
-        subcategory=i.get('sub_category', ''), description=i.get('description', ''),
+    old_name = lookups['item_names'].get(ident)
+    if old_name and old_name != name:
+        aliases.append(old_name)
+    add('item', ident, name, category=(cash['category'] if cash else i.get('category', kind.get('category', 'Scroll' if 'success_rate' in i else 'Item'))),
+        subcategory=(cash.get('sub_category') if cash else i.get('sub_category', kind.get('subCategory', ''))),
+        description=i.get('description') or (cash or {}).get('description') or api.get('desc', ''),
         image=image('current/images/items/' + ident.zfill(8) + '.png'),
-        level=stats.get('reqLevel'), stats=stats, sell=i.get('price', stats.get('price')),
+        level=stats.get('reqLevel', api.get('requiredLevel')), stats=stats, sell=i.get('price', stats.get('price')),
         success=i.get('success_rate'), job=i.get('req_job_label'), aliases=aliases,
-        limited=not bool(i))
+        cash=bool(cash) or api.get('isCash', False), apiRecord=bool(api),
+        cashShop=({k: cash[k] for k in ['price', 'count', 'period', 'on_sale']} if cash else None),
+        limited=not bool(i or cash or api))
 for q in world['quests']:
     raw = next(x for x in quests['quests'] if str(x['id']) == q['id'])
     npc = entities.get('npc:' + str(q.get('npcId')))
@@ -121,6 +137,7 @@ for e in records:
         if e[k] is None or e[k] == '' or e[k] == []:
             del e[k]
 catalog = dict(schema=1, snapshot=world['snapshot'], sourceCommit=COMMIT,
+    gameApi={k: api_snapshot[k] for k in ['source', 'region', 'version', 'checked', 'sha256']},
     sources=SOURCES, counts=dict(Counter(e['type'] for e in records)), entities=records)
 output = ROOT / 'data/search-catalog.json'
 output.write_text(json.dumps(catalog, ensure_ascii=False, separators=(',', ':')) + '\n')

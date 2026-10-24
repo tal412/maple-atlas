@@ -5,7 +5,7 @@ const {create,normalize}=require('../src/search-index.js');
 const {create:loader}=require('../src/search-data.js');
 const start=performance.now(),index=create(catalog),buildTime=performance.now()-start;
 const top=q=>index.search(q).results[0]?.entity;
-assert.equal(index.size,8930);
+assert.equal(index.size,9355);
 for(const q of ['snail','snial','snaill','snails','monster snail'])assert.equal(top(q).key,'monster:2',q);
 for(const q of ['hene','hennesys','HÉNESYS','10001000'])assert.equal(top(q).key,'map:10001000',q);
 assert.equal(top('wg').name,'Work Gloves');
@@ -68,6 +68,6 @@ assert(timings.at(Math.floor(timings.length*.95))<100,'Repeated queries should s
   assert.throws(()=>loader({url:'https://example.com/private-api'}));
   const invalid=loader({url,readCache:async()=>null,writeCache:async()=>{},request:async()=>({ok:true,json:async()=>({error:true})})});
   await assert.rejects(invalid.load());
-  console.log('PASS: 8,930 records; typo/alias/multiword/ID/category ranking; source relationships and values; versioned cache, offline cache, retry and storage failures.');
+  console.log('PASS: 9,355 records; typo/alias/multiword/ID/category ranking; source relationships and values; versioned cache, offline cache, retry and storage failures.');
   console.log(`Index ${buildTime.toFixed(1)} ms; query p95 ${timings[Math.floor(timings.length*.95)].toFixed(2)} ms (${timings.length} queries).`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

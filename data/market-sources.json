@@ -3,6 +3,14 @@
   "integration": "Outbound price-check links. No live player-market feed or copied market-price database.",
   "sources": [
     {
+      "name": "MapleStory Market",
+      "url": "https://maplestory.market/items",
+      "account": "https://maplestory.market/account",
+      "privacy": "https://maplestory.market/privacy",
+      "method": "Player-shop observations, listed prices and history; do not equate listings to completed sales.",
+      "note": "Account page explicitly offers API keys. Privacy policy confirms administrator approval of requests. No key has been obtained and no public endpoint contract was verified. Do not scrape around the provider\u2019s browser checks."
+    },
+    {
       "name": "NiaMeowDB",
       "url": "https://meowdb.com/msclassic/price-check",
       "method": "Item search and inventory screenshots; player-reported prices and shop observations.",
@@ -29,5 +37,10 @@
     "meaning": "Sell Price from the pinned game export, per item. Not an NPC purchase cost or player-market quote. Unknown is never zero.",
     "crossCheck": "https://meowdb.com/msclassic/item-db/1435",
     "example": "Work Gloves: NPC sell-back 1200 mesos. Red Potion exported sell value is 5, not its shop purchase cost of 50."
+  },
+  "gameData": {
+    "source": "https://maplestory.io/api/MCW/1/item",
+    "detailExample": "https://maplestory.io/api/MCW/1/item/1067027",
+    "note": "Public browser-accessible Classic World API, MCW/1. Not a live market-price feed. Full listing captured with count=20000 yielded 7432 records. Item details are cached on selection. White Jeans 1067027 has cash=true; no NPC sell price is supplied. The legacy GitHub bulk route is not deployed and is not used."
   }
 }

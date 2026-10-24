@@ -24,7 +24,7 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 - `src/map-labels.js`: stable label placement during map motion.
 - `src/map-gestures.js`: one-finger pan and anchored pinch zoom.
 - `src/search-index.js`, `src/search-data.js`, `src/search-ui.js`: indexed universal search, versioned IndexedDB catalog cache and entity details.
-- `data/search-catalog.json`: 8,930 records from hash-checked pinned game exports.
+- `data/search-catalog.json`: 9,355 records from hash-checked pinned game exports.
 - `scripts/catalog.py`: optional catalog regeneration from `research/osms/`; regular builds use the committed snapshot.
 - `data/market-sources.json`: pricing-source investigation and value semantics.
 - `src/quest-flow.js`: one next quest per NPC, recorded prerequisites and journal handoffs.
@@ -74,15 +74,17 @@ On phones, the map opens with a compact search bar, discovery chips and a collap
 
 ## Universal search
 
-The desktop search button and mobile search bar share a catalog of 348 locations, 118 monster names, 301 NPCs, 343 quests, 7,361 items, 366 recipes, and 93 unique skills. Name-only records are marked as unverified; 246 maps have route coverage. All search data comes from the same pinned OSMS export, with source-file Git blob hashes in the catalog.
+The desktop search button and mobile search bar share a catalog of 348 locations, 118 monster names, 301 NPCs, 343 quests, 7,786 items, 366 recipes, and 93 unique skills. 246 maps have route coverage. Item coverage is the union of the pinned OSMS names, item and cash-shop exports, plus the complete public MapleStory.io MCW/1 item listing (7,432 entries). The API listing snapshot is committed in `data/mcw-items.json` with its URL, date, region, version and raw-response hash. Historical names remain search aliases; distinct IDs are never merged by name.
 
 Search supports category filters, exact IDs, name prefixes, plurals, small spelling mistakes/transpositions, and aliases such as `wg` for Work Gloves. Examples: `snial`, `where can I find snails`, `hennesys`, `gloves attack 60`, and `work gloves worth`. Names rank above related locations, objective/reward names and description matches. The index uses inverted token postings, prefixes, deletion candidates and trigrams with bounded edit distance, built once per page. Typing queries stays on the device.
 
-The 2 MB catalog downloads only when search opens, from a same-origin content-hashed static JSON file. IndexedDB retains the current version for subsequent searches/reloads, with separate main/dev caches. A failed cache or storage quota does not disable search. Network failures offer retry; a cached older edition is never presented as the current catalog. The app remains backend-free. The catalog cache is separate from character progress.
+The 2.8 MB catalog downloads only when search opens, from a same-origin content-hashed static JSON file. IndexedDB retains the current version for subsequent searches/reloads, with separate main/dev caches. A failed cache or storage quota does not disable search. Network failures offer retry; a cached older edition is never presented as the current catalog. The app remains backend-free. The catalog cache is separate from character progress.
 
 Search results link to entity details, recorded locations, quests, requirements, rewards, and crafting ingredients. NPC details show one next quest; explicit quest searches can inspect any recorded quest without changing the recommended sequence. Quest item lists start collapsed. Maps outside route coverage stay searchable without invented coordinates. Item drops and NPC shop inventories are not inferred from historical MapleStory tables.
 
-Item worth distinguishes **NPC sell values** from player prices. Values come from the pinned export, with unknown values left unknown. The market section links to [NiaMeowDB price checks](https://meowdb.com/msclassic/price-check) and [MesoWatch](https://beta.meso.watch/). There is no live price feed: these sources require permission for bulk data reuse, and no documented reusable feed was verified. Observed shop asking prices and inferred sales are different, and equipment stats affect value. Research and source links are recorded in `data/market-sources.json`.
+Opening an item fetches its exact MCW/1 record from [MapleStory.io](https://maplestory.io/api/MCW/1/item/1067027). Only whitelisted metadata is cached in a separate main/dev IndexedDB store; bulky animation frames are discarded. Results stay fresh for 24 hours, requests are deduplicated, failures preserve the static catalog and allow retry, and cached older details are labeled when used offline. No GMS or other-game fallback is used. API names and statistics describe client records, not proof of current acquisition or live shop stock.
+
+Item worth distinguishes **NPC sell values**, **NX cash-shop snapshot prices** and **player-market prices**. Cash-shop zeroes are never shown as free; missing sell values are never invented. Cash items have their own presentation. [MapleStory Market](https://maplestory.market/account) offers API access through an account and administrator-approved key request. No key has been provisioned, so live player prices are not integrated. NiaMeowDB, MesoWatch and HubCW require permission for automated reuse. Market access would need to be obtained before adding a documented snapshot importer; keep any future key in GitHub Actions secrets, never the public app. Research is in `data/market-sources.json`.
 
 Run `node tests/search.test.cjs` for ranking, category/relationship/value checks, cache versioning, storage/network failures and a query timing check. Rebuild after catalog changes; `scripts/build.py` writes the matching content-hashed public bundle. `scripts/catalog.py` regenerates the committed catalog only when the pinned raw research exports and repository tree are available; it rejects changed source hashes.
 

@@ -96,13 +96,13 @@ for quest in world['quests']:
 page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
-assert len(re.findall(r'\bfetch\s*\(', page)) == 1, 'Only the static search catalog loader may fetch'
+assert len(re.findall(r'\bfetch\s*\(', page)) == 2, 'Only the static catalog and explicit MCW item loader may fetch'
 catalog_blob = (ROOT / 'data/search-catalog.json').read_bytes()
 catalog_name = 'search-' + hashlib.sha256(catalog_blob).hexdigest()[:16] + '.json'
 assert (ROOT / 'docs/data' / catalog_name).read_bytes() == catalog_blob
 assert './data/' + catalog_name in page
 catalog = json.loads(catalog_blob)
-assert len(catalog['entities']) == len({e['key'] for e in catalog['entities']}) == 8930
+assert len(catalog['entities']) == len({e['key'] for e in catalog['entities']}) == 9355
 assert Counter(e['type'] for e in catalog['entities']) == catalog['counts']
 assert all('marketPrice' not in e for e in catalog['entities']), 'Do not invent market values'
 assert {e['id'] for e in catalog['entities'] if e['type'] == 'map' and e.get('covered')} == set(maps)
@@ -119,4 +119,4 @@ assert '<meta name="color-scheme" content="light dark">' in page
 assert '@media(prefers-color-scheme:dark)' in page and 'MapleGestures.create' in page
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')
 print('PASS: all 464 hosted map assets match their pinned source Git blobs.')
-print('PASS: 8,930 unique catalog entities; same-origin versioned search bundle; no live-price claims.')
+print('PASS: 9,355 unique catalog entities; same-origin versioned search bundle; no live-price claims.')
