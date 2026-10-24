@@ -10,7 +10,7 @@
 #maple-atlas-concept .mc-companion-actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
 #maple-atlas-concept .mc-companion-actions button{flex:1}
 #maple-atlas-concept #mc-companion-status{padding:14px 16px;background:var(--mc-soft);border-radius:16px;overflow-wrap:anywhere}
-#maple-atlas-concept #mc-pair-qr{display:block;width:min(100%,360px);height:auto;margin:16px auto;border-radius:12px;background:white}
+#maple-atlas-concept #mc-pair-qr{display:block;width:var(--mc-qr-size,280px);max-width:100%;height:auto;aspect-ratio:1;image-rendering:pixelated;margin:16px auto;border-radius:12px;background:white}
 #maple-atlas-concept #mc-reader-preview{position:relative;margin:16px 0;cursor:crosshair;touch-action:none;line-height:0}
 #maple-atlas-concept #mc-reader-video,#maple-atlas-concept #mc-scan-video{display:block;width:100%;height:auto;background:#111}
 #maple-atlas-concept #mc-reader-selection{position:absolute;border:2px solid #a8c7fa;background:#0b57d033;pointer-events:none}

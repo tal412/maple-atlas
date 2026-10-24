@@ -4,7 +4,15 @@
   function create({root,maps,visualMaps,onLocation,onConnection,onInspect}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),qr=$('#mc-pair-qr'),input=$('#mc-pair-input'),output=$('#mc-pair-output');
     const video=$('#mc-reader-video'),selection=$('#mc-reader-selection'),scanVideo=$('#mc-scan-video'),readerState=$('#mc-reader-state');
-    let role=null,stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null;
+    let role=null,stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null,qrCells=0;
+    function fitQR(){
+      const parent=qr.parentElement,style=getComputedStyle(parent),available=parent.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+      if(!qrCells||available<=0)return;
+      // Whole CSS pixels per module avoid blurred, hard-to-scan downscaling.
+      const limit=Math.min(360,available,innerHeight*.48),size=Math.max(1,Math.floor(limit/qrCells))*qrCells+'px';
+      if(qr.style.getPropertyValue('--mc-qr-size')!==size)qr.style.setProperty('--mc-qr-size',size);
+    }
+    new ResizeObserver(fitQR).observe(qr.parentElement);window.addEventListener('resize',fitQR);
     const tracker=MapleVisualTracker.create(),known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
     const vision=MapleVisualClient.create({onProgress:message=>{readerState.textContent=message;$('#mc-visual-result').textContent=message;}});let fileEpoch=0,lastTest=null;
     const link=MapleCompanionLink.create({ids,onLocation:value=>{lastSeen=Date.now();onLocation(value);},onReading:state=>{lastSeen=0;onConnection(state==='paused'?'stale':'searching');},onState:value=>{
@@ -19,8 +27,12 @@
     async function run(button,fn){button.disabled=true;try{await fn();}catch(e){error(e);}finally{button.disabled=false;}}
     async function showCode(code){
       output.value=code;await load('./vendor/companion/qr.js');
-      await MapleQR.toCanvas(qr,code,{width:900,margin:4,errorCorrectionLevel:'M'});
-      $('#mc-pair-exchange').hidden=false;
+      qrCells=MapleQR.create(code,{errorCorrectionLevel:'M'}).modules.size+8;
+      await MapleQR.toCanvas(qr,code,{scale:8,margin:4,errorCorrectionLevel:'M'});
+      // Keep the high-resolution bitmap; let CSS size its on-screen square.
+      // node-qrcode also writes inline dimensions, overriding responsive CSS.
+      qr.style.removeProperty('width');qr.style.removeProperty('height');
+      $('#mc-pair-exchange').hidden=false;fitQR();
       $('#mc-pair-next').textContent=role==='pc'?'1. On the phone, open Live companion → Use this phone. Scan this code. Then scan the phone’s response here.':'2. On the PC, choose Scan phone response and scan this code. Keep this page open.';
     }
     async function accept(code){
