@@ -47,6 +47,7 @@ function openChannel(peer,link,session,remoteRole){
  for(const patch of bad)await assert.rejects(packed({...offer,...patch}),undefined,JSON.stringify(patch).slice(0,80));
  for(const text of ['https://not-a-pairing-code.test','MA2'+'A'.repeat(800),code.slice(0,-6),code+'AAAA','MA2'+'7'+code.slice(4),'MA2!'+code.slice(4)])await assert.rejects(unpack(text,initial));
  await assert.rejects(unpack('MAPLE1:abc',initial),/older Maple Atlas version/);
+ await assert.rejects(unpack('https://tal412.github.io/maple-atlas/dev/',initial),/website link, not a pairing code/);
  assert.equal((await unpack(code.toLowerCase(),initial)).session,offer.session,'Codes survive case changes from scanners');
  const pc=harness(),own=await unpack(await pc.link.offer(),initial),pcPeer=Peer.last;
  assert.equal(pc.last().phase,'waiting-phone');assert.deepEqual(pc.last().addressing,{ip:2,names:1});assert.match(own.session,/^[a-f0-9]{16}$/);

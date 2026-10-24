@@ -1614,6 +1614,7 @@ window.mapleStorageReady.then(() => {
   }
   async function unpack(text,now=Date.now()){
     text=String(text).trim().toUpperCase();
+    if(/^HTTPS?:\/\//.test(text))throw Error('This QR is a website link, not a pairing code. On your computer, open Maple Atlas → Connect phone → Create computer code, then scan the QR it shows.');
     if(text.startsWith('MAPLE1:'))throw Error('This code is from an older Maple Atlas version. Refresh Maple Atlas on both devices, then pair again.');
     if(!text.startsWith(prefix)||text.length>prefix.length+Math.ceil(maxBytes*8/5))throw Error('This is not a Maple Atlas pairing code.');
     const bytes=unbase32(text.slice(prefix.length));let at=0;
