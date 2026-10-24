@@ -195,6 +195,7 @@
 #maple-atlas-concept .mc-local-header h2 {font-size:22px;line-height:1.3;margin:4px 0 0;font-weight:500;}
 #maple-atlas-concept .mc-local-header button {flex:0 0 44px;width:44px;height:44px;padding:10px;display:grid;place-items:center;}
 #maple-atlas-concept .mc-local-controls {display:flex;align-items:end;gap:12px;padding:0 24px;}
+#maple-atlas-concept .mc-local-controls[hidden] {display:none;}
 #maple-atlas-concept .mc-local-controls label {position:relative;flex:1;min-width:0;color:var(--mc-muted);font-size:12px;}
 #maple-atlas-concept .mc-local-controls label::after {content:'';position:absolute;right:16px;bottom:19px;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);pointer-events:none;}
 #maple-atlas-concept .mc-local-controls select {appearance:none;display:block;margin-top:6px;width:100%;height:44px;border:1px solid var(--mc-edge);border-radius:12px;padding:8px 36px 8px 12px;background:var(--mc-soft);color:var(--mc-ink);font:inherit;font-size:14px;}
@@ -905,7 +906,7 @@ window.mapleStorageReady.then(() => {
       edge = current.portals[index];
       select.value = edge ? String(index) : '';
       const destination = edge ? get(edge.to)?.name : '';
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : 'Explore the original game map. Choose a destination to highlight its portal.';
+      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
@@ -922,6 +923,7 @@ window.mapleStorageReady.then(() => {
       $('#mc-local-source').href = 'https://osmsdataexplorer.com/?tab=maps&id=' + String(id).padStart(9, '0');
       select.replaceChildren(new Option('Choose an exit…', ''), ...map.portals.map((portal, index) => new Option(get(portal.to)?.name || 'Connected map', String(index))));
       select.disabled = !map.portals.length;
+      $('.mc-local-controls').hidden = !map.portals.length;
       choose(map.portals.findIndex(portal => String(portal.to) === String(next)));
       if (!dialog.open) dialog.showModal();
       image.alt = map.name + ' — original game map';

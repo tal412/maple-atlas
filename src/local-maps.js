@@ -52,7 +52,7 @@
       edge = current.portals[index];
       select.value = edge ? String(index) : '';
       const destination = edge ? get(edge.to)?.name : '';
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : 'Explore the original game map. Choose a destination to highlight its portal.';
+      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
@@ -69,6 +69,7 @@
       $('#mc-local-source').href = 'https://osmsdataexplorer.com/?tab=maps&id=' + String(id).padStart(9, '0');
       select.replaceChildren(new Option('Choose an exit…', ''), ...map.portals.map((portal, index) => new Option(get(portal.to)?.name || 'Connected map', String(index))));
       select.disabled = !map.portals.length;
+      $('.mc-local-controls').hidden = !map.portals.length;
       choose(map.portals.findIndex(portal => String(portal.to) === String(next)));
       if (!dialog.open) dialog.showModal();
       image.alt = map.name + ' — original game map';

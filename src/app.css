@@ -183,6 +183,7 @@
 #maple-atlas-concept .mc-local-header h2 {font-size:22px;line-height:1.3;margin:4px 0 0;font-weight:500;}
 #maple-atlas-concept .mc-local-header button {flex:0 0 44px;width:44px;height:44px;padding:10px;display:grid;place-items:center;}
 #maple-atlas-concept .mc-local-controls {display:flex;align-items:end;gap:12px;padding:0 24px;}
+#maple-atlas-concept .mc-local-controls[hidden] {display:none;}
 #maple-atlas-concept .mc-local-controls label {position:relative;flex:1;min-width:0;color:var(--mc-muted);font-size:12px;}
 #maple-atlas-concept .mc-local-controls label::after {content:'';position:absolute;right:16px;bottom:19px;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);pointer-events:none;}
 #maple-atlas-concept .mc-local-controls select {appearance:none;display:block;margin-top:6px;width:100%;height:44px;border:1px solid var(--mc-edge);border-radius:12px;padding:8px 36px 8px 12px;background:var(--mc-soft);color:var(--mc-ink);font:inherit;font-size:14px;}
