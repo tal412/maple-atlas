@@ -35,6 +35,7 @@
     }
     function bindRows(container){container.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.entity));imageEvents();}
     function showResults(){
+      clearTimeout(timer);
       stack=[];detail.hidden=true;$('#mc-search-listing').hidden=false;$('#mc-search-back').hidden=true;$('#mc-search-title').textContent='Search Maple Atlas';
       if(!index)return;
       const found=index.search(input.value,{type:category,limit});
