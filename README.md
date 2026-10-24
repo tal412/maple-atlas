@@ -32,7 +32,9 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 - **Main:** https://tal412.github.io/maple-atlas/ — built from `main`.
 - **Dev preview:** https://tal412.github.io/maple-atlas/dev/ — built from `dev`.
 
-Work on `dev`, commit source changes and push. The Pages workflow validates both branches and publishes them together, keeping the root site on the `main` revision. To release tested work, merge `dev` into `main` and push `main`. A failed check prevents publishing. Both URLs expose `version.json` with their branch and commit.
+Work on `dev`, commit source changes, then run `python3 scripts/deploy.py`. This pushes the current branch and explicitly starts GitHub Actions. The Pages workflow validates both branches and publishes them together, keeping the root site on the `main` revision. To release tested work, merge `dev` into `main` and run the same command from `main`. A failed check prevents publishing. Both URLs expose `version.json` with their branch and commit.
+
+The workflow also listens for pushes to `main` and `dev`. During initial setup GitHub did not start runs from pushes, while explicit workflow dispatch succeeded; the deploy helper provides a verified publishing path without depending on that trigger. It requires the authenticated GitHub CLI (`gh`).
 
 To republish the current branches without another commit, run `gh workflow run pages.yml --ref main`, or use **Run workflow** on the repository's Actions page. The deployment never merges development changes into the stable branch.
 
@@ -43,10 +45,12 @@ python3 scripts/validate.py
 node tests/map-labels.test.cjs
 node tests/local-maps.test.cjs
 node tests/storage.test.cjs
-# After committing and pushing dev, review /dev/ before releasing:
+# After committing your changes:
+python3 scripts/deploy.py
+# Review /dev/ before releasing:
 git switch main
 git merge --ff-only dev
-git push origin main
+python3 scripts/deploy.py
 git switch dev
 ```
 
