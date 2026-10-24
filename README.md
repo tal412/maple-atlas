@@ -23,6 +23,10 @@ Open `http://localhost:8000`. GitHub Actions builds and publishes both branches 
 - `data/map-assets.json`: pinned source hashes for the 464 hosted map assets.
 - `src/map-labels.js`: stable label placement during map motion.
 - `src/map-gestures.js`: one-finger pan and anchored pinch zoom.
+- `src/search-index.js`, `src/search-data.js`, `src/search-ui.js`: indexed universal search, versioned IndexedDB catalog cache and entity details.
+- `data/search-catalog.json`: 8,930 records from hash-checked pinned game exports.
+- `scripts/catalog.py`: optional catalog regeneration from `research/osms/`; regular builds use the committed snapshot.
+- `data/market-sources.json`: pricing-source investigation and value semantics.
 - `src/quest-flow.js`: one next quest per NPC, recorded prerequisites and journal handoffs.
 - `data/night-palette.json`: system dark-mode colors for the original illustrated map.
 - `src/favicon.svg`: original maple-leaf map pin icon.
@@ -66,7 +70,21 @@ For a local development-channel build, use `python3 scripts/build.py --channel d
 
 ## Mobile and appearance
 
-On phones, the map opens with a compact search bar, discovery chips and a collapsed bottom sheet. Search for a place, tap a map marker, or open Directions to choose a start and destination. The bottom navigation opens Explore, Directions or your quest journal; character level is inside the profile button. Pan with one finger and pinch to zoom. The interface and original atlas artwork automatically follow device light/dark appearance, including changes while the app is open. Original game images retain their source colors.
+On phones, the map opens with a compact search bar, discovery chips and a collapsed bottom sheet. Search for any game entity, tap a map marker, or open Directions to choose a start and destination. The bottom navigation opens Explore, Directions or your quest journal; character level is inside the profile button. Pan with one finger and pinch to zoom. The interface and original atlas artwork automatically follow device light/dark appearance, including changes while the app is open. Original game images retain their source colors.
+
+## Universal search
+
+The desktop search button and mobile search bar share a catalog of 348 locations, 118 monster names, 301 NPCs, 343 quests, 7,361 items, 366 recipes, and 93 unique skills. Name-only records are marked as unverified; 246 maps have route coverage. All search data comes from the same pinned OSMS export, with source-file Git blob hashes in the catalog.
+
+Search supports category filters, exact IDs, name prefixes, plurals, small spelling mistakes/transpositions, and aliases such as `wg` for Work Gloves. Examples: `snial`, `where can I find snails`, `hennesys`, `gloves attack 60`, and `work gloves worth`. Names rank above related locations, objective/reward names and description matches. The index uses inverted token postings, prefixes, deletion candidates and trigrams with bounded edit distance, built once per page. Typing queries stays on the device.
+
+The 2 MB catalog downloads only when search opens, from a same-origin content-hashed static JSON file. IndexedDB retains the current version for subsequent searches/reloads, with separate main/dev caches. A failed cache or storage quota does not disable search. Network failures offer retry; a cached older edition is never presented as the current catalog. The app remains backend-free. The catalog cache is separate from character progress.
+
+Search results link to entity details, recorded locations, quests, requirements, rewards, and crafting ingredients. NPC details show one next quest; explicit quest searches can inspect any recorded quest without changing the recommended sequence. Quest item lists start collapsed. Maps outside route coverage stay searchable without invented coordinates. Item drops and NPC shop inventories are not inferred from historical MapleStory tables.
+
+Item worth distinguishes **NPC sell values** from player prices. Values come from the pinned export, with unknown values left unknown. The market section links to [NiaMeowDB price checks](https://meowdb.com/msclassic/price-check) and [MesoWatch](https://beta.meso.watch/). There is no live price feed: these sources require permission for bulk data reuse, and no documented reusable feed was verified. Observed shop asking prices and inferred sales are different, and equipment stats affect value. Research and source links are recorded in `data/market-sources.json`.
+
+Run `node tests/search.test.cjs` for ranking, category/relationship/value checks, cache versioning, storage/network failures and a query timing check. Rebuild after catalog changes; `scripts/build.py` writes the matching content-hashed public bundle. `scripts/catalog.py` regenerates the committed catalog only when the pinned raw research exports and repository tree are available; it rejects changed source hashes.
 
 ## Data and behavior
 

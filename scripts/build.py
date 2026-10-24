@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import argparse
 import re
 import xml.etree.ElementTree as ET
@@ -56,8 +57,11 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = read("map-labels.js") + "\n" + read("map-gestures.js") + "\n" + read("map-images.js") + "\n" + read("local-maps.js") + "\n" + read("quest-flow.js") + "\n" + read("runtime.js")
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'search-ui', 'runtime'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
+    catalog = (project / 'data/search-catalog.json').read_bytes()
+    search_name = 'search-' + hashlib.sha256(catalog).hexdigest()[:16] + '.json'
+    data['searchCatalog'] = './data/' + search_name
     assets = json.loads((project / 'data/map-assets.json').read_text())['maps']
     for m in data['maps']:
         m['localImage'] = './' + assets[m['id']]['image']['path']
@@ -78,7 +82,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
-    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
+    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
     page = """<!doctype html>
 <html lang="en">
 <head>
@@ -105,6 +109,11 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
         raise ValueError("An unresolved build placeholder remains.")
     docs = project / "docs"
     docs.mkdir(parents=True, exist_ok=True)
+    (docs / 'data').mkdir(exist_ok=True)
+    for old in (docs / 'data').glob('search-*.json'):
+        if old.name != search_name:
+            old.unlink()
+    (docs / 'data' / search_name).write_bytes(catalog)
     output = docs / "index.html"
     output.write_text(page, encoding="utf-8")
     (docs / ".nojekyll").write_text("", encoding="utf-8")

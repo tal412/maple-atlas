@@ -1,0 +1,33 @@
+{
+  "checked": "2026-10-24",
+  "integration": "Outbound price-check links. No live player-market feed or copied market-price database.",
+  "sources": [
+    {
+      "name": "NiaMeowDB",
+      "url": "https://meowdb.com/msclassic/price-check",
+      "method": "Item search and inventory screenshots; player-reported prices and shop observations.",
+      "reuse": "https://meowdb.com/reuse",
+      "terms": "https://meowdb.com/terms",
+      "note": "Bulk database reuse and automated collection require permission. Links only."
+    },
+    {
+      "name": "MesoWatch",
+      "url": "https://beta.meso.watch/",
+      "method": "Reads player-shop video/recordings. Distinguishes asking prices and observed sales; incomplete or delayed observations are possible.",
+      "terms": "https://beta.meso.watch/terms",
+      "note": "Automated price-table collection and redistribution require written permission. Links only."
+    },
+    {
+      "name": "Free Market Classic",
+      "url": "https://freemarketclassic.com/fm?hl=en",
+      "method": "FM Sync shop observations over 14 days; listed, typical and sold values are separate.",
+      "note": "No documented reusable public feed verified in this investigation. Not integrated."
+    }
+  ],
+  "npcValues": {
+    "source": "https://github.com/ohmi69/osms_datamine_dashboard/blob/a44f101bffa8272164ca47484ab18c078dcab0a0/tabs/items.js",
+    "meaning": "Sell Price from the pinned game export, per item. Not an NPC purchase cost or player-market quote. Unknown is never zero.",
+    "crossCheck": "https://meowdb.com/msclassic/item-db/1435",
+    "example": "Work Gloves: NPC sell-back 1200 mesos. Red Potion exported sell value is 5, not its shop purchase cost of 50."
+  }
+}

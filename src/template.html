@@ -1,7 +1,7 @@
 <div id="maple-atlas-concept">
 
   <div class="mc-shell">
-    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><label class="mc-profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Level</span><input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
+    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><button type="button" id="mc-desktop-search" aria-label="Search Maple Atlas"><i data-lucide="search" aria-hidden="true"></i><span>Search everything</span></button><label class="mc-profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Level</span><input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
     <div class="mc-workspace">
       <div class="mc-mobile-searchbar">
         <button type="button" id="mc-mobile-search" aria-label="Search Maple Atlas"><img src="./favicon.svg" alt=""><span>Search Maple Atlas</span></button>
@@ -42,7 +42,16 @@
     <div class="mc-bottom"><span>Recorded portal routes · Community atlas positions · Data checked Oct 24, 2026</span><span id="mc-save-status" role="status">Progress stays in this browser</span></div>
   </div>
 
-  <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title"><header><h2 id="mc-search-title">Find a place</h2><button type="button" data-close-dialog="mc-search-dialog" aria-label="Close search"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-search-input"><i data-lucide="search" aria-hidden="true"></i><input id="mc-search-input" type="search" placeholder="City, forest, shop…" aria-label="Search locations" autocomplete="off"></label><div id="mc-search-results"></div></dialog>
+  <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title">
+    <header><button type="button" id="mc-search-back" aria-label="Back to search" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button><h2 id="mc-search-title">Search Maple Atlas</h2><button type="button" data-close-dialog="mc-search-dialog" aria-label="Close search"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <div id="mc-search-listing">
+      <label class="mc-search-input"><i data-lucide="search" aria-hidden="true"></i><input id="mc-search-input" type="search" placeholder="Monsters, quests, items, places…" aria-label="Search everything" autocomplete="off" spellcheck="false"></label>
+      <div id="mc-search-filters" aria-label="Search categories"></div>
+      <p id="mc-search-status" role="status" aria-live="polite"></p>
+      <div id="mc-search-results"></div>
+    </div>
+    <div id="mc-search-entity" hidden></div>
+  </dialog>
   <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
   <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title"><header><h2 id="mc-profile-title">Your character</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header><label class="mc-character-level"><span>Character level<small>Find quests for your level</small></span><input id="mc-mobile-level" type="number" min="1" max="100" value="18" aria-label="Character level"></label><p>Appearance follows your device’s light or dark theme.</p><button type="button" id="mc-mobile-journal" class="mc-primary">Open quest journal</button><a id="mc-mobile-channel" class="mc-mobile-channel" href="./dev/">Open dev preview ↗</a></dialog>
   <dialog id="mc-local-dialog" aria-labelledby="mc-local-title">

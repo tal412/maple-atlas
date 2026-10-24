@@ -1,0 +1,73 @@
+const assert=require('node:assert/strict');
+const {performance}=require('node:perf_hooks');
+const catalog=require('../data/search-catalog.json');
+const {create,normalize}=require('../src/search-index.js');
+const {create:loader}=require('../src/search-data.js');
+const start=performance.now(),index=create(catalog),buildTime=performance.now()-start;
+const top=q=>index.search(q).results[0]?.entity;
+assert.equal(index.size,8930);
+for(const q of ['snail','snial','snaill','snails','monster snail'])assert.equal(top(q).key,'monster:2',q);
+for(const q of ['hene','hennesys','HÉNESYS','10001000'])assert.equal(top(q).key,'map:10001000',q);
+assert.equal(top('wg').name,'Work Gloves');
+assert.equal(top('work gloves worth').key,'item:1082000');
+assert.equal(top('price red potion').name,'Red Potion');
+assert.equal(top('Olaf’s Second Training').key,'quest:10009');
+assert.equal(top('olaf').key,'npc:107');
+assert.equal(top('snail shell').name,'Snail Shell');
+assert.equal(top('where can I find snails').key,'monster:2');
+assert(index.search('snail',{type:'map'}).results.some(x=>x.entity.key==='map:10000020'));
+assert(index.search('lith harbor',{type:'npc'}).results.some(x=>x.entity.key==='npc:107'));
+assert.equal(top('gloves attack 60').name,'Gloves Attack Scroll: Intermediate');
+assert.equal(top('gloves attack 60').success,60);
+assert.equal(top('three snails').type,'skill');
+assert.equal(index.search('monsters').total,catalog.counts.monster);
+assert.equal(index.search('zzzxqvzz').total,0);
+assert.equal(index.search('zzzxqvzz',{type:'npc'}).total,0);
+assert(index.search('gloves',{type:'recipe'}).results.every(x=>x.entity.type==='recipe'));
+assert.equal(index.search('',{limit:5}).results.length,5);
+assert(index.search('').results.slice(0,5).every(x=>x.entity.type==='map'&&x.entity.covered));
+assert.equal(normalize("Olaf’s FIRST training"),'olafs first training');
+assert.equal(index.get('item:1082000').sell,1200);
+assert.equal(index.get('item:2000000').sell,5);
+assert.equal(index.get('item:1302000').sell,undefined,'Unknown values stay unknown');
+assert(index.related('monster:2').get('Found in').has('map:10000020'));
+assert(index.related('npc:107').get('Found in').has('map:10000000'));
+assert.equal(index.related('npc:107').get('Quests').size,2);
+assert.equal(index.related('item:1082000').get('Quest rewards').size,2);
+assert.equal(index.related('item:1082000').get('Crafting recipes').size,1);
+assert(!index.related('item:1082000').has('Dropped by'),'No inferred historical drops');
+const recipe=index.get([...index.related('item:1082000').get('Crafting recipes').keys()][0]);
+assert.equal(recipe.discipline,'Tailoring');
+assert(recipe.ingredients.some(x=>x.name==='Processed Cloth'&&x.count===4));
+const seen=new Set();
+for(const entity of catalog.entities){
+  assert(!seen.has(entity.key));seen.add(entity.key);assert(entity.name.trim());
+  for(const group of index.related(entity.key).values())for(const key of group.keys())assert(index.get(key));
+}
+const timings=[];
+for(let i=0;i<50;i++)for(const q of ['snial','gloves attack 60','hennesys','olaf second training','red potion price']){
+  const t=performance.now();index.search(q);timings.push(performance.now()-t);
+}
+timings.sort((a,b)=>a-b);
+assert(timings.at(Math.floor(timings.length*.95))<100,'Repeated queries should stay under 100 ms on CI');
+
+(async()=>{
+  const url='./data/search-0123456789abcdef.json',data={schema:1,entities:[{key:'test'}]};
+  let requests=0,saved;
+  const request=async target=>{assert.equal(target,url);requests++;return {ok:true,json:async()=>data};};
+  const a=loader({url,readCache:async()=>({url:'old',data}),writeCache:async v=>{saved=v;},request});
+  const [one,two]=await Promise.all([a.load(),a.load()]);
+  assert.equal(one,two);assert.equal(requests,1);assert.equal(saved.url,url);
+  const b=loader({url,readCache:async()=>saved,writeCache:async()=>{},request});
+  assert.equal(await b.load(),data);assert.equal(requests,1,'Current cache bypasses network');
+  const c=loader({url,readCache:async()=>{throw Error('blocked storage');},writeCache:async()=>{throw Error('quota');},request});
+  assert.equal(await c.load(),data,'Storage failure must not block search');
+  let fail=true;
+  const d=loader({url,readCache:async()=>null,writeCache:async()=>{},request:async()=>({ok:!fail,json:async()=>data})});
+  await assert.rejects(d.load());fail=false;assert.equal(await d.load(),data,'Retry after failure');
+  assert.throws(()=>loader({url:'https://example.com/private-api'}));
+  const invalid=loader({url,readCache:async()=>null,writeCache:async()=>{},request:async()=>({ok:true,json:async()=>({error:true})})});
+  await assert.rejects(invalid.load());
+  console.log('PASS: 8,930 records; typo/alias/multiword/ID/category ranking; source relationships and values; versioned cache, offline cache, retry and storage failures.');
+  console.log(`Index ${buildTime.toFixed(1)} ms; query p95 ${timings[Math.floor(timings.length*.95)].toFixed(2)} ms (${timings.length} queries).`);
+})().catch(error=>{console.error(error);process.exitCode=1;});

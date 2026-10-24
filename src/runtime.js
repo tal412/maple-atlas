@@ -79,14 +79,14 @@
     $('#mc-route-slot').append($('#mc-form'));$('#mc-route-dialog').showModal();
   }
   $('#mc-route-dialog').addEventListener('close',()=>$('#mc-route-home').append($('#mc-form')));
-  function searchResults(){
-    const query=$('#mc-search-input').value.trim().toLowerCase();
-    const matches=DATA.maps.filter(m=>query?(m.name+' '+m.street).toLowerCase().includes(query):m.town).sort((a,b)=>Number(b.town)-Number(a.town)||a.name.localeCompare(b.name)).slice(0,20);
-    $('#mc-search-results').innerHTML=matches.length?matches.map(m=>'<button type="button" class="mc-search-result" data-search-place="'+m.id+'">'+icon('map-pin')+'<span><strong>'+esc(m.name)+'</strong><small>'+esc(m.street)+' · '+(m.town?'Town':'Map')+'</small></span></button>').join(''):'<div class="mc-empty">No maps found. Try a city or a shorter name.</div>';
-    $$('[data-search-place]').forEach(b=>b.onclick=()=>{$('#mc-search-dialog').close();inspect(b.dataset.searchPlace);});icons();
-  }
-  $('#mc-mobile-search').onclick=()=>{$('#mc-search-input').value='';searchResults();$('#mc-search-dialog').showModal();$('#mc-search-input').focus();};
-  $('#mc-search-input').oninput=searchResults;
+  MapleSearchUI.create({root,url:DATA.searchCatalog,
+    onMap:(id,kind)=>{if(['monster','npc','quest'].includes(kind))state.category={monster:'monsters',npc:'npcs',quest:'quests'}[kind];inspect(id);},
+    questMarkup:id=>questRows(DATA.quests.filter(q=>q.id===id)),
+    onStatus:(id,value)=>{state.status[id]=value;if(['completed','skipped'].includes(value))expandedQuests.delete(id);detail();markers();save();},
+    currentQuestIds:()=>new Set(currentQuests().map(q=>q.id)),
+    questStatus:id=>({'not-started':'Not started','in-progress':'In progress',completed:'Completed',skipped:'Skipped'}[state.status[id]||'not-started']),
+    remainingQuests:id=>{const q=DATA.quests.find(q=>q.id===id);return q?questFlow.remaining(q,state.status).map(id=>DATA.quests.find(q=>q.id===id)?.name||id):[];}
+  });
   $$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());
   function openProfile(){$('#mc-mobile-level').value=state.level;$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
