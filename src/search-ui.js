@@ -26,7 +26,7 @@
       else if(e.type==='monster')parts.push('Lv. '+e.level,number(e.exp)+' EXP');
       else if(e.type==='npc')parts.push(number(e.maps?.length||0)+' recorded location'+(e.maps?.length===1?'':'s'));
       else if(e.type==='quest')parts.push(e.npcName||'', 'Lv. '+e.level+'+');
-      else if(e.type==='item')parts.push(e.cash?'Cash item':e.category,e.subcategory,e.level>0?'Lv. '+e.level:'',e.success!=null?e.success+'% success':'',worth&&!e.cash?(e.sell!=null?'NPC sell '+number(e.sell)+' mesos':''):'');
+      else if(e.type==='item')parts.push(e.cash?'Cash item':e.category,e.subcategory,e.level>0?'Lv. '+e.level:'',e.success!=null?e.success+'% success':'',worth&&!e.cash?(e.sell!=null?'NPC sell '+number(e.sell)+' mesos':''):'','ID '+e.id);
       else if(e.type==='recipe')parts.push(e.discipline,'Crafting Lv. '+e.level);
       else if(e.type==='skill')parts.push(e.job);
       return parts.filter(Boolean).join(' · ');

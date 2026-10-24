@@ -1029,8 +1029,9 @@ window.mapleStorageReady.then(() => {
         const entity=records[id];counts[entity.type]++;
         if(effective&&effective!==entity.type)continue;
         const exact=Boolean(core)&&[entity.name,...entity.aliases||[]].some(n=>[phrase,core].includes(normalize(n)));
+        const currentName=Boolean(core)&&[phrase,core].includes(normalize(entity.name));
         const close=core.length>=3&&distance(core,normalize(entity.name))<=1;
-        results.push({entity,score:hit.score+(exact?5000:close?2000:0)+defaultRank(entity),fuzzy:!exact&&hit.fuzzy});
+        results.push({entity,score:hit.score+(currentName?6000:exact?5000:close?2000:0)+defaultRank(entity),fuzzy:!exact&&hit.fuzzy});
       }
       results.sort((a,b)=>b.score-a.score||a.entity.name.localeCompare(b.entity.name)||a.entity.key.localeCompare(b.entity.key));
       return {results:results.slice(0,limit),total:results.length,counts,intent:parsed};
@@ -1172,7 +1173,7 @@ window.mapleStorageReady.then(() => {
       else if(e.type==='monster')parts.push('Lv. '+e.level,number(e.exp)+' EXP');
       else if(e.type==='npc')parts.push(number(e.maps?.length||0)+' recorded location'+(e.maps?.length===1?'':'s'));
       else if(e.type==='quest')parts.push(e.npcName||'', 'Lv. '+e.level+'+');
-      else if(e.type==='item')parts.push(e.cash?'Cash item':e.category,e.subcategory,e.level>0?'Lv. '+e.level:'',e.success!=null?e.success+'% success':'',worth&&!e.cash?(e.sell!=null?'NPC sell '+number(e.sell)+' mesos':''):'');
+      else if(e.type==='item')parts.push(e.cash?'Cash item':e.category,e.subcategory,e.level>0?'Lv. '+e.level:'',e.success!=null?e.success+'% success':'',worth&&!e.cash?(e.sell!=null?'NPC sell '+number(e.sell)+' mesos':''):'','ID '+e.id);
       else if(e.type==='recipe')parts.push(e.discipline,'Crafting Lv. '+e.level);
       else if(e.type==='skill')parts.push(e.job);
       return parts.filter(Boolean).join(' · ');

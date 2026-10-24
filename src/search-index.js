@@ -108,8 +108,9 @@
         const entity=records[id];counts[entity.type]++;
         if(effective&&effective!==entity.type)continue;
         const exact=Boolean(core)&&[entity.name,...entity.aliases||[]].some(n=>[phrase,core].includes(normalize(n)));
+        const currentName=Boolean(core)&&[phrase,core].includes(normalize(entity.name));
         const close=core.length>=3&&distance(core,normalize(entity.name))<=1;
-        results.push({entity,score:hit.score+(exact?5000:close?2000:0)+defaultRank(entity),fuzzy:!exact&&hit.fuzzy});
+        results.push({entity,score:hit.score+(currentName?6000:exact?5000:close?2000:0)+defaultRank(entity),fuzzy:!exact&&hit.fuzzy});
       }
       results.sort((a,b)=>b.score-a.score||a.entity.name.localeCompare(b.entity.name)||a.entity.key.localeCompare(b.entity.key));
       return {results:results.slice(0,limit),total:results.length,counts,intent:parsed};

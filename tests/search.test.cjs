@@ -14,6 +14,8 @@ assert.equal(top('price red potion').name,'Red Potion');
 assert.equal(top('Olaf’s Second Training').key,'quest:10009');
 assert.equal(top('olaf').key,'npc:107');
 assert.equal(top('snail shell').name,'Snail Shell');
+assert.equal(top('White Jeans').key,'item:1067027','Current names rank above historical aliases');
+assert(index.search('White Jeans').results.some(r=>r.entity.key==='item:1067187'),'Renamed item still appears by its old name');
 assert.equal(top('where can I find snails').key,'monster:2');
 assert(index.search('snail',{type:'map'}).results.some(x=>x.entity.key==='map:10000020'));
 assert(index.search('lith harbor',{type:'npc'}).results.some(x=>x.entity.key==='npc:107'));
