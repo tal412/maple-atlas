@@ -1,14 +1,22 @@
 {
   "checked": "2026-10-24",
-  "integration": "Outbound price-check links. No live player-market feed or copied market-price database.",
+  "integration": "Public developer JSON mirrored by GitHub Actions daily and on deployment. Browser refreshes the same-origin snapshot on each entry and while an item is visible. Source timestamps remain visible; snapshots are not a live transaction feed.",
   "sources": [
+    {
+      "name": "MapleStory Classic market export",
+      "url": "https://maplestory-classic.com/market",
+      "feed": "https://maplestory-classic.com/market.json",
+      "terms": "https://maplestory-classic.com/legal/terms",
+      "method": "Developer-published JSON: recorded median sales, typical range, asking median and sale counts. Stars marked as sets retain per-set units.",
+      "note": "Anonymous public export; no API key. Cross-origin browser reads are not enabled, so GitHub Actions mirrors the validated export. Names have no item IDs: use exact current names and label duplicate-name variants as references. Provider update cadence is not guaranteed. Preserve the source updatedAt time and last valid snapshot on failure."
+    },
     {
       "name": "MapleStory Market",
       "url": "https://maplestory.market/items",
       "account": "https://maplestory.market/account",
       "privacy": "https://maplestory.market/privacy",
       "method": "Player-shop observations, listed prices and history; do not equate listings to completed sales.",
-      "note": "Account page explicitly offers API keys. Privacy policy confirms administrator approval of requests. No key has been obtained and no public endpoint contract was verified. Do not scrape around the provider\u2019s browser checks."
+      "note": "Account page explicitly offers API keys. Privacy policy confirms administrator approval of requests. No key has been obtained and no public endpoint contract was verified. Do not scrape around the provider’s browser checks."
     },
     {
       "name": "NiaMeowDB",

@@ -4,11 +4,14 @@
   const icons={map:'map-pin',monster:'swords',npc:'user-round',quest:'flag',item:'package',recipe:'hammer',skill:'sparkles'};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=n=>Number(n).toLocaleString();
-  function create({root,url,onMap,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
+  function create({root,url,marketUrl,onMap,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
     const $=s=>root.querySelector(s),dialog=$('#mc-search-dialog'),input=$('#mc-search-input');
     const list=$('#mc-search-results'),filters=$('#mc-search-filters'),detail=$('#mc-search-entity'),status=$('#mc-search-status');
     const loader=MapleSearchData.create({url,channel:root.dataset.channel});
     const items=MapleItemData.create({channel:root.dataset.channel}),itemRecords=new Map(),itemStates=new Map();
+    const market=MapleMarketData.create({url:marketUrl,channel:root.dataset.channel});
+    const marketWatch=MapleMarketData.watch({store:market});
+    let itemIdentities=new Map(),visibleItem=null;
     let index,catalog,loading,category='all',limit=30,timer,stack=[],lastKey=null,searchScroll=0;
     const icon=name=>'<i data-lucide="'+name+'" aria-hidden="true"></i>';
     const refreshIcons=()=>globalThis.lucide?.createIcons({attrs:{width:20,height:20}});
@@ -37,6 +40,7 @@
     function bindRows(container){container.querySelectorAll('[data-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.entity));imageEvents();}
     function showResults(){
       clearTimeout(timer);
+      visibleItem=null;marketWatch.view(false);
       stack=[];detail.hidden=true;$('#mc-search-listing').hidden=false;$('#mc-search-back').hidden=true;$('#mc-search-title').textContent='Search Maple Atlas';
       if(!index)return;
       const found=index.search(input.value,{type:category,limit});
@@ -54,8 +58,35 @@
     function worth(e){
       const blocked=e.stats?.notSale;
       const npc=e.cash?'':blocked||e.sell!=null?'<div class="mc-worth-value"><span>NPC sell value</span><strong>'+(blocked?'Cannot sell to NPCs':number(e.sell)+' <small>mesos / item</small>')+'</strong></div><p>NPC purchase prices and player-market prices are separate.</p>':'<p>The game source does not supply an NPC sell value for this item.</p>';
-      return '<section class="mc-worth"><h3>'+(e.cash?'Market price':'Item value')+'</h3>'+npc+'<div class="mc-market-check"><p>Live quotes aren’t available here yet. Compare recent listings and sales for this item.</p>'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'View '+e.name+' listings')+external('https://meowdb.com/msclassic/price-check','Check NiaMeowDB')+'</div></section>';
+      return '<section class="mc-worth"><div class="mc-worth-heading"><h3>'+(e.cash?'Market price':'Item value')+'</h3><button type="button" id="mc-market-refresh" aria-label="Refresh market prices">'+icon('refresh-cw')+'</button></div>'+npc+'<div class="mc-market-check"><div id="mc-market-content"></div><p id="mc-market-status" role="status" aria-live="polite"></p>'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'View current listings')+'</div></section>';
     }
+    function updateMarket(){
+      if(!dialog.open||!visibleItem||stack.at(-1)!==visibleItem.key)return;
+      const content=$('#mc-market-content'),status=$('#mc-market-status'),refresh=$('#mc-market-refresh');if(!content)return;
+      const state=market.getState(),data=state.data,match=data?market.match(visibleItem,itemIdentities):null;
+      const signature=(data?.digest||'none')+'|'+(data?.updatedAt||'')+'|'+visibleItem.name+'|'+Number(data&&Date.now()-Date.parse(data.updatedAt)>172800000);
+      if(content.dataset.version!==signature){
+        const scroll=dialog.scrollTop,focused=content.contains(document.activeElement)?document.activeElement.getAttribute('href'):null;
+        let html='';
+        if(match){
+          const r=match.record,unit=r.unit==='set'?'mesos / set':'mesos / item';
+          html='<div class="mc-worth-value"><span>'+(match.ambiguous?'Name-based price reference':'Recorded median sale')+'</span><strong>'+(r.median===null?(r.sales?'Sale price unavailable':'No sales recorded'):number(r.median)+' <small>'+unit+'</small>')+'</strong></div>'+
+            (match.ambiguous?'<p class="mc-market-caution">'+esc(r.name)+' matches '+match.identityCount+' game IDs. This feed does not distinguish variants.</p>':'')+
+            '<dl class="mc-market-stats">'+(r.typicalLow!==null&&r.typicalHigh!==null?'<div><dt>Typical sale range</dt><dd>'+number(r.typicalLow)+'–'+number(r.typicalHigh)+'</dd></div>':'')+
+            (r.askingMedian!==null?'<div><dt>Median asking price</dt><dd>'+number(r.askingMedian)+'</dd></div>':'')+'<div><dt>Recorded sales</dt><dd>'+number(r.sales)+'</dd></div></dl>'+
+            (r.sales<data.lowDataBelow?'<p class="mc-market-caution">Limited sales data · Treat this as a rough guide.</p>':'')+
+            (!visibleItem.cash?'<p class="mc-market-date">Item stats and upgrades can change the price.</p>':'')+
+            '<p class="mc-market-date">Prices as of '+esc(new Date(data.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+(Date.now()-Date.parse(data.updatedAt)>172800000?' · Older snapshot':'')+'</p>'+
+            external(data.page+'/'+r.slug,'Price history · MapleStory Classic');
+        }else html='<p>'+(data?'No price record for this item in the current snapshot.':'Price data will appear here when available.')+'</p>';
+        content.innerHTML=html;content.dataset.version=signature;
+        if(focused)[...content.querySelectorAll('a')].find(a=>a.getAttribute('href')===focused)?.focus({preventScroll:true});
+        dialog.scrollTop=scroll;refreshIcons();
+      }
+      refresh.disabled=state.loading;refresh.setAttribute('aria-busy',String(state.loading));
+      status.textContent=state.loading?'Checking for updates…':state.error?(data?'Showing saved prices · Update unavailable':'Prices unavailable · Retry or open current listings'):state.checkedAt?'Checked '+new Date(state.checkedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · Refreshes while you view this item':data?'Showing saved prices':'';
+    }
+    market.subscribe(updateMarket);
     function cashInfo(e){
       if(!e.cash)return '';
       const shop=e.cashShop;
@@ -104,6 +135,7 @@
       const original=index.get(key);if(!original)return;
       const fresh=itemRecords.get(key)?.data;
       const e=fresh?{...original,...fresh,description:fresh.description||original.description,cash:original.cash||fresh.cash,stats:{...original.stats,...fresh.stats},limited:false}:original;
+      visibleItem=e.type==='item'?e:null;
       const scroll=dialog.scrollTop;
       const expanded=focus?new Set():new Set([...detail.querySelectorAll('details[open]')].map(d=>d.querySelector('summary')?.textContent));
       const hadHeadingFocus=!focus&&detail.querySelector('#mc-entity-name')===document.activeElement;
@@ -120,25 +152,27 @@
         '<footer class="mc-search-provenance">Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
       detail.querySelectorAll('[data-quest]').forEach(select=>select.onchange=()=>{onStatus(select.dataset.quest,select.value);renderEntity(key);});
       if($('#mc-item-retry'))$('#mc-item-retry').onclick=()=>{void loadItem(key,true);renderEntity(key,false);};
+      if($('#mc-market-refresh'))$('#mc-market-refresh').onclick=()=>void market.refresh();
       if(!focus)detail.querySelectorAll('details').forEach(d=>{d.open=expanded.has(d.querySelector('summary')?.textContent);});
       bindRows(detail);dialog.scrollTop=focus?0:scroll;if(focus||hadHeadingFocus)$('#mc-entity-name').focus({preventScroll:true});
+      updateMarket();
     }
     function openEntity(key){
       clearTimeout(timer);
       const e=index?.get(key);if(!e)return;
-      if(e.type==='map'&&e.covered){dialog.close();onMap(e.id,stack.length?index.get(stack.at(-1))?.type:null);return;}
+      if(e.type==='map'&&e.covered){marketWatch.view(false);dialog.close();onMap(e.id,stack.length?index.get(stack.at(-1))?.type:null);return;}
       if(!stack.length){searchScroll=dialog.scrollTop;lastKey=key;input.blur();}
-      stack.push(key);if(e.type==='item')void loadItem(key);renderEntity(key);
+      stack.push(key);if(e.type==='item')void loadItem(key);renderEntity(key);marketWatch.view(e.type==='item');
     }
     $('#mc-search-back').onclick=()=>{
-      stack.pop();if(stack.length)renderEntity(stack.at(-1));else{showResults();dialog.scrollTop=searchScroll;list.querySelector('[data-entity="'+lastKey+'"]')?.focus({preventScroll:true});}
+      stack.pop();if(stack.length){renderEntity(stack.at(-1));marketWatch.view(Boolean(visibleItem));}else{showResults();dialog.scrollTop=searchScroll;list.querySelector('[data-entity="'+lastKey+'"]')?.focus({preventScroll:true});}
     };
-    dialog.addEventListener('close',()=>clearTimeout(timer));
+    dialog.addEventListener('close',()=>{clearTimeout(timer);visibleItem=null;marketWatch.view(false);});
     async function ready(){
       if(index){showResults();return;}
       if(loading)return loading;
       status.textContent='Opening search catalog…';list.innerHTML='';
-      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);showResults();}).catch(()=>{
+      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);itemIdentities=MapleMarketData.identities(data.entities);showResults();}).catch(()=>{
         status.textContent='Search catalog could not load. Check your connection and try again.';
         list.innerHTML='<button type="button" id="mc-search-retry">Retry search</button>';
         $('#mc-search-retry').onclick=()=>ready();

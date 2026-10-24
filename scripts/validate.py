@@ -96,7 +96,12 @@ for quest in world['quests']:
 page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
-assert len(re.findall(r'\bfetch\s*\(', page)) == 2, 'Only the static catalog and explicit MCW item loader may fetch'
+assert len(re.findall(r'\bfetch\s*\(', page)) == 3, 'Only catalog, market snapshot and MCW item loaders may fetch'
+from market import validate as validate_market
+market_blob = (ROOT / 'data/market-snapshot.json').read_bytes()
+validate_market(json.loads(market_blob))
+assert (ROOT / 'docs/data/market.json').read_bytes() == market_blob
+assert 'marketUrl:DATA.marketCatalog' in page and "cache:'no-store'" in page
 catalog_blob = (ROOT / 'data/search-catalog.json').read_bytes()
 catalog_name = 'search-' + hashlib.sha256(catalog_blob).hexdigest()[:16] + '.json'
 assert (ROOT / 'docs/data' / catalog_name).read_bytes() == catalog_blob

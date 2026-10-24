@@ -57,11 +57,12 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'search-ui', 'runtime'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'market-data', 'search-ui', 'runtime'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     catalog = (project / 'data/search-catalog.json').read_bytes()
     search_name = 'search-' + hashlib.sha256(catalog).hexdigest()[:16] + '.json'
     data['searchCatalog'] = './data/' + search_name
+    data['marketCatalog'] = './data/market.json'
     assets = json.loads((project / 'data/map-assets.json').read_text())['maps']
     for m in data['maps']:
         m['localImage'] = './' + assets[m['id']]['image']['path']
@@ -114,6 +115,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
         if old.name != search_name:
             old.unlink()
     (docs / 'data' / search_name).write_bytes(catalog)
+    (docs / 'data/market.json').write_bytes((project / 'data/market-snapshot.json').read_bytes())
     output = docs / "index.html"
     output.write_text(page, encoding="utf-8")
     (docs / ".nojekyll").write_text("", encoding="utf-8")

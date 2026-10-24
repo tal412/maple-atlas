@@ -4,6 +4,8 @@ name: Publish main and dev
   push:
     branches: [main, dev]
   workflow_dispatch:
+  schedule:
+    - cron: '23 7 * * *'
 
 permissions:
   contents: read
@@ -32,6 +34,12 @@ jobs:
           ref: dev
           path: preview
           persist-credentials: false
+      - name: Refresh the shared market snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 stable/scripts/market.py --refresh
+          cp stable/data/market-snapshot.json preview/data/market-snapshot.json
       - name: Validate and build both channels
         shell: bash
         run: |
@@ -42,6 +50,7 @@ jobs:
             if [ "$folder" = preview ]; then channel=dev; fi
             python3 scripts/build.py --channel "$channel"
             python3 scripts/validate.py
+            python3 -m unittest discover -s tests -p '*_test.py'
             for script in src/*.js; do node --check "$script"; done
             for test in tests/*.test.cjs; do node "$test"; done
           done

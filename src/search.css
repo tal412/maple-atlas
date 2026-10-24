@@ -69,3 +69,15 @@
 #maple-atlas-concept .mc-item-source .mc-search-link{font-size:13px}
 #maple-atlas-concept .mc-item-source button{border:1px solid var(--mc-edge);border-radius:20px;padding:10px 16px;background:var(--mc-paper);color:var(--mc-ink)}
 #maple-atlas-concept .mc-worth>h3+.mc-market-check{border-top:0;padding-top:0}
+#maple-atlas-concept .mc-worth-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#maple-atlas-concept .mc-worth-heading h3{margin:0}
+#maple-atlas-concept #mc-market-refresh{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--mc-paper);color:var(--mc-blue);cursor:pointer}
+#maple-atlas-concept #mc-market-refresh:disabled{opacity:.55;cursor:progress}
+#maple-atlas-concept .mc-worth-heading+.mc-market-check{border-top:0;padding-top:0;margin-top:0}
+#maple-atlas-concept .mc-market-stats{display:grid;gap:8px;margin:16px 0;font-size:12px}
+#maple-atlas-concept .mc-market-stats>div{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#maple-atlas-concept .mc-market-stats dt{color:var(--mc-muted)}
+#maple-atlas-concept .mc-market-stats dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums}
+#maple-atlas-concept .mc-market-caution{border-left:3px solid var(--mc-edge);padding-left:10px;color:var(--mc-muted)}
+#maple-atlas-concept .mc-market-date,#maple-atlas-concept #mc-market-status{color:var(--mc-muted);font-size:11px!important}
+#maple-atlas-concept #mc-market-status{min-height:32px}
