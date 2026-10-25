@@ -1,0 +1,75 @@
+/* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
+#maple-atlas-concept #mc-intro {
+  --i-water:light-dark(#d7e9e9,#213e43); --i-water-2:light-dark(#c4e0e2,#1a3439); --i-land:light-dark(#e2e7c5,#4b6047); --i-forest:light-dark(#bad2a8,#375444);
+  --i-road:light-dark(#fff4cc,#b5a77c); --i-sand:light-dark(#e6d9b3,#7b7051); --i-device:light-dark(#3c4043,#0f1112); --i-screen:light-dark(#22303a,#25333d);
+  --i-gold:#f0c419; --i-route:light-dark(#0b57d0,#a8c7fa); --i-orange:light-dark(#ea8600,#ffb889);
+  width:min(760px,calc(100vw - 48px)); max-width:none; max-height:calc(100dvh - 48px); padding:0; border:1px solid var(--mc-edge); border-radius:28px;
+  background:var(--mc-paper); color:var(--mc-ink); overflow:hidden; box-shadow:0 16px 64px #0005;
+}
+#maple-atlas-concept #mc-intro[open] {display:flex;flex-direction:column;}
+#maple-atlas-concept #mc-intro::backdrop {background:#16232d99;backdrop-filter:blur(4px);}
+#maple-atlas-concept .mc-intro-scroll {overflow:auto;overscroll-behavior:contain;padding:0 28px 28px;display:grid;gap:28px;}
+#maple-atlas-concept .mc-intro-top {position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;background:var(--mc-paper);}
+#maple-atlas-concept .mc-intro-brand {display:flex;align-items:center;gap:10px;font-size:16px;font-weight:500;}
+#maple-atlas-concept .mc-intro-brand img {width:28px;height:28px;border-radius:8px;}
+#maple-atlas-concept #mc-intro-close {display:grid;place-items:center;width:44px;height:44px;padding:10px;border-radius:50%;}
+#maple-atlas-concept .mc-intro-hero {display:grid;gap:16px;}
+#maple-atlas-concept .mc-intro-art {display:block;width:100%;height:auto;}
+#maple-atlas-concept .mc-intro-hero h1 {font-size:clamp(26px,6vw,34px);line-height:1.2;font-weight:500;margin:4px 0 0;letter-spacing:-.01em;}
+#maple-atlas-concept .mc-intro-hero p,#maple-atlas-concept .mc-intro-private p {margin:0;color:var(--mc-muted);font-size:16px;line-height:1.6;}
+#maple-atlas-concept .mc-intro-actions {display:flex;flex-wrap:wrap;gap:12px;}
+#maple-atlas-concept .mc-intro-actions button {display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:24px;}
+#maple-atlas-concept .mc-intro-actions svg {width:20px;height:20px;}
+#maple-atlas-concept #mc-intro h2 {font-size:20px;font-weight:500;margin:0 0 12px;}
+#maple-atlas-concept .mc-intro-steps ol {list-style:none;margin:0;padding:0;display:grid;gap:14px;}
+#maple-atlas-concept .mc-intro-steps li {display:grid;grid-template-columns:112px minmax(0,1fr);gap:16px;align-items:center;padding:14px;border-radius:22px;background:var(--mc-soft);counter-increment:step;}
+#maple-atlas-concept .mc-intro-steps li svg {width:112px;height:auto;}
+#maple-atlas-concept .mc-intro-steps b,#maple-atlas-concept .mc-intro-features b,#maple-atlas-concept .mc-intro-source b {display:block;font-size:16px;font-weight:500;}
+#maple-atlas-concept .mc-intro-steps b::before {content:counter(step) ' · ';color:var(--i-route);}
+#maple-atlas-concept .mc-intro-steps p,#maple-atlas-concept .mc-intro-features p,#maple-atlas-concept .mc-intro-source p {margin:4px 0 0;color:var(--mc-muted);font-size:14px;line-height:1.55;}
+#maple-atlas-concept .mc-intro-features {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px;}
+#maple-atlas-concept .mc-intro-features div {padding:16px;border:1px solid var(--mc-edge);border-radius:20px;}
+#maple-atlas-concept .mc-intro-features svg {width:24px;height:24px;color:var(--i-route);margin-bottom:8px;}
+#maple-atlas-concept .mc-intro-private {display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;align-items:center;padding:18px;border-radius:24px;background:light-dark(#e6f4ea,#1c3326);}
+#maple-atlas-concept .mc-intro-private svg {width:120px;height:auto;}
+#maple-atlas-concept .mc-intro-private h2 {margin:0 0 6px;}
+#maple-atlas-concept .mc-intro-platform-groups {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;}
+#maple-atlas-concept .mc-intro-platform-groups>div {padding:16px;border-radius:20px;background:var(--mc-soft);}
+#maple-atlas-concept .mc-intro-platform-groups small {display:block;color:var(--mc-muted);font-size:12px;margin-bottom:10px;}
+#maple-atlas-concept .mc-intro-platform-groups ul {list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px;}
+#maple-atlas-concept .mc-intro-platform-groups li {display:flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:16px;background:var(--mc-paper);font-weight:500;}
+#maple-atlas-concept .mc-intro-platform-groups li svg {width:24px;height:24px;}
+#maple-atlas-concept .mc-intro-platform-groups em {font-style:normal;font-size:11px;font-weight:500;color:var(--i-orange);border:1px solid currentColor;border-radius:8px;padding:0 6px;}
+#maple-atlas-concept .mc-intro-note,#maple-atlas-concept .mc-intro-legal {margin:10px 0 0;color:var(--mc-muted);font-size:13px;}
+#maple-atlas-concept .mc-intro-source {display:flex;gap:14px;align-items:center;padding:16px;border:1px solid var(--mc-edge);border-radius:20px;}
+#maple-atlas-concept .mc-intro-source>svg {flex:none;width:36px;height:36px;}
+#maple-atlas-concept .mc-intro-source a {color:var(--i-route);}
+#maple-atlas-concept .mc-intro-legal {margin:-12px 0 0;text-align:center;font-size:12px;}
+/* Illustration parts */
+#maple-atlas-concept #mc-intro .i-water{fill:var(--i-water)} #maple-atlas-concept #mc-intro .i-water-2{fill:var(--i-water-2)}
+#maple-atlas-concept #mc-intro .i-wave{fill:none;stroke:light-dark(#ffffffb0,#ffffff30);stroke-width:3;stroke-linecap:round}
+#maple-atlas-concept #mc-intro .i-land{fill:var(--i-land)} #maple-atlas-concept #mc-intro .i-forest{fill:var(--i-forest)}
+#maple-atlas-concept #mc-intro .i-device{fill:var(--i-device)} #maple-atlas-concept #mc-intro .i-screen{fill:var(--i-screen)}
+#maple-atlas-concept #mc-intro .i-minimap{fill:#0d1b16;stroke:#eeeeee;stroke-width:1.5} #maple-atlas-concept #mc-intro .i-mini-ground{fill:none;stroke:#7fa47a;stroke-width:3}
+#maple-atlas-concept #mc-intro .i-portal{fill:none;stroke:#3ec5d8;stroke-width:2} #maple-atlas-concept #mc-intro .i-box{fill:none;stroke:var(--i-gold);stroke-width:2;stroke-dasharray:5 3}
+#maple-atlas-concept #mc-intro .i-gold{fill:var(--i-gold);stroke:#8a6500;stroke-width:1.5} #maple-atlas-concept #mc-intro .i-gold-halo{fill:#f0c41940}
+#maple-atlas-concept #mc-intro .i-link{fill:none;stroke:var(--i-route);stroke-width:3;stroke-dasharray:2 8;stroke-linecap:round}
+#maple-atlas-concept #mc-intro .i-wifi path{fill:none;stroke:var(--i-route);stroke-width:4;stroke-linecap:round} #maple-atlas-concept #mc-intro .i-wifi circle{fill:var(--i-route)}
+#maple-atlas-concept #mc-intro .i-label{font:500 14px Roboto,Arial,sans-serif;fill:light-dark(#21424a,#d7e9e9)}
+#maple-atlas-concept #mc-intro .i-road{fill:none;stroke:var(--i-road);stroke-width:9;stroke-linecap:round} #maple-atlas-concept #mc-intro .i-route{fill:none;stroke:var(--i-route);stroke-width:4;stroke-dasharray:8 6;stroke-linecap:round}
+#maple-atlas-concept #mc-intro .i-pin-b{fill:var(--i-route)} #maple-atlas-concept #mc-intro .i-pin-text{font:700 10px Roboto,Arial,sans-serif;fill:light-dark(#fff,#062e6f)}
+#maple-atlas-concept #mc-intro .i-bubble{fill:light-dark(#3d2e00,#ffe08a)} #maple-atlas-concept #mc-intro .i-bubble-text{font:500 12px Roboto,Arial,sans-serif;fill:light-dark(#ffe08a,#3d2e00)}
+#maple-atlas-concept #mc-intro .i-qr-bg{fill:#fff} #maple-atlas-concept #mc-intro .i-qr{fill:#1f1f1f} #maple-atlas-concept #mc-intro .i-check{fill:none;stroke:#6dd58c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+#maple-atlas-concept #mc-intro .i-house{fill:light-dark(#fffefa,#2b3a33)} #maple-atlas-concept #mc-intro .i-roof{fill:none;stroke:var(--i-orange);stroke-width:7;stroke-linecap:round;stroke-linejoin:round} #maple-atlas-concept #mc-intro .i-door{fill:var(--i-sand)}
+#maple-atlas-concept #mc-intro .i-shield{fill:#1e8e3e} #maple-atlas-concept #mc-intro .i-check-white{fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#maple-atlas-concept #mc-intro .i-logo{fill:currentColor} #maple-atlas-concept #mc-intro .i-logo-line{fill:none;stroke:currentColor;stroke-width:1.8}
+@media (max-width:767px) {
+  #maple-atlas-concept #mc-intro {width:100%;max-width:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;}
+  #maple-atlas-concept .mc-intro-scroll {padding:0 20px calc(28px + env(safe-area-inset-bottom));gap:24px;}
+  #maple-atlas-concept .mc-intro-top {padding-top:calc(12px + env(safe-area-inset-top));}
+  #maple-atlas-concept .mc-intro-actions button {flex:1 1 100%;justify-content:center;}
+  #maple-atlas-concept .mc-intro-steps li {grid-template-columns:84px minmax(0,1fr);gap:12px;}
+  #maple-atlas-concept .mc-intro-steps li svg {width:84px;}
+  #maple-atlas-concept .mc-intro-private {grid-template-columns:1fr;justify-items:start;}
+  #maple-atlas-concept .mc-intro-private svg {width:110px;}
+}
