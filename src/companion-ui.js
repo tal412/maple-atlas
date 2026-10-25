@@ -67,7 +67,7 @@
         // A rejected code forgets the pairing; a deliberate disconnect keeps it but stops
         // retrying; a dropped link retries by itself.
         if(['verification','version'].includes(value.reason))forget();
-        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:true});
+        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
         else if(role==='phone'&&remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
         onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
         if(role==='phone'&&remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Mac not connected · Tap to reconnect';}
@@ -101,10 +101,12 @@
     function remembered(){try{const v=JSON.parse(localStorage.getItem(pairingKey())||'null');return v&&typeof v.code==='string'&&/^MA2[A-Z2-7]+$/.test(v.code)?v:null;}catch(_){return null;}}
     function remember(code,{paused=false}={}){storedAt=Date.now();try{localStorage.setItem(pairingKey(),JSON.stringify({code,at:storedAt,paused}));}catch(_){}}
     function forget(){pairingCode=null;try{localStorage.removeItem(pairingKey());}catch(_){}paint(currentState);}
-    async function resume({manual=false}={}){
+    // paused: 'user' after Disconnect on this phone (only a tap reconnects), 'mac' after
+    // the Mac app said goodbye (a freshly opened page still tries once first).
+    async function resume({manual=false,opening=false}={}){
       const saved=remembered();
       if(role!=='phone'||!saved||resuming||accepting||link.connected||document.visibilityState!=='visible'||['preparing','connecting','verifying'].includes(currentState.phase))return;
-      if(saved.paused&&!manual)return;
+      if(saved.paused&&!manual&&!(opening&&saved.paused==='mac'))return;
       if(manual){resumeTries=0;remember(saved.code);}
       resuming=true;resumeTries++;
       try{await accept(saved.code,{resume:true});}catch(_){/* the status card shows why */}
@@ -242,7 +244,7 @@
       else if(link.connected&&pairingCode)remember(pairingCode);
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
-    if(!linked)setTimeout(()=>void resume(),0);
+    if(!linked)setTimeout(()=>void resume({opening:true}),0);
     return {open,enterFullscreen};
   }
   scope.MapleCompanionUI={create};
