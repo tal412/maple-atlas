@@ -109,7 +109,7 @@ var desktopMain func(site, stateDir string, ui bool)
 
 func main() {
 	engineDir := flag.String("engine-dir", "", "directory with engine.html and the visual index")
-	site := flag.String("site", "https://tal412.github.io/maple-atlas/dev/", "Maple Atlas site the phone opens")
+	site := flag.String("site", "https://tal412.github.io/maple-atlas/", "Maple Atlas site the phone opens")
 	stateDir := flag.String("state-dir", "", "folder that keeps the pairing so the phone reconnects after restarts")
 	ui := flag.Bool("ui", false, "serve the built-in companion window (desktopui builds)")
 	flag.Parse()

@@ -95,7 +95,7 @@ final class CompanionModel {
     }
 
     init() {
-        site = SiteOption(rawValue: UserDefaults.standard.string(forKey: Keys.site) ?? "") ?? .dev
+        site = SiteOption(rawValue: UserDefaults.standard.string(forKey: Keys.site) ?? "") ?? .main
         engine.onProgress = { [weak self] message in
             guard let self else { return }
             if case .ready = self.engineStatus { return }

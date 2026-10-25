@@ -17,7 +17,7 @@ First launch asks for **Local Network** access, so the phone can connect on your
 
 Click **Choose game window…** and pick the game in macOS's own window picker. Picker capture needs no Screen Recording permission, so there's no prompt to grant. The app never lists windows itself. Pick the window again after each launch. Then drag the box over the in-game minimap (top-left by default). Only that area is matched.
 
-The phone uses the website (`/dev/` by default; switch to Main in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
+The phone uses the website (Main by default; switch to Dev in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
 
 ## Your position and portal guidance
 
