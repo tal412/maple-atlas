@@ -96,7 +96,8 @@ for quest in world['quests']:
 page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
-assert len(re.findall(r'\bfetch\s*\(', page)) == 3, 'Only catalog, market snapshot and MCW item loaders may fetch'
+assert len(re.findall(r'\bfetch\s*\(', page)) == 4, 'Only catalog, market snapshot, MCW item and wiki item-source loaders may fetch'
+assert "const api='https://mapleclassic.wiki/api.php'" in page, 'Item sources come only from the MapleClassic Wiki API'
 from market import validate as validate_market
 market_blob = (ROOT / 'data/market-snapshot.json').read_bytes()
 validate_market(json.loads(market_blob))

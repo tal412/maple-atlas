@@ -445,6 +445,77 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-market-caution{border-left:3px solid var(--mc-edge);padding-left:10px;color:var(--mc-muted)}
 #maple-atlas-concept .mc-market-date,#maple-atlas-concept #mc-market-status{color:var(--mc-muted);font-size:11px!important}
 #maple-atlas-concept #mc-market-status{min-height:32px}
+/* Item details: hero, how to get it, value. */
+#maple-atlas-concept .mc-item-hero {display:flex;align-items:center;gap:16px;padding:4px 0 12px;}
+#maple-atlas-concept .mc-item-hero .mc-search-portrait {flex:0 0 84px;width:84px;height:84px;border-radius:24px;background:radial-gradient(circle at 50% 35%,light-dark(#ffffff,#3a3d40),var(--mc-soft) 70%);box-shadow:inset 0 0 0 1px var(--mc-edge);}
+#maple-atlas-concept .mc-item-hero .mc-search-portrait img {max-width:64px;max-height:64px;transform:scale(1.15);}
+#maple-atlas-concept .mc-item-title {min-width:0;display:grid;gap:8px;}
+#maple-atlas-concept .mc-item-title h3 {font-size:24px;line-height:1.2;margin:0;font-weight:500;letter-spacing:-.3px;}
+#maple-atlas-concept .mc-chips {display:flex;flex-wrap:wrap;gap:6px;}
+#maple-atlas-concept .mc-chips span {padding:3px 10px;border-radius:999px;background:var(--mc-soft);color:var(--mc-muted);font-size:12px;font-weight:500;line-height:1.5;}
+#maple-atlas-concept #mc-search-dialog .mc-item-desc {margin:0 0 16px;padding:12px 14px;border-radius:16px;background:var(--mc-soft);font-size:14px;line-height:1.55;white-space:pre-line;color:var(--mc-ink);}
+#maple-atlas-concept .mc-item-hero+.mc-search-stats,#maple-atlas-concept .mc-item-desc+.mc-search-stats {gap:8px;margin:0 0 16px;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));}
+#maple-atlas-concept .mc-item-hero~.mc-search-stats>div {padding:10px 12px;border-radius:14px;border:1px solid var(--mc-edge);}
+#maple-atlas-concept .mc-item-hero~.mc-search-stats dd {font-size:16px;margin-top:2px;}
+#maple-atlas-concept .mc-section-head {display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;}
+#maple-atlas-concept #mc-search-dialog .mc-section-head h3 {display:flex;align-items:center;gap:8px;font-size:17px;font-weight:500;margin:0;}
+#maple-atlas-concept .mc-section-head h3 svg {width:20px;height:20px;color:var(--mc-blue);}
+#maple-atlas-concept .mc-icon-button {display:grid;place-items:center;width:36px;height:36px;min-height:36px;padding:8px;border-radius:50%;border:0;background:transparent;color:var(--mc-blue);}
+#maple-atlas-concept .mc-icon-button:hover {background:var(--mc-soft);}
+#maple-atlas-concept .mc-icon-button svg {width:18px;height:18px;}
+#maple-atlas-concept #mc-search-dialog .mc-fine {margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--mc-muted);}
+#maple-atlas-concept .mc-fine a {color:var(--mc-blue);}
+/* How to get it */
+#maple-atlas-concept .mc-get {margin:0 0 16px;padding:16px;border-radius:24px;background:light-dark(#f3f6fc,#232528);border:1px solid var(--mc-edge);}
+#maple-atlas-concept .mc-get-group+.mc-get-group {margin-top:14px;}
+#maple-atlas-concept #mc-search-dialog .mc-get-group h4 {display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mc-muted);}
+#maple-atlas-concept .mc-get-group h4 svg {width:15px;height:15px;}
+#maple-atlas-concept .mc-get-group h4 span {margin-left:auto;font-weight:500;letter-spacing:0;}
+#maple-atlas-concept .mc-get-row {display:flex;align-items:center;gap:8px;padding:8px;margin:0 -8px;border-radius:16px;}
+#maple-atlas-concept .mc-get-row+.mc-get-row,#maple-atlas-concept .mc-get-more .mc-get-row {border-top:1px solid light-dark(#e3e8f0,#2f3236);}
+#maple-atlas-concept .mc-get-main {display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:4px;margin:0;border:0;border-radius:14px;background:transparent;color:inherit;text-align:left;font:inherit;}
+#maple-atlas-concept button.mc-get-main:hover {background:var(--mc-soft);}
+#maple-atlas-concept .mc-get-main .mc-search-portrait {flex:0 0 52px;width:52px;height:52px;border-radius:16px;background:var(--mc-paper);box-shadow:inset 0 0 0 1px var(--mc-edge);}
+#maple-atlas-concept .mc-get-main .mc-search-portrait img {max-width:46px;max-height:46px;}
+#maple-atlas-concept .mc-get-copy {display:grid;gap:2px;min-width:0;flex:1;}
+#maple-atlas-concept .mc-get-copy strong {font-size:15px;font-weight:500;line-height:1.3;overflow-wrap:anywhere;}
+#maple-atlas-concept .mc-get-copy small {font-size:12px;line-height:1.45;color:var(--mc-muted);}
+#maple-atlas-concept .mc-price {flex:none;display:grid;justify-items:end;font-size:15px;font-weight:600;line-height:1.15;color:var(--mc-ink);}
+#maple-atlas-concept .mc-price small {font-size:11px;font-weight:400;color:var(--mc-muted);}
+#maple-atlas-concept .mc-tag {flex:none;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;color:light-dark(#8a4b00,#ffb95c);background:light-dark(#fff1dc,#3d2a10);}
+#maple-atlas-concept .mc-nav {flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;border:0;border-radius:20px;background:var(--mc-blue);color:var(--mc-paper);font-size:13px;font-weight:500;}
+#maple-atlas-concept .mc-nav svg {width:16px;height:16px;}
+#maple-atlas-concept .mc-get-more summary {cursor:pointer;padding:8px 0 2px;font-size:13px;color:var(--mc-blue);}
+#maple-atlas-concept .mc-get-empty {display:flex;gap:10px;align-items:flex-start;margin:0;font-size:14px;line-height:1.5;color:var(--mc-muted);}
+#maple-atlas-concept .mc-get-empty svg {flex:none;width:20px;height:20px;margin-top:1px;}
+#maple-atlas-concept .mc-get-credit {padding-top:10px;margin-top:12px !important;border-top:1px solid var(--mc-edge);}
+#maple-atlas-concept .mc-get-loading {display:grid;gap:10px;}
+#maple-atlas-concept .mc-get-loading span {height:56px;border-radius:16px;background:linear-gradient(90deg,var(--mc-soft) 25%,light-dark(#e8edf5,#2d3034) 50%,var(--mc-soft) 75%);background-size:200% 100%;animation:mc-shimmer 1.2s linear infinite;}
+@keyframes mc-shimmer {to{background-position:-200% 0;}}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-get-loading span{animation:none;}}
+#maple-atlas-concept .mc-chip-button {display:inline-flex;align-items:center;gap:6px;margin-top:10px;min-height:36px;padding:6px 14px;border-radius:18px;}
+#maple-atlas-concept .mc-chip-button svg {width:16px;height:16px;}
+/* Value */
+#maple-atlas-concept .mc-value {margin:0 0 16px;padding:16px;border-radius:24px;border:1px solid var(--mc-edge);}
+#maple-atlas-concept .mc-value-tiles {display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;}
+#maple-atlas-concept .mc-value-market {display:contents;}
+#maple-atlas-concept .mc-value-tile {display:grid;align-content:start;gap:2px;padding:12px;border-radius:16px;background:var(--mc-soft);}
+#maple-atlas-concept .mc-value-tile>span {font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-value-tile strong {font-size:18px;font-weight:600;line-height:1.25;}
+#maple-atlas-concept .mc-value-tile strong small {font-size:12px;font-weight:400;color:var(--mc-muted);}
+#maple-atlas-concept .mc-value-tile>small {font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-value-main {background:light-dark(#e8f0fe,#0c2d5a);}
+#maple-atlas-concept #mc-search-dialog .mc-value-note {grid-column:1/-1;margin:2px 0 0;}
+#maple-atlas-concept .mc-link-row {display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px;}
+#maple-atlas-concept .mc-link-row .mc-search-link {justify-content:flex-start;gap:6px;min-height:40px;}
+#maple-atlas-concept .mc-link-row #mc-market-history:empty {display:none;}
+@media (max-width:420px) {
+  #maple-atlas-concept .mc-item-hero .mc-search-portrait {flex-basis:72px;width:72px;height:72px;}
+  #maple-atlas-concept .mc-item-title h3 {font-size:22px;}
+  #maple-atlas-concept .mc-nav span {display:none;}
+  #maple-atlas-concept .mc-nav {padding:10px;min-width:40px;justify-content:center;}
+  #maple-atlas-concept .mc-get,#maple-atlas-concept .mc-value {padding:14px 12px;}
+}
 
 #maple-atlas-concept #mc-companion-desktop{position:relative;display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
 #maple-atlas-concept #mc-companion-desktop .mc-companion-dot{width:9px;height:9px;border-radius:50%;background:var(--mc-muted);display:none}
@@ -1486,6 +1557,79 @@ window.mapleStorageReady.then(() => {
   if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
 
+/* How to get an item: NPC shops, monster drops, quests and boxes from the
+ * MapleClassic Wiki's public Cargo tables (community data, CC BY-NC-SA 4.0).
+ * Queried by item name, cached for a week per channel, never invented: an empty
+ * result means the wiki has no record, not that the item cannot be obtained. */
+(function(scope){
+  const api='https://mapleclassic.wiki/api.php',wiki='https://mapleclassic.wiki/wiki/',week=7*86400000;
+  const decode=s=>String(s??'').replace(/&#0?39;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
+  const quote=s=>"'"+String(s).replace(/\\/g,'').replace(/'/g,"''")+"'";
+  const number=v=>{const n=Number(v);return v!==null&&v!==''&&Number.isFinite(n)?n:null;};
+  const pageURL=name=>wiki+encodeURIComponent(String(name).replace(/ /g,'_'));
+  const imageURL=name=>wiki+'Special:FilePath/'+encodeURIComponent(String(name).replace(/ /g,'_'))+'.png';
+  // Turns Cargo rows (each {title:{field:value}}) into plain objects; rejects odd payloads.
+  function rows(payload,max=200){
+    if(!Array.isArray(payload?.cargoquery)||payload.cargoquery.length>max)throw Error('The wiki listing changed format.');
+    return payload.cargoquery.map(r=>Object.fromEntries(Object.entries(r?.title||{}).map(([k,v])=>[k,v==null?null:decode(v)])));
+  }
+  function parse({shopItems=[],shops=[],drops=[],rewards=[],given=[],boxes=[]}){
+    const shopInfo=new Map(shops.map(s=>[s['name en']||s.page,s]));
+    const seen=new Set();
+    return {
+      shops:shopItems.filter(r=>r['shop id']&&!seen.has(r['shop id'])&&seen.add(r['shop id'])).map(r=>{const s=shopInfo.get(r['shop id'])||{};
+        return {shop:r['shop id'],npc:s.npc||r['shop id'],map:s.map||null,town:s.town||null,type:s['shop type']||null,price:number(r.price),currency:r.currency||s.currency||'Mesos',limit:number(r['purchase limit'])};})
+        .sort((a,b)=>(a.price??Infinity)-(b.price??Infinity)),
+      drops:drops.filter(r=>r['monster id']).map(r=>({monster:r['monster id'],rate:number(r['drop rate']),low:number(r['rate low']),high:number(r['rate high']),min:number(r['min quantity']),max:number(r['max quantity']),quest:r['quest flag']==='1'}))
+        .sort((a,b)=>(b.rate??-1)-(a.rate??-1)),
+      rewards:rewards.filter(r=>r['quest id']).map(r=>({quest:r['quest id'],quantity:number(r.quantity),chance:number(r.chance)})),
+      given:given.filter(r=>r['quest id']).map(r=>({quest:r['quest id'],quantity:number(r.quantity)})),
+      boxes:boxes.filter(r=>r['reactor id']).map(r=>({box:r['reactor id'],rate:number(r['drop rate']),quest:r['required quest']||null})),
+    };
+  }
+  const empty=s=>!s.shops.length&&!s.drops.length&&!s.rewards.length&&!s.given.length&&!s.boxes.length;
+  function storage(channel){
+    const key=name=>'maple-atlas-item-sources:'+channel+':'+name.toLowerCase();
+    return {read:name=>{try{return JSON.parse(localStorage.getItem(key(name)));}catch(_){return null;}},write:(name,v)=>{try{localStorage.setItem(key(name),JSON.stringify(v));}catch(_){}}};
+  }
+  function create({channel='main',request=(...a)=>fetch(...a),store=storage(channel),now=Date.now,timeout=12000}={}){
+    const pending=new Map();
+    async function cargo(table,fields,where){
+      const params=new URLSearchParams({action:'cargoquery',tables:table,fields,where,limit:'200',format:'json',origin:'*'});
+      const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+      try{const r=await request(api+'?'+params,{credentials:'omit',signal:controller.signal});if(!r.ok)throw Error('Wiki request failed');return rows(await r.json());}
+      finally{clearTimeout(timer);}
+    }
+    async function fetchSources(name){
+      const item=quote(name);
+      const [shopItems,drops,rewards,given,boxes]=await Promise.all([
+        cargo('shop_items','_pageName=page,shop_id,item_id,price,currency,purchase_limit','item_id='+item),
+        cargo('monster_drops','monster_id,item_id,drop_rate,rate_low,rate_high,min_quantity,max_quantity,quest_flag','item_id='+item),
+        cargo('quest_rewards','quest_id,item_id,quantity,chance','item_id='+item),
+        cargo('quest_given_items','quest_id,item_id,quantity','item_id='+item),
+        cargo('reactor_drops','reactor_id,item_id,drop_rate,required_quest','item_id='+item),
+      ]);
+      const ids=[...new Set(shopItems.map(r=>r['shop id']).filter(Boolean))].slice(0,40);
+      const shops=ids.length?await cargo('shops','_pageName=page,name_en,npc,map,town,shop_type,currency',ids.map(id=>'name_en='+quote(id)).join(' OR ')):[];
+      return parse({shopItems,shops,drops,rewards,given,boxes});
+    }
+    async function load(name,{refresh=false}={}){
+      name=String(name||'').trim();if(!name||name.length>160)throw Error('Choose a valid item.');
+      if(pending.has(name))return pending.get(name);
+      const task=(async()=>{
+        const saved=store.read(name),valid=saved?.schema===1&&saved.name===name&&Number.isFinite(saved.checked);
+        if(!refresh&&valid&&now()-saved.checked<week)return {...saved,cached:true};
+        try{const record={schema:1,name,checked:now(),sources:await fetchSources(name)};store.write(name,record);return record;}
+        catch(e){if(valid)return {...saved,cached:true,stale:true};throw e;}
+      })();
+      pending.set(name,task);try{return await task;}finally{pending.delete(name);}
+    }
+    return {load};
+  }
+  const exported={create,parse,rows,empty,pageURL,imageURL,license:'https://creativecommons.org/licenses/by-nc-sa/4.0/'};
+  scope.MapleItemSources=exported;if(typeof module!=='undefined')module.exports=exported;
+})(globalThis);
+
 (function(scope){
   const source='https://maplestory-classic.com/market.json',page='https://maplestory-classic.com/market';
   const nameKey=name=>String(name).normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
@@ -1581,17 +1725,22 @@ window.mapleStorageReady.then(() => {
   const icons={map:'map-pin',monster:'swords',npc:'user-round',quest:'flag',item:'package',recipe:'hammer',skill:'sparkles'};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=n=>Number(n).toLocaleString();
-  function create({root,url,marketUrl,onMap,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
+  // Whole mesos for prices of 100 or more; one decimal below that.
+  const price=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:Math.abs(n)>=100?0:1});
+  function create({root,url,marketUrl,onMap,onNavigate=()=>{},routeLength=()=>null,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
     const $=s=>root.querySelector(s),dialog=$('#mc-search-dialog'),input=$('#mc-search-input');
     const list=$('#mc-search-results'),filters=$('#mc-search-filters'),detail=$('#mc-search-entity'),status=$('#mc-search-status');
     const loader=MapleSearchData.create({url,channel:root.dataset.channel});
     const items=MapleItemData.create({channel:root.dataset.channel}),itemRecords=new Map(),itemStates=new Map();
     const market=MapleMarketData.create({url:marketUrl,channel:root.dataset.channel});
     const marketWatch=MapleMarketData.watch({store:market});
-    let itemIdentities=new Map(),visibleItem=null;
+    let itemIdentities=new Map(),visibleItem=null,byName=new Map();
+    const sources=MapleItemSources.create({channel:root.dataset.channel}),sourceStates=new Map();
     let index,catalog,loading,category='all',limit=30,timer,stack=[],lastKey=null,searchScroll=0;
     const icon=name=>'<i data-lucide="'+name+'" aria-hidden="true"></i>';
     const refreshIcons=()=>globalThis.lucide?.createIcons({attrs:{width:20,height:20}});
+    const spriteURL=e=>e?.image?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+catalog.sourceCommit+'/data/'+e.image:null;
+    function thumb(src,name){return '<span class="mc-search-portrait" aria-hidden="true">'+icon(name)+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+'</span>';}
     function portrait(e){
       const src=e.image?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+catalog.sourceCommit+'/data/'+e.image:e.type==='item'&&e.apiRecord?MapleItemData.base+e.id+'/icon':null;
       return '<span class="mc-search-portrait" aria-hidden="true">'+icon(icons[e.type])+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+'</span>';
@@ -1634,8 +1783,10 @@ window.mapleStorageReady.then(() => {
     function external(href,text){return '<a class="mc-search-link" href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(text)+icon('arrow-up-right')+'</a>';}
     function worth(e){
       const blocked=e.stats?.notSale;
-      const npc=e.cash?'':blocked||e.sell!=null?'<div class="mc-worth-value"><span>NPC sell value</span><strong>'+(blocked?'Cannot sell to NPCs':number(e.sell)+' <small>mesos / item</small>')+'</strong></div><p>NPC purchase prices and player-market prices are separate.</p>':'<p>The game source does not supply an NPC sell value for this item.</p>';
-      return '<section class="mc-worth"><div class="mc-worth-heading"><h3>'+(e.cash?'Market price':'Item value')+'</h3><button type="button" id="mc-market-refresh" aria-label="Refresh market prices">'+icon('refresh-cw')+'</button></div>'+npc+'<div class="mc-market-check"><div id="mc-market-content"></div><p id="mc-market-status" role="status" aria-live="polite"></p>'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'View current listings')+'</div></section>';
+      const npc=e.cash?'':'<div class="mc-value-tile"><span>Sell to NPC</span><strong>'+(blocked?'Not sellable':e.sell!=null?number(e.sell)+' <small>mesos</small>':'—')+'</strong></div>';
+      return '<section class="mc-value"><div class="mc-section-head"><h3>'+icon('coins')+(e.cash?'Market price':'Value')+'</h3><button type="button" id="mc-market-refresh" class="mc-icon-button" aria-label="Refresh market prices">'+icon('refresh-cw')+'</button></div>'+
+        '<div class="mc-value-tiles">'+npc+'<div id="mc-market-content" class="mc-value-market"></div></div><p id="mc-market-status" class="mc-fine" role="status" aria-live="polite"></p>'+
+        '<div class="mc-link-row">'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'Current listings')+'<span id="mc-market-history"></span></div></section>';
     }
     function updateMarket(){
       if(!dialog.open||!visibleItem||stack.at(-1)!==visibleItem.key)return;
@@ -1645,23 +1796,22 @@ window.mapleStorageReady.then(() => {
       if(content.dataset.version!==signature){
         const scroll=dialog.scrollTop,focused=content.contains(document.activeElement)?document.activeElement.getAttribute('href'):null;
         let html='';
+        let history='';
         if(match){
-          const r=match.record,unit=r.unit==='set'?'mesos / set':'mesos / item';
-          html='<div class="mc-worth-value"><span>'+(match.ambiguous?'Name-based price reference':'Recorded median sale')+'</span><strong>'+(r.median===null?(r.sales?'Sale price unavailable':'No sales recorded'):number(r.median)+' <small>'+unit+'</small>')+'</strong></div>'+
-            (match.ambiguous?'<p class="mc-market-caution">'+esc(r.name)+' matches '+match.identityCount+' game IDs. This feed does not distinguish variants.</p>':'')+
-            '<dl class="mc-market-stats">'+(r.typicalLow!==null&&r.typicalHigh!==null?'<div><dt>Typical sale range</dt><dd>'+number(r.typicalLow)+'–'+number(r.typicalHigh)+'</dd></div>':'')+
-            (r.askingMedian!==null?'<div><dt>Median asking price</dt><dd>'+number(r.askingMedian)+'</dd></div>':'')+'<div><dt>Recorded sales</dt><dd>'+number(r.sales)+'</dd></div></dl>'+
-            (r.sales<data.lowDataBelow?'<p class="mc-market-caution">Limited sales data · Treat this as a rough guide.</p>':'')+
-            (!visibleItem.cash?'<p class="mc-market-date">Item stats and upgrades can change the price.</p>':'')+
-            '<p class="mc-market-date">Prices as of '+esc(new Date(data.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+(Date.now()-Date.parse(data.updatedAt)>172800000?' · Older snapshot':'')+'</p>'+
-            external(data.page+'/'+r.slug,'Price history · MapleStory Classic');
-        }else html='<p>'+(data?'No price record for this item in the current snapshot.':'Price data will appear here when available.')+'</p>';
-        content.innerHTML=html;content.dataset.version=signature;
+          const r=match.record,unit=r.unit==='set'?'mesos / set':'mesos';
+          html='<div class="mc-value-tile mc-value-main"><span>'+(match.ambiguous?'Market (by name)':'Player market')+'</span><strong>'+(r.median===null?(r.sales?'—':'No sales'):price(r.median)+' <small>'+unit+'</small>')+'</strong>'+
+            (r.typicalLow!==null&&r.typicalHigh!==null?'<small>Usually '+price(r.typicalLow)+'–'+price(r.typicalHigh)+'</small>':'')+'</div>'+
+            (r.askingMedian!==null?'<div class="mc-value-tile"><span>Asking</span><strong>'+price(r.askingMedian)+' <small>mesos</small></strong></div>':'')+
+            '<div class="mc-value-tile"><span>Sales</span><strong>'+number(r.sales)+'</strong></div>'+
+            '<p class="mc-fine mc-value-note">'+(match.ambiguous?esc(r.name)+' matches '+match.identityCount+' game IDs · ':'')+(r.sales<data.lowDataBelow?'Limited sales data · ':'')+'Prices as of '+esc(new Date(data.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+(Date.now()-Date.parse(data.updatedAt)>172800000?' · Older snapshot':'')+'</p>';
+          history=external(data.page+'/'+r.slug,'Price history');
+        }else html='<p class="mc-fine mc-value-note">'+(data?'No player-market record for this item.':'Market prices will appear here when available.')+'</p>';
+        content.innerHTML=html;content.dataset.version=signature;const h=$('#mc-market-history');if(h)h.innerHTML=history;
         if(focused)[...content.querySelectorAll('a')].find(a=>a.getAttribute('href')===focused)?.focus({preventScroll:true});
         dialog.scrollTop=scroll;refreshIcons();
       }
       refresh.disabled=state.loading;refresh.setAttribute('aria-busy',String(state.loading));
-      status.textContent=state.loading?'Checking for updates…':state.error?(data?'Showing saved prices · Update unavailable':'Prices unavailable · Retry or open current listings'):state.checkedAt?'Checked '+new Date(state.checkedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · Refreshes while you view this item':data?'Showing saved prices':'';
+      status.textContent=state.loading?'Checking for updates…':state.error?(data?'Showing saved prices · Update unavailable':'Prices unavailable · Retry or open current listings'):state.checkedAt?'Checked '+new Date(state.checkedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · Updates while open':data?'Showing saved prices':'';
     }
     market.subscribe(updateMarket);
     function cashInfo(e){
@@ -1682,6 +1832,66 @@ window.mapleStorageReady.then(() => {
       try{itemRecords.set(key,await items.load(e.id,{refresh}));itemStates.set(key,'ready');}
       catch(_){itemStates.set(key,'error');}
       if(dialog.open&&stack.at(-1)===key)renderEntity(key,false);
+    }
+    // How to get it: community-recorded sources from the MapleClassic Wiki, linked to the
+    // atlas's own monsters, NPCs, quests and maps so each source can be navigated to.
+    const entityByName=(type,name)=>name?byName.get(type+':'+String(name).toLowerCase())||null:null;
+    function nearest(mapIds){
+      let best=null;
+      for(const id of mapIds||[]){const m=index.get('map:'+id);if(!m?.covered)continue;const d=routeLength(m.id);if(!best||(d!==null&&(best.d===null||d<best.d)))best={id:m.id,name:m.name,d};}
+      return best;
+    }
+    const away=t=>t&&t.d!=null?(t.d?t.d+' portal'+(t.d===1?'':'s')+' away':'You are here'):'';
+    const percent=n=>n==null?'':(n>=10?Math.round(n):n>=1?n.toFixed(1).replace(/\.0$/,''):n.toFixed(2).replace(/0$/,''))+'%';
+    function sourceRow({img,iconName,title,detail,extra='',target,key}){
+      const main=(key?'<button type="button" class="mc-get-main" data-entity="'+esc(key)+'">':'<div class="mc-get-main">')+thumb(img,iconName)+
+        '<span class="mc-get-copy"><strong>'+esc(title)+'</strong>'+(detail?'<small>'+detail+'</small>':'')+'</span>'+extra+(key?'</button>':'</div>');
+      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'" aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
+    }
+    function group(iconName,label,rows){
+      if(!rows.length)return '';
+      return '<div class="mc-get-group"><h4>'+icon(iconName)+esc(label)+'<span>'+rows.length+'</span></h4>'+rows.slice(0,4).join('')+
+        (rows.length>4?'<details class="mc-get-more"><summary>Show all '+rows.length+'</summary>'+rows.slice(4).join('')+'</details>':'')+'</div>';
+    }
+    function howToGet(e){
+      const st=sourceStates.get(e.key),head='<div class="mc-section-head"><h3>'+icon('compass')+'How to get it</h3></div>';
+      const credit='<p class="mc-fine mc-get-credit">Community data from the '+'<a href="'+esc(MapleItemSources.pageURL(e.name))+'" target="_blank" rel="noopener">MapleClassic Wiki</a> · <a href="'+MapleItemSources.license+'" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>'+(st?.record?.stale?' · Saved copy, update unavailable':'')+'</p>';
+      if(!st||st.state==='loading')return '<section class="mc-get" aria-busy="true">'+head+'<div class="mc-get-loading" aria-hidden="true"><span></span><span></span><span></span></div><p class="mc-fine" role="status">Looking up shops, drops and quests…</p></section>';
+      if(st.state==='error')return '<section class="mc-get">'+head+'<p class="mc-fine" role="status">Couldn’t reach the MapleClassic Wiki.</p><button type="button" id="mc-sources-retry" class="mc-chip-button">'+icon('refresh-cw')+'Try again</button></section>';
+      const src=st.record.sources,quest=name=>entityByName('quest',name);
+      const shops=src.shops.map(x=>{
+        const npc=entityByName('npc',x.npc),map=entityByName('map',x.map),town=entityByName('map',x.town);
+        // The shop's own map if a recorded route reaches it, else the NPC's other maps, else its town.
+        const at=m=>m?.covered?{id:m.id,name:m.name,d:routeLength(m.id)}:null,options=[at(map),nearest(npc?.maps),at(town)].filter(Boolean);
+        const target=options.find(o=>o.d!==null)||options[0]||null;
+        const place=[x.map,x.town].filter((v,i,a)=>v&&a.indexOf(v)===i).map(esc).join(' · ');
+        return sourceRow({img:spriteURL(npc)||MapleItemSources.imageURL(x.npc),iconName:'store',title:x.npc,key:npc?.key,detail:place+(away(target)?' · '+away(target):'')+(x.limit?' · Limit '+number(x.limit):''),
+          extra:x.price!=null?'<span class="mc-price">'+number(x.price)+'<small>'+esc(/^mesos$/i.test(x.currency)?'mesos':x.currency)+'</small></span>':'',target});
+      });
+      const drops=src.drops.map(x=>{
+        const mob=entityByName('monster',x.monster),target=nearest(mob?.maps);
+        const qty=x.min!=null&&x.max!=null&&(x.min>1||x.max>1)?' · ×'+(x.min===x.max?x.min:x.min+'–'+x.max):'';
+        return sourceRow({img:spriteURL(mob)||MapleItemSources.imageURL(x.monster),iconName:'swords',title:x.monster,key:mob?.key,
+          detail:[mob?'Lv. '+mob.level:'',x.rate!=null?percent(x.rate)+' drop chance':'Drop rate not recorded'].filter(Boolean).join(' · ')+qty+(target?' · Hunt at '+esc(target.name):''),
+          extra:x.quest?'<span class="mc-tag">Quest only</span>':'',target});
+      });
+      const questRow=(x,verb)=>{const q=quest(x.quest),target=nearest(q?.maps);
+        return sourceRow({img:spriteURL(q),iconName:'flag',title:x.quest,key:q?.key,detail:esc(verb)+(x.quantity>1?' × '+number(x.quantity):'')+(x.chance!=null?' · '+percent(x.chance)+' chance':'')+(q?.npcName?' · '+esc(q.npcName):'')+(q?' · Lv. '+q.level+'+':''),target});};
+      const boxes=src.boxes.map(x=>sourceRow({img:MapleItemSources.imageURL(x.box),iconName:'package-open',title:x.box,detail:(x.rate!=null?percent(x.rate)+' chance':'Chance not recorded')+(x.quest?' · Needs '+esc(x.quest):'')}));
+      const body=group('shopping-bag','Buy from a shop',shops)+group('swords','Dropped by',drops)+group('flag','Quest reward',src.rewards.map(x=>questRow(x,'Reward')))+
+        group('gift','Given by a quest',src.given.map(x=>questRow(x,'Given when you start it')))+group('package-open','From boxes and reactors',boxes);
+      return '<section class="mc-get">'+head+(body||'<p class="mc-get-empty">'+icon('search-x')+'No shops, drops or quests are recorded on the wiki for this item yet. That doesn’t mean it can’t be found.</p>')+credit+'</section>';
+    }
+    async function loadSources(e,refresh=false){
+      sourceStates.set(e.key,{state:'loading'});
+      try{sourceStates.set(e.key,{state:'ready',record:await sources.load(e.name,{refresh})});}
+      catch(_){sourceStates.set(e.key,{state:'error'});}
+      if(dialog.open&&stack.at(-1)===e.key)renderEntity(e.key,false);
+    }
+    function itemHero(e){
+      const chips=[e.cash?'Cash item':e.category,e.subcategory&&e.subcategory!==e.category&&!/^consume$/i.test(e.subcategory)?e.subcategory:'',e.level>0?'Lv. '+e.level:'',e.job&&e.job!=='All'?e.job:'',e.success!=null?e.success+'% success':''].filter(Boolean);
+      return '<div class="mc-item-hero">'+portrait(e)+'<div class="mc-item-title"><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3>'+(chips.length?'<div class="mc-chips">'+chips.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>':'')+'</div></div>'+
+        (e.description?'<p class="mc-item-desc">'+esc(e.description)+'</p>':'');
     }
     function stats(e){
       const values=e.type==='monster'?[['Level',e.level],['HP',e.hp],['EXP',e.exp]]:
@@ -1718,7 +1928,9 @@ window.mapleStorageReady.then(() => {
       const hadHeadingFocus=!focus&&detail.querySelector('#mc-entity-name')===document.activeElement;
       $('#mc-search-listing').hidden=true;detail.hidden=false;$('#mc-search-back').hidden=false;$('#mc-search-title').textContent=singular[e.type]+' details';
       const blocked=e.type==='quest'?remainingQuests(e.id):[];
-      detail.innerHTML='<div class="mc-entity-heading">'+portrait(e)+'<div><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3><p>'+esc(subtitle(e))+'</p></div></div>'+
+      if(e.type==='item')detail.innerHTML=itemHero(e)+stats(e)+(e.cash?cashInfo(e):howToGet(e))+worth(e)+relationGroups(e)+apiInfo(e)+
+        '<footer class="mc-search-provenance">Item ID '+esc(e.id)+' · Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
+      else detail.innerHTML='<div class="mc-entity-heading">'+portrait(e)+'<div><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3><p>'+esc(subtitle(e))+'</p></div></div>'+
         (e.limited&&e.type!=='item'?'<p class="mc-record-note">This name exists in the game export. Details are not verified in this snapshot.</p>':'')+
         (e.type==='map'&&!e.covered?'<p class="mc-record-note">This location is outside the atlas’s verified route coverage.</p>':'')+
         (e.type==='quest'?'<p class="mc-record-note">'+esc(questStatus(e.id))+(blocked.length?' · Earlier quests required: '+blocked.map(esc).join(', '):'')+'</p>'+questMarkup(e.id):stats(e))+
@@ -1727,6 +1939,8 @@ window.mapleStorageReady.then(() => {
         (e.type==='monster'?'<p class="mc-record-note">These are recorded spawn locations. Live spawns and monster drop tables are not available in this snapshot.</p>':'')+
         (e.type==='item'?apiInfo(e):'')+
         '<footer class="mc-search-provenance">Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
+      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate);});
+      if($('#mc-sources-retry'))$('#mc-sources-retry').onclick=()=>{void loadSources(e,true);renderEntity(key,false);};
       detail.querySelectorAll('[data-quest]').forEach(select=>select.onchange=()=>{onStatus(select.dataset.quest,select.value);renderEntity(key);});
       if($('#mc-item-retry'))$('#mc-item-retry').onclick=()=>{void loadItem(key,true);renderEntity(key,false);};
       if($('#mc-market-refresh'))$('#mc-market-refresh').onclick=()=>void market.refresh();
@@ -1739,7 +1953,7 @@ window.mapleStorageReady.then(() => {
       const e=index?.get(key);if(!e)return;
       if(e.type==='map'&&e.covered){marketWatch.view(false);dialog.close();onMap(e.id,stack.length?index.get(stack.at(-1))?.type:null);return;}
       if(!stack.length){searchScroll=dialog.scrollTop;lastKey=key;input.blur();}
-      stack.push(key);if(e.type==='item')void loadItem(key);renderEntity(key);marketWatch.view(e.type==='item');
+      stack.push(key);if(e.type==='item'){void loadItem(key);if(!e.cash&&sourceStates.get(key)?.state!=='ready')void loadSources(e);}renderEntity(key);marketWatch.view(e.type==='item');
     }
     $('#mc-search-back').onclick=()=>{
       stack.pop();if(stack.length){renderEntity(stack.at(-1));marketWatch.view(Boolean(visibleItem));}else{showResults();dialog.scrollTop=searchScroll;list.querySelector('[data-entity="'+lastKey+'"]')?.focus({preventScroll:true});}
@@ -1749,7 +1963,8 @@ window.mapleStorageReady.then(() => {
       if(index){showResults();return;}
       if(loading)return loading;
       status.textContent='Opening search catalog…';list.innerHTML='';
-      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);itemIdentities=MapleMarketData.identities(data.entities);showResults();}).catch(()=>{
+      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);
+        byName=new Map();for(const x of data.entities)if(['npc','monster','map','quest'].includes(x.type)){const k=x.type+':'+x.name.toLowerCase(),had=byName.get(k);if(!had||(x.type==='map'&&x.covered&&!had.covered))byName.set(k,x);}itemIdentities=MapleMarketData.identities(data.entities);showResults();}).catch(()=>{
         status.textContent='Search catalog could not load. Check your connection and try again.';
         list.innerHTML='<button type="button" id="mc-search-retry">Retry search</button>';
         $('#mc-search-retry').onclick=()=>ready();
@@ -2626,6 +2841,11 @@ window.mapleStorageReady.then(() => {
   $('#mc-route-dialog').addEventListener('close',()=>$('#mc-route-home').append($('#mc-form')));
   MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
     onMap:(id,kind)=>{if(['monster','npc','quest'].includes(kind))state.category={monster:'monsters',npc:'npcs',quest:'quests'}[kind];inspect(id);},
+    // Directions from your current map (or the live companion location) to a map.
+    onNavigate:id=>{const m=get(id);if(!m)return;state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
+      $('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();},
+    // Portal hops from your current map, or null when there is no recorded route.
+    routeLength:id=>{if(!get(id))return null;if(String(id)===state.from)return 0;const seen=new Set([state.from]);let frontier=[state.from];for(let d=1;frontier.length&&d<60;d++){const next=[];for(const at of frontier)for(const e of get(at)?.portals||[]){const to=String(e.to);if(seen.has(to)||!maps.has(to))continue;if(to===String(id))return d;seen.add(to);next.push(to);}frontier=next;}return null;},
     questMarkup:id=>questRows(DATA.quests.filter(q=>q.id===id)),
     onStatus:(id,value)=>{state.status[id]=value;if(['completed','skipped'].includes(value))expandedQuests.delete(id);detail();markers();save();},
     currentQuestIds:()=>new Set(currentQuests().map(q=>q.id)),

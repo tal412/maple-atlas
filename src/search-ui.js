@@ -4,17 +4,22 @@
   const icons={map:'map-pin',monster:'swords',npc:'user-round',quest:'flag',item:'package',recipe:'hammer',skill:'sparkles'};
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const number=n=>Number(n).toLocaleString();
-  function create({root,url,marketUrl,onMap,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
+  // Whole mesos for prices of 100 or more; one decimal below that.
+  const price=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:Math.abs(n)>=100?0:1});
+  function create({root,url,marketUrl,onMap,onNavigate=()=>{},routeLength=()=>null,questMarkup,onStatus,questStatus,currentQuestIds,remainingQuests}){
     const $=s=>root.querySelector(s),dialog=$('#mc-search-dialog'),input=$('#mc-search-input');
     const list=$('#mc-search-results'),filters=$('#mc-search-filters'),detail=$('#mc-search-entity'),status=$('#mc-search-status');
     const loader=MapleSearchData.create({url,channel:root.dataset.channel});
     const items=MapleItemData.create({channel:root.dataset.channel}),itemRecords=new Map(),itemStates=new Map();
     const market=MapleMarketData.create({url:marketUrl,channel:root.dataset.channel});
     const marketWatch=MapleMarketData.watch({store:market});
-    let itemIdentities=new Map(),visibleItem=null;
+    let itemIdentities=new Map(),visibleItem=null,byName=new Map();
+    const sources=MapleItemSources.create({channel:root.dataset.channel}),sourceStates=new Map();
     let index,catalog,loading,category='all',limit=30,timer,stack=[],lastKey=null,searchScroll=0;
     const icon=name=>'<i data-lucide="'+name+'" aria-hidden="true"></i>';
     const refreshIcons=()=>globalThis.lucide?.createIcons({attrs:{width:20,height:20}});
+    const spriteURL=e=>e?.image?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+catalog.sourceCommit+'/data/'+e.image:null;
+    function thumb(src,name){return '<span class="mc-search-portrait" aria-hidden="true">'+icon(name)+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+'</span>';}
     function portrait(e){
       const src=e.image?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+catalog.sourceCommit+'/data/'+e.image:e.type==='item'&&e.apiRecord?MapleItemData.base+e.id+'/icon':null;
       return '<span class="mc-search-portrait" aria-hidden="true">'+icon(icons[e.type])+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">':'')+'</span>';
@@ -57,8 +62,10 @@
     function external(href,text){return '<a class="mc-search-link" href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(text)+icon('arrow-up-right')+'</a>';}
     function worth(e){
       const blocked=e.stats?.notSale;
-      const npc=e.cash?'':blocked||e.sell!=null?'<div class="mc-worth-value"><span>NPC sell value</span><strong>'+(blocked?'Cannot sell to NPCs':number(e.sell)+' <small>mesos / item</small>')+'</strong></div><p>NPC purchase prices and player-market prices are separate.</p>':'<p>The game source does not supply an NPC sell value for this item.</p>';
-      return '<section class="mc-worth"><div class="mc-worth-heading"><h3>'+(e.cash?'Market price':'Item value')+'</h3><button type="button" id="mc-market-refresh" aria-label="Refresh market prices">'+icon('refresh-cw')+'</button></div>'+npc+'<div class="mc-market-check"><div id="mc-market-content"></div><p id="mc-market-status" role="status" aria-live="polite"></p>'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'View current listings')+'</div></section>';
+      const npc=e.cash?'':'<div class="mc-value-tile"><span>Sell to NPC</span><strong>'+(blocked?'Not sellable':e.sell!=null?number(e.sell)+' <small>mesos</small>':'—')+'</strong></div>';
+      return '<section class="mc-value"><div class="mc-section-head"><h3>'+icon('coins')+(e.cash?'Market price':'Value')+'</h3><button type="button" id="mc-market-refresh" class="mc-icon-button" aria-label="Refresh market prices">'+icon('refresh-cw')+'</button></div>'+
+        '<div class="mc-value-tiles">'+npc+'<div id="mc-market-content" class="mc-value-market"></div></div><p id="mc-market-status" class="mc-fine" role="status" aria-live="polite"></p>'+
+        '<div class="mc-link-row">'+external('https://maplestory.market/items?q='+encodeURIComponent(e.name),'Current listings')+'<span id="mc-market-history"></span></div></section>';
     }
     function updateMarket(){
       if(!dialog.open||!visibleItem||stack.at(-1)!==visibleItem.key)return;
@@ -68,23 +75,22 @@
       if(content.dataset.version!==signature){
         const scroll=dialog.scrollTop,focused=content.contains(document.activeElement)?document.activeElement.getAttribute('href'):null;
         let html='';
+        let history='';
         if(match){
-          const r=match.record,unit=r.unit==='set'?'mesos / set':'mesos / item';
-          html='<div class="mc-worth-value"><span>'+(match.ambiguous?'Name-based price reference':'Recorded median sale')+'</span><strong>'+(r.median===null?(r.sales?'Sale price unavailable':'No sales recorded'):number(r.median)+' <small>'+unit+'</small>')+'</strong></div>'+
-            (match.ambiguous?'<p class="mc-market-caution">'+esc(r.name)+' matches '+match.identityCount+' game IDs. This feed does not distinguish variants.</p>':'')+
-            '<dl class="mc-market-stats">'+(r.typicalLow!==null&&r.typicalHigh!==null?'<div><dt>Typical sale range</dt><dd>'+number(r.typicalLow)+'–'+number(r.typicalHigh)+'</dd></div>':'')+
-            (r.askingMedian!==null?'<div><dt>Median asking price</dt><dd>'+number(r.askingMedian)+'</dd></div>':'')+'<div><dt>Recorded sales</dt><dd>'+number(r.sales)+'</dd></div></dl>'+
-            (r.sales<data.lowDataBelow?'<p class="mc-market-caution">Limited sales data · Treat this as a rough guide.</p>':'')+
-            (!visibleItem.cash?'<p class="mc-market-date">Item stats and upgrades can change the price.</p>':'')+
-            '<p class="mc-market-date">Prices as of '+esc(new Date(data.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+(Date.now()-Date.parse(data.updatedAt)>172800000?' · Older snapshot':'')+'</p>'+
-            external(data.page+'/'+r.slug,'Price history · MapleStory Classic');
-        }else html='<p>'+(data?'No price record for this item in the current snapshot.':'Price data will appear here when available.')+'</p>';
-        content.innerHTML=html;content.dataset.version=signature;
+          const r=match.record,unit=r.unit==='set'?'mesos / set':'mesos';
+          html='<div class="mc-value-tile mc-value-main"><span>'+(match.ambiguous?'Market (by name)':'Player market')+'</span><strong>'+(r.median===null?(r.sales?'—':'No sales'):price(r.median)+' <small>'+unit+'</small>')+'</strong>'+
+            (r.typicalLow!==null&&r.typicalHigh!==null?'<small>Usually '+price(r.typicalLow)+'–'+price(r.typicalHigh)+'</small>':'')+'</div>'+
+            (r.askingMedian!==null?'<div class="mc-value-tile"><span>Asking</span><strong>'+price(r.askingMedian)+' <small>mesos</small></strong></div>':'')+
+            '<div class="mc-value-tile"><span>Sales</span><strong>'+number(r.sales)+'</strong></div>'+
+            '<p class="mc-fine mc-value-note">'+(match.ambiguous?esc(r.name)+' matches '+match.identityCount+' game IDs · ':'')+(r.sales<data.lowDataBelow?'Limited sales data · ':'')+'Prices as of '+esc(new Date(data.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+(Date.now()-Date.parse(data.updatedAt)>172800000?' · Older snapshot':'')+'</p>';
+          history=external(data.page+'/'+r.slug,'Price history');
+        }else html='<p class="mc-fine mc-value-note">'+(data?'No player-market record for this item.':'Market prices will appear here when available.')+'</p>';
+        content.innerHTML=html;content.dataset.version=signature;const h=$('#mc-market-history');if(h)h.innerHTML=history;
         if(focused)[...content.querySelectorAll('a')].find(a=>a.getAttribute('href')===focused)?.focus({preventScroll:true});
         dialog.scrollTop=scroll;refreshIcons();
       }
       refresh.disabled=state.loading;refresh.setAttribute('aria-busy',String(state.loading));
-      status.textContent=state.loading?'Checking for updates…':state.error?(data?'Showing saved prices · Update unavailable':'Prices unavailable · Retry or open current listings'):state.checkedAt?'Checked '+new Date(state.checkedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · Refreshes while you view this item':data?'Showing saved prices':'';
+      status.textContent=state.loading?'Checking for updates…':state.error?(data?'Showing saved prices · Update unavailable':'Prices unavailable · Retry or open current listings'):state.checkedAt?'Checked '+new Date(state.checkedAt).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})+' · Updates while open':data?'Showing saved prices':'';
     }
     market.subscribe(updateMarket);
     function cashInfo(e){
@@ -105,6 +111,66 @@
       try{itemRecords.set(key,await items.load(e.id,{refresh}));itemStates.set(key,'ready');}
       catch(_){itemStates.set(key,'error');}
       if(dialog.open&&stack.at(-1)===key)renderEntity(key,false);
+    }
+    // How to get it: community-recorded sources from the MapleClassic Wiki, linked to the
+    // atlas's own monsters, NPCs, quests and maps so each source can be navigated to.
+    const entityByName=(type,name)=>name?byName.get(type+':'+String(name).toLowerCase())||null:null;
+    function nearest(mapIds){
+      let best=null;
+      for(const id of mapIds||[]){const m=index.get('map:'+id);if(!m?.covered)continue;const d=routeLength(m.id);if(!best||(d!==null&&(best.d===null||d<best.d)))best={id:m.id,name:m.name,d};}
+      return best;
+    }
+    const away=t=>t&&t.d!=null?(t.d?t.d+' portal'+(t.d===1?'':'s')+' away':'You are here'):'';
+    const percent=n=>n==null?'':(n>=10?Math.round(n):n>=1?n.toFixed(1).replace(/\.0$/,''):n.toFixed(2).replace(/0$/,''))+'%';
+    function sourceRow({img,iconName,title,detail,extra='',target,key}){
+      const main=(key?'<button type="button" class="mc-get-main" data-entity="'+esc(key)+'">':'<div class="mc-get-main">')+thumb(img,iconName)+
+        '<span class="mc-get-copy"><strong>'+esc(title)+'</strong>'+(detail?'<small>'+detail+'</small>':'')+'</span>'+extra+(key?'</button>':'</div>');
+      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'" aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
+    }
+    function group(iconName,label,rows){
+      if(!rows.length)return '';
+      return '<div class="mc-get-group"><h4>'+icon(iconName)+esc(label)+'<span>'+rows.length+'</span></h4>'+rows.slice(0,4).join('')+
+        (rows.length>4?'<details class="mc-get-more"><summary>Show all '+rows.length+'</summary>'+rows.slice(4).join('')+'</details>':'')+'</div>';
+    }
+    function howToGet(e){
+      const st=sourceStates.get(e.key),head='<div class="mc-section-head"><h3>'+icon('compass')+'How to get it</h3></div>';
+      const credit='<p class="mc-fine mc-get-credit">Community data from the '+'<a href="'+esc(MapleItemSources.pageURL(e.name))+'" target="_blank" rel="noopener">MapleClassic Wiki</a> · <a href="'+MapleItemSources.license+'" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>'+(st?.record?.stale?' · Saved copy, update unavailable':'')+'</p>';
+      if(!st||st.state==='loading')return '<section class="mc-get" aria-busy="true">'+head+'<div class="mc-get-loading" aria-hidden="true"><span></span><span></span><span></span></div><p class="mc-fine" role="status">Looking up shops, drops and quests…</p></section>';
+      if(st.state==='error')return '<section class="mc-get">'+head+'<p class="mc-fine" role="status">Couldn’t reach the MapleClassic Wiki.</p><button type="button" id="mc-sources-retry" class="mc-chip-button">'+icon('refresh-cw')+'Try again</button></section>';
+      const src=st.record.sources,quest=name=>entityByName('quest',name);
+      const shops=src.shops.map(x=>{
+        const npc=entityByName('npc',x.npc),map=entityByName('map',x.map),town=entityByName('map',x.town);
+        // The shop's own map if a recorded route reaches it, else the NPC's other maps, else its town.
+        const at=m=>m?.covered?{id:m.id,name:m.name,d:routeLength(m.id)}:null,options=[at(map),nearest(npc?.maps),at(town)].filter(Boolean);
+        const target=options.find(o=>o.d!==null)||options[0]||null;
+        const place=[x.map,x.town].filter((v,i,a)=>v&&a.indexOf(v)===i).map(esc).join(' · ');
+        return sourceRow({img:spriteURL(npc)||MapleItemSources.imageURL(x.npc),iconName:'store',title:x.npc,key:npc?.key,detail:place+(away(target)?' · '+away(target):'')+(x.limit?' · Limit '+number(x.limit):''),
+          extra:x.price!=null?'<span class="mc-price">'+number(x.price)+'<small>'+esc(/^mesos$/i.test(x.currency)?'mesos':x.currency)+'</small></span>':'',target});
+      });
+      const drops=src.drops.map(x=>{
+        const mob=entityByName('monster',x.monster),target=nearest(mob?.maps);
+        const qty=x.min!=null&&x.max!=null&&(x.min>1||x.max>1)?' · ×'+(x.min===x.max?x.min:x.min+'–'+x.max):'';
+        return sourceRow({img:spriteURL(mob)||MapleItemSources.imageURL(x.monster),iconName:'swords',title:x.monster,key:mob?.key,
+          detail:[mob?'Lv. '+mob.level:'',x.rate!=null?percent(x.rate)+' drop chance':'Drop rate not recorded'].filter(Boolean).join(' · ')+qty+(target?' · Hunt at '+esc(target.name):''),
+          extra:x.quest?'<span class="mc-tag">Quest only</span>':'',target});
+      });
+      const questRow=(x,verb)=>{const q=quest(x.quest),target=nearest(q?.maps);
+        return sourceRow({img:spriteURL(q),iconName:'flag',title:x.quest,key:q?.key,detail:esc(verb)+(x.quantity>1?' × '+number(x.quantity):'')+(x.chance!=null?' · '+percent(x.chance)+' chance':'')+(q?.npcName?' · '+esc(q.npcName):'')+(q?' · Lv. '+q.level+'+':''),target});};
+      const boxes=src.boxes.map(x=>sourceRow({img:MapleItemSources.imageURL(x.box),iconName:'package-open',title:x.box,detail:(x.rate!=null?percent(x.rate)+' chance':'Chance not recorded')+(x.quest?' · Needs '+esc(x.quest):'')}));
+      const body=group('shopping-bag','Buy from a shop',shops)+group('swords','Dropped by',drops)+group('flag','Quest reward',src.rewards.map(x=>questRow(x,'Reward')))+
+        group('gift','Given by a quest',src.given.map(x=>questRow(x,'Given when you start it')))+group('package-open','From boxes and reactors',boxes);
+      return '<section class="mc-get">'+head+(body||'<p class="mc-get-empty">'+icon('search-x')+'No shops, drops or quests are recorded on the wiki for this item yet. That doesn’t mean it can’t be found.</p>')+credit+'</section>';
+    }
+    async function loadSources(e,refresh=false){
+      sourceStates.set(e.key,{state:'loading'});
+      try{sourceStates.set(e.key,{state:'ready',record:await sources.load(e.name,{refresh})});}
+      catch(_){sourceStates.set(e.key,{state:'error'});}
+      if(dialog.open&&stack.at(-1)===e.key)renderEntity(e.key,false);
+    }
+    function itemHero(e){
+      const chips=[e.cash?'Cash item':e.category,e.subcategory&&e.subcategory!==e.category&&!/^consume$/i.test(e.subcategory)?e.subcategory:'',e.level>0?'Lv. '+e.level:'',e.job&&e.job!=='All'?e.job:'',e.success!=null?e.success+'% success':''].filter(Boolean);
+      return '<div class="mc-item-hero">'+portrait(e)+'<div class="mc-item-title"><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3>'+(chips.length?'<div class="mc-chips">'+chips.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div>':'')+'</div></div>'+
+        (e.description?'<p class="mc-item-desc">'+esc(e.description)+'</p>':'');
     }
     function stats(e){
       const values=e.type==='monster'?[['Level',e.level],['HP',e.hp],['EXP',e.exp]]:
@@ -141,7 +207,9 @@
       const hadHeadingFocus=!focus&&detail.querySelector('#mc-entity-name')===document.activeElement;
       $('#mc-search-listing').hidden=true;detail.hidden=false;$('#mc-search-back').hidden=false;$('#mc-search-title').textContent=singular[e.type]+' details';
       const blocked=e.type==='quest'?remainingQuests(e.id):[];
-      detail.innerHTML='<div class="mc-entity-heading">'+portrait(e)+'<div><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3><p>'+esc(subtitle(e))+'</p></div></div>'+
+      if(e.type==='item')detail.innerHTML=itemHero(e)+stats(e)+(e.cash?cashInfo(e):howToGet(e))+worth(e)+relationGroups(e)+apiInfo(e)+
+        '<footer class="mc-search-provenance">Item ID '+esc(e.id)+' · Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
+      else detail.innerHTML='<div class="mc-entity-heading">'+portrait(e)+'<div><h3 tabindex="-1" id="mc-entity-name">'+esc(e.name)+'</h3><p>'+esc(subtitle(e))+'</p></div></div>'+
         (e.limited&&e.type!=='item'?'<p class="mc-record-note">This name exists in the game export. Details are not verified in this snapshot.</p>':'')+
         (e.type==='map'&&!e.covered?'<p class="mc-record-note">This location is outside the atlas’s verified route coverage.</p>':'')+
         (e.type==='quest'?'<p class="mc-record-note">'+esc(questStatus(e.id))+(blocked.length?' · Earlier quests required: '+blocked.map(esc).join(', '):'')+'</p>'+questMarkup(e.id):stats(e))+
@@ -150,6 +218,8 @@
         (e.type==='monster'?'<p class="mc-record-note">These are recorded spawn locations. Live spawns and monster drop tables are not available in this snapshot.</p>':'')+
         (e.type==='item'?apiInfo(e):'')+
         '<footer class="mc-search-provenance">Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
+      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate);});
+      if($('#mc-sources-retry'))$('#mc-sources-retry').onclick=()=>{void loadSources(e,true);renderEntity(key,false);};
       detail.querySelectorAll('[data-quest]').forEach(select=>select.onchange=()=>{onStatus(select.dataset.quest,select.value);renderEntity(key);});
       if($('#mc-item-retry'))$('#mc-item-retry').onclick=()=>{void loadItem(key,true);renderEntity(key,false);};
       if($('#mc-market-refresh'))$('#mc-market-refresh').onclick=()=>void market.refresh();
@@ -162,7 +232,7 @@
       const e=index?.get(key);if(!e)return;
       if(e.type==='map'&&e.covered){marketWatch.view(false);dialog.close();onMap(e.id,stack.length?index.get(stack.at(-1))?.type:null);return;}
       if(!stack.length){searchScroll=dialog.scrollTop;lastKey=key;input.blur();}
-      stack.push(key);if(e.type==='item')void loadItem(key);renderEntity(key);marketWatch.view(e.type==='item');
+      stack.push(key);if(e.type==='item'){void loadItem(key);if(!e.cash&&sourceStates.get(key)?.state!=='ready')void loadSources(e);}renderEntity(key);marketWatch.view(e.type==='item');
     }
     $('#mc-search-back').onclick=()=>{
       stack.pop();if(stack.length){renderEntity(stack.at(-1));marketWatch.view(Boolean(visibleItem));}else{showResults();dialog.scrollTop=searchScroll;list.querySelector('[data-entity="'+lastKey+'"]')?.focus({preventScroll:true});}
@@ -172,7 +242,8 @@
       if(index){showResults();return;}
       if(loading)return loading;
       status.textContent='Opening search catalog…';list.innerHTML='';
-      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);itemIdentities=MapleMarketData.identities(data.entities);showResults();}).catch(()=>{
+      loading=loader.load().then(data=>{catalog=data;index=MapleSearch.create(data);
+        byName=new Map();for(const x of data.entities)if(['npc','monster','map','quest'].includes(x.type)){const k=x.type+':'+x.name.toLowerCase(),had=byName.get(k);if(!had||(x.type==='map'&&x.covered&&!had.covered))byName.set(k,x);}itemIdentities=MapleMarketData.identities(data.entities);showResults();}).catch(()=>{
         status.textContent='Search catalog could not load. Check your connection and try again.';
         list.innerHTML='<button type="button" id="mc-search-retry">Retry search</button>';
         $('#mc-search-retry').onclick=()=>ready();

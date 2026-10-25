@@ -82,6 +82,11 @@
   $('#mc-route-dialog').addEventListener('close',()=>$('#mc-route-home').append($('#mc-form')));
   MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
     onMap:(id,kind)=>{if(['monster','npc','quest'].includes(kind))state.category={monster:'monsters',npc:'npcs',quest:'quests'}[kind];inspect(id);},
+    // Directions from your current map (or the live companion location) to a map.
+    onNavigate:id=>{const m=get(id);if(!m)return;state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
+      $('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();},
+    // Portal hops from your current map, or null when there is no recorded route.
+    routeLength:id=>{if(!get(id))return null;if(String(id)===state.from)return 0;const seen=new Set([state.from]);let frontier=[state.from];for(let d=1;frontier.length&&d<60;d++){const next=[];for(const at of frontier)for(const e of get(at)?.portals||[]){const to=String(e.to);if(seen.has(to)||!maps.has(to))continue;if(to===String(id))return d;seen.add(to);next.push(to);}frontier=next;}return null;},
     questMarkup:id=>questRows(DATA.quests.filter(q=>q.id===id)),
     onStatus:(id,value)=>{state.status[id]=value;if(['completed','skipped'].includes(value))expandedQuests.delete(id);detail();markers();save();},
     currentQuestIds:()=>new Set(currentQuests().map(q=>q.id)),
