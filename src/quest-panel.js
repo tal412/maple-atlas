@@ -50,11 +50,15 @@
     }
 
     // ---- Readings from the computer ----
+    // What a reading shows; an identical one only refreshes the "updated" time.
+    let shownSig='';
+    const signature=r=>JSON.stringify([r?.visible,r?.hidden,r?.empty,(r?.quests||[]).map(q=>[q.quest?.id||q.title,q.complete,q.progress.map(p=>[p.name,p.have,p.need,p.done])])]);
+    function changed(){const sig=signature(reading);if(sig===shownSig){refreshAgo();return;}shownSig=sig;onChange();}
     function update({visible,quests:list,receivedAt=Date.now()}){
       const parsed=MapleQuestHelper.unpack(list),resolved=MapleQuestHelper.resolve(parsed,quests,status());
       // A briefly hidden or unreadable panel must not wipe the list.
-      if(visible&&!resolved.length&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,empty:true};onChange();return;}
-      if(!visible&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,hidden:true};onChange();return;}
+      if(visible&&!resolved.length&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,empty:true};changed();return;}
+      if(!visible&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,hidden:true};changed();return;}
       const changes={};
       for(const q of resolved)if(q.quest&&!['in-progress','completed'].includes(status()[q.quest.id]))changes[q.quest.id]='in-progress';
       // A quest that was ready to hand in and is gone on two reads in a row was turned in.
@@ -64,9 +68,9 @@
       if(Object.keys(changes).length)setStatus(changes);
       reading={visible,quests:resolved,at:receivedAt};
       if(resolved.length)lastSeen=receivedAt;
-      onChange();
+      changed();
     }
-    function setConnection(phase){connection=phase;onChange();}
+    function setConnection(phase){if(phase===connection)return;connection=phase;onChange();}
     const tracked=()=>reading?.quests||[];
 
     // ---- Rendering ----
@@ -101,14 +105,14 @@
     const ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<10?'just now':s<60?s+' s ago':Math.round(s/60)+' min ago';};
     function statusLine(){
       const live=connection==='connected'||connection==='stale'||connection==='searching';
-      if(!live)return reading?.quests.length?{tone:'off',text:'Companion not connected · Last seen '+ago(reading.at)}:null;
+      if(!live)return reading?.quests.length?{tone:'off',text:'Companion not connected · Last seen ',ago:true}:null;
       if(!reading)return {tone:'wait',text:'Waiting for the companion to read your Quest Helper…'};
       if(reading.hidden)return {tone:'wait',text:'Quest Helper not visible in the game · Showing the last read'};
-      return {tone:'live',text:'Live from your game · Updated '+ago(reading.at)};
+      return {tone:'live',text:'Live from your game · Updated ',ago:true};
     }
     function html(){
       const line=statusLine(),list=tracked();
-      const head='<div class="mc-eyebrow">Your quests</div><h3>Quest helper</h3>'+(line?'<p class="mc-qh-status" data-tone="'+line.tone+'"><span aria-hidden="true"></span>'+esc(line.text)+'</p>':'');
+      const head='<div class="mc-eyebrow">Your quests</div><h3>Quest helper</h3>'+(line?'<p class="mc-qh-status" data-tone="'+line.tone+'"><span aria-hidden="true"></span>'+esc(line.text)+(line.ago?'<time data-qh-ago></time>':'')+'</p>':'');
       if(list.length){
         // One quest at a time; the chips above switch between the tracked quests.
         const index=Math.max(0,list.findIndex(q=>keyOf(q)===selected)),current=list[index];
@@ -122,7 +126,11 @@
       if(!live)return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>See your quests live</strong><p>Maple Atlas Companion reads the Quest Helper at the top right of your game. Each quest shows up here with what’s left, where to hunt, how to get every item and who to return to.</p><button type="button" class="mc-primary" data-qh-connect>'+icon('smartphone')+'Connect the companion</button></section>';
       return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>'+(reading&&!reading.visible?'Open the Quest Helper in the game':'No tracked quests yet')+'</strong><p>'+(reading&&!reading.visible?'Keep the Quest Helper panel visible at the top right of the game window. Your tracked quests appear here.':'Track a quest in the game so it shows in the Quest Helper at the top right. It appears here within a few seconds.')+'</p></section>';
     }
+    let shownBox=null;
+    function refreshAgo(){if(reading&&shownBox?.isConnected)shownBox.querySelectorAll('[data-qh-ago]').forEach(t=>{t.textContent=ago(reading.at);});}
+    setInterval(refreshAgo,5000);
     function bind(box){
+      shownBox=box;refreshAgo();
       box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav));
       box.querySelectorAll('[data-qh-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.qhEntity,b.dataset.qhName));
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));

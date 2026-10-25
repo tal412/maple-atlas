@@ -260,6 +260,10 @@
 #maple-atlas-concept #mc-route-chip b {display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:16px;background:var(--mc-blue);color:var(--mc-paper);font-size:12px;font-weight:600;white-space:nowrap;}
 #maple-atlas-concept #mc-route-chip svg {display:none;}
 @media(max-width:700px){#maple-atlas-concept #mc-route-chip {top:calc(132px + env(safe-area-inset-top,0px));left:12px;right:auto;}}
+/* A new route's stops pop in along the line (see drawRoute in runtime.js). */
+@keyframes mc-stop-pop {0%{transform:translate(-50%,-50%) scale(0);opacity:0}70%{transform:translate(-50%,-50%) scale(1.25);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+#maple-atlas-concept .mc-place[data-pop] .mc-dot {animation:mc-stop-pop .42s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(250ms + var(--i,0) * 70ms);}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-place[data-pop] .mc-dot{animation:none;}}
 
 html,body { margin:0 !important; padding:0 !important; height:100%; overflow:hidden; }
 #maple-atlas-concept .mc-shell { height:100dvh; display:flex; flex-direction:column; }
@@ -2710,11 +2714,15 @@ window.mapleStorageReady.then(() => {
     }
 
     // ---- Readings from the computer ----
+    // What a reading shows; an identical one only refreshes the "updated" time.
+    let shownSig='';
+    const signature=r=>JSON.stringify([r?.visible,r?.hidden,r?.empty,(r?.quests||[]).map(q=>[q.quest?.id||q.title,q.complete,q.progress.map(p=>[p.name,p.have,p.need,p.done])])]);
+    function changed(){const sig=signature(reading);if(sig===shownSig){refreshAgo();return;}shownSig=sig;onChange();}
     function update({visible,quests:list,receivedAt=Date.now()}){
       const parsed=MapleQuestHelper.unpack(list),resolved=MapleQuestHelper.resolve(parsed,quests,status());
       // A briefly hidden or unreadable panel must not wipe the list.
-      if(visible&&!resolved.length&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,empty:true};onChange();return;}
-      if(!visible&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,hidden:true};onChange();return;}
+      if(visible&&!resolved.length&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,empty:true};changed();return;}
+      if(!visible&&reading?.quests.length&&receivedAt-lastSeen<KEEP_MS){reading={...reading,at:receivedAt,hidden:true};changed();return;}
       const changes={};
       for(const q of resolved)if(q.quest&&!['in-progress','completed'].includes(status()[q.quest.id]))changes[q.quest.id]='in-progress';
       // A quest that was ready to hand in and is gone on two reads in a row was turned in.
@@ -2724,9 +2732,9 @@ window.mapleStorageReady.then(() => {
       if(Object.keys(changes).length)setStatus(changes);
       reading={visible,quests:resolved,at:receivedAt};
       if(resolved.length)lastSeen=receivedAt;
-      onChange();
+      changed();
     }
-    function setConnection(phase){connection=phase;onChange();}
+    function setConnection(phase){if(phase===connection)return;connection=phase;onChange();}
     const tracked=()=>reading?.quests||[];
 
     // ---- Rendering ----
@@ -2761,14 +2769,14 @@ window.mapleStorageReady.then(() => {
     const ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<10?'just now':s<60?s+' s ago':Math.round(s/60)+' min ago';};
     function statusLine(){
       const live=connection==='connected'||connection==='stale'||connection==='searching';
-      if(!live)return reading?.quests.length?{tone:'off',text:'Companion not connected · Last seen '+ago(reading.at)}:null;
+      if(!live)return reading?.quests.length?{tone:'off',text:'Companion not connected · Last seen ',ago:true}:null;
       if(!reading)return {tone:'wait',text:'Waiting for the companion to read your Quest Helper…'};
       if(reading.hidden)return {tone:'wait',text:'Quest Helper not visible in the game · Showing the last read'};
-      return {tone:'live',text:'Live from your game · Updated '+ago(reading.at)};
+      return {tone:'live',text:'Live from your game · Updated ',ago:true};
     }
     function html(){
       const line=statusLine(),list=tracked();
-      const head='<div class="mc-eyebrow">Your quests</div><h3>Quest helper</h3>'+(line?'<p class="mc-qh-status" data-tone="'+line.tone+'"><span aria-hidden="true"></span>'+esc(line.text)+'</p>':'');
+      const head='<div class="mc-eyebrow">Your quests</div><h3>Quest helper</h3>'+(line?'<p class="mc-qh-status" data-tone="'+line.tone+'"><span aria-hidden="true"></span>'+esc(line.text)+(line.ago?'<time data-qh-ago></time>':'')+'</p>':'');
       if(list.length){
         // One quest at a time; the chips above switch between the tracked quests.
         const index=Math.max(0,list.findIndex(q=>keyOf(q)===selected)),current=list[index];
@@ -2782,7 +2790,11 @@ window.mapleStorageReady.then(() => {
       if(!live)return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>See your quests live</strong><p>Maple Atlas Companion reads the Quest Helper at the top right of your game. Each quest shows up here with what’s left, where to hunt, how to get every item and who to return to.</p><button type="button" class="mc-primary" data-qh-connect>'+icon('smartphone')+'Connect the companion</button></section>';
       return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>'+(reading&&!reading.visible?'Open the Quest Helper in the game':'No tracked quests yet')+'</strong><p>'+(reading&&!reading.visible?'Keep the Quest Helper panel visible at the top right of the game window. Your tracked quests appear here.':'Track a quest in the game so it shows in the Quest Helper at the top right. It appears here within a few seconds.')+'</p></section>';
     }
+    let shownBox=null;
+    function refreshAgo(){if(reading&&shownBox?.isConnected)shownBox.querySelectorAll('[data-qh-ago]').forEach(t=>{t.textContent=ago(reading.at);});}
+    setInterval(refreshAgo,5000);
     function bind(box){
+      shownBox=box;refreshAgo();
       box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav));
       box.querySelectorAll('[data-qh-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.qhEntity,b.dataset.qhName));
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
@@ -3076,7 +3088,7 @@ window.mapleStorageReady.then(() => {
   function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" data-lazy="'+(state.panel==='route')+'" aria-label="View local map of '+esc(m.name)+'">'+(m.minimap?'<span class="mc-preview-media"><img alt="" hidden decoding="async" referrerpolicy="no-referrer"><span class="mc-preview-message" role="status">Loading preview…</span></span>':'')+'<span class="mc-preview-caption">'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
   function find(text){const v=text.toLowerCase().trim();if(!v)return null;const exact=DATA.maps.filter(m=>m.name.toLowerCase()===v);if(exact.length===1)return exact[0];const matches=DATA.maps.filter(m=>m.name.toLowerCase().includes(v));return matches.length===1?matches[0]:null;}
   function plan(){
-    state.routeActive=true;state.fitAll=false;state.focus=null;state.dx=0;state.dy=0;state.zoom=1;state.step=0;
+    routeFresh=true;state.routeActive=true;state.fitAll=false;state.focus=null;state.dx=0;state.dy=0;state.zoom=1;state.step=0;
     const queue=[[state.from]],seen=new Set();state.route=[];
     while(queue.length){const path=queue.shift(),last=path.at(-1);if(last===state.to){state.route=path;break;}if(seen.has(last))continue;seen.add(last);for(const edge of get(last)?.portals||[]){const id=String(edge.to);if(maps.has(id)&&!seen.has(id))queue.push([...path,id]);}}
   }
@@ -3204,7 +3216,9 @@ window.mapleStorageReady.then(() => {
     detail();camera();save();
   });
   mobile.addEventListener('change',()=>{if(!mobile.matches){for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();$('#mc-route-home').append($('#mc-form'));}detail();camera();});
+  let shownQuestHtml=null;
   function detail(){
+    const wasQuests=shownQuestHtml;shownQuestHtml=null;
     $$('.mc-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===state.panel)));
     const m=get(state.selected),box=$('#mc-detail');if(!m)return;
     if(mobile.matches&&state.panel==='place'&&!hasInspected){
@@ -3222,8 +3236,10 @@ window.mapleStorageReady.then(() => {
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const history=DATA.quests.filter(q=>['completed','skipped'].includes(state.status[q.id]));
-      box.innerHTML=questPanel.html()+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'')+'<div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>';
-      questPanel.bind(box);
+      const html=questPanel.html()+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'')+'<div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>';
+      // Redrawn only when what it shows changed, so it does not flicker or lose its scroll.
+      if(html!==wasQuests){box.innerHTML=html;questPanel.bind(box);}
+      shownQuestHtml=html;
     }else{
       const a=anchor(m.id),members=a?a.members.map(get).filter(Boolean):[];
       const categories=[['monsters','Monsters'],['npcs','NPCs'],['quests','Quests'],['connections','Places']];
@@ -3260,17 +3276,17 @@ window.mapleStorageReady.then(() => {
       const here=!state.routeActive&&get(state.from)?.spot===s.id,m=get(s.primary),routeIndex=state.route.findIndex(id=>get(id)?.spot===s.id),isFrom=get(state.from)?.spot===s.id,isTo=get(state.to)?.spot===s.id;
       const relevant=state.layer==='quests'?new Set(s.members.flatMap(id=>[...(questMaps.get(String(id))||[])])).size:state.layer==='shops'?m.portals.map(e=>get(e.to)).filter(x=>x&&/shop|store|market/i.test(x.name)).length:0;
       const selected=s.id===selectedSpot&&(!mobile.matches||hasInspected||state.routeActive),isRoute=routeSpots.has(s.id),town=s.kind==='town';
-      return '<button type="button" class="mc-place cursor-interaction" data-spot="'+s.id+'" data-selected="'+selected+'" data-route="'+isRoute+'" data-town="'+town+'" data-schematic="'+Boolean(s.schematic)+'" data-endpoint="'+(isRoute&&(isFrom||isTo))+'" data-here="'+here+'" aria-label="Inspect '+esc(s.label)+(here?' · You are here':'')+(s.schematic?' · Schematic position':'')+'" data-tooltip="'+esc(s.label)+(s.schematic?' · Schematic position':'')+'">'+(here?'<span class="mc-here" aria-hidden="true"><svg viewBox="0 0 24 30"><path d="M12 29 2.5 14.5A10.5 10.5 0 1 1 21.5 14.5z"/><circle cx="12" cy="10.5" r="4"/></svg></span>':'')+'<span class="mc-dot">'+(isRoute?(isFrom?'A':isTo?'B':routeIndex):'')+'</span><span class="mc-tag">'+(s.schematic?'◇ ':'')+esc(s.label)+'</span>'+(state.layer!=='all'&&relevant?'<span class="mc-badge">'+relevant+'</span>':'')+'</button>';
+      return '<button type="button" class="mc-place cursor-interaction" data-spot="'+s.id+'" data-selected="'+selected+'" data-route="'+isRoute+'" data-town="'+town+'" data-schematic="'+Boolean(s.schematic)+'" data-endpoint="'+(isRoute&&(isFrom||isTo))+'"'+(isRoute&&routeFresh?' data-pop style="--i:'+Math.max(0,routeIndex)+'"':'')+' data-here="'+here+'" aria-label="Inspect '+esc(s.label)+(here?' · You are here':'')+(s.schematic?' · Schematic position':'')+'" data-tooltip="'+esc(s.label)+(s.schematic?' · Schematic position':'')+'">'+(here?'<span class="mc-here" aria-hidden="true"><svg viewBox="0 0 24 30"><path d="M12 29 2.5 14.5A10.5 10.5 0 1 1 21.5 14.5z"/><circle cx="12" cy="10.5" r="4"/></svg></span>':'')+'<span class="mc-dot">'+(isRoute?(isFrom?'A':isTo?'B':routeIndex):'')+'</span><span class="mc-tag">'+(s.schematic?'◇ ':'')+esc(s.label)+'</span>'+(state.layer!=='all'&&relevant?'<span class="mc-badge">'+relevant+'</span>':'')+'</button>';
     }).join('');
     $$('[data-spot]').forEach(b=>{b.onclick=()=>{const s=spots.get(b.dataset.spot);if(state.pick)setStart(get(s.primary));else inspect(s.primary);};b.ondblclick=()=>{const s=spots.get(b.dataset.spot);state.focus=s.id;state.zoom=Math.min(2.5,state.zoom*1.35);state.category='connections';state.expanded=true;detail();camera();};});camera();
   }
   let width=1024,height=670,scale=1,ox=0,oy=0,gestures=null,zoomAnchor=null,wheelTimer=0,cameraFrame=0;
   const labelPlanner=MapleLabelLayout.create();
-  function queueCamera(){if(!cameraFrame)cameraFrame=requestAnimationFrame(()=>{cameraFrame=0;camera();});}
+  function queueCamera(){if(!cameraFrame)cameraFrame=requestAnimationFrame(()=>{cameraFrame=0;camera(true);});}
   function placeLabels(points,narrow,left){
     const mapRect=$('#mc-map').getBoundingClientRect();
     const minX=narrow?8:left+8,maxX=width-8,minY=narrow?$('.mc-maptools').getBoundingClientRect().bottom-mapRect.top+12:70,maxY=narrow?Math.max(minY+32,$('.mc-panel').getBoundingClientRect().top-mapRect.top-12):height-80;
-    const moving=Boolean(gestures?.moving||wheelTimer);
+    const moving=Boolean(gestures?.moving||wheelTimer||animating);
     const blocked=moving?[]:$$('.mc-mobile-searchbar,.mc-mobile-mapactions,.mc-mobile-nav,.mc-maptools,.mc-zooms,.mc-mapfooter,.mc-routeform,.mc-tabs,.mc-detail,.mc-sheet-handle').filter(e=>e.offsetWidth&&e.offsetHeight).map(e=>{const r=e.getBoundingClientRect();return{x:r.left-mapRect.left,y:r.top-mapRect.top,w:r.width,h:r.height};});
     const route=$('#mc-route'),samples=[],total=!moving&&route.getAttribute('d')?.trim()?route.getTotalLength():0;
     if(total>0)for(let d=0;d<=total;d+=10/scale){const p=route.getPointAtLength(d);samples.push({x:ox+p.x*scale,y:oy+p.y*scale,w:0,h:0});}
@@ -3287,7 +3303,11 @@ window.mapleStorageReady.then(() => {
     });
   }
   function routePath(){let d='',last=null;for(const id of state.route){const a=anchor(id);if(!a){last=null;continue;}if(last&&a.id===anchor(last)?.id){last=id;continue;}if(last){let segment=DATA.artRoutes?.[last+':'+id];if(!segment){const reverse=DATA.artRoutes?.[id+':'+last];if(reverse){const p=reverse.match(/-?\d+(?:\.\d+)?/g).map(Number);segment='M'+p[6]+' '+p[7]+'C'+p[4]+' '+p[5]+' '+p[2]+' '+p[3]+' '+p[0]+' '+p[1];}}d+=segment?' '+segment.slice(segment.indexOf('C')):' M'+a.x+' '+a.y;}else d+=' M'+a.x+' '+a.y;last=id;}return d;}
-  function camera(){
+  // The camera glides to each new view (live location, a route, a place) with an
+  // eased pan and zoom; gestures, the wheel and resizing move it instantly.
+  let shown=null,cameraAnim=0,animating=false,drawnRoute='',routeFresh=false;
+  const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  function camera(instant=false){
     const el=$('#mc-map');width=el.clientWidth;height=el.clientHeight;const narrow=width<700,left=narrow?0:320,availableW=width-left;
     let mapTop=70,mapBottom=height-84;
     $('.mc-maptools').style.top='';$('.mc-zooms').style.top='';
@@ -3298,14 +3318,57 @@ window.mapleStorageReady.then(() => {
     else if(narrow){const xs=routePoints.map(p=>p.x),ys=routePoints.map(p=>p.y),top=mapTop,bottom=mapBottom,cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;scale=Math.min((width-64)/(Math.max(...xs)-Math.min(...xs)+40),(bottom-top-20)/(Math.max(...ys)-Math.min(...ys)+40))*state.zoom;ox=width/2-cx*scale+state.dx;oy=(top+bottom)/2-cy*scale+state.dy;}
     else{const xs=routePoints.map(p=>p.x),ys=routePoints.map(p=>p.y),cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;scale=Math.min((availableW-110)/(Math.max(...xs)-Math.min(...xs)+400),(height-170)/(Math.max(...ys)-Math.min(...ys)+380))*state.zoom;scale=Math.min(scale,1.7*state.zoom);ox=left+availableW/2-cx*scale+state.dx;oy=height*.54-cy*scale+state.dy;}
     if(zoomAnchor){const dx=zoomAnchor.screen.x-(ox+zoomAnchor.world.x*scale),dy=zoomAnchor.screen.y-(oy+zoomAnchor.world.y*scale);state.dx+=dx;state.dy+=dy;ox+=dx;oy+=dy;zoomAnchor=null;}
+    const target={ox,oy,scale};cancelAnimationFrame(cameraAnim);
+    const still=shown&&Math.abs(shown.ox-target.ox)<1&&Math.abs(shown.oy-target.oy)<1&&Math.abs(shown.scale/target.scale-1)<.002;
+    if(instant===true||!shown||still||reduceMotion.matches||gestures?.moving||wheelTimer){animating=false;shown=target;showCamera(target,narrow,left);return;}
+    // Pan the view's centre in map space and zoom geometrically, so the path looks straight.
+    const from=shown,vx=left+availableW/2,vy=height/2;
+    const c0={x:(vx-from.ox)/from.scale,y:(vy-from.oy)/from.scale},c1={x:(vx-target.ox)/target.scale,y:(vy-target.oy)/target.scale};
+    const travel=Math.hypot(c1.x-c0.x,c1.y-c0.y)*target.scale+Math.abs(Math.log(target.scale/from.scale))*300;
+    const duration=Math.min(950,Math.max(380,300+travel*.5)),t0=performance.now();animating=true;
+    const frame=now=>{
+      const t=Math.min(1,(now-t0)/duration),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      if(t>=1){animating=false;shown=target;showCamera(target,narrow,left);return;}
+      const k=from.scale*Math.pow(target.scale/from.scale,e),cx=c0.x+(c1.x-c0.x)*e,cy=c0.y+(c1.y-c0.y)*e;
+      shown={ox:vx-cx*k,oy:vy-cy*k,scale:k};showCamera(shown,narrow,left);cameraAnim=requestAnimationFrame(frame);
+    };
+    cameraAnim=requestAnimationFrame(frame);
+    // A page that is not drawing (in the background) goes straight to the end.
+    setTimeout(()=>{if(animating&&shown===from){cancelAnimationFrame(cameraAnim);animating=false;shown=target;showCamera(target,narrow,left);}},150);
+  }
+  function showCamera(view,narrow,left){
+    ox=view.ox;oy=view.oy;scale=view.scale;
     $('#mc-svg').setAttribute('viewBox','0 0 '+width+' '+height);$('#mc-world').setAttribute('transform','translate('+ox+','+oy+') scale('+scale+')');
     $$('[data-ocean]').forEach(r=>{r.setAttribute('x',-ox/scale-2);r.setAttribute('y',-oy/scale-2);r.setAttribute('width',width/scale+4);r.setAttribute('height',height/scale+4);});
     const selectedSpot=get(state.selected)?.spot;
     const labelPoints=[];
     $$('[data-spot]').forEach(b=>{const s=spots.get(b.dataset.spot),x=ox+s.x*scale,y=oy+s.y*scale;b.style.left=x+'px';b.style.top=y+'px';if(narrow&&scale<.8&&b.dataset.town!=='true'&&b.dataset.route!=='true'&&b.dataset.selected!=='true'){b.hidden=true;return;}b.hidden=false;labelPoints.push({b,x,y,r:b.dataset.route==='true'?13:9});});
-    const d=routePath();$('#mc-route').setAttribute('d',d);$('#mc-routehalo').setAttribute('d',d);const c=anchor(state.route[state.step]);$('#mc-traveler').setAttribute('visibility',c&&state.step?'visible':'hidden');if(c){$('#mc-traveler').setAttribute('cx',c.x);$('#mc-traveler').setAttribute('cy',c.y);}
+    const d=routePath();if(d!==drawnRoute){$('#mc-route').setAttribute('d',d);$('#mc-routehalo').setAttribute('d',d);drawnRoute=d;if(d.trim()&&routeFresh)drawRoute();}const c=anchor(state.route[state.step]);$('#mc-traveler').setAttribute('visibility',c&&state.step?'visible':'hidden');if(c){$('#mc-traveler').setAttribute('cx',c.x);$('#mc-traveler').setAttribute('cy',c.y);}
     placeLabels(labelPoints,narrow,left);
     $('#mc-network').setAttribute('d',Object.values(DATA.artRoutes||{}).join(' '));$('#mc-zoom').textContent=Math.round(state.zoom*100)+'%';const unplaced=state.route.filter(id=>!anchor(id)).length;$('#mc-caption').textContent=state.route.length?(state.route.length-1)+' portal transitions · '+(unplaced?unplaced+' stops have no reviewed atlas position':'Select any numbered stop'):'Explore the recorded map network';
+  }
+  // A new route draws itself from A to B; its stops pop in one after another.
+  let routeAnim=0;
+  function drawRoute(){
+    routeFresh=false;if(reduceMotion.matches)return;
+    const paths=[$('#mc-route'),$('#mc-routehalo')],full=paths[0].getAttribute('d'),length=paths[0].getTotalLength();if(!length)return;
+    // Points along the real path; a gap between unplaced stops stays a gap.
+    const step=Math.max(2,length/260),points=[];
+    for(let d=0;d<=length+step/2;d+=step){const p=paths[0].getPointAtLength(Math.min(d,length));points.push([p.x,p.y]);}
+    const partial=n=>points.slice(0,n).map((p,i)=>(i&&Math.hypot(p[0]-points[i-1][0],p[1]-points[i-1][1])<step*3?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');
+    const start=performance.now()+250,duration=Math.min(1500,650+length*.45),finish=()=>{cancelAnimationFrame(routeAnim);paths.forEach(p=>p.setAttribute('d',full));};
+    paths.forEach(p=>p.setAttribute('d','M0 0'));
+    // Each stop pops when the line reaches it (the line eases out, so early stops come sooner).
+    const stops=$$('[data-pop]'),last=Math.max(1,...stops.map(b=>Number(b.style.getPropertyValue('--i'))||0));
+    stops.forEach(b=>{const f=(Number(b.style.getPropertyValue('--i'))||0)/last,t=1-Math.cbrt(1-Math.min(1,f));b.querySelector('.mc-dot').style.animationDelay=Math.round(250+duration*t-120)+'ms';});
+    const frame=now=>{
+      if(drawnRoute!==full){return;}
+      const t=Math.max(0,Math.min(1,(now-start)/duration)),e=1-Math.pow(1-t,3);
+      if(t>=1){finish();return;}
+      const d=partial(Math.max(1,Math.round(e*points.length)));paths.forEach(p=>p.setAttribute('d',d));routeAnim=requestAnimationFrame(frame);
+    };
+    cancelAnimationFrame(routeAnim);routeAnim=requestAnimationFrame(frame);
+    setTimeout(()=>{if(drawnRoute===full)finish();},duration+600);
   }
   function render(){const chip=$('#mc-route-chip');chip.hidden=!state.routeActive;if(state.routeActive)chip.querySelector('span').textContent='Route to '+(get(state.to)?.name||'destination');detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
@@ -3317,10 +3380,10 @@ window.mapleStorageReady.then(() => {
   $$('.mc-tabs button').forEach(b=>b.onclick=()=>{state.panel=b.dataset.panel;setSheet(true);detail();camera();save();});
   ['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).onclick=()=>{if(i===1&&!questPanel.tracked().length){state.panel='progress';setSheet(true);detail();camera();save();return;}state.layer=['all','quests','shops'][i];state.category=i===2?'connections':i===1?'quests':'monsters';state.panel='place';if(mobile.matches){if(!hasInspected)state.selected=state.from;hasInspected=true;setSheet(true);}render();save();});
   $('#mc-plus').onclick=()=>{state.zoom=Math.min(5,state.zoom*1.2);camera();};$('#mc-minus').onclick=()=>{state.zoom=Math.max(.5,state.zoom/1.2);camera();};$('#mc-fit').onclick=()=>{state.zoom=1;state.dx=0;state.dy=0;state.fitAll=true;state.focus=null;camera();};
-  gestures=MapleGestures.create({element:$('#mc-map'),getCamera:()=>{if(cameraFrame){cancelAnimationFrame(cameraFrame);cameraFrame=0;camera();}return{ox,oy,scale,zoom:state.zoom,dx:state.dx,dy:state.dy};},onStart:()=>{if(wheelTimer){clearTimeout(wheelTimer);wheelTimer=0;}},onPan:(dx,dy)=>{state.dx=dx;state.dy=dy;queueCamera();},onZoom:next=>{state.zoom=next.zoom;zoomAnchor=next;queueCamera();},onEnd:queueCamera});
+  gestures=MapleGestures.create({element:$('#mc-map'),getCamera:()=>{if(animating){cancelAnimationFrame(cameraAnim);animating=false;camera(true);}if(cameraFrame){cancelAnimationFrame(cameraFrame);cameraFrame=0;camera(true);}return{ox,oy,scale,zoom:state.zoom,dx:state.dx,dy:state.dy};},onStart:()=>{if(wheelTimer){clearTimeout(wheelTimer);wheelTimer=0;}},onPan:(dx,dy)=>{state.dx=dx;state.dy=dy;queueCamera();},onZoom:next=>{state.zoom=next.zoom;zoomAnchor=next;queueCamera();},onEnd:queueCamera});
   $('#mc-map').addEventListener('wheel',e=>{if(e.target.closest('button'))return;e.preventDefault();state.zoom=Math.max(.5,Math.min(5,state.zoom*(e.deltaY<0?1.1:1/1.1)));clearTimeout(wheelTimer);wheelTimer=setTimeout(()=>{wheelTimer=0;queueCamera();},160);queueCamera();},{passive:false});
-  $('#mc-network').style.visibility='hidden';if(state.routeActive)plan();else{state.route=[];if(state.panel==='route')state.panel='place';const a=anchor(state.from);if(a){state.focus=a.id;state.zoom=mobile.matches?1:1.1;}else{state.fitAll=true;state.zoom=1.3;}if(!mobile.matches)state.selected=state.from;}render();new ResizeObserver(camera).observe($('#mc-map'));
-  if(document.fonts?.ready)document.fonts.ready.then(camera);
+  $('#mc-network').style.visibility='hidden';if(state.routeActive)plan();else{state.route=[];if(state.panel==='route')state.panel='place';const a=anchor(state.from);if(a){state.focus=a.id;state.zoom=mobile.matches?1:1.1;}else{state.fitAll=true;state.zoom=1.3;}if(!mobile.matches)state.selected=state.from;}render();new ResizeObserver(()=>camera(true)).observe($('#mc-map'));
+  if(document.fonts?.ready)document.fonts.ready.then(()=>camera(true));
   window.addEventListener('openai:set_globals',e=>{if(restore(e.detail?.globals?.widgetState)){syncFields();if(state.routeActive)plan();else state.route=[];render();}});
   if(globalThis.Tweak){const options={network:false};const tweak=new Tweak({container:root,onChange:()=>$('#mc-network').style.visibility=options.network?'visible':'hidden'});tweak.addToggle(options,'network',{label:'Show recorded connections'});}
 })();

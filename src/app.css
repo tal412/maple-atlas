@@ -244,3 +244,7 @@
 #maple-atlas-concept #mc-route-chip b {display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:16px;background:var(--mc-blue);color:var(--mc-paper);font-size:12px;font-weight:600;white-space:nowrap;}
 #maple-atlas-concept #mc-route-chip svg {display:none;}
 @media(max-width:700px){#maple-atlas-concept #mc-route-chip {top:calc(132px + env(safe-area-inset-top,0px));left:12px;right:auto;}}
+/* A new route's stops pop in along the line (see drawRoute in runtime.js). */
+@keyframes mc-stop-pop {0%{transform:translate(-50%,-50%) scale(0);opacity:0}70%{transform:translate(-50%,-50%) scale(1.25);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+#maple-atlas-concept .mc-place[data-pop] .mc-dot {animation:mc-stop-pop .42s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(250ms + var(--i,0) * 70ms);}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-place[data-pop] .mc-dot{animation:none;}}
