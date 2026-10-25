@@ -14,8 +14,12 @@ warn() { printf '\033[33mwarning:\033[0m %s\n' "$*" >&2; }
 step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 
 step "Building Swift app"
-(cd "$MACOS_DIR/App" && swift build -c release)
-BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release --show-bin-path)"
+# Universal (Apple silicon and Intel) unless ARCHS says otherwise.
+ARCHS="${ARCHS:-arm64 x86_64}"
+VERSION="${VERSION:-0.2.0}"
+SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
+(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
+BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
 
 step "Assembling $APP"
 rm -rf "$APP"
@@ -29,10 +33,28 @@ if [[ -n "${MAPLE_LINK_BIN:-}" ]]; then
   chmod +x "$CONTENTS/MacOS/maple-link"
 elif command -v go >/dev/null 2>&1 && [[ -f "$MACOS_DIR/link/go.mod" ]]; then
   step "Building maple-link helper"
-  (cd "$MACOS_DIR/link" && go build -trimpath -o "$CONTENTS/MacOS/maple-link" .)
+  LINK_PARTS=()
+  for a in $ARCHS; do
+    goarch="$a"; [[ "$a" == x86_64 ]] && goarch=amd64
+    (cd "$MACOS_DIR/link" && GOOS=darwin GOARCH="$goarch" CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o "$MACOS_DIR/build/maple-link-$a" .)
+    LINK_PARTS+=("$MACOS_DIR/build/maple-link-$a")
+  done
+  lipo -create "${LINK_PARTS[@]}" -output "$CONTENTS/MacOS/maple-link"
+  rm -f "${LINK_PARTS[@]}"
 else
   warn "maple-link not built (needs 'go' on PATH and macos/link/go.mod); the app can't pair with a phone without it."
 fi
+
+step "App icon"
+ICONSET="$MACOS_DIR/build/AppIcon.iconset"
+rm -rf "$ICONSET" && mkdir -p "$ICONSET"
+for size in 16 32 128 256 512; do
+  sips -z $size $size "$REPO/src/icons/icon-512.png" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+  double=$((size * 2)); [[ $double -le 512 ]] && sips -z $double $double "$REPO/src/icons/icon-512.png" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+done
+cp "$REPO/src/icons/icon-512.png" "$ICONSET/icon_512x512@2x.png"
+iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/AppIcon.icns"
+rm -rf "$ICONSET"
 
 step "Copying engine assets"
 copy() { # copy <source relative to repo> <destination relative to engine dir>
@@ -87,8 +109,9 @@ cat > "$CONTENTS/Info.plist" <<PLIST
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundleDisplayName</key><string>$APP_NAME</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$VERSION</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.games</string>
   <key>NSHighResolutionCapable</key><true/>

@@ -1,5 +1,7 @@
 # Maple Atlas Companion for Mac
 
+**Download:** [MapleAtlasCompanion-mac.dmg](https://github.com/tal412/maple-atlas/releases/latest/download/MapleAtlasCompanion-mac.dmg) (Apple silicon and Intel, macOS 14+). Open it and drag the app to Applications. Windows: [MapleAtlasCompanion-Setup.exe](https://github.com/tal412/maple-atlas/releases/latest/download/MapleAtlasCompanion-Setup.exe). To build the installers yourself: `macos/package.sh` and `windows/build.sh`.
+
 A native macOS app that replaces the browser on the computer side of the live companion. It captures the game window, recognizes the current map with the same matcher as the website, and sends the map ID to your phone. Pairing takes **one scan**: point the phone's camera at the QR in the app. No camera is needed on the Mac, and nothing is sent to the internet.
 
 ## Build and run

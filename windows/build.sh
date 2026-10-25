@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Builds windows/build/MapleAtlasCompanion-windows-x64.zip: one MapleAtlasCompanion.exe
-# (pairing helper + companion window + matcher, all embedded) and a short README.
-# Cross-compiles from macOS or Linux; needs Go 1.22+.
+# Builds windows/build/MapleAtlasCompanion-Setup.exe: a setup program that installs one
+# MapleAtlasCompanion.exe (pairing helper + companion window + matcher, all embedded)
+# with Start menu and desktop shortcuts. Cross-compiles from macOS or Linux; needs
+# Go 1.22+, makensis (brew install makensis) and go-winres (go install
+# github.com/tc-hib/go-winres@latest) for the app icon.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LINK="$REPO/macos/link"
 WEBUI="$LINK/webui"
 OUT="$REPO/windows/build"
+VERSION="${VERSION:-0.2.0}"
+WINRES="$(command -v go-winres || echo "$HOME/go/bin/go-winres")"
 
 echo "==> Collecting the window and engine files"
 rm -rf "$WEBUI" && mkdir -p "$WEBUI/vendor/vision" "$WEBUI/data" "$OUT"
@@ -27,30 +31,27 @@ marks = {str(m["id"]): [[float(p["x"]), float(p["y"])] for p in m.get("portals",
 json.dump({k: v for k, v in marks.items() if v}, open(sys.argv[2], "w"), separators=(",", ":"))
 PY
 
+echo "==> App icon and version"
+mkdir -p "$OUT/installer"
+python3 - "$REPO/src/icons/icon-512.png" "$OUT/installer" <<'PY'
+import sys
+from PIL import Image
+icon = Image.open(sys.argv[1]).convert("RGBA")
+icon.save(sys.argv[2] + "/icon.ico", sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])
+icon.resize((256, 256), Image.LANCZOS).save(sys.argv[2] + "/icon-256.png")
+PY
+(cd "$LINK" && "$WINRES" simply --arch amd64 --icon "$OUT/installer/icon-256.png" --manifest gui \
+  --product-name "Maple Atlas Companion" --file-description "Maple Atlas Companion" \
+  --product-version "$VERSION" --file-version "$VERSION" --original-filename MapleAtlasCompanion.exe \
+  --copyright "Maple Atlas contributors" --out rsrc)
+
 echo "==> Compiling MapleAtlasCompanion.exe (windows/amd64)"
 (cd "$LINK" && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags desktopui -trimpath \
   -ldflags "-s -w -H=windowsgui" -o "$OUT/MapleAtlasCompanion.exe" .)
 
-cat > "$OUT/README.txt" <<'TXT'
-Maple Atlas Companion for Windows
-=================================
+rm -f "$LINK"/rsrc_windows_*.syso
 
-Follow your MapleStory Classic World game on your phone. Everything stays on your
-Wi-Fi: no account, no server, nothing sent to the internet.
-
-1. Double-click MapleAtlasCompanion.exe. Windows may warn that the app is from an
-   unknown publisher (it is not code-signed yet): choose "More info" > "Run anyway".
-2. When Windows Defender Firewall asks, allow it on PRIVATE networks. Your phone
-   connects to this PC over your Wi-Fi.
-3. A Maple Atlas Companion window opens (in Microsoft Edge). Scan its QR code with
-   your phone's camera. After the first scan the phone stays paired.
-4. Click "Choose game window...", pick MapleStory, drag the box over the minimap if
-   needed, then "Start tracking".
-
-Close the companion window to quit. Settings and the pairing are kept in
-%APPDATA%\Maple Atlas Companion. Source: https://github.com/tal412/maple-atlas
-TXT
-
-rm -f "$OUT/MapleAtlasCompanion-windows-x64.zip"
-(cd "$OUT" && zip -q -9 MapleAtlasCompanion-windows-x64.zip MapleAtlasCompanion.exe README.txt)
+echo "==> Building the setup program"
+(cd "$REPO/windows" && LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 makensis -V2 -DVERSION="$VERSION" installer.nsi)
+rm -f "$OUT/MapleAtlasCompanion-windows-x64.zip" "$OUT/README.txt"
 ls -la "$OUT"

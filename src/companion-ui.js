@@ -149,7 +149,7 @@
     }
     if(role==='pc'){
       // A computer runs the companion app; the dialog only points to it.
-      $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;
+      $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;if(/Mac/i.test(navigator.platform||navigator.userAgent)){$('#mc-get-mac').classList.add('mc-primary');$('#mc-get-windows').classList.remove('mc-primary');root.querySelector('.mc-get-app-links').prepend($('#mc-get-mac'));}
       $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
       $('#mc-companion-desktop').onclick=open;
       return {open,enterFullscreen};

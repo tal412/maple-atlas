@@ -18,3 +18,4 @@ macos/link/webui/
 windows/build/
 macos/link/maple-link
 macos/link/*.exe
+macos/link/*.syso
