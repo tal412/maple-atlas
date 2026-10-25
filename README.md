@@ -124,7 +124,7 @@ The validator checks all 457 included directed portal pairs against the pinned s
 
 ## Visual location companion
 
-Open Live companion from **Connect phone** on a computer or **Your character → Live companion** on a phone.
+Open Live companion from **Connect phone** on a computer, or the phone button next to your profile in the top bar on a phone (its dot shows the connection: green connected, amber connecting, grey Mac away).
 
 **On a Mac, use Maple Atlas Companion** (`macos/`, see [macos/README.md](macos/README.md)). It captures the game window natively and pairs with **one scan**: point the phone's camera at the app's QR and the phone connects. No camera is needed on the Mac. The browser flow below remains for other computers. It also finds your dot on the minimap, so the phone shows where you are on the local game map and which way to walk to the next route portal (adapted from [Maple Route](https://github.com/maplerouteadmin-dev/maple-route), MIT).
 
