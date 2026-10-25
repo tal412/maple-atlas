@@ -65,3 +65,13 @@
 @media (min-width:701px) and (max-width:1000px) {
   #maple-atlas-concept .mc-header small,#maple-atlas-concept .mc-header .mc-channel {display:none;}
 }
+
+/* Computer browser: point to the companion app first. */
+#maple-atlas-concept #mc-get-app {display:grid;gap:12px;padding:20px;border-radius:22px;background:var(--mc-soft);}
+#maple-atlas-concept #mc-get-app h3 {margin:0;font-size:18px;font-weight:500;}
+#maple-atlas-concept #mc-get-app p {margin:0;line-height:1.55;color:var(--mc-muted);}
+#maple-atlas-concept .mc-get-app-links {display:flex;flex-wrap:wrap;gap:10px;}
+#maple-atlas-concept .mc-get-app-links a {display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:22px;border:1px solid var(--mc-edge);background:var(--mc-paper);color:var(--mc-blue);font-weight:500;text-decoration:none;}
+#maple-atlas-concept .mc-get-app-links a.mc-primary {background:var(--mc-blue);border-color:var(--mc-blue);color:var(--mc-paper);}
+#maple-atlas-concept .mc-get-app-links svg {width:18px;height:18px;}
+#maple-atlas-concept .mc-get-app-links small {font-size:11px;opacity:.8;}

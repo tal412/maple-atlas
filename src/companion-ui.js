@@ -33,7 +33,8 @@
       $('#mc-companion-state-icon').textContent=linked?'✓':['failed','expired'].includes(phase)?'!':pending?'…':'○';
       $('#mc-companion-state-title').textContent=titles[phase]||'Not connected';$('#mc-companion-message').textContent=value.message;
       const saved=role==='phone'&&remembered();
-      $('#mc-pair-roles').hidden=phase!=='idle';$('#mc-pair-retry').hidden=!['failed','expired','disconnected'].includes(phase);
+      $('#mc-pair-roles').hidden=phase!=='idle'||(role==='pc'&&!browserPairing&&phase==='idle');
+      if(role==='pc'&&!browserPairing&&phase==='idle')$('#mc-companion-status').hidden=true;else $('#mc-companion-status').hidden=false;$('#mc-pair-retry').hidden=!['failed','expired','disconnected'].includes(phase);
       $('#mc-pair-reconnect').hidden=!(saved&&terminal);$('#mc-pair-forget').hidden=!(saved&&terminal);
       $('#mc-pair-active').hidden=terminal;$('#mc-pair-steps').hidden=terminal;
       const step=linked?4:['connecting','verifying','reconnecting'].includes(phase)?3:phase==='waiting-computer'?2:1;
@@ -148,6 +149,11 @@
     $('#mc-pair-start').textContent=role==='pc'?'Create computer code':'Connect to computer';
     $('#mc-companion-intro').textContent=role==='pc'?'This is your computer. Connect a phone on the same local network to follow your game. Pairing needs two scans.':'This is your phone or tablet. Connect to the computer running your game. Both devices must use the same local network.';
     $('#mc-pair-start').disabled=role==='pc'&&!device.canShareScreen;
+    // On a computer, the companion app is the way to pair (one scan, stays paired).
+    // The older browser-to-browser pairing stays available behind a link.
+    let browserPairing=false;
+    if(role==='pc'){$('#mc-get-app').hidden=false;$('#mc-companion-intro').hidden=true;
+      $('#mc-use-browser').onclick=()=>{browserPairing=true;$('#mc-get-app').hidden=true;$('#mc-companion-intro').hidden=false;paint(currentState);};}
     paint({phase:'idle',message:role==='pc'?device.canShareScreen?'Create a code, scan it on your phone, then scan the phone’s response here.':'This computer’s browser cannot share its screen. Use a desktop browser that supports game-window sharing.':'Open Maple Atlas Companion on your Mac and scan its code with your phone’s camera. Or create a code in Maple Atlas on a computer browser, then connect here.'});
     $('#mc-pair-start').onclick=e=>run(e.currentTarget,begin);$('#mc-pair-retry').onclick=e=>run(e.currentTarget,begin);
     $('#mc-pair-check').onclick=()=>{clearError();link.waitForConnection();dialog.scrollTo({top:0});};

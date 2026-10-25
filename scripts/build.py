@@ -80,8 +80,11 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     template = template[:template.rindex('</div>')] + intro + template[template.rindex('</div>'):]
     app = template.replace("<!-- MAPLE_WORLD -->", art)
     app = app.replace('id="maple-atlas-concept"', f'id="maple-atlas-concept" data-channel="{channel}"', 1)
-    channel_link = '<a class="mc-channel" href="../">Dev preview · Open main ↗</a>' if channel == 'dev' else '<a class="mc-channel" href="./dev/">Dev preview ↗</a>'
+    # Main is the only public channel: it no longer advertises the dev preview.
+    channel_link = '<a class="mc-channel" href="../">Dev preview · Open main ↗</a>' if channel == 'dev' else ''
     app = app.replace('<small>Classic World</small>', '<small>Classic World</small>' + channel_link, 1)
+    if channel != 'dev':
+        app = re.sub(r'<a id="mc-mobile-channel"[^>]*>[^<]*</a>', '', app, count=1)
     if channel == 'dev':
         app = app.replace('href="./dev/">Open dev preview', 'href="../">Dev preview · Open main')
     encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
