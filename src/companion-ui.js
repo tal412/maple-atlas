@@ -46,6 +46,8 @@
       // App-bar button: green dot when connected, pulsing amber while connecting, grey when a paired Mac is away.
       const appBar=$('#mc-mobile-companion'),barState=linked?'connected':pending?'pending':saved?'away':'off';
       appBar.dataset.state=barState;appBar.setAttribute('aria-label','Live companion · '+{connected:'Connected',pending:'Connecting',away:'Mac not connected',off:'Not connected'}[barState]);
+      // Tablets (iPad) use the wide layout: its header button shows the same state.
+      if(role==='phone'){const wide=$('#mc-companion-desktop');wide.dataset.state=barState;wide.setAttribute('aria-label',appBar.getAttribute('aria-label'));}
       if(phase!=='idle'){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent=linked?(role==='phone'?'Computer connected':'Phone connected'):titles[phase]||'Not connected';}
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
@@ -226,10 +228,12 @@
       const page=document.documentElement;
       if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
       page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
-    }$('#mc-mobile-companion').onclick=()=>{
+    }$('#mc-mobile-companion').onclick=$('#mc-companion-desktop').onclick=()=>{
       // One tap: open the companion and, when a paired Mac isn't connected, reconnect.
       open();if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase))void resume({manual:true});
-    };$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
+    };if(role!=='phone')$('#mc-companion-desktop').onclick=open;
+    // On a tablet the wide layout's button is for following a computer, not pairing a phone.
+    if(role==='phone'){const wide=$('#mc-companion-desktop');wide.querySelector('span').textContent='Live companion';wide.insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');}$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
     // The Mac app's QR opens this page with the pairing code in the fragment. Remove
     // it from the address bar and history, then connect without a second scan.
     const linked=/^#link=(MA2[A-Z2-7]+)$/i.exec(location.hash);

@@ -1,4 +1,9 @@
-#maple-atlas-concept #mc-companion-desktop{display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
+#maple-atlas-concept #mc-companion-desktop{position:relative;display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
+#maple-atlas-concept #mc-companion-desktop .mc-companion-dot{width:9px;height:9px;border-radius:50%;background:var(--mc-muted);display:none}
+#maple-atlas-concept #mc-companion-desktop[data-state=connected]{background:light-dark(#d3e3fd,#0842a0)}
+#maple-atlas-concept #mc-companion-desktop[data-state=connected] .mc-companion-dot{display:block;background:#1e8e3e}
+#maple-atlas-concept #mc-companion-desktop[data-state=pending] .mc-companion-dot{display:block;background:#f9ab00}
+#maple-atlas-concept #mc-companion-desktop[data-state=away] .mc-companion-dot{display:block}
 #maple-atlas-concept #mc-companion-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--mc-edge);border-radius:28px;background:var(--mc-paper);color:var(--mc-ink)}
 #maple-atlas-concept #mc-companion-dialog header{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-24px;background:var(--mc-paper);z-index:3;padding:12px 0;gap:16px;margin:0 0 20px}
 #maple-atlas-concept #mc-companion-dialog header button{flex:0 0 48px;width:48px;height:48px;padding:12px}
@@ -56,3 +61,7 @@
  #maple-atlas-concept #mc-companion-badge{bottom:calc(var(--mc-nav-height,80px) + 88px + env(safe-area-inset-bottom));left:16px;transform:none;max-width:calc(100vw - 88px)}
 }
 #maple-atlas-concept .mc-companion-file input::file-selector-button{min-height:44px;margin-right:12px;padding:10px 18px;border:1px solid var(--mc-edge);border-radius:24px;background:var(--mc-soft);color:var(--mc-ink);cursor:pointer}
+/* Tablets in portrait (iPad): keep the header on one row so Level stays visible. */
+@media (min-width:701px) and (max-width:1000px) {
+  #maple-atlas-concept .mc-header small,#maple-atlas-concept .mc-header .mc-channel {display:none;}
+}

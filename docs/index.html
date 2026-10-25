@@ -446,7 +446,12 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-market-date,#maple-atlas-concept #mc-market-status{color:var(--mc-muted);font-size:11px!important}
 #maple-atlas-concept #mc-market-status{min-height:32px}
 
-#maple-atlas-concept #mc-companion-desktop{display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
+#maple-atlas-concept #mc-companion-desktop{position:relative;display:flex;align-items:center;gap:8px;border:0;background:var(--mc-soft);white-space:nowrap}
+#maple-atlas-concept #mc-companion-desktop .mc-companion-dot{width:9px;height:9px;border-radius:50%;background:var(--mc-muted);display:none}
+#maple-atlas-concept #mc-companion-desktop[data-state=connected]{background:light-dark(#d3e3fd,#0842a0)}
+#maple-atlas-concept #mc-companion-desktop[data-state=connected] .mc-companion-dot{display:block;background:#1e8e3e}
+#maple-atlas-concept #mc-companion-desktop[data-state=pending] .mc-companion-dot{display:block;background:#f9ab00}
+#maple-atlas-concept #mc-companion-desktop[data-state=away] .mc-companion-dot{display:block}
 #maple-atlas-concept #mc-companion-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid var(--mc-edge);border-radius:28px;background:var(--mc-paper);color:var(--mc-ink)}
 #maple-atlas-concept #mc-companion-dialog header{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-24px;background:var(--mc-paper);z-index:3;padding:12px 0;gap:16px;margin:0 0 20px}
 #maple-atlas-concept #mc-companion-dialog header button{flex:0 0 48px;width:48px;height:48px;padding:12px}
@@ -504,6 +509,10 @@ body {background:light-dark(#d7e9e9,#142937);}
  #maple-atlas-concept #mc-companion-badge{bottom:calc(var(--mc-nav-height,80px) + 88px + env(safe-area-inset-bottom));left:16px;transform:none;max-width:calc(100vw - 88px)}
 }
 #maple-atlas-concept .mc-companion-file input::file-selector-button{min-height:44px;margin-right:12px;padding:10px 18px;border:1px solid var(--mc-edge);border-radius:24px;background:var(--mc-soft);color:var(--mc-ink);cursor:pointer}
+/* Tablets in portrait (iPad): keep the header on one row so Level stays visible. */
+@media (min-width:701px) and (max-width:1000px) {
+  #maple-atlas-concept .mc-header small,#maple-atlas-concept .mc-header .mc-channel {display:none;}
+}
 
 /* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
 #maple-atlas-concept #mc-intro {
@@ -867,10 +876,11 @@ body {background:light-dark(#d7e9e9,#142937);}
               <li><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-logo" d="M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7L3 18.5zM11.5 12.5H21V21l-9.5-1.4z"/></svg>Windows <em>preview</em></li>
               <li><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-logo" d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.9-.9-3.1-.8c-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3.1.7 2-1.1 2.8-2.3c.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.7zM14.2 5.5c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/></svg>macOS</li>
             </ul></div>
-          <div><small>Map · on your phone, in the browser</small>
+          <div><small>Map · on your phone or tablet, in the browser</small>
             <ul>
               <li><svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-logo" d="M6 9.5h12V17a1.5 1.5 0 0 1-1.5 1.5H16V21a1 1 0 0 1-2 0v-2.5h-4V21a1 1 0 0 1-2 0v-2.5h-.5A1.5 1.5 0 0 1 6 17zM4 9.5a1 1 0 0 1 2 0v5a1 1 0 0 1-2 0zM18 9.5a1 1 0 0 1 2 0v5a1 1 0 0 1-2 0zM6 8.5a6 6 0 0 1 3-4.8l-.9-1.5a.4.4 0 1 1 .7-.4l.9 1.5a6.4 6.4 0 0 1 4.6 0l.9-1.5a.4.4 0 1 1 .7.4l-.9 1.5a6 6 0 0 1 3 4.8zM9.5 6.5a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4zM14.5 6.5a.7.7 0 1 0 0 1.4.7.7 0 0 0 0-1.4z"/></svg>Android</li>
               <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="i-logo-line" x="6.5" y="2" width="11" height="20" rx="2.6"/><path class="i-logo" d="M10.5 3.6h3a.6.6 0 0 1 0 1.2h-3a.6.6 0 0 1 0-1.2z"/></svg>iPhone</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="i-logo-line" x="3.5" y="2.5" width="17" height="19" rx="2.4"/><circle class="i-logo" cx="12" cy="19.2" r=".9"/></svg>iPad</li>
             </ul></div>
         </div>
         <p class="mc-intro-note">Add Maple Atlas to your Home screen to open it full screen, like an app.</p>
@@ -2297,6 +2307,8 @@ window.mapleStorageReady.then(() => {
       // App-bar button: green dot when connected, pulsing amber while connecting, grey when a paired Mac is away.
       const appBar=$('#mc-mobile-companion'),barState=linked?'connected':pending?'pending':saved?'away':'off';
       appBar.dataset.state=barState;appBar.setAttribute('aria-label','Live companion · '+{connected:'Connected',pending:'Connecting',away:'Mac not connected',off:'Not connected'}[barState]);
+      // Tablets (iPad) use the wide layout: its header button shows the same state.
+      if(role==='phone'){const wide=$('#mc-companion-desktop');wide.dataset.state=barState;wide.setAttribute('aria-label',appBar.getAttribute('aria-label'));}
       if(phase!=='idle'){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent=linked?(role==='phone'?'Computer connected':'Phone connected'):titles[phase]||'Not connected';}
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
@@ -2477,10 +2489,12 @@ window.mapleStorageReady.then(() => {
       const page=document.documentElement;
       if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
       page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
-    }$('#mc-mobile-companion').onclick=()=>{
+    }$('#mc-mobile-companion').onclick=$('#mc-companion-desktop').onclick=()=>{
       // One tap: open the companion and, when a paired Mac isn't connected, reconnect.
       open();if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase))void resume({manual:true});
-    };$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
+    };if(role!=='phone')$('#mc-companion-desktop').onclick=open;
+    // On a tablet the wide layout's button is for following a computer, not pairing a phone.
+    if(role==='phone'){const wide=$('#mc-companion-desktop');wide.querySelector('span').textContent='Live companion';wide.insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');}$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
     // The Mac app's QR opens this page with the pairing code in the fragment. Remove
     // it from the address bar and history, then connect without a second scan.
     const linked=/^#link=(MA2[A-Z2-7]+)$/i.exec(location.hash);
