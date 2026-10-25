@@ -14,7 +14,8 @@
     }
     const itemIds=new Map();
     for(const q of quests)for(const o of [...q.objectives,...(q.items||[])])if(o.id&&(o.type==='item'||!o.type))itemIds.set(MapleQuestHelper.normalize(o.name),o.id);
-    let reading=null,lastSeen=null,connection='disconnected',readyMisses={},onChange=()=>{};
+    let reading=null,lastSeen=null,connection='disconnected',readyMisses={},onChange=()=>{},selected=null;
+    const keyOf=q=>q.quest?.id||MapleQuestHelper.normalize(q.title);
 
     // The closest of these maps by recorded portals (null when none is reachable).
     function nearest(list){
@@ -108,7 +109,15 @@
     function html(){
       const line=statusLine(),list=tracked();
       const head='<div class="mc-eyebrow">Your quests</div><h3>Quest helper</h3>'+(line?'<p class="mc-qh-status" data-tone="'+line.tone+'"><span aria-hidden="true"></span>'+esc(line.text)+'</p>':'');
-      if(list.length)return head+'<div class="mc-qh-list">'+list.map(card).join('')+'</div>';
+      if(list.length){
+        // One quest at a time; the chips above switch between the tracked quests.
+        const index=Math.max(0,list.findIndex(q=>keyOf(q)===selected)),current=list[index];
+        const tabs=list.length>1?'<div class="mc-qh-tabs" role="tablist" aria-label="Tracked quests">'+list.map((q,i)=>{
+          const done=q.progress.filter(p=>p.done).length,total=q.progress.length;
+          return '<button type="button" role="tab" class="mc-qh-tab" data-qh-pick="'+esc(keyOf(q))+'" aria-selected="'+(i===index)+'" data-ready="'+q.complete+'"><span class="mc-qh-tab-name">'+esc(q.quest?.name||q.title)+'</span><small>'+(q.complete?icon('circle-check')+'Ready':total?done+'/'+total:'Talk')+'</small></button>';
+        }).join('')+'</div><p class="mc-qh-count-line">Quest '+(index+1)+' of '+list.length+' · Tap a quest to switch</p>':'';
+        return head+tabs+'<div class="mc-qh-list" role="tabpanel">'+card(current,index)+'</div>';
+      }
       const live=['connected','stale','searching'].includes(connection);
       if(!live)return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>See your quests live</strong><p>Maple Atlas Companion reads the Quest Helper at the top right of your game. Each quest shows up here with what’s left, where to hunt, how to get every item and who to return to.</p><button type="button" class="mc-primary" data-qh-connect>'+icon('smartphone')+'Connect the companion</button></section>';
       return head+'<section class="mc-qh-empty"><span class="mc-qh-empty-art" aria-hidden="true">'+icon('scroll-text')+'</span><strong>'+(reading&&!reading.visible?'Open the Quest Helper in the game':'No tracked quests yet')+'</strong><p>'+(reading&&!reading.visible?'Keep the Quest Helper panel visible at the top right of the game window. Your tracked quests appear here.':'Track a quest in the game so it shows in the Quest Helper at the top right. It appears here within a few seconds.')+'</p></section>';
@@ -118,6 +127,7 @@
       box.querySelectorAll('[data-qh-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.qhEntity,b.dataset.qhName));
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
       box.querySelectorAll('[data-qh-connect]').forEach(b=>b.onclick=openCompanion);
+      box.querySelectorAll('[data-qh-pick]').forEach(b=>b.onclick=()=>{selected=b.dataset.qhPick;onChange();});
     }
     // Map ids that matter to the tracked quests (quest NPCs and monsters still to hunt).
     function relevantMaps(){
