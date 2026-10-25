@@ -2902,7 +2902,9 @@ window.mapleStorageReady.then(() => {
     function releaseWake(){wakeLock?.release().catch(()=>{});wakeLock=null;}
     async function accept(code,{resume=false}={}){
       if(accepting)return;accepting=true;clearError();pairingCode=String(code).trim();
-      try{await link.join(pairingCode,{resume});}
+      // A scanned code is kept as soon as it is accepted, so a reload while connecting
+      // reconnects by itself instead of asking for another scan.
+      try{await link.join(pairingCode,{resume});if(!resume)remember(pairingCode);}
       finally{accepting=false;stopScan();}
     }
     function stopScan(){scanEpoch++;scanning=false;clearTimeout(scanTimer);scanner?.getTracks().forEach(t=>t.stop());scanner=null;scanVideo.srcObject=null;$('#mc-camera-box').hidden=true;paint(currentState);}
