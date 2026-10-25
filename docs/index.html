@@ -595,6 +595,11 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-get-app-links svg {width:18px;height:18px;}
 #maple-atlas-concept .mc-get-app-links small {font-size:11px;opacity:.8;}
 
+#maple-atlas-concept #mc-phone-flow {display:grid;gap:16px;min-width:0;}
+#maple-atlas-concept #mc-phone-flow[hidden] {display:none;}
+#maple-atlas-concept #mc-pair-scan {display:grid;gap:12px;}
+#maple-atlas-concept #mc-pair-scan[hidden] {display:none;}
+
 /* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
 #maple-atlas-concept #mc-intro {
   --i-water:light-dark(#d7e9e9,#213e43); --i-water-2:light-dark(#c4e0e2,#1a3439); --i-land:light-dark(#e2e7c5,#4b6047); --i-forest:light-dark(#bad2a8,#375444);
@@ -817,9 +822,8 @@ body {background:light-dark(#d7e9e9,#142937);}
   </div>
 
   <dialog id="mc-companion-dialog" class="mc-mobile-dialog" aria-labelledby="mc-companion-title">
-    <header><h2 id="mc-companion-title">Live companion</h2><button type="button" data-close-dialog="mc-companion-dialog" aria-label="Close companion settings"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <header><h2 id="mc-companion-title">Live companion</h2><button type="button" data-close-dialog="mc-companion-dialog" aria-label="Close companion"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <div class="mc-companion-flow">
-    <p id="mc-companion-intro">Connect your computer and phone on the same local network. Pairing needs two scans.</p>
     <section id="mc-get-app" hidden>
       <h3>Get Maple Atlas Companion</h3>
       <p>Run the free companion app on the computer with the game. Scan its QR once with your phone and it stays paired: your dot follows you live, with directions.</p>
@@ -827,38 +831,31 @@ body {background:light-dark(#d7e9e9,#142937);}
         <a class="mc-primary" id="mc-get-windows" href="https://github.com/tal412/maple-atlas/releases" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5l7.5-1v7H3zM11.5 4.4L21 3v8.5h-9.5zM3 12.5h7.5v7L3 18.5zM11.5 12.5H21V21l-9.5-1.4z"/></svg>Windows <small>preview</small></a>
         <a id="mc-get-mac" href="https://github.com/tal412/maple-atlas/tree/main/macos#readme" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.9-.9-3.1-.8c-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3.1.7 2-1.1 2.8-2.3c.9-1.3 1.2-2.5 1.2-2.6 0 0-2.4-.9-2.4-3.7zM14.2 5.5c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/></svg>macOS</a>
       </div>
-      <button type="button" id="mc-use-browser" class="mc-text-action">Pair from this browser instead (two scans)</button>
+      <p class="mc-companion-note">Then open Maple Atlas on your phone and scan the QR the app shows.</p>
     </section>
-    <section id="mc-companion-status" data-tone="neutral" role="status" aria-live="polite" aria-atomic="true">
-      <span id="mc-companion-state-icon" aria-hidden="true">○</span><div><strong id="mc-companion-state-title">Not connected</strong><p id="mc-companion-message">Checking this device…</p></div>
-    </section>
-    <ol id="mc-pair-steps" aria-label="Pairing progress" hidden><li data-step="1"><span>1</span>Scan computer</li><li data-step="2"><span>2</span>Scan phone</li><li data-step="3"><span>3</span>Connected</li></ol>
-    <p id="mc-pair-timer" class="mc-companion-note" hidden></p>
-    <div id="mc-pair-error" role="alert" hidden><strong>Could not complete this step</strong><p id="mc-pair-error-message"></p></div>
-    <div id="mc-pair-roles" class="mc-companion-actions"><button type="button" id="mc-pair-start" class="mc-primary">Start pairing</button></div>
-    <button type="button" id="mc-pair-reconnect" class="mc-primary" hidden>Reconnect to Mac</button>
-    <button type="button" id="mc-pair-forget" class="mc-text-action" hidden>Forget this Mac</button>
-    <button type="button" id="mc-pair-retry" class="mc-primary" hidden>Start new pairing</button>
-    <div id="mc-pair-active" hidden>
-      <section id="mc-pair-exchange" hidden>
-        <h3 id="mc-pair-code-title">Computer pairing code</h3><p id="mc-pair-next"></p>
-        <canvas id="mc-pair-qr" aria-label="Private pairing QR code"></canvas>
-        <details><summary>Copy pairing code instead</summary><textarea id="mc-pair-output" aria-label="Your pairing code" readonly spellcheck="false"></textarea><button type="button" id="mc-pair-copy">Copy code</button></details>
-        <p id="mc-pair-copy-status" class="mc-companion-note" role="status"></p>
-        <button type="button" id="mc-pair-check" hidden>The computer scanned this response</button>
-        <p class="mc-companion-note">Keep both pages open. Refreshing either page ends this pairing.</p>
+    <div id="mc-phone-flow">
+      <p id="mc-companion-intro">Run Maple Atlas Companion on the computer with the game, then scan its QR with this phone. Both devices must use the same Wi-Fi.</p>
+      <section id="mc-companion-status" data-tone="neutral" role="status" aria-live="polite" aria-atomic="true">
+        <span id="mc-companion-state-icon" aria-hidden="true">○</span><div><strong id="mc-companion-state-title">Not connected</strong><p id="mc-companion-message"></p></div>
       </section>
+      <p id="mc-pair-timer" class="mc-companion-note" hidden></p>
+      <div id="mc-pair-error" role="alert" hidden><strong>Could not connect</strong><p id="mc-pair-error-message"></p></div>
+      <div class="mc-companion-actions">
+        <button type="button" id="mc-pair-reconnect" class="mc-primary" hidden>Reconnect</button>
+        <button type="button" id="mc-pair-start" class="mc-primary">Scan the companion's code</button>
+      </div>
+      <button type="button" id="mc-pair-retry" hidden>Scan a new code</button>
+      <button type="button" id="mc-pair-forget" class="mc-text-action" hidden>Forget this computer</button>
       <section id="mc-pair-scan" hidden>
-        <h3 id="mc-pair-scan-title">Scan the other device</h3><p id="mc-pair-scan-help"></p>
-        <button type="button" id="mc-pair-scan-button" class="mc-primary">Scan code</button>
-        <div id="mc-camera-box" hidden><video id="mc-scan-video" muted autoplay playsinline></video><p id="mc-camera-hint" role="status">Point the camera at the entire QR code.</p><button type="button" id="mc-camera-stop">Stop camera</button></div>
-        <details><summary>No camera? Use an image or paste a code</summary><label class="mc-companion-file">Choose a QR image<input id="mc-pair-file" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Code from the other device<textarea id="mc-pair-input" aria-label="Code from the other device" spellcheck="false" autocomplete="off"></textarea></label><button type="button" id="mc-pair-apply">Use code</button></details>
+        <div id="mc-camera-box" hidden><video id="mc-scan-video" muted autoplay playsinline></video><p id="mc-camera-hint" role="status">Point the camera at the QR in Maple Atlas Companion.</p><button type="button" id="mc-camera-stop">Stop camera</button></div>
+        <details><summary>No camera? Use an image or paste the link</summary><label class="mc-companion-file">Choose a QR image<input id="mc-pair-file" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Link from the companion app<textarea id="mc-pair-input" aria-label="Link from the companion app" spellcheck="false" autocomplete="off"></textarea></label><button type="button" id="mc-pair-apply">Connect</button></details>
       </section>
-      <section id="mc-tracking-status" hidden><h3 id="mc-tracking-title">Waiting for screen sharing</h3><p id="mc-tracking-message">The connection is ready. Start sharing the game window on your computer.</p><button type="button" id="mc-pair-view-map" class="mc-primary" hidden>View map</button></section>
-      <section id="mc-reader" hidden><h3>Share your game window</h3><p>Match visible minimap or scenery landmarks, including partial views. Images stay on this computer; only a recognized map ID is sent.</p><div class="mc-companion-actions"><button type="button" id="mc-reader-share" class="mc-primary">Share game window</button><button type="button" id="mc-reader-stop" hidden>Stop sharing</button></div><div id="mc-reader-preview" hidden><video id="mc-reader-video" muted autoplay playsinline></video><span id="mc-reader-selection" hidden></span></div><div class="mc-companion-actions"><button type="button" id="mc-reader-run" class="mc-primary" hidden>Start visual tracking</button><button type="button" id="mc-reader-whole" hidden>Use whole window</button></div><p id="mc-reader-state" role="status"></p><p id="mc-reader-text" class="mc-companion-note"></p><p class="mc-companion-note">Keep this page open while playing. Recognition identifies the map; the exact player position is not tracked yet. This fan tool is not approved by Nexon; ban-free use cannot be guaranteed.</p></section>
-      <button type="button" id="mc-pair-stop">Disconnect</button>
+      <div id="mc-pair-active" hidden>
+        <section id="mc-tracking-status" hidden><h3 id="mc-tracking-title">Waiting for the game</h3><p id="mc-tracking-message">The connection is working. In the companion app, choose the game window and start tracking.</p><button type="button" id="mc-pair-view-map" class="mc-primary" hidden>View map</button></section>
+        <button type="button" id="mc-pair-stop">Disconnect</button>
+      </div>
     </div>
-    <details class="mc-companion-help"><summary>Connection help &amp; offline use</summary><p>On a Mac, Maple Atlas Companion pairs with one scan: point your phone’s camera at the QR in the app.</p><p>First, the phone scans the computer’s QR. Then the computer scans the new response shown on the phone. Both screens must say Connected before tracking starts.</p><p>If the computer has no camera, use a QR image or copy the phone response using a transfer method you already trust.</p><p>Both devices must be on the same reachable local network. A phone on cellular data or a computer on a different network cannot connect through this server-free mode. Guest Wi-Fi, VPNs and firewalls can also block it. Keep both pages open.</p><p>Allow camera access on both devices. Browsers keep a device’s local network address private until the page has camera access; without it, the devices exchange private names that many phones and routers cannot resolve. The camera only reads pairing codes. On a Mac, also check System Settings → Privacy &amp; Security → Local Network and make sure your browser is allowed.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data and visual matching can then run locally. Market updates still need internet.</p></details>
+    <details class="mc-companion-help"><summary>Connection help &amp; offline use</summary><p>Maple Atlas Companion runs on Windows and macOS. Scan its QR once: the phone remembers the computer and reconnects by itself, or with one tap on Reconnect.</p><p>Both devices must be on the same Wi-Fi network. A phone on cellular data cannot connect. Guest Wi-Fi, VPNs and firewalls can also block it; on Windows, allow the app on private networks when the firewall asks.</p><p>Nothing is sent to the internet: the phone and computer talk directly, and only the map you're on and your position travel between them.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data can then run locally. Market updates still need internet.</p></details>
     </div>
   </dialog>
   <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title">
@@ -2063,8 +2060,8 @@ window.mapleStorageReady.then(() => {
     text=String(text).trim().toUpperCase();
     // The Mac app's QR is a link to this site with the code in the fragment.
     const linked=/^HTTPS?:\/\/[^#\s]+#LINK=(MA2[A-Z2-7]+)$/.exec(text);if(linked)text=linked[1];
-    else if(/^HTTPS?:\/\//.test(text))throw Error('This QR is a website link, not a pairing code. On your computer, open Maple Atlas → Connect phone → Create computer code, then scan the QR it shows.');
-    if(text.startsWith('MAPLE1:'))throw Error('This code is from an older Maple Atlas version. Refresh Maple Atlas on both devices, then pair again.');
+    else if(/^HTTPS?:\/\//.test(text))throw Error('This QR is a website link, not a pairing code. Scan the QR shown in Maple Atlas Companion on your computer.');
+    if(text.startsWith('MAPLE1:'))throw Error('This code is from an old Maple Atlas version. Scan the code in Maple Atlas Companion instead.');
     if(!text.startsWith(prefix)||text.length>prefix.length+Math.ceil(maxBytes*8/5))throw Error('This is not a Maple Atlas pairing code.');
     const bytes=unbase32(text.slice(prefix.length));let at=0;
     const take=n=>{if(at+n>bytes.length)throw invalid();const out=bytes.subarray(at,at+n);at+=n;return out;};
@@ -2073,6 +2070,8 @@ window.mapleStorageReady.then(() => {
     // Bit 3 marks a native host (Maple Atlas Companion for Mac): ICE-lite, single scan.
     const native=!!(head&8);
     if(head>>4!==2||!setup||(type==='offer')!==(setup==='actpass')||native&&type!=='offer')throw invalid();
+    // Codes from the removed browser-to-browser pairing carry no app secret.
+    if(!native)throw Error('This code is from an old Maple Atlas version. Scan the code in Maple Atlas Companion instead.');
     const session=Array.from(take(8),b=>b.toString(16).padStart(2,'0')).join(''),time=take(4),expires=((time[0]<<24>>>0)+(time[1]<<16)+(time[2]<<8)+time[3])*1000;
     if(!ignoreExpiry&&(expires<now||expires>now+ttl+30000))throw invalid();
     const mid=string(1,16,/^[A-Za-z0-9_-]+$/),ufrag=string(4,32,ICE_CHARS),pwd=string(22,64,ICE_CHARS);
@@ -2102,165 +2101,100 @@ window.mapleStorageReady.then(() => {
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
+  // The phone side of the link to Maple Atlas Companion (Mac or Windows app). The app
+  // is an ICE-lite peer that learns this phone's ICE username from its connectivity
+  // checks, so one scan is enough; the phone then proves the QR secret over the
+  // encrypted channel before the usual hello, heartbeat and location messages.
   function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
-    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,phase='idle';
+    let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
-    let savedOffer=null,savedAnswer=null,finishing=false,cancelGather=null,local=null,native=null;
-    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,role,expires,...extra});};
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
     const random=(n=16)=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>b.toString(16).padStart(2,'0')).join('');
     function clear(){
-      epoch++;cancelGather?.();cancelGather=null;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
+      epoch++;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
       expiryTimer=connectTimer=verifyTimer=heartbeat=null;
       if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
       if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
-      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;seq=0;pingSeq=0;pongSeq=-1;savedOffer=savedAnswer=null;finishing=false;local=null;native=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;pingSeq=0;pongSeq=-1;secret=null;joined=null;
     }
-    // A goodbye lets the other device show Disconnected instead of a channel error.
-    // quiet: leave without a goodbye (the page is only going away), so the Mac app
-    // keeps the pairing and the phone can resume it.
-    function stop(message='Disconnected. Start a new pairing to reconnect.',{quiet=false,reason='user'}={}){if(verified&&!quiet)control({kind:'bye',v:2,session});clear();state('disconnected',message,{reason});}
+    // quiet: leave without a goodbye (the page is only going away), so the app keeps
+    // the pairing and the phone can resume it. A goodbye ends it on the computer too.
+    function stop(message='Disconnected.',{quiet=false,reason='user'}={}){if(verified&&!quiet)control({kind:'bye',v:2,session});clear();state('disconnected',message,{reason});}
     function fail(message,reason='network'){clear();state('failed',message,{reason});}
     function control(value){if(channel?.readyState==='open'&&channel.bufferedAmount<4096)channel.send(JSON.stringify(value));}
     function ping(){
       if(!verified)return;
       const age=now()-lastPong;
-      if(age>=20000){fail('The other device stopped responding. Keep both pages open and pair again.','heartbeat');return;}
-      if(age>=9000&&phase==='connected')state('reconnecting','No response from the other device. Checking the connection…');
+      if(age>=20000){fail('Your computer stopped responding.','heartbeat');return;}
+      if(age>=9000&&phase==='connected')state('reconnecting','No response from your computer. Checking the connection…');
       control({kind:'ping',v:2,session,seq:++pingSeq});
     }
     function confirm(){
       if(!helloSeen||!helloAck||verified)return;
       verified=true;lastPong=now();
       for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);
-      state('connected','Both devices exchanged a confirmation. The connection is working.');
+      state('connected','Connected to Maple Atlas Companion. Your map follows the game.');
       heartbeat=timers.setInterval(ping,3000);ping();
     }
     function bind(c){
       if(channel||c.label!=='maple-atlas'){c.close();return;}channel=c;
       c.onopen=()=>{
-        timers.clearTimeout(connectTimer);state('verifying','The link opened. Verifying that the other device can send and receive…',{deadline:now()+7000});
-        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the other device. Refresh Maple Atlas on both devices, then pair again.','verification'),7000);
-        const hello=()=>control({kind:'hello',v:2,session,role,nonce});
-        if(!native){hello();return;}
-        const version=epoch;proof(native,session,pc.localDescription.sdp).then(value=>{if(version!==epoch)return;control({kind:'auth',v:3,session,proof:value});hello();})
+        timers.clearTimeout(connectTimer);state('verifying','Verifying the connection…',{deadline:now()+7000});
+        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the companion app. Reload Maple Atlas, then scan a new code.','verification'),7000);
+        const version=epoch;proof(secret,session,pc.localDescription.sdp).then(value=>{if(version!==epoch)return;control({kind:'auth',v:3,session,proof:value});control({kind:'hello',v:2,session,role:'phone',nonce});})
           .catch(()=>{if(version===epoch)fail('Could not prepare the secure check. Reload Maple Atlas, then scan a new code.','verification');});
       };
-      c.onclose=()=>stop('The other device disconnected or closed its page. Start a new pairing to reconnect.',{quiet:true,reason:'closed'});
-      c.onerror=()=>fail('The device connection encountered an error. Start a new pairing.','channel');
+      c.onclose=()=>stop('The companion app closed the connection.',{quiet:true,reason:'closed'});
+      c.onerror=()=>fail('The connection to your computer had an error.','channel');
       c.onmessage=event=>{
         if(typeof event.data!=='string'||event.data.length>512)return;
         try{
           const value=JSON.parse(event.data);
           if(['hello','hello-ack','ping','pong','bye'].includes(value.kind)){
             if(value.session!==session)return;
-            if(value.kind==='bye'){stop(native?'Maple Atlas on your Mac disconnected. Scan a new code to reconnect.':'The other device disconnected. Start a new pairing to reconnect.',{quiet:true,reason:'bye'});return;}
-            if(value.v!==2){fail('These pages use different pairing versions. Refresh both devices and pair again.','version');return;}
-            if(value.kind==='hello'&&value.role===(role==='pc'?'phone':'pc')&&/^[a-f0-9]{32}$/.test(value.nonce)){
-              helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();
-            }else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
+            if(value.kind==='bye'){stop('Maple Atlas Companion disconnected.',{quiet:true,reason:'bye'});return;}
+            if(value.v!==2){fail('The companion app uses a different version. Update it or reload Maple Atlas, then scan a new code.','version');return;}
+            if(value.kind==='hello'&&value.role==='pc'&&/^[a-f0-9]{32}$/.test(value.nonce)){helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();}
+            else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
             else if(value.kind==='ping'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>0)control({kind:'pong',v:2,session,seq:value.seq});
             else if(value.kind==='pong'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>pongSeq&&value.seq<=pingSeq){
-              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored. Both devices are responding.');
+              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored.');
             }
             return;
           }
-          if(role!=='phone'||!verified||phase!=='connected')return;
+          if(!verified||phase!=='connected')return;
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
-          // The player's dot on that map, in the portal data's coordinates (from the Mac app).
+          // The player's dot on that map, in the portal data's coordinates.
           else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
           else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
         }catch(_){}
       };
     }
-    function start(nextRole){
-      clear();role=nextRole;
+    // Joins the companion app from its code (scanned or remembered). resume: a code
+    // from an earlier pairing, which the app keeps accepting, so its expiry is ignored.
+    async function join(code,{resume=false}={}){
+      const previous=epoch,value=await unpack(code,now(),{ignoreExpiry:resume});if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(joined===code&&pc)return;
+      clear();
       if(!Peer){state('failed','This browser cannot connect directly to another device.',{reason:'unsupported'});throw Error('Use a browser with WebRTC support.');}
-      pc=new Peer({iceServers:[],iceTransportPolicy:'all'});
+      const version=epoch;session=value.session;expires=value.expires;secret=value.secret;joined=code;
+      pc=new Peer({iceServers:[],iceTransportPolicy:'all'});const current=pc;
       pc.onconnectionstatechange=()=>{
         if(!pc)return;
-        if(pc.connectionState==='failed')fail('The devices could not reach each other. Use the same Wi-Fi network. Guest Wi-Fi, VPNs, a firewall or (on a Mac) a blocked Local Network permission for your browser can stop the link.','network');
-        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for the other device to respond…');
-        // ICE alone does not prove that the other app is receiving messages.
+        if(pc.connectionState==='failed')fail('Your phone could not reach the computer. Use the same Wi-Fi network; guest Wi-Fi, VPNs or a firewall can block the link.','network');
+        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for your computer…');
         else if(pc.connectionState==='connected'&&verified&&now()-lastPong<9000)ping();
       };
       pc.ondatachannel=e=>bind(e.channel);
-      state('preparing','Preparing a private pairing code…');return epoch;
-    }
-    async function gathered(current,version){
-      if(version!==epoch)throw Error('Pairing was cancelled.');
-      if(current.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{
-        const timer=timers.setTimeout(()=>finish(Error('Could not find a local connection. Check Wi-Fi and retry.')),8000);
-        function finish(error){timers.clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);cancelGather=null;error?reject(error):resolve();}
-        function check(){if(current.iceGatheringState==='complete')finish();}
-        cancelGather=()=>finish(Error('Pairing was cancelled.'));
-        current.addEventListener('icegatheringstatechange',check);check();
-      });
-      if(version!==epoch)throw Error('Pairing was cancelled.');
-      const value={v:2,type:current.localDescription.type,sdp:current.localDescription.sdp,session,expires};
-      const code=await pack(value);await unpack(code,now());if(version!==epoch)throw Error('Pairing was cancelled.');
-      local=addressing(value.sdp);
-      expiryTimer=timers.setTimeout(()=>{clear();state('expired','The pairing code expired. Create a new code on the computer and scan it again.');},Math.max(1,expires-now()));
-      return code;
-    }
-    async function offer(){
-      const version=start('pc');session=random(8);expires=Math.ceil((now()+ttl)/1000)*1000;const current=pc;
-      try{
-        bind(current.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());const code=await gathered(current,version);
-        state('waiting-phone','Not connected yet. Scan this code on your phone, then scan the phone’s response on this computer.',{addressing:local});return code;
-      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
-    }
-    async function answer(code,{resume=false}={}){
-      const previous=epoch,value=await unpack(code,now(),{ignoreExpiry:resume});if(previous!==epoch)throw Error('Pairing was cancelled.');
-      if(value.type!=='offer')throw Error('This is a phone response. Scan the code shown on your computer.');
-      if(resume&&!value.native)throw Error('Only Mac app pairings can resume.');
-      if(value.native)return join(code,value,resume);
-      // Re-reading the same computer QR must not rotate an active response.
-      if(savedOffer===code&&savedAnswer&&pc)return savedAnswer;
-      const version=start('phone');session=value.session;expires=value.expires;const current=pc;
-      try{
-        await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());const answerCode=await gathered(current,version);
-        savedOffer=code;savedAnswer=answerCode;state('waiting-computer','Computer code scanned successfully. Show this new response QR to your computer. You are not connected yet.',{addressing:local});return answerCode;
-      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
-    }
-    // Single-scan pairing with Maple Atlas Companion for Mac. The Mac learns this
-    // phone's ICE username from its connectivity checks, so no response code is shown.
-    async function join(code,value,resume=false){
-      if(savedOffer===code&&pc)return null;
-      const version=start('phone');session=value.session;expires=value.expires;native=value.secret;savedOffer=code;const current=pc;
       try{
         await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());
         if(version!==epoch)throw Error('Pairing was cancelled.');
-        state('connecting',resume?'Reconnecting to Maple Atlas on your Mac…':'Connecting to Maple Atlas on your Mac…',{deadline:now()+25000,resume});
-        connectTimer=timers.setTimeout(()=>fail(resume?'Could not reconnect to Maple Atlas on your Mac. Keep the app open on the same Wi-Fi network; it waits 30 minutes for the phone. Otherwise scan a new code.':'Could not reach Maple Atlas on your Mac. Keep the app open, use the same Wi-Fi network on both devices, then scan a new code.','timeout'),25000);
-        // A resumed pairing was verified before; only a first scan honours the code's expiry.
-        if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','The pairing code expired. Create a new code on your Mac and scan it again.');}},Math.max(1,expires-now()));
-        return null;
+        state('connecting',resume?'Reconnecting to your computer…':'Connecting to your computer…',{deadline:now()+25000,resume});
+        connectTimer=timers.setTimeout(()=>fail(resume?'Could not reconnect. Make sure Maple Atlas Companion is open on the same Wi-Fi network.':'Could not reach Maple Atlas Companion. Keep it open and use the same Wi-Fi network on both devices.','timeout'),25000);
+        if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
-    function waitForConnection(){
-      if(!pc||verified||!['waiting-computer','waiting-phone','connecting'].includes(phase))return;
-      timers.clearTimeout(connectTimer);const deadline=now()+25000;
-      state('connecting','Waiting for the device link. Keep both pages open on the same local network.',{deadline});
-      connectTimer=timers.setTimeout(()=>fail('Connection timed out. Make sure the computer scanned the phone response. Both devices must use the same Wi-Fi network; guest Wi-Fi, VPNs, firewalls or (on a Mac) a blocked Local Network permission for your browser may stop pairing.','timeout'),25000);
-    }
-    async function finish(code){
-      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
-      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer'||finishing)throw Error('This is not the response to this computer’s current code. Scan the current phone response, or restart pairing on both devices.');
-      const current=pc,version=epoch;finishing=true;
-      try{await current.setRemoteDescription({type:'answer',sdp:value.sdp});if(version===epoch&&!verified&&phase!=='verifying')waitForConnection();}
-      catch(e){if(version===epoch)fail('The phone response could not be applied. Start a new pairing.','response');throw e;}
-      finally{finishing=false;}
-    }
-    function send({id,confidence,observedAt}){
-      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
-      const value={kind:'location',id:String(id),confidence,observedAt,seq:seq++};if(!location(value,ids))return false;
-      channel.send(JSON.stringify(value));return true;
-    }
-    function sendStatus(value){
-      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
-      channel.send(JSON.stringify({kind:'tracking',state:value,seq:seq++,observedAt:now()}));return true;
-    }
-    return {offer,answer,finish,waitForConnection,send,sendStatus,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';},get addressing(){return local;},get native(){return !!native;}};
+    return {join,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);
@@ -2448,162 +2382,93 @@ window.mapleStorageReady.then(() => {
   scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
 
-/* Short, session-only visual history. Scores are evidence, not probabilities. */
-(function(scope){
- function create(){
-  let history=[],confirmed=null,lastStrong=null,strongCount=0,lastTime=0;
-  function reset(){history=[];confirmed=null;lastStrong=null;strongCount=0;lastTime=0;}
-  function read(result,now=Date.now()){
-   if(now-lastTime>10000)reset();lastTime=now;
-   const best=result.candidates?.[0];
-   if(!best){history=[];lastStrong=null;strongCount=0;confirmed=null;return {phase:'searching'};}
-   strongCount=result.strong&&lastStrong===best.id?strongCount+1:result.strong?1:0;lastStrong=result.strong?best.id:null;
-   // Never accumulate a weak candidate over a contradictory strong observation.
-   if(result.strong&&history.length&&history.at(-1).candidates[0].id!==best.id)history=[];
-   const marks=new Set(best.landmarks),previous=history.at(-1),novel=!previous||best.id!==previous.candidates[0].id||best.landmarks.filter(k=>!previous.marks.has(k)).length>=8;
-   if(novel)history.push({at:now,candidates:result.candidates,marks});
-   history=history.filter(h=>now-h.at<8000).slice(-5);
-   const totals=new Map();for(const frame of history)for(const c of frame.candidates){const t=totals.get(c.id)||{score:0,frames:0,landmarks:new Set()};t.score+=Math.min(c.score,80);t.frames++;for(const p of c.landmarks)t.landmarks.add(p);totals.set(c.id,t);}
-   const ranking=[...totals].sort((a,b)=>b[1].score-a[1].score),top=ranking[0],runner=ranking[1];
-   const accumulated=top&&top[0]===best.id&&top[1].frames>=3&&top[1].landmarks.size>=40&&(!runner||top[1].score>runner[1].score*1.8);
-   if((result.strong&&strongCount>=2)||accumulated){confirmed=best.id;return {phase:'confirmed',match:best,method:accumulated?'multiple-views':'stable-match'};}
-   confirmed=null;return {phase:'candidate',match:best,alternatives:result.candidates.length};
-  }
-  return {read,reset};
- }
- scope.MapleVisualTracker={create};if(typeof module!=='undefined')module.exports=scope.MapleVisualTracker;
-})(globalThis);
-
-(function(scope){
- function create({onProgress=()=>{}}={}){
-  let worker=null,loading=null,catalog=null,next=0;const pending=new Map();
-  function stop(){worker?.terminate();worker=null;loading=null;catalog=null;for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('Visual reading stopped.'));}pending.clear();}
-  function request(type,extra={},transfer=[],timeout=20000){return new Promise((resolve,reject)=>{const id=++next,timer=setTimeout(()=>{pending.delete(id);reject(Error('Visual reading took too long. Stop and restart the reader.'));},timeout);pending.set(id,{resolve,reject,timer});worker.postMessage({type,id,...extra},transfer);});}
-  async function ready(){
-   if(!loading){worker=new Worker('./vision-worker.js');worker.onmessage=({data})=>{
-    if(data.type==='loading'){onProgress(data.message);return;}
-    const p=pending.get(data.id);if(!p)return;pending.delete(data.id);clearTimeout(p.timer);if(data.type==='error')p.reject(Error(data.message));else p.resolve(data);
-   };worker.onerror=()=>{for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('The local matcher could not start. Reload and retry.'));}pending.clear();};
-   loading=request('init',{},[],90000).then(value=>{catalog=value;return value;}).catch(e=>{stop();throw e;});}
-   return loading;
-  }
-  async function match(image){await ready();return (await request('match',{image:{width:image.width,height:image.height,data:image.data}},[image.data.buffer])).result;}
-  return {ready,match,stop,get catalog(){return catalog;}};
- }
- scope.MapleVisualClient={create};
-})(globalThis);
-
+/* Live companion on the phone: pair with Maple Atlas Companion (Mac or Windows) by
+ * scanning its QR once, then reconnect by itself or with one tap. On a computer the
+ * dialog only points to the companion app. */
 (function(scope){
   const loaded=new Map();
-  function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the local reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
+  function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the QR reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
+  const busy=['connecting','verifying'];
   function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},device}){
-    const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),qr=$('#mc-pair-qr'),input=$('#mc-pair-input'),output=$('#mc-pair-output');
-    const video=$('#mc-reader-video'),selection=$('#mc-reader-selection'),scanVideo=$('#mc-scan-video'),readerState=$('#mc-reader-state');
-    device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData,canShareScreen:!!navigator.mediaDevices?.getDisplayMedia});
+    const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),input=$('#mc-pair-input'),scanVideo=$('#mc-scan-video');
+    device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
-    let stream=null,scanner=null,scanEpoch=0,scanTimer=null,readerEpoch=0,readTimer=null,roi=null,startPoint=null,lastFrame=-1,lastSeen=0,watch=null,qrCells=0,accepting=false,uiEpoch=0;
+    const known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
+    let scanner=null,scanEpoch=0,scanTimer=null,lastSeen=0,accepting=false,scanning=false;
     let currentState={phase:'idle',message:'',expires:0};
-    function fitQR(){
-      const parent=qr.parentElement,style=getComputedStyle(parent),available=parent.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
-      if(!qrCells||available<=0)return;
-      // Whole CSS pixels per module avoid blurred, hard-to-scan downscaling.
-      const limit=Math.min(360,available,innerHeight*.48),size=Math.max(1,Math.floor(limit/qrCells))*qrCells+'px';
-      if(qr.style.getPropertyValue('--mc-qr-size')!==size)qr.style.setProperty('--mc-qr-size',size);
-    }
-    new ResizeObserver(fitQR).observe(qr.parentElement);window.addEventListener('resize',fitQR);
-    const tracker=MapleVisualTracker.create(),known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
-    const vision=MapleVisualClient.create({onProgress:message=>{readerState.textContent=message;}});
-    function activity(title,message){$('#mc-tracking-title').textContent=title;$('#mc-tracking-message').textContent=message;}
-    function clock(){
-      const timer=$('#mc-pair-timer'),{phase,expires,deadline}=currentState;
-      timer.hidden=!(['waiting-phone','waiting-computer'].includes(phase)&&expires||['connecting','verifying'].includes(phase)&&deadline);
-      if(timer.hidden)return;
-      const seconds=Math.max(0,Math.ceil(((deadline||expires)-Date.now())/1000));
-      timer.textContent=deadline?'Checking connection · '+seconds+'s remaining':'Pairing code expires in '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
-    }
-    function paint(value){
-      currentState=value;const phase=value.phase,terminal=['idle','disconnected','failed','expired'].includes(phase),linked=phase==='connected',pending=!terminal&&!linked;
-      const titles={idle:'Not connected',preparing:'Preparing pairing…','scan-computer':'Step 1 · Scan your computer','waiting-phone':'Not connected · Waiting for phone','waiting-computer':'Code scanned · One more step',connecting:'Connecting…',verifying:'Verifying both devices…',connected:role==='phone'?'Connected to computer':'Connected to phone',reconnecting:'Connection interrupted',failed:'Connection failed',expired:'Code expired',disconnected:'Disconnected'};
-      status.dataset.tone=linked?'success':['failed','expired'].includes(phase)?'error':pending?'pending':'neutral';
-      $('#mc-companion-state-icon').textContent=linked?'✓':['failed','expired'].includes(phase)?'!':pending?'…':'○';
-      $('#mc-companion-state-title').textContent=titles[phase]||'Not connected';$('#mc-companion-message').textContent=value.message;
-      const saved=role==='phone'&&remembered();
-      $('#mc-pair-roles').hidden=phase!=='idle'||(role==='pc'&&!browserPairing&&phase==='idle');
-      if(role==='pc'&&!browserPairing&&phase==='idle')$('#mc-companion-status').hidden=true;else $('#mc-companion-status').hidden=false;$('#mc-pair-retry').hidden=!['failed','expired','disconnected'].includes(phase);
-      $('#mc-pair-reconnect').hidden=!(saved&&terminal);$('#mc-pair-forget').hidden=!(saved&&terminal);
-      $('#mc-pair-active').hidden=terminal;$('#mc-pair-steps').hidden=terminal;
-      const step=linked?4:['connecting','verifying','reconnecting'].includes(phase)?3:phase==='waiting-computer'?2:1;
-      for(const item of root.querySelectorAll('#mc-pair-steps li')){const n=Number(item.dataset.step);item.dataset.state=n<step?'done':n===step?'active':'pending';item.firstElementChild.textContent=n<step?'✓':n;if(n===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');}
-      $('#mc-pair-scan').hidden=!(phase==='scan-computer'||phase==='waiting-phone');
-      $('#mc-pair-exchange').hidden=!(['waiting-phone','waiting-computer'].includes(phase)&&output.value);
-      $('#mc-pair-check').hidden=phase!=='waiting-computer';
-      $('#mc-reader').hidden=!(role==='pc'&&linked);$('#mc-tracking-status').hidden=!(role==='phone'&&linked);$('#mc-pair-view-map').hidden=role!=='phone'||!linked;
-      clock();
-      // App-bar button: green dot when connected, pulsing amber while connecting, grey when a paired Mac is away.
-      const appBar=$('#mc-mobile-companion'),barState=linked?'connected':pending?'pending':saved?'away':'off';
-      appBar.dataset.state=barState;appBar.setAttribute('aria-label','Live companion · '+{connected:'Connected',pending:'Connecting',away:'Mac not connected',off:'Not connected'}[barState]);
-      // Tablets (iPad) use the wide layout: its header button shows the same state.
-      if(role==='phone'){const wide=$('#mc-companion-desktop');wide.dataset.state=barState;wide.setAttribute('aria-label',appBar.getAttribute('aria-label'));}
-      if(phase!=='idle'){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent=linked?(role==='phone'?'Computer connected':'Phone connected'):titles[phase]||'Not connected';}
-    }
-    const link=MapleCompanionLink.create({ids,onLocation:value=>{
-      lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
-    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onReading:state=>{
-      lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The device connection is working. Resume screen sharing and visual tracking on your computer.':'The device connection is working. Keep the minimap or scenery visible while the computer identifies your map.');onConnection(state==='paused'?'stale':'searching');
-    },onState:value=>{
-      paint(value);
-      if(value.phase==='connected'){
-        stopScan();output.value='';input.value='';clearError();onConnection('connected');
-        if(role==='phone'&&link.native&&pairingCode){remember(pairingCode);resumeTries=0;void requestWake();}
-        if(role==='phone'){if(!lastSeen)activity('Waiting for screen sharing','The connection is working. On your computer, share the game window and start visual tracking.');}
-        else{$('#mc-companion-badge').textContent='Phone connected';readerState.textContent=stream?'Connection ready. Watching the visible terrain…':'Phone connected. Share the game window to start.';}
-        dialog.scrollTo({top:0});
-      }
-      if(['failed','expired','disconnected'].includes(value.phase)){
-        uiEpoch++;stopReader();stopScan();lastSeen=0;output.value='';input.value='';releaseWake();
-        // A deliberate end forgets the pairing; a dropped link resumes it.
-        // A rejected code forgets the pairing; a deliberate disconnect keeps it but stops
-        // retrying; a dropped link retries by itself.
-        if(['verification','version'].includes(value.reason))forget();
-        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
-        else if(role==='phone'&&remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
-        onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
-        if(role==='phone'&&remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Mac not connected · Tap to reconnect';}
-      }else if(value.phase==='reconnecting')onConnection('reconnecting');
-      else if(['connecting','verifying'].includes(value.phase)&&resuming)onConnection('resuming');
-      else if(['preparing','waiting-phone','waiting-computer','connecting','verifying'].includes(value.phase))onConnection('pairing');
-    }});
-    function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';}
-    function error(e,source='camera'){
-      if(e?.message==='Pairing was cancelled.')return;
-      const message=e?.name==='NotAllowedError'?(source==='screen'?'Screen sharing was cancelled or blocked. Choose Share game window to try again. Your phone connection is unchanged.':'Camera access was denied. Allow the camera in browser settings, or use a QR image or paste the pairing code.'):e?.name==='NotFoundError'?(source==='screen'?'No shareable window was found. Open the game, then choose Share game window again.':'No camera was found. Use a QR image or paste the pairing code.'):e?.message||'This step could not finish. Please retry.';
-      $('#mc-pair-error-message').textContent=message;$('#mc-pair-error').hidden=false;$('#mc-pair-error').scrollIntoView({block:'start'});
-    }
-    async function run(button,fn){button.disabled=true;clearError();try{await fn();}catch(e){error(e,button.id==='mc-reader-share'?'screen':'camera');}finally{button.disabled=false;}}
-    async function showCode(code,version){
-      await load('./vendor/companion/qr.js');if(version!==uiEpoch||link.connected||['failed','expired','disconnected'].includes(currentState.phase))return;
-      output.value=code;qrCells=MapleQR.create(code,{errorCorrectionLevel:'M'}).modules.size+8;
-      await MapleQR.toCanvas(qr,code,{scale:8,margin:4,errorCorrectionLevel:'M'});
-      if(version!==uiEpoch)return;
-      qr.style.removeProperty('width');qr.style.removeProperty('height');
-      $('#mc-pair-code-title').textContent=role==='pc'?'1 · Scan this with your phone':'2 · Show this response to your computer';
-      const hidden=link.addressing&&!link.addressing.ip?' This device is only sharing a private network name, which some networks cannot resolve. Allowing camera access on '+(role==='pc'?'this computer':'this phone')+' makes pairing more reliable.':'';
-      $('#mc-pair-next').textContent=(role==='pc'?'On your phone, open Maple Atlas → Live companion → Connect to computer. Scan this code.':'Computer code accepted. This is a new response code, not a refresh. Hold it up to the computer’s camera, or choose “Scan phone response” there.')+hidden;
-      paint(currentState);fitQR();$('#mc-pair-copy-status').textContent='';$('#mc-pair-exchange').scrollIntoView({block:'start'});
-    }
-    // Pair once: the Mac app's code is kept on this phone (localStorage, separately for
-    // Main and Dev) and used to reconnect whenever Maple Atlas is on screen, or with one
-    // tap after a deliberate disconnect. "Forget this Mac" removes it.
+
+    // Pair once: the app's code is kept on this phone (localStorage, per site) and used
+    // to reconnect whenever Maple Atlas is on screen, or with one tap after a
+    // deliberate disconnect. "Forget this computer" removes it.
     let pairingCode=null,resuming=false,resumeTries=0,wakeLock=null,storedAt=0;
     const pairingKey=()=>'maple-atlas-mac-pairing:'+location.pathname.replace(/index\.html$/,'');
     function remembered(){try{const v=JSON.parse(localStorage.getItem(pairingKey())||'null');return v&&typeof v.code==='string'&&/^MA2[A-Z2-7]+$/.test(v.code)?v:null;}catch(_){return null;}}
     function remember(code,{paused=false}={}){storedAt=Date.now();try{localStorage.setItem(pairingKey(),JSON.stringify({code,at:storedAt,paused}));}catch(_){}}
     function forget(){pairingCode=null;try{localStorage.removeItem(pairingKey());}catch(_){}paint(currentState);}
+
+    function activity(title,message){$('#mc-tracking-title').textContent=title;$('#mc-tracking-message').textContent=message;}
+    function clock(){
+      const timer=$('#mc-pair-timer'),{phase,deadline}=currentState;
+      timer.hidden=!(busy.includes(phase)&&deadline);if(timer.hidden)return;
+      timer.textContent='Checking connection · '+Math.max(0,Math.ceil((deadline-Date.now())/1000))+'s remaining';
+    }
+    function paint(value){
+      currentState=value;const phase=value.phase,linked=phase==='connected',pending=busy.includes(phase)||phase==='reconnecting',ended=!linked&&!pending,saved=role==='phone'&&remembered();
+      const titles={idle:saved?'Computer not connected':'Not paired',connecting:'Connecting…',verifying:'Verifying…',connected:'Connected to your computer',reconnecting:'Connection interrupted',failed:'Could not connect',expired:'Code expired',disconnected:'Disconnected'};
+      status.dataset.tone=linked?'success':['failed','expired'].includes(phase)?'error':pending?'pending':'neutral';
+      $('#mc-companion-state-icon').textContent=linked?'✓':['failed','expired'].includes(phase)?'!':pending?'…':'○';
+      $('#mc-companion-state-title').textContent=titles[phase]||'Not connected';
+      $('#mc-companion-message').textContent=value.message||(saved?'Open Maple Atlas Companion on your computer, then tap Reconnect.':'');$('#mc-companion-message').hidden=!$('#mc-companion-message').textContent;
+      $('#mc-companion-intro').hidden=!!saved||linked||pending;
+      $('#mc-pair-reconnect').hidden=!(saved&&ended);
+      $('#mc-pair-start').hidden=!!saved||!ended||scanning;
+      $('#mc-pair-retry').hidden=!(saved&&ended);
+      $('#mc-pair-forget').hidden=!(saved&&ended);
+      $('#mc-pair-scan').hidden=!scanning||!ended;
+      $('#mc-pair-active').hidden=!(linked||pending);
+      $('#mc-tracking-status').hidden=!linked;$('#mc-pair-view-map').hidden=!linked;
+      clock();
+      // App-bar button and the wide layout's header button share the state dot.
+      const state=linked?'connected':pending?'pending':saved?'away':'off',label='Live companion · '+{connected:'Connected',pending:'Connecting',away:'Computer not connected',off:'Not connected'}[state];
+      for(const button of [$('#mc-mobile-companion'),$('#mc-companion-desktop')]){button.dataset.state=state;button.setAttribute('aria-label',label);}
+      if(phase!=='idle'){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent=linked?'Computer connected':titles[phase]||'Not connected';}
+    }
+    const link=MapleCompanionLink.create({ids,onLocation:value=>{
+      lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
+    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onReading:state=>{
+      lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the minimap visible while your computer identifies the map.');onConnection(state==='paused'?'stale':'searching');
+    },onState:value=>{
+      paint(value);
+      if(value.phase==='connected'){
+        stopScan();input.value='';clearError();onConnection('connected');
+        if(pairingCode){remember(pairingCode);resumeTries=0;void requestWake();}
+        if(!lastSeen)activity('Waiting for the game','The connection is working. In Maple Atlas Companion, choose the game window and start tracking.');
+        dialog.scrollTo({top:0});
+      }
+      if(['failed','expired','disconnected'].includes(value.phase)){
+        stopScan();lastSeen=0;input.value='';releaseWake();
+        // A rejected code forgets the pairing; a deliberate disconnect keeps it but stops
+        // retrying; a dropped link retries by itself.
+        if(['verification','version'].includes(value.reason))forget();
+        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
+        else if(remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
+        onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
+        if(remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Computer not connected · Tap to reconnect';}
+      }else if(value.phase==='reconnecting')onConnection('reconnecting');
+      else if(busy.includes(value.phase))onConnection(resuming?'resuming':'pairing');
+    }});
+    function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';}
+    function error(e){
+      if(e?.message==='Pairing was cancelled.')return;
+      const message=e?.name==='NotAllowedError'?'Camera access was denied. Allow the camera in your browser settings, or use a QR image or the link.':e?.name==='NotFoundError'?'No camera was found. Use a QR image or paste the link.':e?.message||'Something went wrong. Please try again.';
+      $('#mc-pair-error-message').textContent=message;$('#mc-pair-error').hidden=false;
+    }
+    async function run(button,fn){button.disabled=true;clearError();try{await fn();}catch(e){error(e);}finally{button.disabled=false;}}
     // paused: 'user' after Disconnect on this phone (only a tap reconnects), 'mac' after
-    // the Mac app said goodbye (a freshly opened page still tries once first).
+    // the app said goodbye (a freshly opened page still tries once first).
     async function resume({manual=false,opening=false}={}){
       const saved=remembered();
-      if(role!=='phone'||!saved||resuming||accepting||link.connected||document.visibilityState!=='visible'||['preparing','connecting','verifying'].includes(currentState.phase))return;
+      if(role!=='phone'||!saved||resuming||accepting||link.connected||document.visibilityState!=='visible'||busy.includes(currentState.phase))return;
       if(saved.paused&&!manual&&!(opening&&saved.paused==='mac'))return;
       if(manual){resumeTries=0;remember(saved.code);}
       resuming=true;resumeTries++;
@@ -2612,138 +2477,83 @@ window.mapleStorageReady.then(() => {
     }
     // Keeps the phone screen on while connected and on screen (released when hidden).
     async function requestWake(){
-      if(role!=='phone'||!navigator.wakeLock||wakeLock||document.visibilityState!=='visible'||!link.connected)return;
+      if(!navigator.wakeLock||wakeLock||document.visibilityState!=='visible'||!link.connected)return;
       try{wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}catch(_){wakeLock=null;}
     }
     function releaseWake(){wakeLock?.release().catch(()=>{});wakeLock=null;}
     async function accept(code,{resume=false}={}){
-      if(accepting)return;accepting=true;const version=uiEpoch;clearError();if(role==='phone')pairingCode=code;
-      // Browsers reveal a device's real local address only while it holds camera access.
-      // The phone keeps the camera open until its response is built, then releases it.
-      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code,{resume});stopScan();if(answer&&version===uiEpoch)await showCode(answer,version);}}
-      catch(e){stopScan();throw e;}
-      finally{accepting=false;}
+      if(accepting)return;accepting=true;clearError();pairingCode=String(code).trim();
+      try{await link.join(pairingCode,{resume});}
+      finally{accepting=false;stopScan();}
     }
-    async function begin(){
-      if(role==='pc'&&!device.canShareScreen)throw Error('This computer’s browser cannot share a game window. Open Maple Atlas in a desktop browser with screen sharing.');
-      uiEpoch++;stopScan();stopReader();clearError();output.value='';input.value='';lastSeen=0;
-      $('#mc-pair-scan-button').textContent=role==='pc'?'Scan phone response':'Scan computer code';
-      $('#mc-pair-scan-title').textContent=role==='pc'?'2 · Scan the phone response':'1 · Scan the computer code';
-      $('#mc-pair-scan-help').textContent=role==='pc'?'After the phone scans your code, it displays a new QR. Scan that response here to connect.':'Keep the computer’s Maple Atlas page open. Point your camera at its pairing QR.';
-      if(role==='pc'){
-        const version=uiEpoch;let note='';
-        // Opening the camera first makes the browser share this computer's local address
-        // instead of a private .local name that many phones and routers cannot resolve.
-        try{await scan();}catch(e){note=e?.name==='NotAllowedError'?'Camera access was not allowed. ':e?.name==='NotFoundError'?'No camera was found. ':'The camera could not start. ';}
-        if(version!==uiEpoch)return;
-        $('#mc-pair-scan-help').textContent=note?note+'Use a QR image or paste the phone response below. Without camera access the browser hides this computer’s local address, so pairing may fail on some networks.':'The camera is ready. After your phone scans the code above, hold the phone’s response QR up to this camera.';
-        await showCode(await link.offer(),version);
-      }
-      else{link.stop('Starting a new pairing.');clearError();paint({phase:'scan-computer',message:'Scan the code displayed by your computer. You will then show a response code back to it.'});}
-    }
-    $('#mc-pair-start').textContent=role==='pc'?'Create computer code':'Connect to computer';
-    $('#mc-companion-intro').textContent=role==='pc'?'This is your computer. Connect a phone on the same local network to follow your game. Pairing needs two scans.':'This is your phone or tablet. Connect to the computer running your game. Both devices must use the same local network.';
-    $('#mc-pair-start').disabled=role==='pc'&&!device.canShareScreen;
-    // On a computer, the companion app is the way to pair (one scan, stays paired).
-    // The older browser-to-browser pairing stays available behind a link.
-    let browserPairing=false;
-    if(role==='pc'){$('#mc-get-app').hidden=false;$('#mc-companion-intro').hidden=true;
-      $('#mc-use-browser').onclick=()=>{browserPairing=true;$('#mc-get-app').hidden=true;$('#mc-companion-intro').hidden=false;paint(currentState);};}
-    paint({phase:'idle',message:role==='pc'?device.canShareScreen?'Create a code, scan it on your phone, then scan the phone’s response here.':'This computer’s browser cannot share its screen. Use a desktop browser that supports game-window sharing.':'Open Maple Atlas Companion on your Mac and scan its code with your phone’s camera. Or create a code in Maple Atlas on a computer browser, then connect here.'});
-    $('#mc-pair-start').onclick=e=>run(e.currentTarget,begin);$('#mc-pair-retry').onclick=e=>run(e.currentTarget,begin);
-    $('#mc-pair-check').onclick=()=>{clearError();link.waitForConnection();dialog.scrollTo({top:0});};
-    $('#mc-pair-apply').onclick=e=>run(e.currentTarget,()=>accept(input.value));
-    $('#mc-pair-copy').onclick=e=>run(e.currentTarget,async()=>{try{await navigator.clipboard.writeText(output.value);$('#mc-pair-copy-status').textContent='Code copied. Paste it into Maple Atlas on the other device.';}catch(_){output.focus();output.select();$('#mc-pair-copy-status').textContent='Select and copy this code to the other device.';}});
-    $('#mc-pair-stop').onclick=()=>{clearError();link.stop(link.native?'Disconnected. Tap Reconnect to continue with your Mac.':'You disconnected. Screen sharing and the camera have stopped.');};
-    $('#mc-pair-reconnect').onclick=()=>{clearError();void resume({manual:true});};
-    $('#mc-pair-forget').onclick=()=>{forget();link.stop('This phone forgot your Mac. Scan the code in Maple Atlas Companion to pair again.',{quiet:true,reason:'forget'});};
-    $('#mc-pair-view-map').onclick=()=>{dialog.close();enterFullscreen();};
-    function stopScan(){scanEpoch++;clearTimeout(scanTimer);scanner?.getTracks().forEach(t=>t.stop());scanner=null;scanVideo.srcObject=null;$('#mc-camera-box').hidden=true;}
+    function stopScan(){scanEpoch++;scanning=false;clearTimeout(scanTimer);scanner?.getTracks().forEach(t=>t.stop());scanner=null;scanVideo.srcObject=null;$('#mc-camera-box').hidden=true;paint(currentState);}
     async function scan(){
-      stopScan();const version=scanEpoch;await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;
-      if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access is unavailable. Use a QR image or paste a pairing code.');
-      const camera=await navigator.mediaDevices.getUserMedia({video:{facingMode:role==='phone'?'environment':'user'},audio:false});
+      stopScan();scanning=true;paint(currentState);const version=scanEpoch;
+      await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;
+      if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access is unavailable. Use a QR image or paste the link.');
+      const camera=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
       if(version!==scanEpoch){camera.getTracks().forEach(t=>t.stop());return;}
-      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-hint').textContent='Point the camera at the entire QR code.';$('#mc-camera-box').hidden=false;await scanVideo.play();$('#mc-camera-box').scrollIntoView({block:'nearest'});
+      scanner=camera;scanVideo.srcObject=scanner;$('#mc-camera-hint').textContent='Point the camera at the QR in Maple Atlas Companion.';$('#mc-camera-box').hidden=false;await scanVideo.play();
       const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
       async function frame(){
         if(!scanner||version!==scanEpoch)return;
-        if(scanVideo.videoWidth){const scale=Math.min(1,1200/scanVideo.videoWidth);canvas.width=Math.round(scanVideo.videoWidth*scale);canvas.height=Math.round(scanVideo.videoHeight*scale);context.drawImage(scanVideo,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(pixels.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
-          if(code&&!/^\s*(MA2|MAPLE1:)|#link=MA2/i.test(code.data))$('#mc-camera-hint').textContent='That QR is not a Maple Atlas pairing code. Point the camera at the code in Maple Atlas.';
-          else if(code){try{await accept(code.data);}catch(e){error(e);}return;}}
+        if(scanVideo.videoWidth){
+          const scale=Math.min(1,1200/scanVideo.videoWidth);canvas.width=Math.round(scanVideo.videoWidth*scale);canvas.height=Math.round(scanVideo.videoHeight*scale);context.drawImage(scanVideo,0,0,canvas.width,canvas.height);
+          const pixels=context.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(pixels.data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
+          if(code&&!/^\s*MA2|#link=MA2/i.test(code.data))$('#mc-camera-hint').textContent='That QR is not from Maple Atlas Companion. Point the camera at the QR in the app.';
+          else if(code){try{await accept(code.data);}catch(e){error(e);}return;}
+        }
         scanTimer=setTimeout(frame,250);
       }void frame();
     }
-    $('#mc-pair-scan-button').onclick=e=>run(e.currentTarget,scan);$('#mc-camera-stop').onclick=stopScan;
+    $('#mc-pair-start').onclick=e=>run(e.currentTarget,scan);
+    $('#mc-pair-retry').onclick=e=>run(e.currentTarget,scan);
+    $('#mc-camera-stop').onclick=stopScan;
+    $('#mc-pair-apply').onclick=e=>run(e.currentTarget,()=>accept(input.value));
     $('#mc-pair-file').onchange=async e=>{
-      const file=e.target.files[0];if(!file)return;stopScan();clearError();const version=scanEpoch;
-      try{if(file.size>12000000)throw Error('Choose an image under 12 MB.');await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;const bitmap=await createImageBitmap(file);if(version!==scanEpoch){bitmap.close();return;}const canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const data=ctx.getImageData(0,0,canvas.width,canvas.height);const code=MapleQR.decode(data.data,canvas.width,canvas.height);if(!code)throw Error('No readable pairing QR was found. Include the entire code or paste the text instead.');await accept(code.data);}catch(e){error(e);}finally{e.target.value='';}
+      const file=e.target.files[0];if(!file)return;clearError();
+      try{
+        if(file.size>12000000)throw Error('Choose an image under 12 MB.');
+        await load('./vendor/companion/qr.js');const bitmap=await createImageBitmap(file),canvas=document.createElement('canvas'),scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+        canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+        const data=ctx.getImageData(0,0,canvas.width,canvas.height),code=MapleQR.decode(data.data,canvas.width,canvas.height);
+        if(!code)throw Error('No readable QR was found. Include the whole code, or paste the link instead.');await accept(code.data);
+      }catch(err){error(err);}finally{e.target.value='';}
     };
-    function stopReader(){
-      if(stream)link.sendStatus('paused');
-      readerEpoch++;clearTimeout(readTimer);stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;vision.stop();roi=null;startPoint=null;tracker.reset();lastFrame=-1;selection.hidden=true;$('#mc-reader-preview').hidden=true;$('#mc-reader-stop').hidden=true;$('#mc-reader-run').hidden=true;$('#mc-reader-whole').hidden=true;
-    }
-    $('#mc-reader-share').onclick=e=>run(e.currentTarget,async()=>{
-      if(!link.connected)throw Error('Connect your phone before sharing the game window.');
-      stopReader();if(!navigator.mediaDevices?.getDisplayMedia)throw Error('Open this on a desktop browser that supports window sharing, such as Chrome or Edge. The phone only receives your location.');
-      const version=readerEpoch,captured=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'window',frameRate:5},audio:false});
-      if(version!==readerEpoch){captured.getTracks().forEach(t=>t.stop());return;}
-      stream=captured;video.srcObject=stream;await video.play();if(version!==readerEpoch)return;$('#mc-reader-preview').hidden=false;$('#mc-reader-stop').hidden=false;stream.getVideoTracks()[0].addEventListener('ended',()=>{if(stream!==captured)return;stopReader();readerState.textContent='Screen sharing stopped.';});roi={x:0,y:0,w:1,h:1};$('#mc-reader-run').hidden=false;$('#mc-reader-whole').hidden=false;readerState.textContent='Ready to recognize the visible terrain. You can optionally drag around the minimap to focus the search.';
-    });
-    $('#mc-reader-stop').onclick=()=>{stopReader();readerState.textContent='Screen sharing stopped.';};
-    const preview=$('#mc-reader-preview');
-    const point=e=>{const r=preview.getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};};
-    function select(e){const p=point(e);roi={x:Math.min(startPoint.x,p.x),y:Math.min(startPoint.y,p.y),w:Math.abs(p.x-startPoint.x),h:Math.abs(p.y-startPoint.y)};selection.hidden=false;Object.assign(selection.style,{left:roi.x*100+'%',top:roi.y*100+'%',width:roi.w*100+'%',height:roi.h*100+'%'});}
-    preview.onpointerdown=e=>{if(!stream)return;e.preventDefault();link.sendStatus('paused');readerEpoch++;clearTimeout(readTimer);tracker.reset();startPoint=point(e);preview.setPointerCapture(e.pointerId);select(e);};
-    preview.onpointermove=e=>{if(startPoint)select(e);};
-    preview.onpointerup=e=>{if(!startPoint)return;select(e);startPoint=null;$('#mc-reader-run').hidden=!roi||roi.w<.01||roi.h<.01;readerState.textContent='Area selected. Start visual tracking, or use the whole window.';};
-    preview.onpointercancel=()=>{startPoint=null;};
-    $('#mc-reader-whole').onclick=()=>{link.sendStatus('paused');readerEpoch++;clearTimeout(readTimer);tracker.reset();roi={x:0,y:0,w:1,h:1};selection.hidden=true;$('#mc-reader-run').hidden=false;readerState.textContent='The whole game window will be matched.';};
-    async function startReader(){
-      if(!link.connected)throw Error('Connect your phone before starting live tracking.');
-      if(!stream||!roi)throw Error('Share the game window first.');
-      clearTimeout(readTimer);const version=++readerEpoch;tracker.reset();await vision.ready();if(version!==readerEpoch)return;
-      const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-      async function read(){
-        if(version!==readerEpoch||!stream||!roi)return;
-        try{
-          if(video.readyState>=2&&video.currentTime!==lastFrame){
-            lastFrame=video.currentTime;const crop={x:roi.x*video.videoWidth,y:roi.y*video.videoHeight,w:roi.w*video.videoWidth,h:roi.h*video.videoHeight};
-            const scale=Math.min(1,960/Math.max(crop.w,crop.h));canvas.width=Math.max(1,Math.round(crop.w*scale));canvas.height=Math.max(1,Math.round(crop.h*scale));ctx.drawImage(video,crop.x,crop.y,crop.w,crop.h,0,0,canvas.width,canvas.height);
-            const result=await vision.match(ctx.getImageData(0,0,canvas.width,canvas.height));if(version!==readerEpoch)return;
-            const observation=tracker.read(result),match=observation.match,name=known.get(match?.id)?.name;
-            $('#mc-reader-text').textContent=match?match.inliers+' aligned landmarks · '+(match.kind==='minimap'?'Minimap':'Game scene'):'No distinctive map landmarks yet';
-            if(observation.phase==='confirmed'){
-              const value={id:match.id,confidence:Math.min(100,Math.round(match.ratio*100)),observedAt:Date.now()};link.send(value);
-              readerState.textContent=(link.connected?'Following on phone · ':'Visual match · ')+name;
-            }else {link.sendStatus('searching');readerState.textContent=observation.phase==='candidate'?'Checking the terrain… Keep walking to reveal more landmarks.':'Finding your location… Keep the minimap or game scenery visible.';}
-          }
-        }catch(e){if(version===readerEpoch){link.sendStatus('searching');tracker.reset();readerState.textContent=e.message||'Could not match this view. Adjust the area or restart tracking.';}}
-        if(version===readerEpoch)readTimer=setTimeout(read,1500);
-      }void read();
-    }
-    $('#mc-reader-run').onclick=e=>run(e.currentTarget,startReader);
+    $('#mc-pair-stop').onclick=()=>{clearError();link.stop('Disconnected. Tap Reconnect to continue.');};
+    $('#mc-pair-reconnect').onclick=()=>{clearError();void resume({manual:true});};
+    $('#mc-pair-forget').onclick=()=>{forget();link.stop('This phone forgot the computer. Scan the code in Maple Atlas Companion to pair again.',{quiet:true,reason:'forget'});};
+    $('#mc-pair-view-map').onclick=()=>{dialog.close();enterFullscreen();};
     function open(){$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();}
     // Full screen needs a tap; browsers without it (iPhone Safari) keep their bars.
     function enterFullscreen(){
       const page=document.documentElement;
       if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
       page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
-    }$('#mc-mobile-companion').onclick=$('#mc-companion-desktop').onclick=()=>{
-      // One tap: open the companion and, when a paired Mac isn't connected, reconnect.
-      open();if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase))void resume({manual:true});
-    };if(role!=='phone')$('#mc-companion-desktop').onclick=open;
-    // On a tablet the wide layout's button is for following a computer, not pairing a phone.
-    if(role==='phone'){const wide=$('#mc-companion-desktop');wide.querySelector('span').textContent='Live companion';wide.insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');}$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
-    // The Mac app's QR opens this page with the pairing code in the fragment. Remove
-    // it from the address bar and history, then connect without a second scan.
+    }
+    if(role==='pc'){
+      // A computer runs the companion app; the dialog only points to it.
+      $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;
+      $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
+      $('#mc-companion-desktop').onclick=open;
+      return {open,enterFullscreen};
+    }
+    // One tap: open the companion and, when a paired computer isn't connected, reconnect.
+    const tap=()=>{open();if(remembered()&&!link.connected&&!busy.includes(currentState.phase))void resume({manual:true});};
+    $('#mc-mobile-companion').onclick=$('#mc-companion-desktop').onclick=tap;
+    // Tablets use the wide layout: its header button follows the computer too.
+    const wide=$('#mc-companion-desktop');wide.querySelector('span').textContent='Live companion';wide.insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');
+    $('#mc-companion-badge').onclick=()=>{if(remembered()&&!link.connected&&!busy.includes(currentState.phase)){void resume({manual:true});return;}open();};
+    paint({phase:'idle',message:''});
+    // The app's QR opens this page with the pairing code in the fragment. Remove it from
+    // the address bar and history, then connect: no second scan.
     const linked=/^#link=(MA2[A-Z2-7]+)$/i.exec(location.hash);
-    if(linked){history.replaceState(null,'',location.pathname+location.search);if(role==='phone'){open();void run($('#mc-pair-start'),()=>accept(linked[1]));}}
-    dialog.addEventListener('close',()=>{stopScan();if(!stream)vision.stop();});
-    watch=setInterval(()=>{clock();if(link.connected&&pairingCode&&link.native&&Date.now()-storedAt>10000)remember(pairingCode);if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The device connection is working. Check screen sharing and visual tracking on your computer.');onConnection('stale');}},1000);
-    // Leaving the page closes the link quietly: the Mac app keeps the pairing so this
-    // tab can resume it (a reload, or Android discarding the tab in the background).
-    window.addEventListener('pagehide',()=>link.stop(undefined,{quiet:link.native,reason:'page'}));
+    if(linked){history.replaceState(null,'',location.pathname+location.search);open();void run($('#mc-pair-start'),()=>accept(linked[1]));}
+    dialog.addEventListener('close',stopScan);
+    setInterval(()=>{clock();if(link.connected&&pairingCode&&Date.now()-storedAt>10000)remember(pairingCode);if(link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The connection is working. Check tracking in Maple Atlas Companion.');onConnection('stale');}},1000);
+    // Leaving the page closes the link quietly: the app keeps the pairing so this tab
+    // can resume it (a reload, or Android discarding the tab in the background).
+    window.addEventListener('pagehide',()=>link.stop(undefined,{quiet:true,reason:'page'}));
     document.addEventListener('visibilitychange',()=>{
       if(document.visibilityState==='visible'){resumeTries=0;if(link.connected)void requestWake();else void resume();}
       else if(link.connected&&pairingCode)remember(pairingCode);

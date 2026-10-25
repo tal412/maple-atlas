@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'visual-tracker', 'visual-client', 'companion-ui', 'offline', 'runtime', 'intro'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'companion-ui', 'offline', 'runtime', 'intro'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
@@ -148,7 +148,9 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     if channel == 'dev':
         output.write_text(page.replace('<title>Maple Atlas</title>', '<title>Maple Atlas · Dev</title>'), encoding='utf-8')
     offline_files = ['index.html', 'favicon.svg', 'vendor/lucide.js', 'vendor/roboto-latin.woff2', 'data/' + search_name]
-    offline_files += ['vendor/companion/qr.js', 'vendor/vision/opencv.js', 'vision-worker.js', 'visual-matcher.js', 'data/visual-index.json', visual['data'][2:]]
+    # The phone only scans QR codes; map recognition runs in the companion apps, which
+    # bundle the matcher files built below.
+    offline_files += ['vendor/companion/qr.js']
     for name in ['vision-worker.js', 'visual-matcher.js']:
         (docs / name).write_text(read(name))
     cache_version = hashlib.sha256((docs / 'vendor/companion/versions.json').read_bytes() + visual['sha256'].encode() + read('visual-matcher.js').encode() + read('vision-worker.js').encode() + (docs / 'vendor/lucide.js').read_bytes() + (docs / 'vendor/roboto-latin.woff2').read_bytes()).hexdigest()[:12]

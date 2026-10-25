@@ -165,10 +165,11 @@ assert hashlib.sha256((ROOT / 'docs/vendor/vision/opencv.js').read_bytes()).hexd
 for name, digest in versions['files'].items():
     assert hashlib.sha256((ROOT / 'docs/vendor/companion' / name).read_bytes()).hexdigest() == digest
 service_worker = (ROOT / 'docs/sw.js').read_text()
-assert visual['data'][2:] in service_worker and '__OFFLINE_FILES__' not in service_worker
-assert 'Tesseract' not in page and 'MapleVisualClient' in page
+# The phone no longer runs the matcher; the companion apps bundle it from docs/.
+assert visual['data'][2:] not in service_worker and 'vendor/companion/qr.js' in service_worker and '__OFFLINE_FILES__' not in service_worker
+assert 'Tesseract' not in page and 'MapleVisualClient' not in page, 'The website no longer runs the matcher or OCR'
 assert 'MapleCompanionDevice.detect' in page
-assert not any('id="' + removed + '"' in page for removed in ('mc-visual-file', 'mc-pair-pc', 'mc-pair-phone')), 'Public companion must not expose developer testing or role switches'
+assert not any('id="' + removed + '"' in page for removed in ('mc-visual-file', 'mc-pair-pc', 'mc-pair-phone', 'mc-pair-exchange', 'mc-reader', 'mc-pair-check', 'mc-pair-output')), 'The removed browser-to-browser pairing and in-browser reader must stay gone'
 assert all('id="' + required + '"' in page for required in ('mc-companion-state-title', 'mc-pair-error', 'mc-pair-retry', 'mc-tracking-status'))
 print('PASS: 336 image-backed locations, 335 vectorized maps; every reference and vector bundle matches its pinned hash.')
 print('PASS: 246 map images, 218 minimaps, 457 source-matched portal pairs and image coordinates, 67 anchors, 68 road curves; route, sprite and static publication checks.')

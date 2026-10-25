@@ -75,3 +75,8 @@
 #maple-atlas-concept .mc-get-app-links a.mc-primary {background:var(--mc-blue);border-color:var(--mc-blue);color:var(--mc-paper);}
 #maple-atlas-concept .mc-get-app-links svg {width:18px;height:18px;}
 #maple-atlas-concept .mc-get-app-links small {font-size:11px;opacity:.8;}
+
+#maple-atlas-concept #mc-phone-flow {display:grid;gap:16px;min-width:0;}
+#maple-atlas-concept #mc-phone-flow[hidden] {display:none;}
+#maple-atlas-concept #mc-pair-scan {display:grid;gap:12px;}
+#maple-atlas-concept #mc-pair-scan[hidden] {display:none;}

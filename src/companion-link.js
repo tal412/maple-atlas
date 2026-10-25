@@ -63,8 +63,8 @@
     text=String(text).trim().toUpperCase();
     // The Mac app's QR is a link to this site with the code in the fragment.
     const linked=/^HTTPS?:\/\/[^#\s]+#LINK=(MA2[A-Z2-7]+)$/.exec(text);if(linked)text=linked[1];
-    else if(/^HTTPS?:\/\//.test(text))throw Error('This QR is a website link, not a pairing code. On your computer, open Maple Atlas → Connect phone → Create computer code, then scan the QR it shows.');
-    if(text.startsWith('MAPLE1:'))throw Error('This code is from an older Maple Atlas version. Refresh Maple Atlas on both devices, then pair again.');
+    else if(/^HTTPS?:\/\//.test(text))throw Error('This QR is a website link, not a pairing code. Scan the QR shown in Maple Atlas Companion on your computer.');
+    if(text.startsWith('MAPLE1:'))throw Error('This code is from an old Maple Atlas version. Scan the code in Maple Atlas Companion instead.');
     if(!text.startsWith(prefix)||text.length>prefix.length+Math.ceil(maxBytes*8/5))throw Error('This is not a Maple Atlas pairing code.');
     const bytes=unbase32(text.slice(prefix.length));let at=0;
     const take=n=>{if(at+n>bytes.length)throw invalid();const out=bytes.subarray(at,at+n);at+=n;return out;};
@@ -73,6 +73,8 @@
     // Bit 3 marks a native host (Maple Atlas Companion for Mac): ICE-lite, single scan.
     const native=!!(head&8);
     if(head>>4!==2||!setup||(type==='offer')!==(setup==='actpass')||native&&type!=='offer')throw invalid();
+    // Codes from the removed browser-to-browser pairing carry no app secret.
+    if(!native)throw Error('This code is from an old Maple Atlas version. Scan the code in Maple Atlas Companion instead.');
     const session=Array.from(take(8),b=>b.toString(16).padStart(2,'0')).join(''),time=take(4),expires=((time[0]<<24>>>0)+(time[1]<<16)+(time[2]<<8)+time[3])*1000;
     if(!ignoreExpiry&&(expires<now||expires>now+ttl+30000))throw invalid();
     const mid=string(1,16,/^[A-Za-z0-9_-]+$/),ufrag=string(4,32,ICE_CHARS),pwd=string(22,64,ICE_CHARS);
@@ -102,165 +104,100 @@
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
+  // The phone side of the link to Maple Atlas Companion (Mac or Windows app). The app
+  // is an ICE-lite peer that learns this phone's ICE username from its connectivity
+  // checks, so one scan is enough; the phone then proves the QR secret over the
+  // encrypted channel before the usual hello, heartbeat and location messages.
   function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
-    let pc=null,channel=null,role=null,session=null,expires=0,seq=0,lastSeq=-1,epoch=0,phase='idle';
+    let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
-    let savedOffer=null,savedAnswer=null,finishing=false,cancelGather=null,local=null,native=null;
-    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,role,expires,...extra});};
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
     const random=(n=16)=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>b.toString(16).padStart(2,'0')).join('');
     function clear(){
-      epoch++;cancelGather?.();cancelGather=null;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
+      epoch++;for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);timers.clearInterval(heartbeat);
       expiryTimer=connectTimer=verifyTimer=heartbeat=null;
       if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
       if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
-      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;seq=0;pingSeq=0;pongSeq=-1;savedOffer=savedAnswer=null;finishing=false;local=null;native=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;pingSeq=0;pongSeq=-1;secret=null;joined=null;
     }
-    // A goodbye lets the other device show Disconnected instead of a channel error.
-    // quiet: leave without a goodbye (the page is only going away), so the Mac app
-    // keeps the pairing and the phone can resume it.
-    function stop(message='Disconnected. Start a new pairing to reconnect.',{quiet=false,reason='user'}={}){if(verified&&!quiet)control({kind:'bye',v:2,session});clear();state('disconnected',message,{reason});}
+    // quiet: leave without a goodbye (the page is only going away), so the app keeps
+    // the pairing and the phone can resume it. A goodbye ends it on the computer too.
+    function stop(message='Disconnected.',{quiet=false,reason='user'}={}){if(verified&&!quiet)control({kind:'bye',v:2,session});clear();state('disconnected',message,{reason});}
     function fail(message,reason='network'){clear();state('failed',message,{reason});}
     function control(value){if(channel?.readyState==='open'&&channel.bufferedAmount<4096)channel.send(JSON.stringify(value));}
     function ping(){
       if(!verified)return;
       const age=now()-lastPong;
-      if(age>=20000){fail('The other device stopped responding. Keep both pages open and pair again.','heartbeat');return;}
-      if(age>=9000&&phase==='connected')state('reconnecting','No response from the other device. Checking the connection…');
+      if(age>=20000){fail('Your computer stopped responding.','heartbeat');return;}
+      if(age>=9000&&phase==='connected')state('reconnecting','No response from your computer. Checking the connection…');
       control({kind:'ping',v:2,session,seq:++pingSeq});
     }
     function confirm(){
       if(!helloSeen||!helloAck||verified)return;
       verified=true;lastPong=now();
       for(const timer of [expiryTimer,connectTimer,verifyTimer])timers.clearTimeout(timer);
-      state('connected','Both devices exchanged a confirmation. The connection is working.');
+      state('connected','Connected to Maple Atlas Companion. Your map follows the game.');
       heartbeat=timers.setInterval(ping,3000);ping();
     }
     function bind(c){
       if(channel||c.label!=='maple-atlas'){c.close();return;}channel=c;
       c.onopen=()=>{
-        timers.clearTimeout(connectTimer);state('verifying','The link opened. Verifying that the other device can send and receive…',{deadline:now()+7000});
-        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the other device. Refresh Maple Atlas on both devices, then pair again.','verification'),7000);
-        const hello=()=>control({kind:'hello',v:2,session,role,nonce});
-        if(!native){hello();return;}
-        const version=epoch;proof(native,session,pc.localDescription.sdp).then(value=>{if(version!==epoch)return;control({kind:'auth',v:3,session,proof:value});hello();})
+        timers.clearTimeout(connectTimer);state('verifying','Verifying the connection…',{deadline:now()+7000});
+        nonce=random();verifyTimer=timers.setTimeout(()=>fail('Could not verify the companion app. Reload Maple Atlas, then scan a new code.','verification'),7000);
+        const version=epoch;proof(secret,session,pc.localDescription.sdp).then(value=>{if(version!==epoch)return;control({kind:'auth',v:3,session,proof:value});control({kind:'hello',v:2,session,role:'phone',nonce});})
           .catch(()=>{if(version===epoch)fail('Could not prepare the secure check. Reload Maple Atlas, then scan a new code.','verification');});
       };
-      c.onclose=()=>stop('The other device disconnected or closed its page. Start a new pairing to reconnect.',{quiet:true,reason:'closed'});
-      c.onerror=()=>fail('The device connection encountered an error. Start a new pairing.','channel');
+      c.onclose=()=>stop('The companion app closed the connection.',{quiet:true,reason:'closed'});
+      c.onerror=()=>fail('The connection to your computer had an error.','channel');
       c.onmessage=event=>{
         if(typeof event.data!=='string'||event.data.length>512)return;
         try{
           const value=JSON.parse(event.data);
           if(['hello','hello-ack','ping','pong','bye'].includes(value.kind)){
             if(value.session!==session)return;
-            if(value.kind==='bye'){stop(native?'Maple Atlas on your Mac disconnected. Scan a new code to reconnect.':'The other device disconnected. Start a new pairing to reconnect.',{quiet:true,reason:'bye'});return;}
-            if(value.v!==2){fail('These pages use different pairing versions. Refresh both devices and pair again.','version');return;}
-            if(value.kind==='hello'&&value.role===(role==='pc'?'phone':'pc')&&/^[a-f0-9]{32}$/.test(value.nonce)){
-              helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();
-            }else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
+            if(value.kind==='bye'){stop('Maple Atlas Companion disconnected.',{quiet:true,reason:'bye'});return;}
+            if(value.v!==2){fail('The companion app uses a different version. Update it or reload Maple Atlas, then scan a new code.','version');return;}
+            if(value.kind==='hello'&&value.role==='pc'&&/^[a-f0-9]{32}$/.test(value.nonce)){helloSeen=true;control({kind:'hello-ack',v:2,session,nonce:value.nonce});confirm();}
+            else if(value.kind==='hello-ack'&&value.nonce===nonce&&nonce){helloAck=true;confirm();}
             else if(value.kind==='ping'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>0)control({kind:'pong',v:2,session,seq:value.seq});
             else if(value.kind==='pong'&&verified&&Number.isSafeInteger(value.seq)&&value.seq>pongSeq&&value.seq<=pingSeq){
-              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored. Both devices are responding.');
+              pongSeq=value.seq;lastPong=now();if(phase==='reconnecting'&&pc?.connectionState!=='disconnected')state('connected','Connection restored.');
             }
             return;
           }
-          if(role!=='phone'||!verified||phase!=='connected')return;
+          if(!verified||phase!=='connected')return;
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
-          // The player's dot on that map, in the portal data's coordinates (from the Mac app).
+          // The player's dot on that map, in the portal data's coordinates.
           else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
           else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
         }catch(_){}
       };
     }
-    function start(nextRole){
-      clear();role=nextRole;
+    // Joins the companion app from its code (scanned or remembered). resume: a code
+    // from an earlier pairing, which the app keeps accepting, so its expiry is ignored.
+    async function join(code,{resume=false}={}){
+      const previous=epoch,value=await unpack(code,now(),{ignoreExpiry:resume});if(previous!==epoch)throw Error('Pairing was cancelled.');
+      if(joined===code&&pc)return;
+      clear();
       if(!Peer){state('failed','This browser cannot connect directly to another device.',{reason:'unsupported'});throw Error('Use a browser with WebRTC support.');}
-      pc=new Peer({iceServers:[],iceTransportPolicy:'all'});
+      const version=epoch;session=value.session;expires=value.expires;secret=value.secret;joined=code;
+      pc=new Peer({iceServers:[],iceTransportPolicy:'all'});const current=pc;
       pc.onconnectionstatechange=()=>{
         if(!pc)return;
-        if(pc.connectionState==='failed')fail('The devices could not reach each other. Use the same Wi-Fi network. Guest Wi-Fi, VPNs, a firewall or (on a Mac) a blocked Local Network permission for your browser can stop the link.','network');
-        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for the other device to respond…');
-        // ICE alone does not prove that the other app is receiving messages.
+        if(pc.connectionState==='failed')fail('Your phone could not reach the computer. Use the same Wi-Fi network; guest Wi-Fi, VPNs or a firewall can block the link.','network');
+        else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for your computer…');
         else if(pc.connectionState==='connected'&&verified&&now()-lastPong<9000)ping();
       };
       pc.ondatachannel=e=>bind(e.channel);
-      state('preparing','Preparing a private pairing code…');return epoch;
-    }
-    async function gathered(current,version){
-      if(version!==epoch)throw Error('Pairing was cancelled.');
-      if(current.iceGatheringState!=='complete')await new Promise((resolve,reject)=>{
-        const timer=timers.setTimeout(()=>finish(Error('Could not find a local connection. Check Wi-Fi and retry.')),8000);
-        function finish(error){timers.clearTimeout(timer);current.removeEventListener('icegatheringstatechange',check);cancelGather=null;error?reject(error):resolve();}
-        function check(){if(current.iceGatheringState==='complete')finish();}
-        cancelGather=()=>finish(Error('Pairing was cancelled.'));
-        current.addEventListener('icegatheringstatechange',check);check();
-      });
-      if(version!==epoch)throw Error('Pairing was cancelled.');
-      const value={v:2,type:current.localDescription.type,sdp:current.localDescription.sdp,session,expires};
-      const code=await pack(value);await unpack(code,now());if(version!==epoch)throw Error('Pairing was cancelled.');
-      local=addressing(value.sdp);
-      expiryTimer=timers.setTimeout(()=>{clear();state('expired','The pairing code expired. Create a new code on the computer and scan it again.');},Math.max(1,expires-now()));
-      return code;
-    }
-    async function offer(){
-      const version=start('pc');session=random(8);expires=Math.ceil((now()+ttl)/1000)*1000;const current=pc;
-      try{
-        bind(current.createDataChannel('maple-atlas',{ordered:true}));await current.setLocalDescription(await current.createOffer());const code=await gathered(current,version);
-        state('waiting-phone','Not connected yet. Scan this code on your phone, then scan the phone’s response on this computer.',{addressing:local});return code;
-      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
-    }
-    async function answer(code,{resume=false}={}){
-      const previous=epoch,value=await unpack(code,now(),{ignoreExpiry:resume});if(previous!==epoch)throw Error('Pairing was cancelled.');
-      if(value.type!=='offer')throw Error('This is a phone response. Scan the code shown on your computer.');
-      if(resume&&!value.native)throw Error('Only Mac app pairings can resume.');
-      if(value.native)return join(code,value,resume);
-      // Re-reading the same computer QR must not rotate an active response.
-      if(savedOffer===code&&savedAnswer&&pc)return savedAnswer;
-      const version=start('phone');session=value.session;expires=value.expires;const current=pc;
-      try{
-        await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());const answerCode=await gathered(current,version);
-        savedOffer=code;savedAnswer=answerCode;state('waiting-computer','Computer code scanned successfully. Show this new response QR to your computer. You are not connected yet.',{addressing:local});return answerCode;
-      }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
-    }
-    // Single-scan pairing with Maple Atlas Companion for Mac. The Mac learns this
-    // phone's ICE username from its connectivity checks, so no response code is shown.
-    async function join(code,value,resume=false){
-      if(savedOffer===code&&pc)return null;
-      const version=start('phone');session=value.session;expires=value.expires;native=value.secret;savedOffer=code;const current=pc;
       try{
         await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());
         if(version!==epoch)throw Error('Pairing was cancelled.');
-        state('connecting',resume?'Reconnecting to Maple Atlas on your Mac…':'Connecting to Maple Atlas on your Mac…',{deadline:now()+25000,resume});
-        connectTimer=timers.setTimeout(()=>fail(resume?'Could not reconnect to Maple Atlas on your Mac. Keep the app open on the same Wi-Fi network; it waits 30 minutes for the phone. Otherwise scan a new code.':'Could not reach Maple Atlas on your Mac. Keep the app open, use the same Wi-Fi network on both devices, then scan a new code.','timeout'),25000);
-        // A resumed pairing was verified before; only a first scan honours the code's expiry.
-        if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','The pairing code expired. Create a new code on your Mac and scan it again.');}},Math.max(1,expires-now()));
-        return null;
+        state('connecting',resume?'Reconnecting to your computer…':'Connecting to your computer…',{deadline:now()+25000,resume});
+        connectTimer=timers.setTimeout(()=>fail(resume?'Could not reconnect. Make sure Maple Atlas Companion is open on the same Wi-Fi network.':'Could not reach Maple Atlas Companion. Keep it open and use the same Wi-Fi network on both devices.','timeout'),25000);
+        if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
-    function waitForConnection(){
-      if(!pc||verified||!['waiting-computer','waiting-phone','connecting'].includes(phase))return;
-      timers.clearTimeout(connectTimer);const deadline=now()+25000;
-      state('connecting','Waiting for the device link. Keep both pages open on the same local network.',{deadline});
-      connectTimer=timers.setTimeout(()=>fail('Connection timed out. Make sure the computer scanned the phone response. Both devices must use the same Wi-Fi network; guest Wi-Fi, VPNs, firewalls or (on a Mac) a blocked Local Network permission for your browser may stop pairing.','timeout'),25000);
-    }
-    async function finish(code){
-      const previous=epoch,value=await unpack(code,now());if(previous!==epoch)throw Error('Pairing was cancelled.');
-      if(role!=='pc'||!pc||value.type!=='answer'||value.session!==session||value.expires!==expires||pc.signalingState!=='have-local-offer'||finishing)throw Error('This is not the response to this computer’s current code. Scan the current phone response, or restart pairing on both devices.');
-      const current=pc,version=epoch;finishing=true;
-      try{await current.setRemoteDescription({type:'answer',sdp:value.sdp});if(version===epoch&&!verified&&phase!=='verifying')waitForConnection();}
-      catch(e){if(version===epoch)fail('The phone response could not be applied. Start a new pairing.','response');throw e;}
-      finally{finishing=false;}
-    }
-    function send({id,confidence,observedAt}){
-      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096)return false;
-      const value={kind:'location',id:String(id),confidence,observedAt,seq:seq++};if(!location(value,ids))return false;
-      channel.send(JSON.stringify(value));return true;
-    }
-    function sendStatus(value){
-      if(role!=='pc'||!verified||phase!=='connected'||channel?.readyState!=='open'||channel.bufferedAmount>4096||!['searching','paused'].includes(value))return false;
-      channel.send(JSON.stringify({kind:'tracking',state:value,seq:seq++,observedAt:now()}));return true;
-    }
-    return {offer,answer,finish,waitForConnection,send,sendStatus,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';},get addressing(){return local;},get native(){return !!native;}};
+    return {join,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

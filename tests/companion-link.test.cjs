@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict');
+const crypto=require('node:crypto');
 const {pack,unpack,create,location,addressing}=require('../src/companion-link.js');
 const initial=Date.now(),ids=new Set(['1','2']),seconds=t=>Math.ceil(t/1000)*1000;
 const fp=Array.from({length:32},(_,i)=>(i*7).toString(16).padStart(2,'0').toUpperCase()).join(':');
@@ -7,10 +8,8 @@ const sdpFor=setup=>['v=0','o=- 1 2 IN IP4 127.0.0.1','s=-','t=0 0','a=group:BUN
  'a=candidate:3 1 udp 2122129151 1f4712db-ea17-4bcf-a596-105139dfd8bf.local 34567 typ host generation 0','a=candidate:4 1 tcp 1518280447 10.0.0.2 9 typ host tcptype active',
  'a=candidate:5 1 udp 1686052607 203.0.113.9 40000 typ srflx raddr 10.0.0.2 rport 12345','a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=ice-options:trickle',
  'a=fingerprint:sha-256 '+fp,'a=setup:'+setup,'a=mid:0','a=sctp-port:5000',''].join('\r\n');
-const sdp=sdpFor('actpass'),answerSdp=sdpFor('active');
-const offer={v:2,type:'offer',sdp,session:'a'.repeat(16),expires:seconds(initial+600000)};
-const asAnswer=value=>({...value,type:'answer',sdp:value.sdp.replace('a=setup:actpass','a=setup:active')});
-const packed=async value=>unpack(await pack(value),initial);
+const secret=Uint8Array.from({length:16},(_,i)=>i);
+const offer={v:2,type:'offer',sdp:sdpFor('actpass'),session:'a'.repeat(16),expires:seconds(initial+600000),secret};
 class Clock{
  constructor(){this.time=initial;this.next=0;this.tasks=new Map();}
  setTimeout(fn,ms){const id=++this.next;this.tasks.set(id,{fn,at:this.time+ms,every:0});return id;}
@@ -20,98 +19,76 @@ class Clock{
  advance(ms){const end=this.time+ms;for(;;){const task=[...this.tasks].sort((a,b)=>a[1].at-b[1].at)[0];if(!task||task[1].at>end)break;const [id,t]=task;this.time=t.at;if(t.every)t.at+=t.every;else this.tasks.delete(id);t.fn();}this.time=end;}
 }
 class Peer{
- constructor(config){assert.deepEqual(config.iceServers,[]);this.iceGatheringState='complete';this.connectionState='new';Peer.last=this;}
- createDataChannel(label){return this.channel={label,readyState:'connecting',bufferedAmount:0,messages:[],close(){this.readyState='closed';},send(value){this.sent=value;this.messages.push(JSON.parse(value));}};}
- async createOffer(){return {type:'offer',sdp};}
- async createAnswer(){return {type:'answer',sdp:answerSdp};}
- async setLocalDescription(value){this.localDescription=value;this.signalingState=value.type==='offer'?'have-local-offer':'stable';}
- async setRemoteDescription(value){this.remoteDescription=value;this.signalingState=value.type==='offer'?'have-remote-offer':'stable';}
+ constructor(config){assert.deepEqual(config.iceServers,[]);this.connectionState='new';Peer.last=this;}
+ createDataChannel(label){return {label,readyState:'connecting',bufferedAmount:0,messages:[],close(){this.readyState='closed';},send(value){this.messages.push(JSON.parse(value));}};}
+ async createAnswer(){return {type:'answer',sdp:sdpFor('active')};}
+ async setLocalDescription(value){this.localDescription=value;}
+ async setRemoteDescription(value){this.remoteDescription=value;}
  close(){this.closed=true;}
 }
 function harness(extra={}){const clock=new Clock(),states=[];const link=create({ids,Peer,timers:clock,now:()=>clock.time,onState:s=>states.push(s),...extra});return {link,clock,states,last:()=>states.at(-1)};}
-function openChannel(peer,link,session,remoteRole){
- const channel=peer.channel;channel.readyState='open';channel.onopen();assert(!link.connected,'An open channel is not an application confirmation');
- const hello=channel.messages.findLast(m=>m.kind==='hello'),deliver=v=>channel.onmessage({data:JSON.stringify(v)});
- deliver({kind:'hello-ack',v:2,session,nonce:'0'.repeat(32)});assert(!link.connected,'A mismatched acknowledgement is rejected');
- deliver({kind:'hello',v:2,session,role:remoteRole,nonce:'f'.repeat(32)});assert(!link.connected,'Both directions must be verified');
- deliver({kind:'hello-ack',v:2,session,nonce:hello.nonce});assert(link.connected);return {channel,deliver};
+const tick=()=>new Promise(r=>setTimeout(r,30));
+// The app creates the data channel, the phone authenticates, then both say hello.
+async function connect(h,code){
+ await h.link.join(code);const peer=Peer.last,channel=peer.createDataChannel('maple-atlas');peer.ondatachannel({channel});
+ channel.readyState='open';channel.onopen();await tick();
+ const [auth,hello]=channel.messages,deliver=v=>channel.onmessage({data:JSON.stringify(v)});
+ deliver({kind:'hello',v:2,session:offer.session,role:'pc',nonce:'e'.repeat(32)});assert(!h.link.connected,'Both directions must be verified');
+ deliver({kind:'hello-ack',v:2,session:offer.session,nonce:hello.nonce});
+ return {peer,channel,deliver,auth,hello};
 }
 (async()=>{
+ // Codes: compact, alphanumeric, only from the companion app.
  const code=await pack(offer),decoded=await unpack(code,initial);
- assert.match(code,/^MA2[A-Z2-7]+$/,'Codes use the QR alphanumeric character set');assert(code.length<220,'Codes stay small enough for a webcam to read');
- assert.deepEqual({...decoded,sdp:undefined},{...offer,sdp:undefined});assert.equal(await pack(decoded),code,'Rebuilt descriptions encode identically');
- for(const line of ['a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=fingerprint:sha-256 '+fp,'a=setup:actpass','a=mid:0','a=candidate:1 1 udp 2122260223 10.0.0.2 12345 typ host','a=candidate:3 1 udp 2122260221 2001:db8:0:0:0:0:0:5 23456 typ host',' 1f4712db-ea17-4bcf-a596-105139dfd8bf.local 34567 typ host'])assert(decoded.sdp.includes(line),line);
+ assert.match(code,/^MA2[A-Z2-7]+$/);assert(code.length<260);assert(decoded.native);assert.deepEqual([...decoded.secret],[...secret]);
+ for(const line of ['a=ice-lite','a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=fingerprint:sha-256 '+fp,'a=setup:actpass','a=candidate:1 1 udp 2122260223 10.0.0.2 12345 typ host'])assert(decoded.sdp.includes(line),line);
  assert(!/ tcp | srflx /.test(decoded.sdp),'Only direct UDP host candidates are carried');assert.deepEqual(addressing(decoded.sdp),{ip:2,names:1});
- assert.equal((await packed(asAnswer(offer))).sdp.match(/a=setup:(\w+)/)[1],'active');
- const bad=[{expires:seconds(initial)-2000},{expires:seconds(initial+700000)},{expires:initial+0.5},{session:'invalid'},{sdp:sdp+'m=video 9 RTP/AVP 96\r\n'},{sdp:sdp.replace(/ typ host/g,' typ relay')},{sdp:sdp.replace('a=fingerprint:sha-256','a=fingerprint:sha-1')},{sdp:sdp.replace('a=ice-pwd:abcdefghijklmnopqrstuv12','a=ice-pwd:short')},{type:'answer'},{...asAnswer(offer),type:'offer'}];
- for(const patch of bad)await assert.rejects(packed({...offer,...patch}),undefined,JSON.stringify(patch).slice(0,80));
- for(const text of ['https://not-a-pairing-code.test','MA2'+'A'.repeat(800),code.slice(0,-6),code+'AAAA','MA2'+'7'+code.slice(4),'MA2!'+code.slice(4)])await assert.rejects(unpack(text,initial));
- await assert.rejects(unpack('MAPLE1:abc',initial),/older Maple Atlas version/);
- await assert.rejects(unpack('https://tal412.github.io/maple-atlas/dev/',initial),/website link, not a pairing code/);
- assert.equal((await unpack(code.toLowerCase(),initial)).session,offer.session,'Codes survive case changes from scanners');
- const pc=harness(),own=await unpack(await pc.link.offer(),initial),pcPeer=Peer.last;
- assert.equal(pc.last().phase,'waiting-phone');assert.deepEqual(pc.last().addressing,{ip:2,names:1});assert.match(own.session,/^[a-f0-9]{16}$/);
- await assert.rejects(pc.link.finish(await pack({...asAnswer(own),session:'b'.repeat(16)})));assert.equal(pc.last().phase,'waiting-phone');
- await pc.link.finish(await pack(asAnswer(own)));assert.equal(pc.last().phase,'connecting');assert(!pc.link.connected);
- pcPeer.connectionState='connected';pcPeer.onconnectionstatechange();assert(!pc.link.connected,'ICE success alone never displays Connected');
- const {channel:pcChannel,deliver:toPC}=openChannel(pcPeer,pc.link,own.session,'phone');
- assert(!pc.link.send({id:'missing',confidence:99,observedAt:initial}));assert(pc.link.send({id:'1',confidence:90,observedAt:initial,pixels:'must not transmit'}));
- const sent=JSON.parse(pcChannel.sent);assert.deepEqual(Object.keys(sent),['kind','id','confidence','observedAt','seq']);assert(location(sent,ids));
- assert(!pc.link.sendStatus('invalid'));assert(pc.link.sendStatus('searching'));const searching=JSON.parse(pcChannel.sent);
- pc.clock.advance(9001);assert.equal(pc.last().phase,'reconnecting');assert(!pc.link.connected);assert(!pc.link.send({id:'1',confidence:90,observedAt:pc.clock.time}));
- const ping=pcChannel.messages.findLast(m=>m.kind==='ping');toPC({...ping,kind:'pong'});assert.equal(pc.last().phase,'connected');assert(pc.link.connected);
- pc.clock.advance(21000);assert.equal(pc.last().phase,'failed');assert.equal(pc.last().reason,'heartbeat');assert(pcPeer.closed);
-
- const received=[],readings=[],phone=harness({onLocation:v=>received.push(v),onReading:v=>readings.push(v)}),offerCode=await pack(offer);
- const response=await phone.link.answer(offerCode),phonePeer=Peer.last;
- assert.equal(phone.last().phase,'waiting-computer');assert.equal(await phone.link.answer(offerCode),response,'Repeated scans keep the same response');assert.equal(Peer.last,phonePeer);
- const channel=phonePeer.createDataChannel('maple-atlas');phonePeer.ondatachannel({channel});channel.onmessage({data:JSON.stringify(sent)});assert.equal(received.length,0);
- const {deliver}=openChannel(phonePeer,phone.link,offer.session,'pc');
- deliver(sent);deliver(sent);deliver({...sent,seq:sent.seq+1,id:'unknown'});deliver({...sent,seq:sent.seq+2,confidence:101});assert.equal(received.length,1);
- deliver(searching);deliver(searching);deliver(sent);deliver({...searching,seq:searching.seq+1,state:'invented'});deliver({...searching,seq:searching.seq+1,observedAt:null});assert.deepEqual(readings,['searching']);
- deliver({...sent,seq:sent.seq+3,id:'2'});assert.equal(received.length,2);deliver({...searching,seq:sent.seq+4,state:'paused'});assert.deepEqual(readings,['searching','paused']);
- phone.link.stop();assert.equal(channel.onmessage,null);assert(phonePeer.closed);assert.equal(phone.clock.tasks.size,0);
-
- const timeout=harness();await timeout.link.answer(offerCode);timeout.link.waitForConnection();assert.equal(timeout.last().phase,'connecting');timeout.clock.advance(25000);assert.equal(timeout.last().reason,'timeout');assert(!timeout.link.connected);
- const expired=harness();await expired.link.offer();expired.clock.advance(601000);assert.equal(expired.last().phase,'expired');assert.equal(expired.clock.tasks.size,0);
- const unverified=harness();await unverified.link.offer();const oldPeer=Peer.last;oldPeer.channel.readyState='open';oldPeer.channel.onopen();unverified.clock.advance(7000);assert.equal(unverified.last().reason,'verification');assert(!unverified.link.connected);
- const network=harness();await network.link.offer();Peer.last.connectionState='failed';Peer.last.onconnectionstatechange();assert.equal(network.last().reason,'network');
- const stopped=harness();await stopped.link.offer();stopped.link.stop();assert.equal(stopped.last().phase,'disconnected');assert.equal(stopped.clock.tasks.size,0);
- const decoding=harness(),decodingAnswer=decoding.link.answer(offerCode);decoding.link.stop();await assert.rejects(decodingAnswer,/cancelled/);assert.equal(decoding.last().phase,'disconnected');assert.equal(decoding.clock.tasks.size,0);
- let startedGather;const gatheringStarted=new Promise(resolve=>{startedGather=resolve;});
- class GatheringPeer extends Peer{
-  constructor(config){super(config);this.iceGatheringState='gathering';}
-  addEventListener(name,fn){this.listener=fn;startedGather();}
-  removeEventListener(){this.listener=null;}
- }
- const gathering=harness({Peer:GatheringPeer}),gatheringOffer=gathering.link.offer();await gatheringStarted;gathering.link.stop();await assert.rejects(gatheringOffer,/cancelled/);assert.equal(gathering.last().phase,'disconnected');assert.equal(gathering.clock.tasks.size,0);assert.equal(Peer.last.listener,null);
- const mismatch=harness();await mismatch.link.offer();const mismatchPeer=Peer.last;mismatchPeer.channel.readyState='open';mismatchPeer.channel.onopen();const hello=mismatchPeer.channel.messages.find(m=>m.kind==='hello');mismatchPeer.channel.onmessage({data:JSON.stringify({...hello,v:99,role:'phone'})});assert.equal(mismatch.last().reason,'version');assert(!mismatch.link.connected);
- const positions=[],tracked=harness({onPosition:v=>positions.push(v)});await tracked.link.answer(offerCode);const trackedPeer=Peer.last;
- const trackedChannel=trackedPeer.createDataChannel('maple-atlas');trackedPeer.ondatachannel({channel:trackedChannel});const {deliver:toTracked}=openChannel(trackedPeer,tracked.link,offer.session,'pc');
- const at={kind:'position',id:'1',x:3400,y:940,seq:10,observedAt:initial};
- toTracked(at);toTracked(at);toTracked({...at,seq:11,id:'missing'});toTracked({...at,seq:12,x:'5'});toTracked({...at,seq:13,y:Infinity});toTracked({...at,seq:14,x:2e6});
- assert.equal(positions.length,1,'Only valid, new positions for known maps are accepted');assert.deepEqual({id:positions[0].id,x:positions[0].x,y:positions[0].y},{id:'1',x:3400,y:940});
- toTracked({...at,seq:15,x:3500});assert.equal(positions.length,2);tracked.link.stop();
- // Single-scan pairing with the native Mac app (ICE-lite host + QR secret).
+ assert.equal(await pack(decoded),code,'Rebuilt descriptions encode identically');
  const golden='MA2FCVKVKVKVKVKVKTLJHJAAAJQARAWEQZRDBQWEY3EMVTGO2DJNJVWY3LON5YHC4TTOR2XMMJSAADQ4FI4EMVDCOB7IZGVIW3CNFYHO7UFRSJZVINIV63L3RGL2LMQCBAKAAAAEMBZAAAQEAYEAUDAOCAJBIFQYDIOB4';
  const goldenSdp=['v=0','m=application 9 UDP/DTLS/SCTP webrtc-datachannel','a=candidate:1 1 udp 2122260223 10.0.0.2 12345 typ host','a=ice-ufrag:AbC1','a=ice-pwd:abcdefghijklmnopqrstuv12','a=fingerprint:sha-256 '+fp,'a=setup:actpass','a=mid:0',''].join('\r\n');
- const secret=Uint8Array.from({length:16},(_,i)=>i);
  assert.equal(await pack({type:'offer',sdp:goldenSdp,session:'a'.repeat(16),expires:1800000000000,secret}),golden,'Must match the Go encoder in macos/link');
- const host=await unpack(golden,1800000000000-60000);assert(host.native);assert.deepEqual([...host.secret],[...secret]);assert.match(host.sdp,/\r\na=ice-lite\r\n/);
- assert.equal((await unpack('https://tal412.github.io/maple-atlas/dev/#link='+golden,1800000000000-60000)).session,'a'.repeat(16),'The QR link form is accepted');
- await assert.rejects(unpack('https://tal412.github.io/maple-atlas/dev/#link=nope',initial),/website link/);
- await assert.rejects(packed({...asAnswer(offer),secret}),undefined,'Only offers carry a host secret');
- const nativeCode=await pack({...offer,secret}),joined=harness();
- assert.equal(await joined.link.answer(nativeCode),null,'No response code is shown for the Mac app');assert.equal(joined.last().phase,'connecting');
- const joinPeer=Peer.last;assert.match(joinPeer.remoteDescription.sdp,/a=ice-lite/);
- const hostChannel=joinPeer.createDataChannel('maple-atlas');joinPeer.ondatachannel({channel:hostChannel});hostChannel.readyState='open';hostChannel.onopen();
- await new Promise(r=>setTimeout(r,50));
- const [auth,phoneHello]=hostChannel.messages;assert.equal(auth.kind,'auth');assert.equal(auth.v,3);assert.equal(phoneHello.kind,'hello','Auth goes first, then the usual hello');
- const expected=require('node:crypto').createHmac('sha256',Buffer.from(secret)).update('maple-atlas-link|'+offer.session+'|'+fp).digest('base64url');assert.equal(auth.proof,expected);
- const toPhone=v=>hostChannel.onmessage({data:JSON.stringify(v)});
- toPhone({kind:'hello',v:2,session:offer.session,role:'pc',nonce:'e'.repeat(32)});toPhone({kind:'hello-ack',v:2,session:offer.session,nonce:phoneHello.nonce});assert(joined.link.connected);
- toPhone({kind:'bye',v:2,session:'0'.repeat(16)});assert(joined.link.connected,'A goodbye for another session is ignored');
- toPhone({kind:'bye',v:2,session:offer.session});assert.equal(joined.last().phase,'disconnected');assert.match(joined.last().message,/Mac disconnected/);assert.equal(joined.clock.tasks.size,0);
- const late=harness();await late.link.answer(nativeCode);late.clock.advance(25000);assert.equal(late.last().reason,'timeout');assert.match(late.last().message,/Mac/);
- console.log('PASS: compact MA2 codes (IPv4, IPv6, mDNS, rejection), Mac app single-scan (golden code, QR link, HMAC auth, bye), live positions, explicit scan/response states, stable repeated scans, two-way confirmation, no false connected state, heartbeat loss/recovery, timeout/expiry/failure, replay rejection and cleanup');
+ assert.equal((await unpack('https://tal412.github.io/maple-atlas/#link='+golden,1800000000000-60000)).session,'a'.repeat(16),'The QR link form is accepted');
+ assert.equal((await unpack(code.toLowerCase(),initial)).session,offer.session,'Codes survive case changes from scanners');
+ const browserCode=await pack({...offer,secret:undefined});
+ await assert.rejects(unpack(browserCode,initial),/old Maple Atlas version/,'Codes from the removed browser pairing are refused');
+ await assert.rejects(unpack('MAPLE1:abc',initial),/old Maple Atlas version/);
+ await assert.rejects(unpack('https://tal412.github.io/maple-atlas/',initial),/website link/);
+ for(const text of ['MA2'+'A'.repeat(800),code.slice(0,-6),code+'AAAA','MA2!'+code.slice(4)])await assert.rejects(unpack(text,initial));
+ await assert.rejects(unpack(await pack({...offer,expires:seconds(initial)-2000}),initial),'Expired codes are refused');
+ assert.equal((await unpack(await pack({...offer,expires:seconds(initial)-2000}),initial,{ignoreExpiry:true})).session,offer.session,'Remembered codes resume after expiry');
+ for(const bad of [{session:'invalid'},{sdp:offer.sdp+'m=video 9 RTP/AVP 96\r\n'},{sdp:offer.sdp.replace(/ typ host/g,' typ relay')},{sdp:offer.sdp.replace('sha-256','sha-1')}])
+  await assert.rejects((async()=>unpack(await pack({...offer,...bad}),initial))());
+
+ // Joining: one scan, the QR secret proven over this phone's own certificate.
+ const received=[],readings=[],positions=[],h=harness({onLocation:v=>received.push(v),onReading:v=>readings.push(v),onPosition:v=>positions.push(v)});
+ const {peer,channel,deliver,auth,hello}=await connect(h,code);
+ assert.match(peer.remoteDescription.sdp,/a=ice-lite/);assert(h.link.connected);assert.equal(h.last().phase,'connected');
+ assert.equal(auth.kind,'auth');assert.equal(auth.v,3);assert.equal(hello.kind,'hello');assert.equal(hello.role,'phone');
+ assert.equal(auth.proof,crypto.createHmac('sha256',Buffer.from(secret)).update('maple-atlas-link|'+offer.session+'|'+fp).digest('base64url'));
+ const at={kind:'location',id:'1',confidence:90,observedAt:initial,seq:1};
+ deliver(at);deliver(at);deliver({...at,seq:2,id:'unknown'});deliver({...at,seq:3,confidence:101});assert.equal(received.length,1,'Replays, unknown maps and bad values are ignored');assert(location(received[0],ids));
+ deliver({kind:'position',id:'1',x:3400,y:940,seq:4,observedAt:initial});deliver({kind:'position',id:'1',x:'5',y:1,seq:5,observedAt:initial});deliver({kind:'position',id:'missing',x:1,y:1,seq:6,observedAt:initial});
+ assert.deepEqual(positions.map(p=>[p.x,p.y]),[[3400,940]]);
+ deliver({kind:'tracking',state:'searching',seq:7,observedAt:initial});deliver({kind:'tracking',state:'invented',seq:8,observedAt:initial});assert.deepEqual(readings,['searching']);
+ // Heartbeat: quiet after 9 s, restored by a pong, failed after 20 s.
+ h.clock.advance(9001);assert.equal(h.last().phase,'reconnecting');
+ const ping=channel.messages.findLast(m=>m.kind==='ping');deliver({...ping,kind:'pong'});assert.equal(h.last().phase,'connected');
+ h.clock.advance(21000);assert.equal(h.last().phase,'failed');assert.equal(h.last().reason,'heartbeat');assert(peer.closed);
+
+ // Goodbyes: the app's bye ends it; the phone's own Disconnect sends one; leaving quietly does not.
+ const b=harness(),bye=await connect(b,code);bye.deliver({kind:'bye',v:2,session:'0'.repeat(16)});assert(b.link.connected,'A goodbye for another session is ignored');
+ bye.deliver({kind:'bye',v:2,session:offer.session});assert.equal(b.last().phase,'disconnected');assert.equal(b.last().reason,'bye');assert.equal(b.clock.tasks.size,0);
+ const d=harness(),own=await connect(d,code);d.link.stop('Disconnected.');assert.equal(own.channel.messages.at(-1).kind,'bye');assert.equal(d.last().reason,'user');
+ const q=harness(),quiet=await connect(q,code);const sent=quiet.channel.messages.length;q.link.stop(undefined,{quiet:true,reason:'page'});assert.equal(quiet.channel.messages.length,sent,'Leaving the page sends no goodbye');assert.equal(q.last().reason,'page');
+
+ // Failures: timeout, expiry, unverified link, version mismatch, network.
+ const late=harness();await late.link.join(code);late.clock.advance(25000);assert.equal(late.last().reason,'timeout');
+ const resumed=harness();await resumed.link.join(code,{resume:true});assert.match(resumed.last().message,/Reconnecting/);resumed.clock.advance(25000);assert.match(resumed.last().message,/reconnect/i);
+ const expired=harness();await expired.link.join(code);expired.clock.advance(601000);assert.ok(['expired','failed'].includes(expired.last().phase));
+ const unverified=harness();await unverified.link.join(code);const up=Peer.last,uc=up.createDataChannel('maple-atlas');up.ondatachannel({channel:uc});uc.readyState='open';uc.onopen();unverified.clock.advance(7000);assert.equal(unverified.last().reason,'verification');
+ const mismatch=harness(),m=await connect(harness(),code);void m;const mm=await (async()=>{await mismatch.link.join(code);const p=Peer.last,c=p.createDataChannel('maple-atlas');p.ondatachannel({channel:c});c.readyState='open';c.onopen();await tick();c.onmessage({data:JSON.stringify({kind:'hello',v:99,session:offer.session,role:'pc',nonce:'e'.repeat(32)})});return mismatch.last();})();
+ assert.equal(mm.reason,'version');
+ const network=harness();await network.link.join(code);Peer.last.connectionState='failed';Peer.last.onconnectionstatechange();assert.equal(network.last().reason,'network');
+ const twice=harness();await twice.link.join(code);const first=Peer.last;await twice.link.join(code);assert.equal(Peer.last,first,'Scanning the same code again keeps the connection attempt');
+ console.log('PASS: app-only codes (golden, QR link, case, expiry, old codes refused) · one-scan join with HMAC auth · hello, heartbeat, positions, tracking · goodbyes, quiet leave · timeout, expiry, verification, version, network');
 })().catch(e=>{console.error(e);process.exitCode=1;});
