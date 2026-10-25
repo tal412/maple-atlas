@@ -16,6 +16,7 @@
     if(v.event==='code'){code=v;paired=false;showCode();}
     else if(v.event==='paired'){code=null;paired=true;$('qr').hidden=true;}
     else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);}
+    else if(v.event==='update'){$('update-text').textContent=v.message;$('update').hidden=v.phase!=='failed';$('update').disabled=false;if(v.phase==='failed')$('update').textContent='Try again';}
     else if(v.event==='error'){$('phone-error').textContent=v.message;$('phone-error').hidden=false;}
     paintPhone();
   };
@@ -35,6 +36,18 @@
   setInterval(()=>{if(code&&!paired){const s=Math.max(0,Math.round((code.expires-Date.now())/1000));$('qr-expiry').textContent=s?'Expires in '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):'Code expired — press New code';}},1000);
   $('new-code').onclick=()=>{paired=false;cmd({cmd:'pair'});};
   $('disconnect').onclick=()=>cmd({cmd:'stop'});
+
+  // Updates: checked at launch and every 6 hours; one click downloads and runs the setup.
+  async function checkUpdate(){
+    try{
+      const r=await fetch('/api/update',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
+      if(r.error){$('update-text').textContent='Version '+r.current;return;}
+      $('update-text').textContent=r.available?'Version '+r.latest+' is available (you have '+r.current+')':'Version '+r.current+' · Up to date';
+      $('update').hidden=!r.available;$('update').textContent='Update to '+r.latest;
+    }catch(_){}
+  }
+  $('update').onclick=()=>{$('update').disabled=true;$('update-text').textContent='Starting the update…';fetch('/api/update',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>{$('update').disabled=false;});};
+  checkUpdate();setInterval(checkUpdate,6*3600*1000);
 
   // Engine.
   window.addEventListener('atlas-engine',e=>{if(!engineReady&&e.detail?.message)$('engine').textContent=e.detail.message;});

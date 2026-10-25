@@ -22,6 +22,7 @@ button{font:inherit;min-height:40px;padding:8px 18px;border-radius:20px;border:1
 .box{position:absolute;border:2px solid #f0c419;box-shadow:0 0 0 9999px #0007;border-radius:4px;pointer-events:none}.box span{position:absolute;left:-2px;top:-24px;background:#f0c419;color:#3d2e00;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
 .hint{color:var(--muted);font-size:13px;margin:0}.error{color:var(--red)}
 dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{color:var(--muted)}dd{margin:0}
+.update{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:13px;opacity:.85}.update button{padding:8px 16px}
 </style>
 </head>
 <body>
@@ -47,6 +48,7 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{c
 <section aria-labelledby="tracking-title">
   <h2 id="tracking-title">Tracking</h2>
   <dl><dt>Map engine</dt><dd id="engine">Loading the map index…</dd><dt>Reading</dt><dd id="reading">Not tracking</dd><dt>Last match</dt><dd id="last-map">—</dd><dt>Your position</dt><dd id="position">—</dd><dt>Quest Helper</dt><dd id="quests">Not read yet</dd></dl>
+  <p class="update" id="update-row"><span id="update-text">Version …</span><button type="button" id="update" hidden>Update</button></p>
 </section>
 
 <script src="./qr.js"></script>

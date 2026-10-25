@@ -15,8 +15,12 @@ struct ContentView: View {
         .frame(minWidth: 480, idealWidth: 520, minHeight: 560, idealHeight: 820)
         .safeAreaInset(edge: .bottom) {
             HStack {
-                Text("Site: \(model.site.title)")
+                Text(model.updater.label)
                     .foregroundStyle(.secondary)
+                if model.updater.canInstall {
+                    Button("Update") { Task { await model.updater.install() } }
+                        .buttonStyle(.borderedProminent)
+                }
                 Spacer()
                 Button("Diagnostics") { openWindow(id: "log") }
                 SettingsLink { Text("Settings…") }
@@ -302,13 +306,18 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Picker("Phone opens", selection: $model.site) {
-                ForEach(SiteOption.allCases) { option in
-                    Text("\(option.title) — \(option.url)").tag(option)
+            LabeledContent("Version", value: model.updater.current)
+            LabeledContent("Updates") {
+                HStack {
+                    Text(model.updater.label).foregroundStyle(.secondary)
+                    if model.updater.canInstall {
+                        Button("Update") { Task { await model.updater.install() } }
+                    } else {
+                        Button("Check now") { Task { await model.updater.check() } }
+                    }
                 }
             }
-            .pickerStyle(.radioGroup)
-            Text("Changing this restarts the connection and creates a new code.")
+            Text("The phone opens \(model.site.url). Update checks contact GitHub only.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }

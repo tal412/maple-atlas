@@ -48,7 +48,7 @@ PY
 
 echo "==> Compiling MapleAtlasCompanion.exe (windows/amd64)"
 (cd "$LINK" && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags desktopui -trimpath \
-  -ldflags "-s -w -H=windowsgui" -o "$OUT/MapleAtlasCompanion.exe" .)
+  -ldflags "-s -w -H=windowsgui -X main.version=$VERSION" -o "$OUT/MapleAtlasCompanion.exe" .)
 
 rm -f "$LINK"/rsrc_windows_*.syso
 

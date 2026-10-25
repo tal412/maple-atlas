@@ -2842,11 +2842,11 @@ window.mapleStorageReady.then(() => {
       }
       if(['failed','expired','disconnected'].includes(value.phase)){
         stopScan();lastSeen=0;input.value='';releaseWake();
-        // A rejected code forgets the pairing; a deliberate disconnect keeps it but stops
-        // retrying; a dropped link retries by itself.
-        if(['verification','version'].includes(value.reason))forget();
-        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
-        else if(remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
+        // The pairing is only removed with "Forget this computer": a failed or slow check
+        // after a reload is retried, never treated as a rejection. A deliberate disconnect
+        // keeps it but stops retrying; a dropped link retries by itself, backing off.
+        if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
+        else if(remembered()&&!remembered().paused&&resumeTries<6){onConnection('resuming');setTimeout(()=>void resume(),Math.min(8000,1500*resumeTries));return;}
         onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
         checklist(value.phase==='failed'&&['network','timeout'].includes(value.reason));
         if(remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Computer not connected · Tap to reconnect';}

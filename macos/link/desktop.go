@@ -178,6 +178,50 @@ func runDesktop(site, stateDir string, _ bool) {
 		go ctrl.handle(cmd)
 		w.WriteHeader(http.StatusNoContent)
 	})
+	// Updates: GET checks the latest release; POST downloads its setup and starts it.
+	// Progress arrives as "update" events.
+	var updating sync.Mutex
+	mux.HandleFunc("/api/update", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Companion-Token") != token || r.Header.Get("Origin") != origin && r.Method == http.MethodPost {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		rel, err := latestRelease()
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{"current": version, "error": "Could not check for updates: " + err.Error()})
+			return
+		}
+		latest, setup := releaseVersion(rel.Tag), rel.asset(setupName)
+		available := setup != nil && newerVersion(latest, version)
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{"current": version, "latest": latest, "available": available, "page": rel.Page})
+			return
+		}
+		if r.Method != http.MethodPost || !available {
+			http.Error(w, "no update", http.StatusConflict)
+			return
+		}
+		if !updating.TryLock() {
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
+		go func() {
+			defer updating.Unlock()
+			h.emit(map[string]any{"event": "update", "phase": "downloading", "message": "Downloading version " + latest + "…"})
+			path, err := downloadAsset(setup, latest)
+			if err == nil {
+				err = startInstaller(path)
+			}
+			if err != nil {
+				h.emit(map[string]any{"event": "update", "phase": "failed", "message": "Update failed: " + err.Error()})
+				return
+			}
+			h.emit(map[string]any{"event": "update", "phase": "installing", "message": "Follow the setup window. The companion reopens when it finishes."})
+		}()
+		w.WriteHeader(http.StatusAccepted)
+	})
 	go http.Serve(ln, mux)
 
 	ctrl.handle(command{Cmd: "start"})

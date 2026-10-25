@@ -78,6 +78,7 @@ final class CompanionModel {
     }
 
     @ObservationIgnored let engine = EngineHost()
+    @ObservationIgnored let updater = Updater()
     @ObservationIgnored let capture = GameCapture()
     @ObservationIgnored private var regionKey = "default"
     @ObservationIgnored private var helper: HelperProcess?
@@ -99,7 +100,9 @@ final class CompanionModel {
     }
 
     init() {
-        site = SiteOption(rawValue: UserDefaults.standard.string(forKey: Keys.site) ?? "") ?? .main
+        // The phone always opens the main site (the dev preview is no longer offered).
+        site = .main
+        UserDefaults.standard.removeObject(forKey: Keys.site)
         engine.onProgress = { [weak self] message in
             guard let self else { return }
             if case .ready = self.engineStatus { return }
@@ -154,6 +157,7 @@ final class CompanionModel {
     // MARK: Lifecycle
 
     func start() {
+        updater.start()
         launchHelper()
         startPreviewLoop()
     }
