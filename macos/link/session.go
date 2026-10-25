@@ -96,7 +96,9 @@ func mustECDSAKey() *ecdsa.PrivateKey {
 }
 
 func interfaceAllowed(name string) bool {
-	for _, skip := range []string{"lo", "utun", "awdl", "llw", "bridge", "anpi", "ap", "gif", "stf", "vmnet", "vboxnet", "ipsec", "ppp"} {
+	// macOS virtual interfaces, then Windows virtual adapters (Hyper-V/WSL, VPNs, VMs).
+	for _, skip := range []string{"lo", "utun", "awdl", "llw", "bridge", "anpi", "ap", "gif", "stf", "vmnet", "vboxnet", "ipsec", "ppp",
+		"vEthernet", "VMware", "VirtualBox", "Loopback", "Bluetooth", "Tailscale", "ZeroTier", "Hamachi", "OpenVPN", "WireGuard"} {
 		if strings.HasPrefix(name, skip) {
 			return false
 		}

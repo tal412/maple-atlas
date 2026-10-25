@@ -14,3 +14,5 @@ docs/mobile-qa.html
 
 macos/build/
 macos/App/.build/
+macos/link/webui/
+windows/build/

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Maple Atlas Companion</title>
+<link rel="icon" href="./favicon.svg">
+<style>
+:root{--ink:#1f1f1f;--muted:#5e6368;--paper:#fff;--soft:#f0f4f9;--edge:#dde3ea;--blue:#0b57d0;--green:#1e8e3e;--amber:#b06000;--red:#b3261e;font:15px/1.45 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--soft)}
+@media (prefers-color-scheme:dark){:root{--ink:#e3e3e3;--muted:#a8adb3;--paper:#1f2021;--soft:#131314;--edge:#3c4043;--blue:#a8c7fa;--green:#6dd58c;--amber:#ffb95c;--red:#f2b8b5}}
+*{box-sizing:border-box}body{margin:0;padding:20px;display:grid;gap:16px;max-width:620px;margin-inline:auto}
+header{display:flex;align-items:center;gap:12px}header img{width:36px;height:36px}h1{font-size:20px;font-weight:600;margin:0}header small{color:var(--muted);display:block}
+section{background:var(--paper);border:1px solid var(--edge);border-radius:20px;padding:18px;display:grid;gap:12px}
+h2{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+.status{display:flex;gap:12px;align-items:flex-start}.status b{display:block;font-size:16px}.status p{margin:2px 0 0;color:var(--muted)}
+.dot{flex:none;width:12px;height:12px;border-radius:50%;margin-top:6px;background:var(--muted)}.dot[data-tone=ok]{background:var(--green)}.dot[data-tone=wait]{background:var(--amber)}.dot[data-tone=bad]{background:var(--red)}
+.qr{display:grid;justify-items:center;gap:6px;text-align:center}.qr canvas{background:#fff;border-radius:16px;padding:6px;image-rendering:pixelated;width:260px;height:260px}.qr small{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;min-height:40px;padding:8px 18px;border-radius:20px;border:1px solid var(--edge);background:var(--paper);color:var(--blue);cursor:pointer}button.primary{background:var(--blue);border-color:var(--blue);color:var(--paper)}button:disabled{opacity:.5;cursor:default}
+.preview{position:relative;border-radius:14px;overflow:hidden;background:#000;touch-action:none;cursor:crosshair}.preview canvas{display:block;width:100%}
+.box{position:absolute;border:2px solid #f0c419;box-shadow:0 0 0 9999px #0007;border-radius:4px;pointer-events:none}.box span{position:absolute;left:-2px;top:-24px;background:#f0c419;color:#3d2e00;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
+.hint{color:var(--muted);font-size:13px;margin:0}.error{color:var(--red)}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{color:var(--muted)}dd{margin:0}
+</style>
+</head>
+<body>
+<header><img src="./favicon.svg" alt=""><div><h1>Maple Atlas Companion</h1><small>Follow your game on your phone · nothing leaves this Wi-Fi</small></div></header>
+
+<section aria-labelledby="phone-title">
+  <h2 id="phone-title">Phone</h2>
+  <div class="status"><span class="dot" id="phone-dot"></span><div><b id="phone-state">Starting…</b><p id="phone-message"></p></div></div>
+  <div class="qr" id="qr" hidden><canvas id="qr-canvas" aria-label="Pairing QR code"></canvas><b>Scan with your phone's camera</b><small id="qr-expiry"></small><small id="qr-address"></small></div>
+  <p class="error" id="phone-error" hidden></p>
+  <div class="row"><button id="new-code">New code</button><button id="disconnect" hidden>Disconnect</button></div>
+</section>
+
+<section aria-labelledby="game-title">
+  <h2 id="game-title">Game window</h2>
+  <div class="row"><button class="primary" id="choose">Choose game window…</button><span id="window-name" class="hint">No game window chosen</span></div>
+  <div class="preview" id="preview" hidden><canvas id="preview-canvas"></canvas><div class="box" id="box"><span>Minimap</span></div></div>
+  <div class="row" id="region-row" hidden><span class="hint">Drag a box around the in-game minimap</span><button id="reset-box">Reset to top-left</button></div>
+  <p class="hint">Windows asks which window to share; pick the game. Frames stay on this PC; only the map ID and your position go to your phone.</p>
+  <div class="row"><button class="primary" id="track" disabled>Start tracking</button></div>
+</section>
+
+<section aria-labelledby="tracking-title">
+  <h2 id="tracking-title">Tracking</h2>
+  <dl><dt>Map engine</dt><dd id="engine">Loading the map index…</dd><dt>Reading</dt><dd id="reading">Not tracking</dd><dt>Last match</dt><dd id="last-map">—</dd><dt>Your position</dt><dd id="position">—</dd></dl>
+</section>
+
+<script src="./qr.js"></script>
+<script src="./visual-client.js"></script>
+<script src="./visual-tracker.js"></script>
+<script src="./minimap-position.js"></script>
+<script src="./engine.js"></script>
+<script src="./desktop.js"></script>
+</body>
+</html>
