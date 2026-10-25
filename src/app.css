@@ -237,3 +237,10 @@
 @media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-here{animation:none;}}
 #maple-atlas-concept .mc-route-buttons {display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;}
 #maple-atlas-concept .mc-end-route {min-height:32px;padding:4px 12px;font-size:12px;}
+/* Active route: one obvious way to end it, on the map. */
+#maple-atlas-concept #mc-route-chip {position:absolute;z-index:4;top:16px;right:16px;display:inline-flex;align-items:center;gap:8px;min-height:44px;max-width:min(360px,calc(100% - 32px));padding:6px 8px 6px 16px;border:0;border-radius:22px;background:var(--mc-paper);color:var(--mc-ink);box-shadow:0 2px 10px var(--mc-shadow);font:inherit;font-size:13px;cursor:pointer;}
+#maple-atlas-concept #mc-route-chip[hidden] {display:none;}
+#maple-atlas-concept #mc-route-chip span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+#maple-atlas-concept #mc-route-chip b {display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:16px;background:var(--mc-blue);color:var(--mc-paper);font-size:12px;font-weight:600;white-space:nowrap;}
+#maple-atlas-concept #mc-route-chip svg {display:none;}
+@media(max-width:700px){#maple-atlas-concept #mc-route-chip {top:calc(132px + env(safe-area-inset-top,0px));left:12px;right:auto;}}

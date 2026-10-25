@@ -16,7 +16,7 @@
     if(s?.preview!=='maple-atlas-data-v2')return false;
     const valid=new Set(DATA.quests.map(q=>q.id));
     state.status=Object.fromEntries(Object.entries(s.quests||{}).filter(([id,v])=>valid.has(id)&&['not-started','in-progress','completed','skipped'].includes(v)));
-    state.routeActive=s.routeActive===true;
+    state.routeActive=false; // Always open on where you are; a route is shown only when asked for.
     state.level=Math.max(1,Math.min(100,Number(s.level)||18));
     for(const key of ['from','to']){const m=get(s[key+'Id'])||DATA.maps.find(m=>m.name===s[key]);if(m)state[key]=String(m.id);}
     if(get(p.selected))state.selected=String(p.selected);
@@ -158,7 +158,7 @@
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   function endRoute(){state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
-  $('#mc-clear-route').onclick=endRoute;
+  $('#mc-clear-route').onclick=endRoute;$('#mc-route-chip').onclick=endRoute;
   $$('[data-mobile-panel]').forEach(b=>b.onclick=()=>{
     if(b.dataset.mobilePanel==='route'&&!state.routeActive){openRoute();return;}
     state.panel=b.dataset.mobilePanel;
@@ -269,7 +269,7 @@
     placeLabels(labelPoints,narrow,left);
     $('#mc-network').setAttribute('d',Object.values(DATA.artRoutes||{}).join(' '));$('#mc-zoom').textContent=Math.round(state.zoom*100)+'%';const unplaced=state.route.filter(id=>!anchor(id)).length;$('#mc-caption').textContent=state.route.length?(state.route.length-1)+' portal transitions · '+(unplaced?unplaced+' stops have no reviewed atlas position':'Select any numbered stop'):'Explore the recorded map network';
   }
-  function render(){detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
+  function render(){const chip=$('#mc-route-chip');chip.hidden=!state.routeActive;if(state.routeActive)chip.querySelector('span').textContent='Route to '+(get(state.to)?.name||'destination');detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');

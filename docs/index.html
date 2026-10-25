@@ -253,6 +253,13 @@
 @media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-here{animation:none;}}
 #maple-atlas-concept .mc-route-buttons {display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;}
 #maple-atlas-concept .mc-end-route {min-height:32px;padding:4px 12px;font-size:12px;}
+/* Active route: one obvious way to end it, on the map. */
+#maple-atlas-concept #mc-route-chip {position:absolute;z-index:4;top:16px;right:16px;display:inline-flex;align-items:center;gap:8px;min-height:44px;max-width:min(360px,calc(100% - 32px));padding:6px 8px 6px 16px;border:0;border-radius:22px;background:var(--mc-paper);color:var(--mc-ink);box-shadow:0 2px 10px var(--mc-shadow);font:inherit;font-size:13px;cursor:pointer;}
+#maple-atlas-concept #mc-route-chip[hidden] {display:none;}
+#maple-atlas-concept #mc-route-chip span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
+#maple-atlas-concept #mc-route-chip b {display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:16px;background:var(--mc-blue);color:var(--mc-paper);font-size:12px;font-weight:600;white-space:nowrap;}
+#maple-atlas-concept #mc-route-chip svg {display:none;}
+@media(max-width:700px){#maple-atlas-concept #mc-route-chip {top:calc(132px + env(safe-area-inset-top,0px));left:12px;right:auto;}}
 
 html,body { margin:0 !important; padding:0 !important; height:100%; overflow:hidden; }
 #maple-atlas-concept .mc-shell { height:100dvh; display:flex; flex-direction:column; }
@@ -889,6 +896,7 @@ body {background:light-dark(#d7e9e9,#142937);}
         <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Your quests</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button></div>
         <div class="mc-zooms"><button type="button" id="mc-plus" aria-label="Zoom in" class="cursor-interaction"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-minus" aria-label="Zoom out" class="cursor-interaction"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" id="mc-fit" aria-label="Fit island" class="cursor-interaction"><i data-lucide="maximize" aria-hidden="true"></i></button></div>
         <div class="mc-mobile-mapactions"><button type="button" id="mc-mobile-locate" aria-label="Show my starting location"><i data-lucide="locate-fixed" aria-hidden="true"></i></button><button type="button" id="mc-mobile-directions" aria-label="Plan a route"><i data-lucide="route" aria-hidden="true"></i></button></div>
+        <button type="button" id="mc-route-chip" hidden aria-label="End route"><span>Route</span><i data-lucide="x" aria-hidden="true"></i><b>End route</b></button>
         <div id="mc-map-notice" role="status" hidden></div>
         <div class="mc-mapfooter"><span>Original map art · Game sprites © Nexon</span><span id="mc-zoom">100%</span></div>
       </div>
@@ -3021,7 +3029,7 @@ window.mapleStorageReady.then(() => {
     if(s?.preview!=='maple-atlas-data-v2')return false;
     const valid=new Set(DATA.quests.map(q=>q.id));
     state.status=Object.fromEntries(Object.entries(s.quests||{}).filter(([id,v])=>valid.has(id)&&['not-started','in-progress','completed','skipped'].includes(v)));
-    state.routeActive=s.routeActive===true;
+    state.routeActive=false; // Always open on where you are; a route is shown only when asked for.
     state.level=Math.max(1,Math.min(100,Number(s.level)||18));
     for(const key of ['from','to']){const m=get(s[key+'Id'])||DATA.maps.find(m=>m.name===s[key]);if(m)state[key]=String(m.id);}
     if(get(p.selected))state.selected=String(p.selected);
@@ -3163,7 +3171,7 @@ window.mapleStorageReady.then(() => {
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   function endRoute(){state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
-  $('#mc-clear-route').onclick=endRoute;
+  $('#mc-clear-route').onclick=endRoute;$('#mc-route-chip').onclick=endRoute;
   $$('[data-mobile-panel]').forEach(b=>b.onclick=()=>{
     if(b.dataset.mobilePanel==='route'&&!state.routeActive){openRoute();return;}
     state.panel=b.dataset.mobilePanel;
@@ -3274,7 +3282,7 @@ window.mapleStorageReady.then(() => {
     placeLabels(labelPoints,narrow,left);
     $('#mc-network').setAttribute('d',Object.values(DATA.artRoutes||{}).join(' '));$('#mc-zoom').textContent=Math.round(state.zoom*100)+'%';const unplaced=state.route.filter(id=>!anchor(id)).length;$('#mc-caption').textContent=state.route.length?(state.route.length-1)+' portal transitions · '+(unplaced?unplaced+' stops have no reviewed atlas position':'Select any numbered stop'):'Explore the recorded map network';
   }
-  function render(){detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
+  function render(){const chip=$('#mc-route-chip');chip.hidden=!state.routeActive;if(state.routeActive)chip.querySelector('span').textContent='Route to '+(get(state.to)?.name||'destination');detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');
