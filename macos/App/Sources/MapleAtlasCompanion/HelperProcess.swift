@@ -27,6 +27,7 @@ enum HelperEvent: Sendable {
         let addresses: [String]?
         let phase: String?
         let message: String?
+        let from: String?
     }
 
     /// Returns nil for unknown or malformed events, which the contract says to ignore.
@@ -47,6 +48,8 @@ enum HelperEvent: Sendable {
             self = .state(phase: phase, message: raw.message ?? "")
         case "log":
             self = .log(raw.message ?? "")
+        case "contact":
+            self = .log("A phone with this code reached the Mac (\(raw.from ?? "?")).")
         case "error":
             self = .error(raw.message ?? "Unknown error")
         default:

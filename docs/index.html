@@ -2862,6 +2862,12 @@ window.mapleStorageReady.then(() => {
         '<b>Same Wi-Fi:</b> the phone must be on the Wi-Fi of the computer’s network, not mobile data, a guest network or a VPN.'].filter(Boolean);
       list.innerHTML=show?items.map(t=>'<li>'+t+'</li>').join(''):'';list.hidden=!show;
       if(show)$('#mc-pair-error').hidden=false;
+      // Which addresses the phone tried, to compare with "This PC" under the app's QR.
+      const code=pairingCode||remembered()?.code;
+      if(show&&code)MapleCompanionLink.unpack(code,Date.now(),{ignoreExpiry:true}).then(v=>{
+        const ips=[...new Set([...v.sdp.matchAll(/a=candidate:\S+ 1 udp \d+ (\S+) \d+/g)].map(m=>m[1]))].join(', ');
+        if(ips&&!list.hidden)list.insertAdjacentHTML('beforeend','<li><b>Address check:</b> this phone tried '+ips.replace(/[<>&]/g,'')+'. The companion app shows the same address under its QR (“This PC”). If the app says your phone reached it, the Wi-Fi is fine and the computer is blocking it.</li>');
+      }).catch(()=>{});
     }
     function error(e){
       if(e?.message==='Pairing was cancelled.')return;

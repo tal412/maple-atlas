@@ -22,17 +22,25 @@ button{font:inherit;min-height:40px;padding:8px 18px;border-radius:20px;border:1
 .box{position:absolute;border:2px solid #f0c419;box-shadow:0 0 0 9999px #0007;border-radius:4px;pointer-events:none}.box span{position:absolute;left:-2px;top:-24px;background:#f0c419;color:#3d2e00;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
 .hint{color:var(--muted);font-size:13px;margin:0}.error{color:var(--red)}
 dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{color:var(--muted)}dd{margin:0}
+.alert{border-color:var(--amber);border-width:2px}.alert p{margin:0}
 .update{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:13px;opacity:.85}.update button{padding:8px 16px}
 </style>
 </head>
 <body>
 <header><img src="./favicon.svg" alt=""><div><h1>Maple Atlas Companion</h1><small>Follow your game on your phone · nothing leaves this Wi-Fi</small></div></header>
 
+<section class="alert" id="firewall" hidden aria-labelledby="firewall-title">
+  <h2 id="firewall-title">Allow your phone to connect</h2>
+  <p id="firewall-text">Windows Firewall is blocking connections from your phone to this app.</p>
+  <div class="row"><button class="primary" id="firewall-fix">Allow phone connections</button><span class="hint" id="firewall-hint">Windows asks for permission once.</span></div>
+</section>
+
 <section aria-labelledby="phone-title">
   <h2 id="phone-title">Phone</h2>
   <div class="status"><span class="dot" id="phone-dot"></span><div><b id="phone-state">Starting…</b><p id="phone-message"></p></div></div>
   <div class="qr" id="qr" hidden><canvas id="qr-canvas" aria-label="Pairing QR code"></canvas><b>Scan with your phone's camera</b><small id="qr-expiry"></small><small id="qr-address"></small></div>
   <p class="error" id="phone-error" hidden></p>
+  <p class="hint" id="contact" hidden></p>
   <div class="row"><button id="new-code">New code</button><button id="disconnect" hidden>Disconnect</button></div>
 </section>
 

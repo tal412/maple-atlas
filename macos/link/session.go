@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -121,6 +122,9 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 	ident.Port = udp.LocalAddr().(*net.UDPAddr).Port
 	s.udp = udp
 	s.sniffer = newSniffConn(udp, ident.Ufrag, ident.Pwd)
+	s.sniffer.contact = func(from string) {
+		emit(map[string]any{"event": "contact", "from": from, "at": time.Now().UnixMilli()})
+	}
 
 	se := webrtc.SettingEngine{}
 	se.SetLite(true)
@@ -150,6 +154,8 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 		return nil, nil, err
 	}
 	s.mid = mid
+	// Home networks first, so the code's few addresses are the ones a phone can reach.
+	sort.SliceStable(cands, func(i, j int) bool { return addressRank(cands[i].IP) < addressRank(cands[j].IP) })
 	for i, c := range cands {
 		if i < maxCandidates {
 			s.addresses = append(s.addresses, c.IP.String())
@@ -194,6 +200,26 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 		s.state("waiting", "Scan this code with your phone's camera. Both devices must use the same Wi-Fi.")
 	}
 	return s, &pairingInfo{Code: code, Link: link, Addresses: s.addresses, Expires: expires.UnixMilli(), Paired: s.paired, Note: note}, nil
+}
+
+// addressRank orders local addresses by how likely a phone on the same Wi-Fi can
+// reach them: typical home ranges first, VPN and carrier-grade ranges last.
+func addressRank(ip net.IP) int {
+	v4 := ip.To4()
+	switch {
+	case v4 == nil:
+		return 8
+	case v4[0] == 192 && v4[1] == 168:
+		return 0
+	case v4[0] == 10:
+		return 1
+	case v4[0] == 172 && v4[1]&0xf0 == 16:
+		return 2
+	case v4[0] == 100 && v4[1]&0xc0 == 64, v4[0] == 198 && v4[1]&0xfe == 18:
+		return 9
+	default:
+		return 5
+	}
 }
 
 func overlaps(a, b []string) bool {

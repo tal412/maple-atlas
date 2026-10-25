@@ -178,6 +178,27 @@ func runDesktop(site, stateDir string, _ bool) {
 		go ctrl.handle(cmd)
 		w.WriteHeader(http.StatusNoContent)
 	})
+	// Windows Firewall: GET reports whether the phone can get through; POST asks
+	// Windows (administrator approval) to allow this program.
+	mux.HandleFunc("/api/firewall", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Companion-Token") != token || r.Method == http.MethodPost && r.Header.Get("Origin") != origin {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		if r.Method == http.MethodPost {
+			if err := fixFirewall(); err != nil {
+				logger.Printf("firewall fix: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
+		report := firewallStatus()
+		logger.Printf("firewall: %s %s", report.State, report.Detail)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(report)
+	})
 	// Updates: GET checks the latest release; POST downloads its setup and starts it.
 	// Progress arrives as "update" events.
 	var updating sync.Mutex

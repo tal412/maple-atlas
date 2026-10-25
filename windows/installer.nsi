@@ -66,8 +66,8 @@ Section "Install"
   ; Inbound connections from the phone (WebRTC over UDP on the local network).
   nsExec::Exec 'netsh advfirewall firewall delete rule name=all program="$INSTDIR\${EXE}"'
   nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP}"'
-  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=private,public protocol=udp'
-  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=private,public protocol=tcp'
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=any protocol=udp'
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=any protocol=tcp'
   SetShellVarContext all
   CreateShortcut "$SMPROGRAMS\${APP}.lnk" "$INSTDIR\${EXE}"
   CreateShortcut "$DESKTOP\${APP}.lnk" "$INSTDIR\${EXE}"

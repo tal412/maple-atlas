@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pion/stun/v4"
 )
@@ -22,6 +23,11 @@ type sniffConn struct {
 	mu                   sync.Mutex
 	last                 string
 	found                chan string
+	// contact is told (at most every few seconds) that a phone holding this code
+	// reached this computer, even before its check verifies: that tells a blocked
+	// network apart from a phone that never tried.
+	contact   func(from string)
+	contactAt time.Time
 }
 
 func newSniffConn(conn net.PacketConn, ufrag, pwd string) *sniffConn {
@@ -31,12 +37,12 @@ func newSniffConn(conn net.PacketConn, ufrag, pwd string) *sniffConn {
 func (c *sniffConn) ReadFrom(b []byte) (int, net.Addr, error) {
 	n, addr, err := c.PacketConn.ReadFrom(b)
 	if err == nil && n > 0 {
-		c.inspect(b[:n])
+		c.inspect(b[:n], addr)
 	}
 	return n, addr, err
 }
 
-func (c *sniffConn) inspect(packet []byte) {
+func (c *sniffConn) inspect(packet []byte, from net.Addr) {
 	if !stun.IsMessage(packet) {
 		return
 	}
@@ -52,6 +58,13 @@ func (c *sniffConn) inspect(packet []byte) {
 	if !ok || local != c.localUfrag || len(remote) < 4 || len(remote) > 256 {
 		return
 	}
+	c.mu.Lock()
+	if c.contact != nil && time.Since(c.contactAt) > 3*time.Second {
+		c.contactAt = time.Now()
+		host, _, _ := net.SplitHostPort(from.String())
+		go c.contact(host)
+	}
+	c.mu.Unlock()
 	if stun.MessageIntegrity([]byte(c.localPwd)).Check(m) != nil {
 		return
 	}

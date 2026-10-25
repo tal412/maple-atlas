@@ -6,7 +6,7 @@
   const token=new URLSearchParams(location.search).get('t')||'';
   const cmd=body=>fetch('/api/cmd',{method:'POST',headers:{'Content-Type':'application/json','X-Companion-Token':token},body:JSON.stringify(body)}).catch(()=>{});
   const DEFAULT_BOX={x:0,y:0,w:.4,h:.4},BOX_KEY='maple-atlas-companion-minimap-box';
-  let phase='idle',paired=false,code=null,stream=null,video=null,tracking=false,box=loadBox();
+  let contactAt=0,contactFrom='',phase='idle',paired=false,code=null,stream=null,video=null,tracking=false,box=loadBox();
   let lastMap=null,lastPosition=null,readBusy=false,dotBusy=false,questBusy=false,lastQuestRead=0,questsSentAt=0,lastRead=0,lastSearching=0,noMatchSince=Date.now(),engineReady=false;
   const titles={idle:'Not paired',waiting:'Waiting for your phone',connecting:'Connecting…',verifying:'Verifying…',connected:'Connected to phone',reconnecting:'Phone away',disconnected:'Disconnected',failed:'Connection failed',expired:'Code expired'};
 
@@ -16,6 +16,7 @@
     if(v.event==='code'){code=v;paired=false;showCode();}
     else if(v.event==='paired'){code=null;paired=true;$('qr').hidden=true;}
     else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);}
+    else if(v.event==='contact'){contactAt=Date.now();contactFrom=v.from;paintContact();}
     else if(v.event==='update'){$('update-text').textContent=v.message;$('update').hidden=v.phase!=='failed';$('update').disabled=false;if(v.phase==='failed')$('update').textContent='Try again';}
     else if(v.event==='error'){$('phone-error').textContent=v.message;$('phone-error').hidden=false;}
     paintPhone();
@@ -36,6 +37,30 @@
   setInterval(()=>{if(code&&!paired){const s=Math.max(0,Math.round((code.expires-Date.now())/1000));$('qr-expiry').textContent=s?'Expires in '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):'Code expired — press New code';}},1000);
   $('new-code').onclick=()=>{paired=false;cmd({cmd:'pair'});};
   $('disconnect').onclick=()=>cmd({cmd:'stop'});
+
+  // Whether the phone's connection attempts arrive at all (a blocked network looks the same as no try).
+  function paintContact(){
+    const el=$('contact');if(phase==='connected'){el.hidden=true;return;}
+    el.hidden=!contactAt;if(contactAt)el.textContent='Your phone reached this PC ('+contactFrom+', '+Math.round((Date.now()-contactAt)/1000)+' s ago).';
+  }
+  setInterval(paintContact,2000);
+  // Windows Firewall: checked at launch; one button asks Windows to allow this app.
+  async function checkFirewall(){
+    try{
+      const r=await fetch('/api/firewall',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
+      const bad=['blocked','missing'].includes(r.state);$('firewall').hidden=!bad;
+      if(bad)$('firewall-text').textContent=(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
+      return r.state;
+    }catch(_){return 'unknown';}
+  }
+  $('firewall-fix').onclick=async()=>{
+    $('firewall-fix').disabled=true;$('firewall-hint').textContent='Choose Yes in the Windows prompt…';
+    const r=await fetch('/api/firewall',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>null);
+    if(!r||!r.ok){$('firewall-fix').disabled=false;$('firewall-hint').textContent='Windows did not allow it. Try again and choose Yes.';return;}
+    for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,1500));if(await checkFirewall()==='ok'){$('firewall-hint').textContent='';break;}}
+    $('firewall-fix').disabled=false;$('firewall-hint').textContent=$('firewall').hidden?'':'Still blocked. Try again and choose Yes.';
+  };
+  checkFirewall();
 
   // Updates: checked at launch and every 6 hours; one click downloads and runs the setup.
   async function checkUpdate(){
