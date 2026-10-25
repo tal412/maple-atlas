@@ -1,6 +1,7 @@
 ; Maple Atlas Companion for Windows: the setup program (built by windows/build.sh).
-; Installs for the current user only (no administrator prompt), adds Start menu and
-; desktop shortcuts and an entry in Settings > Apps for uninstalling.
+; Installs to Program Files, adds Start menu and desktop shortcuts, an entry in
+; Settings > Apps for uninstalling, and a Windows Firewall rule so the phone can
+; reach the app on the Wi-Fi (also when Windows marks the network as Public).
 Unicode true
 !include "MUI2.nsh"
 
@@ -13,9 +14,9 @@ Unicode true
 
 Name "${APP}"
 OutFile "build/MapleAtlasCompanion-Setup.exe"
-InstallDir "$LOCALAPPDATA\Programs\${APP}"
-InstallDirRegKey HKCU "Software\${APP}" "InstallDir"
-RequestExecutionLevel user
+InstallDir "$PROGRAMFILES64\${APP}"
+InstallDirRegKey HKLM "Software\${APP}" "InstallDir"
+RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 BrandingText "${APP} ${VERSION}"
 VIProductVersion "${VERSION}.0"
@@ -30,9 +31,10 @@ VIAddVersionKey "LegalCopyright" "Maple Atlas contributors"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Install ${APP}"
 !define MUI_WELCOMEPAGE_TEXT "Follow your MapleStory Classic World game on your phone: your map and your position, live.$\r$\n$\r$\nEverything stays on your Wi-Fi. No account, no server, nothing sent to the internet.$\r$\n$\r$\nClick Install to continue."
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE}"
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_FUNCTION LaunchApp
 !define MUI_FINISHPAGE_RUN_TEXT "Open ${APP} now"
-!define MUI_FINISHPAGE_TEXT "${APP} is installed. Open it from the Start menu or the desktop.$\r$\n$\r$\nWhen Windows Firewall asks, allow it on private networks so your phone can connect."
+!define MUI_FINISHPAGE_TEXT "${APP} is installed and allowed through Windows Firewall, so your phone can connect over your Wi-Fi.$\r$\n$\r$\nOpen it from the Start menu or the desktop."
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_INSTFILES
@@ -41,6 +43,11 @@ VIAddVersionKey "LegalCopyright" "Maple Atlas contributors"
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
 
+; Setup runs as administrator; the app itself should not, so it starts through Explorer.
+Function LaunchApp
+  Exec '"$WINDIR\explorer.exe" "$INSTDIR\${EXE}"'
+FunctionEnd
+
 Section "Install"
   ; An older copy that is still running would lock the file.
   nsExec::Exec 'taskkill /IM "${EXE}" /F'
@@ -48,19 +55,33 @@ Section "Install"
   SetOutPath "$INSTDIR"
   File "build/${EXE}"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+  ; The 0.2.0 preview installed per user: remove that copy, its shortcuts and any
+  ; firewall rules (including a "block" saved when the firewall prompt was dismissed).
+  nsExec::Exec 'netsh advfirewall firewall delete rule name=all program="$LOCALAPPDATA\Programs\${APP}\${EXE}"'
+  RMDir /r "$LOCALAPPDATA\Programs\${APP}"
+  Delete "$DESKTOP\${APP}.lnk"
+  Delete "$SMPROGRAMS\${APP}.lnk"
+  DeleteRegKey HKCU "${UNINSTALL_KEY}"
+  DeleteRegKey HKCU "Software\${APP}"
+  ; Inbound connections from the phone (WebRTC over UDP on the local network).
+  nsExec::Exec 'netsh advfirewall firewall delete rule name=all program="$INSTDIR\${EXE}"'
+  nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP}"'
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=private,public protocol=udp'
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=private,public protocol=tcp'
+  SetShellVarContext all
   CreateShortcut "$SMPROGRAMS\${APP}.lnk" "$INSTDIR\${EXE}"
   CreateShortcut "$DESKTOP\${APP}.lnk" "$INSTDIR\${EXE}"
-  WriteRegStr HKCU "Software\${APP}" "InstallDir" "$INSTDIR"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayName" "${APP}"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "Publisher" "Maple Atlas"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "URLInfoAbout" "https://github.com/tal412/maple-atlas"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\${EXE}"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "${UNINSTALL_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-  WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoModify" 1
-  WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoRepair" 1
-  WriteRegDWORD HKCU "${UNINSTALL_KEY}" "EstimatedSize" 56000
+  WriteRegStr HKLM "Software\${APP}" "InstallDir" "$INSTDIR"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP}"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "Publisher" "Maple Atlas"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "URLInfoAbout" "https://github.com/tal412/maple-atlas"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayIcon" "$INSTDIR\${EXE}"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+  WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoModify" 1
+  WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoRepair" 1
+  WriteRegDWORD HKLM "${UNINSTALL_KEY}" "EstimatedSize" 56000
 SectionEnd
 
 Section "Uninstall"
@@ -69,10 +90,12 @@ Section "Uninstall"
   Delete "$INSTDIR\${EXE}"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
+  nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP}"'
+  SetShellVarContext all
   Delete "$SMPROGRAMS\${APP}.lnk"
   Delete "$DESKTOP\${APP}.lnk"
-  DeleteRegKey HKCU "${UNINSTALL_KEY}"
-  DeleteRegKey HKCU "Software\${APP}"
+  DeleteRegKey HKLM "${UNINSTALL_KEY}"
+  DeleteRegKey HKLM "Software\${APP}"
   ; The phone pairing in %APPDATA%\Maple Atlas Companion is kept, so a reinstall
   ; reconnects without scanning again.
 SectionEnd

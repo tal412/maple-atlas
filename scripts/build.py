@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'companion-ui', 'offline', 'runtime', 'intro'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'offline', 'runtime', 'intro'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
@@ -91,7 +91,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
-    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + read('companion.css') + '\n' + read('intro.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
+    css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + read('companion.css') + '\n' + read('quests.css') + '\n' + read('intro.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
     page = """<!doctype html>
 <html lang="en">
 <head>

@@ -2,12 +2,12 @@
 
   <button type="button" id="mc-companion-badge" hidden>Live companion</button>
   <div class="mc-shell">
-    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><button type="button" id="mc-desktop-search" aria-label="Search Maple Atlas"><i data-lucide="search" aria-hidden="true"></i><span>Search everything</span></button><button type="button" id="mc-companion-desktop" aria-label="Open live companion"><i data-lucide="smartphone" aria-hidden="true"></i><span>Connect phone</span></button><label class="mc-profile"><i data-lucide="user-round" aria-hidden="true"></i><span>Level</span><input id="mc-level" aria-label="Character level" type="number" min="1" max="100" value="18"></label></div>
+    <div class="mc-header"><div class="mc-logo"><i data-lucide="map" aria-hidden="true"></i>Maple Atlas</div><small>Classic World</small><button type="button" id="mc-sheet-toggle" class="mc-sheet-toggle cursor-interaction" aria-expanded="false">Details</button><button type="button" id="mc-desktop-search" aria-label="Search Maple Atlas"><i data-lucide="search" aria-hidden="true"></i><span>Search everything</span></button><button type="button" id="mc-companion-desktop" aria-label="Open live companion"><i data-lucide="smartphone" aria-hidden="true"></i><span>Connect phone</span></button><button type="button" class="mc-profile" id="mc-desktop-quests"><i data-lucide="scroll-text" aria-hidden="true"></i><span>Quest helper</span></button></div>
     <div class="mc-workspace">
       <div class="mc-mobile-searchbar">
         <button type="button" id="mc-mobile-search" aria-label="Search Maple Atlas"><img src="./favicon.svg" alt=""><span>Search Maple Atlas</span></button>
         <button type="button" id="mc-mobile-companion" aria-label="Live companion · Not connected"><i data-lucide="smartphone" aria-hidden="true"></i><span class="mc-companion-dot" aria-hidden="true"></span></button>
-        <button type="button" id="mc-mobile-profile" aria-label="Your character and level"><i data-lucide="user-round" aria-hidden="true"></i></button>
+        <button type="button" id="mc-mobile-profile" aria-label="Settings and about"><i data-lucide="user-round" aria-hidden="true"></i></button>
       </div>
       <aside class="mc-panel">
         <button type="button" id="mc-sheet-handle" class="mc-sheet-handle" aria-expanded="false" aria-controls="mc-detail"><span class="mc-grab" aria-hidden="true"></span><span class="mc-peek-copy"><strong id="mc-peek-title">Explore Victoria Island</strong><small id="mc-peek-subtitle">Find your next adventure</small></span><i data-lucide="chevron-up" aria-hidden="true"></i></button>
@@ -21,7 +21,7 @@
         </form>
         </div>
         <div class="mc-status" id="mc-status" aria-live="polite">Location set manually · Change either field or select a place.</div>
-        <div class="mc-tabs" aria-label="Map panel"><button type="button" data-panel="place" aria-pressed="true" class="cursor-interaction">What's here?</button><button type="button" data-panel="route" aria-pressed="false" class="cursor-interaction">Directions</button><button type="button" data-panel="progress" aria-pressed="false" class="cursor-interaction">Progress</button></div>
+        <div class="mc-tabs" aria-label="Map panel"><button type="button" data-panel="place" aria-pressed="true" class="cursor-interaction">What's here?</button><button type="button" data-panel="route" aria-pressed="false" class="cursor-interaction">Directions</button><button type="button" data-panel="progress" aria-pressed="false" class="cursor-interaction">Quests</button></div>
         <div class="mc-detail" id="mc-detail" aria-live="polite"></div>
       </aside>
       <div class="mc-map" id="mc-map" aria-label="Interactive concept atlas of Victoria Island">
@@ -33,13 +33,13 @@
           <circle id="mc-traveler" r="6" fill="var(--mc-blue)" stroke="var(--mc-paper)" stroke-width="3" visibility="hidden"/>
         </g></svg>
         <div id="mc-markers"></div>
-        <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Quests for you</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button></div>
+        <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Your quests</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button></div>
         <div class="mc-zooms"><button type="button" id="mc-plus" aria-label="Zoom in" class="cursor-interaction"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-minus" aria-label="Zoom out" class="cursor-interaction"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" id="mc-fit" aria-label="Fit island" class="cursor-interaction"><i data-lucide="maximize" aria-hidden="true"></i></button></div>
         <div class="mc-mobile-mapactions"><button type="button" id="mc-mobile-locate" aria-label="Show my starting location"><i data-lucide="locate-fixed" aria-hidden="true"></i></button><button type="button" id="mc-mobile-directions" aria-label="Plan a route"><i data-lucide="route" aria-hidden="true"></i></button></div>
         <div id="mc-map-notice" role="status" hidden></div>
         <div class="mc-mapfooter"><span>Original map art · Game sprites © Nexon</span><span id="mc-zoom">100%</span></div>
       </div>
-      <nav class="mc-mobile-nav" aria-label="Main navigation"><button type="button" data-mobile-panel="place" aria-pressed="true"><span><i data-lucide="map" aria-hidden="true"></i></span>Explore</button><button type="button" data-mobile-panel="route" aria-pressed="false"><span><i data-lucide="route" aria-hidden="true"></i></span>Directions</button><button type="button" data-mobile-panel="progress" aria-pressed="false"><span><i data-lucide="bookmark" aria-hidden="true"></i></span>You</button></nav>
+      <nav class="mc-mobile-nav" aria-label="Main navigation"><button type="button" data-mobile-panel="place" aria-pressed="true"><span><i data-lucide="map" aria-hidden="true"></i></span>Explore</button><button type="button" data-mobile-panel="route" aria-pressed="false"><span><i data-lucide="route" aria-hidden="true"></i></span>Directions</button><button type="button" data-mobile-panel="progress" aria-pressed="false"><span><i data-lucide="scroll-text" aria-hidden="true"></i></span>Quests</button></nav>
     </div>
     <div class="mc-bottom"><span>Recorded portal routes · Community atlas positions · Data checked Oct 24, 2026</span><span id="mc-save-status" role="status">Progress stays in this browser</span></div>
   </div>
@@ -62,7 +62,7 @@
         <span id="mc-companion-state-icon" aria-hidden="true">○</span><div><strong id="mc-companion-state-title">Not connected</strong><p id="mc-companion-message"></p></div>
       </section>
       <p id="mc-pair-timer" class="mc-companion-note" hidden></p>
-      <div id="mc-pair-error" role="alert" hidden><strong>Could not connect</strong><p id="mc-pair-error-message"></p></div>
+      <div id="mc-pair-error" role="alert" hidden><strong>Could not connect</strong><p id="mc-pair-error-message"></p><ul id="mc-pair-checklist" hidden></ul></div>
       <div class="mc-companion-actions">
         <button type="button" id="mc-pair-reconnect" class="mc-primary" hidden>Reconnect</button>
         <button type="button" id="mc-pair-start" class="mc-primary">Scan the companion's code</button>
@@ -78,7 +78,7 @@
         <button type="button" id="mc-pair-stop">Disconnect</button>
       </div>
     </div>
-    <details class="mc-companion-help"><summary>Connection help &amp; offline use</summary><p>Maple Atlas Companion runs on Windows and macOS. Scan its QR once: the phone remembers the computer and reconnects by itself, or with one tap on Reconnect.</p><p>Both devices must be on the same Wi-Fi network. A phone on cellular data cannot connect. Guest Wi-Fi, VPNs and firewalls can also block it; on Windows, allow the app on private networks when the firewall asks.</p><p>Nothing is sent to the internet: the phone and computer talk directly, and only the map you're on and your position travel between them.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data can then run locally. Market updates still need internet.</p></details>
+    <details class="mc-companion-help"><summary>Connection help &amp; offline use</summary><p>Maple Atlas Companion runs on Windows and macOS. Scan its QR once: the phone remembers the computer and reconnects by itself, or with one tap on Reconnect.</p><p>Both devices must be on the same Wi-Fi network. A phone on cellular data cannot connect. Guest Wi-Fi, VPNs and firewalls can also block it; on Windows, allow the app on private networks when the firewall asks.</p><p>Nothing is sent to the internet: the phone and computer talk directly, and only the map you're on, your position and the quests in your Quest Helper travel between them.</p><button type="button" id="mc-offline-save">Download offline essentials</button><p id="mc-offline-status" role="status">The first download needs internet. Saved map data can then run locally. Market updates still need internet.</p></details>
     </div>
   </dialog>
   <dialog id="mc-search-dialog" class="mc-mobile-dialog" aria-labelledby="mc-search-title">
@@ -93,13 +93,12 @@
   </dialog>
   <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
   <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title">
-    <header><h2 id="mc-profile-title">Your character</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header>
+    <header><h2 id="mc-profile-title">Maple Atlas</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header>
     <div class="mc-profile-content">
-      <label class="mc-character-level"><span>Character level<small>Find quests for your level</small></span><input id="mc-mobile-level" type="number" min="1" max="100" value="18" aria-label="Character level"></label>
-      <div class="mc-profile-actions">
+            <div class="mc-profile-actions">
         <button type="button" id="mc-fullscreen" hidden><i data-lucide="maximize" aria-hidden="true"></i><span><strong>Full screen</strong><small>Hide the browser bars</small></span></button>
         <button type="button" id="mc-intro-open"><i data-lucide="info" aria-hidden="true"></i><span><strong>About Maple Atlas</strong><small>How the companion works</small></span></button>
-        <button type="button" id="mc-mobile-journal" class="mc-primary"><i data-lucide="book-open" aria-hidden="true"></i>Open quest journal</button>
+        <button type="button" id="mc-mobile-journal" class="mc-primary"><i data-lucide="scroll-text" aria-hidden="true"></i>Open quest helper</button>
       </div>
       <footer class="mc-profile-footer"><p>Appearance follows your device’s theme.</p><a id="mc-mobile-channel" class="mc-mobile-channel" href="./dev/">Open dev preview ↗</a></footer>
     </div>

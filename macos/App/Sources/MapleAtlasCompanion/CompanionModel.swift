@@ -63,6 +63,8 @@ final class CompanionModel {
     private(set) var lastConfirmed: ConfirmedMap?
     /// Latest player position on the confirmed map, in the portal data's coordinates.
     private(set) var lastPosition: EngineReading.Position?
+    /// What the game's Quest Helper panel showed at the last read.
+    private(set) var questSummary = "Not read yet"
 
     // MARK: Diagnostics
     private(set) var logLines: [String] = []
@@ -86,6 +88,8 @@ final class CompanionModel {
     @ObservationIgnored private var lastSearchingSent: Date?
     @ObservationIgnored private var previewTask: Task<Void, Never>?
     @ObservationIgnored private var positionTask: Task<Void, Never>?
+    @ObservationIgnored private var questTask: Task<Void, Never>?
+    @ObservationIgnored private var questsSentAt: Date?
     @ObservationIgnored private var noMatchSince = Date.now
     @ObservationIgnored private let logger = Logger(subsystem: "io.github.tal412.maple-atlas-companion", category: "app")
 
@@ -159,6 +163,7 @@ final class CompanionModel {
         trackingTask?.cancel()
         previewTask?.cancel()
         positionTask?.cancel()
+        questTask?.cancel()
         capture.stop()
         helper?.shutdown()
         helper = nil
@@ -239,7 +244,7 @@ final class CompanionModel {
             let wasConnected = isPhoneConnected
             phase = newPhase
             phaseMessage = message
-            if newPhase == "connected" { hasPairedPhone = true }
+            if newPhase == "connected" { hasPairedPhone = true; questsSentAt = nil }
             if !["waiting", "connecting", "verifying"].contains(newPhase) {
                 // The QR is only useful while a code is pending.
                 pairing = nil
@@ -391,6 +396,8 @@ final class CompanionModel {
         trackingTask = nil
         positionTask?.cancel()
         positionTask = nil
+        questTask?.cancel()
+        questTask = nil
         isTracking = false
         readingText = "Not tracking"
         if let activity = trackingActivity {
@@ -428,8 +435,49 @@ final class CompanionModel {
         }
     }
 
+    /// The Quest Helper panel is read every 3 s (the engine skips an unchanged panel);
+    /// the phone gets the list when it changes, and again every 15 s.
+    private func runQuestLoop() {
+        questTask?.cancel()
+        questsSentAt = nil
+        questTask = Task {
+            while !Task.isCancelled {
+                let deadline = ContinuousClock.now + .seconds(3)
+                await readQuestsOnce()
+                try? await Task.sleep(until: deadline, clock: .continuous)
+            }
+        }
+    }
+
+    private func readQuestsOnce() async {
+        guard isTracking, case .ready = engineStatus else { return }
+        let capture = self.capture
+        guard let png = try? await Task.detached(operation: { try capture.questPanelImage() }).value else { return }
+        do {
+            let reading = try await engine.readQuests(png)
+            guard !Task.isCancelled, isTracking else { return }
+            let summary = !reading.visible ? "Quest Helper not visible (top right of the game)"
+                : reading.quests.isEmpty ? "Quest Helper open · no quests read"
+                : "\(reading.quests.count) quest\(reading.quests.count == 1 ? "" : "s") tracked"
+            if summary != questSummary || (reading.changed && reading.text != nil) {
+                log("Quest Helper: \(summary)" + (reading.text.map { " · " + $0.replacingOccurrences(of: "\n", with: " | ") } ?? ""))
+            }
+            questSummary = summary
+            let due = questsSentAt.map { Date.now.timeIntervalSince($0) >= 15 } ?? true
+            if isPhoneConnected, reading.changed || due {
+                helper?.send(.quests(visible: reading.visible, quests: reading.quests, observedAt: .now))
+                questsSentAt = .now
+            }
+        } catch EngineHost.EngineError.busy {
+            return
+        } catch {
+            if !Task.isCancelled { log("Quest Helper: \(error.localizedDescription)") }
+        }
+    }
+
     private func runTrackingLoop() {
         runPositionLoop()
+        runQuestLoop()
         trackingTask?.cancel()
         lastSearchingSent = nil
         noMatchSince = .now

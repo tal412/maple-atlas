@@ -253,7 +253,16 @@
     input.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();list.querySelector('[data-entity]')?.focus();}if(e.key==='Enter'){e.preventDefault();clearTimeout(timer);showResults();list.querySelector('[data-entity]')?.click();}};
     function open(){stack=[];detail.hidden=true;$('#mc-search-listing').hidden=false;$('#mc-search-back').hidden=true;$('#mc-search-title').textContent='Search Maple Atlas';dialog.showModal();input.focus();void ready();}
     $('#mc-mobile-search').onclick=open;$('#mc-desktop-search').onclick=open;
-    return {open};
+    // Opens one record by type and exact name (an item, monster, NPC or quest), e.g. from the quest helper.
+    async function show(type,name){
+      stack=[];detail.hidden=true;$('#mc-search-listing').hidden=false;$('#mc-search-back').hidden=true;if(!dialog.open)dialog.showModal();
+      await ready();if(!catalog)return false;
+      const want=String(name).toLowerCase(),norm=v=>String(v).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+      const e=catalog.entities.find(x=>x.type===type&&x.name.toLowerCase()===want)||catalog.entities.find(x=>x.type===type&&norm(x.name)===norm(name));
+      if(!e){input.value=name;showResults();return false;}
+      openEntity(e.key);return true;
+    }
+    return {open,show};
   }
   scope.MapleSearchUI={create};
 })(globalThis);

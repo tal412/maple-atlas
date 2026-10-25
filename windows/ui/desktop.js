@@ -7,7 +7,7 @@
   const cmd=body=>fetch('/api/cmd',{method:'POST',headers:{'Content-Type':'application/json','X-Companion-Token':token},body:JSON.stringify(body)}).catch(()=>{});
   const DEFAULT_BOX={x:0,y:0,w:.4,h:.4},BOX_KEY='maple-atlas-companion-minimap-box';
   let phase='idle',paired=false,code=null,stream=null,video=null,tracking=false,box=loadBox();
-  let lastMap=null,lastPosition=null,readBusy=false,dotBusy=false,lastRead=0,lastSearching=0,noMatchSince=Date.now(),engineReady=false;
+  let lastMap=null,lastPosition=null,readBusy=false,dotBusy=false,questBusy=false,lastQuestRead=0,questsSentAt=0,lastRead=0,lastSearching=0,noMatchSince=Date.now(),engineReady=false;
   const titles={idle:'Not paired',waiting:'Waiting for your phone',connecting:'Connecting…',verifying:'Verifying…',connected:'Connected to phone',reconnecting:'Phone away',disconnected:'Disconnected',failed:'Connection failed',expired:'Code expired'};
 
   // Helper events.
@@ -15,7 +15,7 @@
   events.onmessage=e=>{let v;try{v=JSON.parse(e.data);}catch(_){return;}
     if(v.event==='code'){code=v;paired=false;showCode();}
     else if(v.event==='paired'){code=null;paired=true;$('qr').hidden=true;}
-    else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected')paired=true;paintPhone(v.message);}
+    else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);}
     else if(v.event==='error'){$('phone-error').textContent=v.message;$('phone-error').hidden=false;}
     paintPhone();
   };
@@ -96,6 +96,17 @@
     catch(_){}finally{dotBusy=false;}
   }
   function sendPosition(id,p){lastPosition=p;$('position').textContent='x '+Math.round(p.x)+', y '+Math.round(p.y);cmd({cmd:'position',id,x:p.x,y:p.y,observedAt:Date.now()});}
+  // The game's Quest Helper (top right) every 3 s; the phone gets the list when it
+  // changes and again every 15 s.
+  async function readQuests(){
+    questBusy=true;lastQuestRead=Date.now();
+    try{
+      const w=video.videoWidth,h=video.videoHeight,r=await atlasEngine.readQuestsFrame(video,{x:Math.round(w*.55),y:0,w:Math.round(w*.45),h:Math.round(h*.5)});
+      if(!tracking)return;
+      $('quests').textContent=!r.visible?'Not visible (top right of the game)':r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
+      if(phase==='connected'&&(r.changed||Date.now()-questsSentAt>=15000)){cmd({cmd:'quests',visible:r.visible,quests:r.quests,observedAt:Date.now()});questsSentAt=Date.now();}
+    }catch(_){}finally{questBusy=false;}
+  }
   // Ticks come from a worker: its timers keep running while this window is behind the game.
   const ticker=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),200)'],{type:'text/javascript'})));
   let previewAt=0;
@@ -103,6 +114,7 @@
     if(!video?.videoWidth)return;
     if(Date.now()-previewAt>500){previewAt=Date.now();drawPreview();}
     if(!tracking||!engineReady)return;
+    if(!questBusy&&!readBusy&&Date.now()-lastQuestRead>=3000)void readQuests();
     if(!readBusy&&Date.now()-lastRead>=1500)void readMap();
     else if(!dotBusy&&lastMap&&Date.now()-lastMap.at<10000)void readDot();
   };

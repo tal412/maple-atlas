@@ -83,3 +83,4 @@
 #maple-atlas-concept .mc-install-steps {margin:14px 0 0;padding-left:20px;display:grid;gap:8px;font-size:13px;line-height:1.45;color:var(--mc-muted);}
 #maple-atlas-concept .mc-install-steps strong {color:var(--mc-ink);}
 #maple-atlas-concept .mc-install-steps code {font-size:12px;}
+#maple-atlas-concept #mc-pair-checklist {margin:10px 0 0;padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.45;}

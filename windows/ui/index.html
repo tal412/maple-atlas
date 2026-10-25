@@ -40,19 +40,21 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{c
   <div class="row"><button class="primary" id="choose">Choose game window…</button><span id="window-name" class="hint">No game window chosen</span></div>
   <div class="preview" id="preview" hidden><canvas id="preview-canvas"></canvas><div class="box" id="box"><span>Minimap</span></div></div>
   <div class="row" id="region-row" hidden><span class="hint">Drag a box around the in-game minimap</span><button id="reset-box">Reset to top-left</button></div>
-  <p class="hint">Windows asks which window to share; pick the game. Frames stay on this PC; only the map ID and your position go to your phone.</p>
+  <p class="hint">Windows asks which window to share; pick the game. Frames stay on this PC; only the map, your position and the quests in your Quest Helper go to your phone.</p>
   <div class="row"><button class="primary" id="track" disabled>Start tracking</button></div>
 </section>
 
 <section aria-labelledby="tracking-title">
   <h2 id="tracking-title">Tracking</h2>
-  <dl><dt>Map engine</dt><dd id="engine">Loading the map index…</dd><dt>Reading</dt><dd id="reading">Not tracking</dd><dt>Last match</dt><dd id="last-map">—</dd><dt>Your position</dt><dd id="position">—</dd></dl>
+  <dl><dt>Map engine</dt><dd id="engine">Loading the map index…</dd><dt>Reading</dt><dd id="reading">Not tracking</dd><dt>Last match</dt><dd id="last-map">—</dd><dt>Your position</dt><dd id="position">—</dd><dt>Quest Helper</dt><dd id="quests">Not read yet</dd></dl>
 </section>
 
 <script src="./qr.js"></script>
 <script src="./visual-client.js"></script>
 <script src="./visual-tracker.js"></script>
 <script src="./minimap-position.js"></script>
+<script src="./quest-helper.js"></script>
+<script src="./ocr/tesseract.min.js"></script>
 <script src="./engine.js"></script>
 <script src="./desktop.js"></script>
 </body>

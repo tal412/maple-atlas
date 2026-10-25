@@ -5,7 +5,7 @@
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the QR reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
   const busy=['connecting','verifying'];
-  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},device}){
+  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),input=$('#mc-pair-input'),scanVideo=$('#mc-scan-video');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
@@ -51,7 +51,7 @@
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
       lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
-    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onReading:state=>{
+    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onReading:state=>{
       lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the minimap visible while your computer identifies the map.');onConnection(state==='paused'?'stale':'searching');
     },onState:value=>{
       paint(value);
@@ -69,11 +69,21 @@
         else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:value.reason==='user'?'user':'mac'});
         else if(remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
         onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
+        checklist(value.phase==='failed'&&['network','timeout'].includes(value.reason));
         if(remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Computer not connected · Tap to reconnect';}
       }else if(value.phase==='reconnecting')onConnection('reconnecting');
       else if(busy.includes(value.phase))onConnection(resuming?'resuming':'pairing');
     }});
-    function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';}
+    function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';checklist(false);}
+    // What usually blocks the link, for this kind of phone.
+    function checklist(show){
+      const list=$('#mc-pair-checklist'),apple=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+      const items=[apple?'<b>iPhone or iPad:</b> open Settings, then '+(/CriOS/.test(navigator.userAgent)?'Chrome':/FxiOS/.test(navigator.userAgent)?'Firefox':/EdgiOS/.test(navigator.userAgent)?'Edge':'your browser')+', and turn on <b>Local Network</b>. Then reload this page.':'',
+        '<b>Windows PC:</b> install the latest companion from the website. It allows itself through Windows Firewall. Or, in Windows Security → Firewall → Allow an app, allow Maple Atlas Companion on private and public networks.',
+        '<b>Same Wi-Fi:</b> the phone must be on the Wi-Fi of the computer’s network, not mobile data, a guest network or a VPN.'].filter(Boolean);
+      list.innerHTML=show?items.map(t=>'<li>'+t+'</li>').join(''):'';list.hidden=!show;
+      if(show)$('#mc-pair-error').hidden=false;
+    }
     function error(e){
       if(e?.message==='Pairing was cancelled.')return;
       const message=e?.name==='NotAllowedError'?'Camera access was denied. Allow the camera in your browser settings, or use a QR image or the link.':e?.name==='NotFoundError'?'No camera was found. Use a QR image or paste the link.':e?.message||'Something went wrong. Please try again.';

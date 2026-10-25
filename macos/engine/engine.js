@@ -2,8 +2,10 @@
  * and the Windows app (its local window). It reuses the website's matcher (OpenCV
  * ORB + local index in a worker) and short observation history, reads only minimap
  * references, and finds the player's dot (src/minimap-position.js). Frames never
- * leave the computer. Needs visual-client.js, visual-tracker.js and
- * minimap-position.js loaded first. */
+ * leave the computer. It also reads the game's Quest Helper panel (top right) with
+ * on-device text recognition (ocr/, Apache-2.0). Needs visual-client.js,
+ * visual-tracker.js, minimap-position.js, quest-helper.js and ocr/tesseract.min.js
+ * loaded first. */
 (function(){
   const notify=message=>{try{window.webkit?.messageHandlers?.atlas?.postMessage(message);}catch(_){}window.dispatchEvent(new CustomEvent('atlas-engine',{detail:message}));};
   const vision=MapleVisualClient.create({onProgress:message=>notify({type:'progress',message})});
@@ -71,9 +73,50 @@
     const where=position(String(id),dotContext.getImageData(0,0,dotCanvas.width,dotCanvas.height),Math.round((frameHeight||dotCanvas.height/scale)*scale));
     return where.reason?{position:null,positionNote:where.reason}:{position:where,positionNote:null};
   }
+  // ---- Quest Helper ----
+  // Text recognition runs in its own worker, loaded the first time the panel is seen.
+  let ocr=null,questBusy=false,questSeen=null;
+  const questCanvas=document.createElement('canvas'),questContext=questCanvas.getContext('2d',{willReadFrequently:true});
+  const textCanvas=document.createElement('canvas'),textContext=textCanvas.getContext('2d',{willReadFrequently:true});
+  function reader(){
+    ocr??=Tesseract.createWorker('eng',1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr/tesseract-core-simd-lstm.wasm.js',langPath:'./ocr/lang',workerBlobURL:false,gzip:true})
+      .then(async worker=>{await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});return worker;})
+      .catch(e=>{ocr=null;throw e;});
+    return ocr;
+  }
+  // Reads the tracked quests from `source` (its `crop`: the top-right part of the game
+  // window). Returns {visible, quests (MapleQuestHelper.pack form), changed, text}.
+  // The panel is read again only when it looks different, or every 30 s.
+  async function readQuestsFrame(source,crop){
+    if(questBusy)throw Error('The quest panel is already being read.');
+    questBusy=true;const started=performance.now();
+    try{
+      const w=crop?crop.w:source.videoWidth||source.width,h=crop?crop.h:source.videoHeight||source.height,scale=Math.min(1,1600/Math.max(w,h));
+      questCanvas.width=Math.max(16,Math.round(w*scale));questCanvas.height=Math.max(16,Math.round(h*scale));
+      if(crop)questContext.drawImage(source,crop.x,crop.y,crop.w,crop.h,0,0,questCanvas.width,questCanvas.height);else questContext.drawImage(source,0,0,questCanvas.width,questCanvas.height);
+      const image=questContext.getImageData(0,0,questCanvas.width,questCanvas.height),panel=MapleQuestHelper.find(image);
+      if(!panel){questSeen=null;return {visible:false,quests:[],changed:true,elapsed:Math.round(performance.now()-started)};}
+      const body=questContext.getImageData(panel.x,panel.y,panel.w,panel.h),signature=MapleQuestHelper.signature(body);
+      if(questSeen&&!MapleQuestHelper.changed(signature,questSeen.signature)&&performance.now()-questSeen.at<30000)
+        return {visible:true,quests:questSeen.quests,changed:false,elapsed:Math.round(performance.now()-started)};
+      // Enlarge so the AUTO button is about 90 px wide, the size the reader is tuned for.
+      const zoom=Math.max(1,Math.min(4,90/panel.button));
+      textCanvas.width=Math.round(panel.w*zoom);textCanvas.height=Math.round(panel.h*zoom);
+      textContext.imageSmoothingEnabled=true;textContext.imageSmoothingQuality='high';
+      textContext.drawImage(questCanvas,panel.x,panel.y,panel.w,panel.h,0,0,textCanvas.width,textCanvas.height);
+      const pixels=MapleQuestHelper.inkDark(textContext.getImageData(0,0,textCanvas.width,textCanvas.height),75);
+      textContext.putImageData(pixels,0,0);
+      const worker=await reader(),{data}=await worker.recognize(textCanvas),text=String(data.text||'').trim();
+      const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(text));
+      const changed=JSON.stringify(quests)!==JSON.stringify(questSeen?.quests);
+      questSeen={signature,at:performance.now(),quests};
+      return {visible:true,quests,changed,text:text.slice(0,600),elapsed:Math.round(performance.now()-started)};
+    }finally{questBusy=false;}
+  }
   const bitmapOf=async dataURL=>createImageBitmap(await (await fetch(dataURL)).blob());
   // Data-URL entry points used by the Mac app (frameHeight in that image's pixels).
   async function read(dataURL,frameHeight){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight);}finally{bitmap.close();}}
   async function locate(dataURL,frameHeight,id){const bitmap=await bitmapOf(dataURL);try{return await locateFrame(bitmap,null,frameHeight,id);}finally{bitmap.close();}}
-  window.atlasEngine={ready,read,locate,readFrame,locateFrame,reset:()=>tracker.reset()};
+  async function readQuests(dataURL){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null);}finally{bitmap.close();}}
+  window.atlasEngine={ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>tracker.reset()};
 })();

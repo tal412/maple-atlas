@@ -270,6 +270,9 @@ private struct TrackingSection: View {
                         Text("Dot not found on the minimap").foregroundStyle(.secondary)
                     }
                 }
+                LabeledContent("Quest Helper") {
+                    Text(model.questSummary).foregroundStyle(.secondary)
+                }
             }
         }
     }

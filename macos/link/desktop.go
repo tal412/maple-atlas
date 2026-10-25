@@ -171,7 +171,7 @@ func runDesktop(site, stateDir string, _ bool) {
 			return
 		}
 		var cmd command
-		if json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&cmd) != nil {
+		if json.NewDecoder(io.LimitReader(r.Body, 16384)).Decode(&cmd) != nil {
 			http.Error(w, "bad command", http.StatusBadRequest)
 			return
 		}

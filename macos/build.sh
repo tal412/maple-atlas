@@ -16,7 +16,7 @@ step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 step "Building Swift app"
 # Universal (Apple silicon and Intel) unless ARCHS says otherwise.
 ARCHS="${ARCHS:-arm64 x86_64}"
-VERSION="${VERSION:-0.2.0}"
+VERSION="${VERSION:-0.3.0}"
 SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
 (cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
 BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
@@ -83,6 +83,9 @@ INDEX_BIN="${INDEX_BIN#./}"
 copy "docs/$INDEX_BIN" "$INDEX_BIN"
 copy src/minimap-position.js minimap-position.js
 copy macos/engine/engine.js engine.js
+copy src/quest-helper.js quest-helper.js
+# On-device text recognition for the Quest Helper panel (Apache-2.0).
+for f in tesseract.min.js worker.min.js tesseract-core-simd-lstm.wasm.js LICENSE lang/eng.traineddata.gz; do copy "macos/engine/ocr/$f" "ocr/$f"; done
 # Visible portal positions per map, for placing the player dot (see src/minimap-position.js).
 /usr/bin/python3 - "$REPO/data/world.json" "$ENGINE/data/portal-marks.json" <<'PY'
 import json, sys

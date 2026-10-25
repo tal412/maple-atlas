@@ -66,6 +66,8 @@ enum HelperCommand {
     case location(id: String, confidence: Int, observedAt: Date)
     /// The player's position on that map, in the portal data's coordinates.
     case position(id: String, x: Int, y: Int, observedAt: Date)
+    /// The quests tracked in the game's Quest Helper (engine's compact form).
+    case quests(visible: Bool, quests: [Any], observedAt: Date)
 
     var payload: [String: Any] {
         switch self {
@@ -78,6 +80,11 @@ enum HelperCommand {
                 "cmd": "location",
                 "id": id,
                 "confidence": max(0, min(100, confidence)),
+                "observedAt": Int64((observedAt.timeIntervalSince1970 * 1000).rounded()),
+            ]
+        case .quests(let visible, let quests, let observedAt):
+            [
+                "cmd": "quests", "visible": visible, "quests": quests,
                 "observedAt": Int64((observedAt.timeIntervalSince1970 * 1000).rounded()),
             ]
         case .position(let id, let x, let y, let observedAt):

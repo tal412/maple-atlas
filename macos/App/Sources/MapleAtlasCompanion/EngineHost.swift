@@ -80,6 +80,7 @@ final class EngineHost: NSObject {
     private var navigationWaiter: CheckedContinuation<Void, Error>?
     private var reading = false
     private var locating = false
+    private var questReading = false
 
     override init() {
         let configuration = WKWebViewConfiguration()
@@ -151,6 +152,29 @@ final class EngineHost: NSObject {
               let reading = try? JSONDecoder().decode(EngineReading.Located.self, from: Data(json.utf8))
         else { throw EngineError.badResult }
         return reading.position
+    }
+
+    /// What `atlasEngine.readQuests` saw in the Quest Helper panel. `quests` stays in the
+    /// engine's compact form and is passed to the phone as is.
+    struct QuestReading: @unchecked Sendable {
+        let visible: Bool
+        let changed: Bool
+        let quests: [Any]
+        let text: String?
+    }
+
+    func readQuests(_ dataURL: String) async throws -> QuestReading {
+        guard !questReading else { throw EngineError.busy }
+        questReading = true
+        defer { questReading = false }
+        let script = "return JSON.stringify(await window.atlasEngine.readQuests(frame));"
+        let result = try await webView.callAsyncJavaScript(script, arguments: ["frame": dataURL], contentWorld: .page)
+        guard let json = result as? String,
+              let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+              let visible = value["visible"] as? Bool
+        else { throw EngineError.badResult }
+        return QuestReading(visible: visible, changed: value["changed"] as? Bool ?? true,
+                            quests: value["quests"] as? [Any] ?? [], text: value["text"] as? String)
     }
 
     func reset() async {

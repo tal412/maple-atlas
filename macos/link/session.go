@@ -556,6 +556,24 @@ func (s *session) sendPosition(id string, x, y float64, observedAt int64) bool {
 	return s.sendSequenced(map[string]any{"kind": "position", "id": id, "x": math.Round(x), "y": math.Round(y), "observedAt": observedAt})
 }
 
+// sendQuests forwards the tracked quests read from the game's Quest Helper. The list
+// is passed through as given by the engine, after a size and shape check.
+func (s *session) sendQuests(visible bool, raw json.RawMessage, observedAt int64) bool {
+	if observedAt <= 0 || len(raw) > 6000 {
+		return false
+	}
+	var quests []any
+	if len(raw) > 0 {
+		if json.Unmarshal(raw, &quests) != nil || len(quests) > 8 {
+			return false
+		}
+	}
+	if quests == nil {
+		quests = []any{}
+	}
+	return s.sendSequenced(map[string]any{"kind": "quests", "visible": visible, "quests": quests, "observedAt": observedAt})
+}
+
 func (s *session) sendTracking(state string) bool {
 	if state != "searching" && state != "paused" {
 		return false

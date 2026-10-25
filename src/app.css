@@ -226,3 +226,14 @@
 /* Live portal guidance from the companion's minimap reading. */
 #maple-atlas-concept .mc-live-hint {display:inline-flex;align-items:center;gap:6px;margin:6px 0 0;padding:6px 12px;border-radius:14px;background:light-dark(#fff4cc,#3d2e00);color:light-dark(#5c4300,#ffe08a);font-weight:500;font-size:13px;}
 #maple-atlas-concept .mc-live-hint::before {content:'';width:10px;height:10px;border-radius:50%;background:#f0c419;box-shadow:0 0 0 2px #8a6500;}
+/* You are here: an arrow pin over your current map when no route is shown. */
+#maple-atlas-concept .mc-place[data-here=true] {z-index:3;}
+#maple-atlas-concept .mc-place[data-here=true] .mc-dot {background:var(--mc-blue);box-shadow:0 0 0 1px var(--mc-blue),0 0 0 6px color-mix(in srgb,var(--mc-blue) 22%,transparent);}
+#maple-atlas-concept .mc-here {position:absolute;left:50%;bottom:calc(50% + 6px);width:30px;height:38px;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 3px 4px var(--mc-shadow));animation:mc-here-bob 2.4s ease-in-out infinite;}
+#maple-atlas-concept .mc-here svg {display:block;width:100%;height:100%;}
+#maple-atlas-concept .mc-here path {fill:var(--mc-blue);stroke:var(--mc-paper);stroke-width:2;}
+#maple-atlas-concept .mc-here circle {fill:var(--mc-paper);}
+@keyframes mc-here-bob {50%{transform:translateX(-50%) translateY(-4px);}}
+@media (prefers-reduced-motion:reduce){#maple-atlas-concept .mc-here{animation:none;}}
+#maple-atlas-concept .mc-route-buttons {display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;}
+#maple-atlas-concept .mc-end-route {min-height:32px;padding:4px 12px;font-size:12px;}

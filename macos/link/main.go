@@ -27,6 +27,9 @@ type command struct {
 	State      string  `json:"state"`
 	X          float64 `json:"x"`
 	Y          float64 `json:"y"`
+	// quests: what the game's Quest Helper shows (MapleQuestHelper.pack form).
+	Visible bool            `json:"visible"`
+	Quests  json.RawMessage `json:"quests"`
 }
 
 // controller runs one pairing session at a time and applies app commands to it.
@@ -83,6 +86,10 @@ func (c *controller) handle(cmd command) {
 	case "position":
 		if c.current != nil {
 			c.current.sendPosition(cmd.ID, cmd.X, cmd.Y, cmd.ObservedAt)
+		}
+	case "quests":
+		if c.current != nil {
+			c.current.sendQuests(cmd.Visible, cmd.Quests, cmd.ObservedAt)
 		}
 	case "tracking":
 		if c.current != nil {
