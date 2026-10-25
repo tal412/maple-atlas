@@ -16,7 +16,7 @@ step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 step "Building Swift app"
 # Universal (Apple silicon and Intel) unless ARCHS says otherwise.
 ARCHS="${ARCHS:-arm64 x86_64}"
-VERSION="${VERSION:-0.3.0}"
+VERSION="${VERSION:-0.3.1}"
 SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
 (cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
 BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
