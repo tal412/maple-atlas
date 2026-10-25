@@ -18,8 +18,11 @@
     // deliberate disconnect. "Forget this computer" removes it.
     let pairingCode=null,resuming=false,resumeTries=0,wakeLock=null,storedAt=0;
     const pairingKey=()=>'maple-atlas-mac-pairing:'+location.pathname.replace(/index\.html$/,'');
-    function remembered(){try{const v=JSON.parse(localStorage.getItem(pairingKey())||'null');return v&&typeof v.code==='string'&&/^MA2[A-Z2-7]+$/.test(v.code)?v:null;}catch(_){return null;}}
-    function remember(code,{paused=false}={}){storedAt=Date.now();try{localStorage.setItem(pairingKey(),JSON.stringify({code,at:storedAt,paused}));}catch(_){}}
+    // The bare MA2 code, whether given as the code itself or as the QR's full link.
+    const bareCode=v=>{const m=String(v||'').match(/MA2[A-Za-z2-7]{20,}/);return m?m[0].toUpperCase():'';};
+    // Older versions could save the whole link from an in-page scan; it is read the same way.
+    function remembered(){try{const v=JSON.parse(localStorage.getItem(pairingKey())||'null'),code=bareCode(v?.code);return code?{...v,code}:null;}catch(_){return null;}}
+    function remember(code,{paused=false}={}){code=bareCode(code);if(!code)return;storedAt=Date.now();try{localStorage.setItem(pairingKey(),JSON.stringify({code,at:storedAt,paused}));}catch(_){}}
     function forget(){pairingCode=null;try{localStorage.removeItem(pairingKey());}catch(_){}paint(currentState);}
 
     function activity(title,message){$('#mc-tracking-title').textContent=title;$('#mc-tracking-message').textContent=message;}
