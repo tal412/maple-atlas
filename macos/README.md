@@ -13,13 +13,15 @@ open "macos/build/Maple Atlas Companion.app"
 
 First launch asks for **Local Network** access, so the phone can connect on your Wi-Fi.
 
+**Pair once.** After the first scan the app saves the pairing in `~/Library/Application Support/Maple Atlas Companion/<dev|main>/pairing.json` (mode 600) and the phone saves the code in `localStorage`. From then on the app shows *Paired · waiting for your phone* instead of a QR, and the phone reconnects by itself, or with one tap on **Reconnect**, after switching apps, screen lock, reloads or restarts. The session keeps the same UDP port, ICE username/password and DTLS certificate, so the code the phone holds stays valid; each return opens a new peer connection that again proves the QR secret. **Pair a new phone** replaces the pairing. If the Mac's network address changes, the app shows a new QR.
+
 Click **Choose game window…** and pick the game in macOS's own window picker. Picker capture needs no Screen Recording permission, so there's no prompt to grant. The app never lists windows itself. Pick the window again after each launch. Then drag the box over the in-game minimap (top-left by default). Only that area is matched.
 
 The phone uses the website (`/dev/` by default; switch to Main in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
 
 ## Your position and portal guidance
 
-On every confirmed minimap match, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".
+Map recognition runs every 1.5 s. Between those reads the app locates only your dot, about **5 times a second**, on the confirmed map (a few milliseconds per read), so the phone follows smoothly. On every confirmed minimap match, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".
 
 Dot, ring and title colors, the fit and the guidance wording are adapted from [Maple Route](https://github.com/maplerouteadmin-dev/maple-route) (MIT; its notice is in `src/minimap-position.js`). Map identity still comes from this project's landmark matcher, not from reading the map name.
 

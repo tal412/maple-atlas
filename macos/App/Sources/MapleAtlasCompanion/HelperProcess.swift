@@ -12,6 +12,8 @@ struct PairingCode: Equatable, Sendable {
 enum HelperEvent: Sendable {
     case engine(URL)
     case code(PairingCode)
+    /// A saved phone pairing is active; no QR is needed.
+    case paired(addresses: [String])
     case state(phase: String, message: String)
     case log(String)
     case error(String)
@@ -38,6 +40,8 @@ enum HelperEvent: Sendable {
             guard let link = raw.link, let code = raw.code else { return nil }
             let expires = raw.expires.map { Date(timeIntervalSince1970: $0 / 1000) } ?? .now.addingTimeInterval(600)
             self = .code(PairingCode(link: link, code: code, expires: expires, addresses: raw.addresses ?? []))
+        case "paired":
+            self = .paired(addresses: raw.addresses ?? [])
         case "state":
             guard let phase = raw.phase else { return nil }
             self = .state(phase: phase, message: raw.message ?? "")
@@ -53,6 +57,9 @@ enum HelperEvent: Sendable {
 
 /// Commands written to the helper's stdin (one JSON object per line).
 enum HelperCommand {
+    /// Use the saved pairing, or create a code when none exists.
+    case start
+    /// Forget the saved phone and create a code for a new one.
     case pair
     case stop
     case tracking(state: String)
@@ -62,6 +69,7 @@ enum HelperCommand {
 
     var payload: [String: Any] {
         switch self {
+        case .start: ["cmd": "start"]
         case .pair: ["cmd": "pair"]
         case .stop: ["cmd": "stop"]
         case .tracking(let state): ["cmd": "tracking", "state": state]

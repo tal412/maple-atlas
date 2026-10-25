@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "Maple Atlas",
+  "short_name": "Maple Atlas",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "any",
+  "background_color": "#1e1f20",
+  "theme_color": "#1e1f20",
+  "description": "Classic World atlas and live map companion.",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

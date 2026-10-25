@@ -61,7 +61,19 @@
       return {...base,phase:'candidate',text:'Checking the terrain… Keep walking to reveal more landmarks.'};
     }finally{busy=false;}
   }
-  window.atlasEngine={ready,read,reset:()=>tracker.reset()};
+  // Fast path: only the player's dot, on a map the matcher already confirmed. It is a
+  // pixel scan with no landmark matching, so the app can call it several times a second.
+  const dotCanvas=document.createElement('canvas'),dotContext=dotCanvas.getContext('2d',{willReadFrequently:true});
+  async function locate(dataURL,frameHeight,id){
+    await ready();
+    const bitmap=await createImageBitmap(await (await fetch(dataURL)).blob());
+    const scale=Math.min(1,960/Math.max(bitmap.width,bitmap.height));
+    dotCanvas.width=Math.max(16,Math.round(bitmap.width*scale));dotCanvas.height=Math.max(16,Math.round(bitmap.height*scale));
+    dotContext.drawImage(bitmap,0,0,dotCanvas.width,dotCanvas.height);bitmap.close();
+    const where=position(String(id),dotContext.getImageData(0,0,dotCanvas.width,dotCanvas.height),Math.round((frameHeight||dotCanvas.height/scale)*scale));
+    return where.reason?{position:null,positionNote:where.reason}:{position:where,positionNote:null};
+  }
+  window.atlasEngine={ready,read,locate,reset:()=>tracker.reset()};
 })();
 </script>
 </html>

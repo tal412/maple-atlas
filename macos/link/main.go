@@ -31,6 +31,7 @@ type command struct {
 func main() {
 	engineDir := flag.String("engine-dir", "", "directory with engine.html and the visual index")
 	site := flag.String("site", "https://tal412.github.io/maple-atlas/dev/", "Maple Atlas site the phone opens")
+	stateDir := flag.String("state-dir", "", "folder that keeps the pairing so the phone reconnects after restarts")
 	flag.Parse()
 
 	var outMu sync.Mutex
@@ -60,18 +61,40 @@ func main() {
 		}
 		mu.Lock()
 		switch c.Cmd {
-		case "pair":
+		case "start", "pair":
+			// start: wait for the saved phone, or show a code when none is paired.
+			// pair: forget the saved phone and show a code for a new one.
 			if current != nil {
 				current.close()
-			}
-			s, code, link, addresses, expires, err := newSession(*site, emit)
-			if err != nil {
 				current = nil
-				emit(map[string]any{"event": "state", "phase": "failed", "reason": "setup", "message": "Could not create a pairing code: " + err.Error()})
+			}
+			var ident *identity
+			if c.Cmd == "start" {
+				ident = loadIdentity(*stateDir)
+			} else {
+				forgetIdentity(*stateDir)
+			}
+			if ident == nil {
+				var err error
+				if ident, err = newIdentity(); err != nil {
+					emit(map[string]any{"event": "state", "phase": "failed", "reason": "setup", "message": "Could not create a pairing: " + err.Error()})
+					break
+				}
+			}
+			s, info, err := newSession(*site, emit, ident, *stateDir)
+			if err != nil {
+				emit(map[string]any{"event": "state", "phase": "failed", "reason": "setup", "message": "Could not start pairing: " + err.Error()})
 				break
 			}
 			current = s
-			emit(map[string]any{"event": "code", "code": code, "link": link, "expires": expires, "addresses": addresses})
+			if info.Paired {
+				emit(map[string]any{"event": "paired", "addresses": info.Addresses})
+			} else {
+				if info.Note != "" {
+					emit(map[string]any{"event": "error", "message": info.Note})
+				}
+				emit(map[string]any{"event": "code", "code": info.Code, "link": info.Link, "expires": info.Expires, "addresses": info.Addresses})
+			}
 		case "location":
 			if current != nil {
 				current.sendLocation(c.ID, c.Confidence, c.ObservedAt)
@@ -86,8 +109,7 @@ func main() {
 			}
 		case "stop":
 			if current != nil {
-				current.end("disconnected", "You disconnected. Create a new code to pair again.")
-				current = nil
+				current.disconnect()
 			}
 		}
 		mu.Unlock()

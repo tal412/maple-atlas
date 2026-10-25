@@ -97,6 +97,10 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
   <meta name="theme-color" content="#1e1f20" media="(prefers-color-scheme: dark)">
   <title>Maple Atlas</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <style>
 """ + css + """  </style>
 </head>
@@ -122,6 +126,19 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     output.write_text(page, encoding="utf-8")
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     (docs / 'favicon.svg').write_text(read('favicon.svg'), encoding='utf-8')
+    # Installable app: "Add to Home screen" opens the map full screen, without browser bars.
+    (docs / 'icons').mkdir(exist_ok=True)
+    for size in (192, 512):
+        (docs / f'icons/icon-{size}.png').write_bytes((project / f'src/icons/icon-{size}.png').read_bytes())
+    label = 'Maple Atlas Dev' if channel == 'dev' else 'Maple Atlas'
+    manifest = {
+        'id': './', 'name': label, 'short_name': label, 'start_url': './', 'scope': './',
+        'display': 'fullscreen', 'display_override': ['fullscreen', 'standalone'], 'orientation': 'any',
+        'background_color': '#1e1f20', 'theme_color': '#1e1f20',
+        'description': 'Classic World atlas and live map companion.',
+        'icons': [{'src': f'./icons/icon-{size}.png', 'sizes': f'{size}x{size}', 'type': 'image/png', 'purpose': 'any'} for size in (192, 512)],
+    }
+    (docs / 'manifest.webmanifest').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     if channel == 'dev':
         output.write_text(page.replace('<title>Maple Atlas</title>', '<title>Maple Atlas · Dev</title>'), encoding='utf-8')
     offline_files = ['index.html', 'favicon.svg', 'vendor/lucide.js', 'vendor/roboto-latin.woff2', 'data/' + search_name]

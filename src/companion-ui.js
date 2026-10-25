@@ -32,7 +32,9 @@
       status.dataset.tone=linked?'success':['failed','expired'].includes(phase)?'error':pending?'pending':'neutral';
       $('#mc-companion-state-icon').textContent=linked?'✓':['failed','expired'].includes(phase)?'!':pending?'…':'○';
       $('#mc-companion-state-title').textContent=titles[phase]||'Not connected';$('#mc-companion-message').textContent=value.message;
+      const saved=role==='phone'&&remembered();
       $('#mc-pair-roles').hidden=phase!=='idle';$('#mc-pair-retry').hidden=!['failed','expired','disconnected'].includes(phase);
+      $('#mc-pair-reconnect').hidden=!(saved&&terminal);$('#mc-pair-forget').hidden=!(saved&&terminal);
       $('#mc-pair-active').hidden=terminal;$('#mc-pair-steps').hidden=terminal;
       const step=linked?4:['connecting','verifying','reconnecting'].includes(phase)?3:phase==='waiting-computer'?2:1;
       for(const item of root.querySelectorAll('#mc-pair-steps li')){const n=Number(item.dataset.step);item.dataset.state=n<step?'done':n===step?'active':'pending';item.firstElementChild.textContent=n<step?'✓':n;if(n===step)item.setAttribute('aria-current','step');else item.removeAttribute('aria-current');}
@@ -51,13 +53,23 @@
       paint(value);
       if(value.phase==='connected'){
         stopScan();output.value='';input.value='';clearError();onConnection('connected');
+        if(role==='phone'&&link.native&&pairingCode){remember(pairingCode);resumeTries=0;void requestWake();}
         if(role==='phone'){if(!lastSeen)activity('Waiting for screen sharing','The connection is working. On your computer, share the game window and start visual tracking.');}
         else{$('#mc-companion-badge').textContent='Phone connected';readerState.textContent=stream?'Connection ready. Watching the visible terrain…':'Phone connected. Share the game window to start.';}
         dialog.scrollTo({top:0});
       }
       if(['failed','expired','disconnected'].includes(value.phase)){
-        uiEpoch++;stopReader();stopScan();lastSeen=0;output.value='';input.value='';onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
+        uiEpoch++;stopReader();stopScan();lastSeen=0;output.value='';input.value='';releaseWake();
+        // A deliberate end forgets the pairing; a dropped link resumes it.
+        // A rejected code forgets the pairing; a deliberate disconnect keeps it but stops
+        // retrying; a dropped link retries by itself.
+        if(['verification','version'].includes(value.reason))forget();
+        else if(['user','bye'].includes(value.reason)&&remembered())remember(remembered().code,{paused:true});
+        else if(role==='phone'&&remembered()&&!remembered().paused&&resumeTries<3){onConnection('resuming');setTimeout(()=>void resume(),1500);return;}
+        onConnection(value.phase==='disconnected'?'disconnected':'failed');dialog.scrollTo({top:0});
+        if(role==='phone'&&remembered()){$('#mc-companion-badge').hidden=false;$('#mc-companion-badge').textContent='Mac not connected · Tap to reconnect';}
       }else if(value.phase==='reconnecting')onConnection('reconnecting');
+      else if(['connecting','verifying'].includes(value.phase)&&resuming)onConnection('resuming');
       else if(['preparing','waiting-phone','waiting-computer','connecting','verifying'].includes(value.phase))onConnection('pairing');
     }});
     function clearError(){$('#mc-pair-error').hidden=true;$('#mc-pair-error-message').textContent='';}
@@ -78,11 +90,34 @@
       $('#mc-pair-next').textContent=(role==='pc'?'On your phone, open Maple Atlas → Live companion → Connect to computer. Scan this code.':'Computer code accepted. This is a new response code, not a refresh. Hold it up to the computer’s camera, or choose “Scan phone response” there.')+hidden;
       paint(currentState);fitQR();$('#mc-pair-copy-status').textContent='';$('#mc-pair-exchange').scrollIntoView({block:'start'});
     }
-    async function accept(code){
-      if(accepting)return;accepting=true;const version=uiEpoch;clearError();
+    // Pair once: the Mac app's code is kept on this phone (localStorage, separately for
+    // Main and Dev) and used to reconnect whenever Maple Atlas is on screen, or with one
+    // tap after a deliberate disconnect. "Forget this Mac" removes it.
+    let pairingCode=null,resuming=false,resumeTries=0,wakeLock=null,storedAt=0;
+    const pairingKey=()=>'maple-atlas-mac-pairing:'+location.pathname.replace(/index\.html$/,'');
+    function remembered(){try{const v=JSON.parse(localStorage.getItem(pairingKey())||'null');return v&&typeof v.code==='string'&&/^MA2[A-Z2-7]+$/.test(v.code)?v:null;}catch(_){return null;}}
+    function remember(code,{paused=false}={}){storedAt=Date.now();try{localStorage.setItem(pairingKey(),JSON.stringify({code,at:storedAt,paused}));}catch(_){}}
+    function forget(){pairingCode=null;try{localStorage.removeItem(pairingKey());}catch(_){}paint(currentState);}
+    async function resume({manual=false}={}){
+      const saved=remembered();
+      if(role!=='phone'||!saved||resuming||accepting||link.connected||document.visibilityState!=='visible'||['preparing','connecting','verifying'].includes(currentState.phase))return;
+      if(saved.paused&&!manual)return;
+      if(manual){resumeTries=0;remember(saved.code);}
+      resuming=true;resumeTries++;
+      try{await accept(saved.code,{resume:true});}catch(_){/* the status card shows why */}
+      finally{resuming=false;}
+    }
+    // Keeps the phone screen on while connected and on screen (released when hidden).
+    async function requestWake(){
+      if(role!=='phone'||!navigator.wakeLock||wakeLock||document.visibilityState!=='visible'||!link.connected)return;
+      try{wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}catch(_){wakeLock=null;}
+    }
+    function releaseWake(){wakeLock?.release().catch(()=>{});wakeLock=null;}
+    async function accept(code,{resume=false}={}){
+      if(accepting)return;accepting=true;const version=uiEpoch;clearError();if(role==='phone')pairingCode=code;
       // Browsers reveal a device's real local address only while it holds camera access.
       // The phone keeps the camera open until its response is built, then releases it.
-      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code);stopScan();if(answer&&version===uiEpoch)await showCode(answer,version);}}
+      try{if(role==='pc'){stopScan();await link.finish(code);}else{const answer=await link.answer(code,{resume});stopScan();if(answer&&version===uiEpoch)await showCode(answer,version);}}
       catch(e){stopScan();throw e;}
       finally{accepting=false;}
     }
@@ -111,8 +146,10 @@
     $('#mc-pair-check').onclick=()=>{clearError();link.waitForConnection();dialog.scrollTo({top:0});};
     $('#mc-pair-apply').onclick=e=>run(e.currentTarget,()=>accept(input.value));
     $('#mc-pair-copy').onclick=e=>run(e.currentTarget,async()=>{try{await navigator.clipboard.writeText(output.value);$('#mc-pair-copy-status').textContent='Code copied. Paste it into Maple Atlas on the other device.';}catch(_){output.focus();output.select();$('#mc-pair-copy-status').textContent='Select and copy this code to the other device.';}});
-    $('#mc-pair-stop').onclick=()=>{clearError();link.stop('You disconnected. Screen sharing and the camera have stopped.');};
-    $('#mc-pair-view-map').onclick=()=>dialog.close();
+    $('#mc-pair-stop').onclick=()=>{clearError();link.stop(link.native?'Disconnected. Tap Reconnect to continue with your Mac.':'You disconnected. Screen sharing and the camera have stopped.');};
+    $('#mc-pair-reconnect').onclick=()=>{clearError();void resume({manual:true});};
+    $('#mc-pair-forget').onclick=()=>{forget();link.stop('This phone forgot your Mac. Scan the code in Maple Atlas Companion to pair again.',{quiet:true,reason:'forget'});};
+    $('#mc-pair-view-map').onclick=()=>{dialog.close();enterFullscreen();};
     function stopScan(){scanEpoch++;clearTimeout(scanTimer);scanner?.getTracks().forEach(t=>t.stop());scanner=null;scanVideo.srcObject=null;$('#mc-camera-box').hidden=true;}
     async function scan(){
       stopScan();const version=scanEpoch;await load('./vendor/companion/qr.js');if(version!==scanEpoch)return;
@@ -178,16 +215,29 @@
       }void read();
     }
     $('#mc-reader-run').onclick=e=>run(e.currentTarget,startReader);
-    function open(){$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();}$('#mc-companion-open').onclick=open;$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=open;
+    function open(){$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();}
+    // Full screen needs a tap; browsers without it (iPhone Safari) keep their bars.
+    function enterFullscreen(){
+      const page=document.documentElement;
+      if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
+      page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+    }$('#mc-companion-open').onclick=open;$('#mc-companion-desktop').onclick=open;$('#mc-companion-badge').onclick=()=>{if(role==='phone'&&remembered()&&!link.connected&&!['preparing','connecting','verifying'].includes(currentState.phase)){void resume({manual:true});return;}open();};
     // The Mac app's QR opens this page with the pairing code in the fragment. Remove
     // it from the address bar and history, then connect without a second scan.
     const linked=/^#link=(MA2[A-Z2-7]+)$/i.exec(location.hash);
     if(linked){history.replaceState(null,'',location.pathname+location.search);if(role==='phone'){open();void run($('#mc-pair-start'),()=>accept(linked[1]));}}
     dialog.addEventListener('close',()=>{stopScan();if(!stream)vision.stop();});
-    watch=setInterval(()=>{clock();if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The device connection is working. Check screen sharing and visual tracking on your computer.');onConnection('stale');}},1000);
-    // Browsers suspend this interval in the back/forward cache and resume it on return.
-    window.addEventListener('pagehide',()=>link.stop());
-    return {open};
+    watch=setInterval(()=>{clock();if(link.connected&&pairingCode&&link.native&&Date.now()-storedAt>10000)remember(pairingCode);if(role==='phone'&&link.connected&&lastSeen&&Date.now()-lastSeen>12000){activity('No recent location update','The device connection is working. Check screen sharing and visual tracking on your computer.');onConnection('stale');}},1000);
+    // Leaving the page closes the link quietly: the Mac app keeps the pairing so this
+    // tab can resume it (a reload, or Android discarding the tab in the background).
+    window.addEventListener('pagehide',()=>link.stop(undefined,{quiet:link.native,reason:'page'}));
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible'){resumeTries=0;if(link.connected)void requestWake();else void resume();}
+      else if(link.connected&&pairingCode)remember(pairingCode);
+    });
+    window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
+    if(!linked)setTimeout(()=>void resume(),0);
+    return {open,enterFullscreen};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);

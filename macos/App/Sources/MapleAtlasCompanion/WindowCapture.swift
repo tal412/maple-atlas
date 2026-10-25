@@ -89,7 +89,7 @@ final class GameCapture: NSObject {
         let configuration = SCStreamConfiguration()
         configuration.width = max(64, Int(filter.contentRect.width * scale))
         configuration.height = max(64, Int(filter.contentRect.height * scale))
-        configuration.minimumFrameInterval = CMTime(value: 1, timescale: 2) // 2 fps is plenty.
+        configuration.minimumFrameInterval = CMTime(value: 1, timescale: 10) // feeds the 5 Hz dot reading
         configuration.queueDepth = 3
         configuration.showsCursor = false
         configuration.capturesAudio = false

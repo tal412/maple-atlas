@@ -130,11 +130,17 @@
     if(phase==='searching'){liveFresh=false;$('#mc-companion-badge').textContent='Finding your location…';$('#mc-status').textContent='Waiting for a reliable visual match · Last location retained';}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
+    if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
     if(phase==='failed'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Connection failed · Try again';$('#mc-status').textContent='Companion is not connected';}
     if(phase==='disconnected'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Companion disconnected';$('#mc-status').textContent='Location set manually · Companion is disconnected';}
     if(wasFresh&&!liveFresh&&state.panel==='route')detail();
   }});
+  // Full screen on demand; an installed app (Add to Home screen) is full screen already.
+  const fullscreenButton=$('#mc-fullscreen'),installed=matchMedia('(display-mode: fullscreen), (display-mode: standalone)');
+  function syncFullscreen(){fullscreenButton.hidden=!document.documentElement.requestFullscreen||installed.matches;fullscreenButton.querySelector('strong').textContent=document.fullscreenElement?'Exit full screen':'Full screen';}
+  fullscreenButton.onclick=()=>{$('#mc-profile-dialog').close();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>notice('This browser cannot hide its bars. Use Add to Home screen instead.'));};
+  document.addEventListener('fullscreenchange',syncFullscreen);syncFullscreen();
   $('#mc-mobile-journal').onclick=()=>{$('#mc-profile-dialog').close();state.panel='progress';setSheet(true);detail();camera();save();};
   $('#mc-mobile-directions').onclick=openRoute;
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};

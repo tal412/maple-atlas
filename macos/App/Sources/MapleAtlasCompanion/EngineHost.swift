@@ -21,6 +21,11 @@ struct EngineReading: Decodable, Sendable {
         let y: Double
     }
 
+    /// Result of `atlasEngine.locate`.
+    struct Located: Decodable, Sendable {
+        let position: Position?
+    }
+
     private enum CodingKeys: String, CodingKey {
         case phase, id, name, inliers, kind, confidence, text, elapsed, position, positionNote
     }
@@ -74,6 +79,7 @@ final class EngineHost: NSObject {
     private(set) var loadedURL: URL?
     private var navigationWaiter: CheckedContinuation<Void, Error>?
     private var reading = false
+    private var locating = false
 
     override init() {
         let configuration = WKWebViewConfiguration()
@@ -131,6 +137,20 @@ final class EngineHost: NSObject {
               let reading = try? JSONDecoder().decode(EngineReading.self, from: Data(json.utf8))
         else { throw EngineError.badResult }
         return reading
+    }
+
+    /// Reads only the player's dot on an already-confirmed map (fast; no landmark matching).
+    func locate(_ dataURL: String, frameHeight: Int, mapID: String) async throws -> EngineReading.Position? {
+        guard !locating else { throw EngineError.busy }
+        locating = true
+        defer { locating = false }
+        let script = "return JSON.stringify(await window.atlasEngine.locate(frame, frameHeight, mapID));"
+        let result = try await webView.callAsyncJavaScript(
+            script, arguments: ["frame": dataURL, "frameHeight": frameHeight, "mapID": mapID], contentWorld: .page)
+        guard let json = result as? String,
+              let reading = try? JSONDecoder().decode(EngineReading.Located.self, from: Data(json.utf8))
+        else { throw EngineError.badResult }
+        return reading.position
     }
 
     func reset() async {

@@ -44,6 +44,8 @@ final class CompanionModel {
     private(set) var pairing: PairingCode?
     private(set) var qrImage: CGImage?
     private(set) var helperProblem: String?
+    /// A phone is paired and reconnects by itself; the QR is hidden.
+    private(set) var hasPairedPhone = false
     var lastError: String?
 
     // MARK: Game window
@@ -83,6 +85,7 @@ final class CompanionModel {
     @ObservationIgnored private var trackingActivity: NSObjectProtocol?
     @ObservationIgnored private var lastSearchingSent: Date?
     @ObservationIgnored private var previewTask: Task<Void, Never>?
+    @ObservationIgnored private var positionTask: Task<Void, Never>?
     @ObservationIgnored private var noMatchSince = Date.now
     @ObservationIgnored private let logger = Logger(subsystem: "io.github.tal412.maple-atlas-companion", category: "app")
 
@@ -130,11 +133,11 @@ final class CompanionModel {
     var phaseTitle: String {
         switch phase {
         case "idle": "Not paired"
-        case "waiting": "Waiting for your phone"
+        case "waiting": hasPairedPhone ? "Paired · waiting for your phone" : "Waiting for your phone"
         case "connecting": "Connecting…"
         case "verifying": "Verifying…"
         case "connected": "Connected to phone"
-        case "reconnecting": "Connection interrupted"
+        case "reconnecting": hasPairedPhone ? "Phone away" : "Connection interrupted"
         case "disconnected": "Disconnected"
         case "failed": "Connection failed"
         case "expired": "Code expired"
@@ -155,6 +158,7 @@ final class CompanionModel {
     func shutdown() {
         trackingTask?.cancel()
         previewTask?.cancel()
+        positionTask?.cancel()
         capture.stop()
         helper?.shutdown()
         helper = nil
@@ -180,7 +184,7 @@ final class CompanionModel {
         do {
             let process = try HelperProcess(
                 executable: paths.executable,
-                arguments: ["--engine-dir", paths.engineDir.path, "--site", site.url],
+                arguments: ["--engine-dir", paths.engineDir.path, "--site", site.url, "--state-dir", Self.stateDirectory(for: site).path],
                 onEvent: { [weak self] event in
                     guard let self, self.helperGeneration == generation else { return }
                     self.handle(event)
@@ -197,7 +201,7 @@ final class CompanionModel {
                     self.log("Helper exited with status \(status).")
                 })
             helper = process
-            helper?.send(.pair)
+            helper?.send(.start)
         } catch {
             helperProblem = error.localizedDescription
             phase = "failed"
@@ -224,11 +228,18 @@ final class CompanionModel {
         case .code(let code):
             pairing = code
             qrImage = QRCode.image(for: code.link)
+            hasPairedPhone = false
             log("New pairing code \(code.code)")
+        case .paired(let addresses):
+            pairing = nil
+            qrImage = nil
+            hasPairedPhone = true
+            log("Using the saved phone pairing (\(addresses.joined(separator: ", ")))")
         case .state(let newPhase, let message):
             let wasConnected = isPhoneConnected
             phase = newPhase
             phaseMessage = message
+            if newPhase == "connected" { hasPairedPhone = true }
             if !["waiting", "connecting", "verifying"].contains(newPhase) {
                 // The QR is only useful while a code is pending.
                 pairing = nil
@@ -248,9 +259,20 @@ final class CompanionModel {
 
     // MARK: Phone actions
 
+    /// Shows a fresh code: a new one for an unpaired Mac, or, when a phone is
+    /// paired, a code for a different phone (the old pairing is forgotten).
     func newCode() {
         if helper == nil { launchHelper(); return }
+        hasPairedPhone = false
         helper?.send(.pair)
+    }
+
+    /// Where the helper keeps the phone pairing, separately for the Main and Dev sites.
+    private static func stateDirectory(for site: SiteOption) -> URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let dir = base.appendingPathComponent("Maple Atlas Companion/\(site.rawValue)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        return dir
     }
 
     func disconnect() {
@@ -367,6 +389,8 @@ final class CompanionModel {
         guard isTracking else { return }
         trackingTask?.cancel()
         trackingTask = nil
+        positionTask?.cancel()
+        positionTask = nil
         isTracking = false
         readingText = "Not tracking"
         if let activity = trackingActivity {
@@ -376,7 +400,36 @@ final class CompanionModel {
         helper?.send(.tracking(state: "paused"))
     }
 
+    /// Map recognition runs every 1.5 s; between those reads the dot alone is located
+    /// about five times a second on the confirmed map, so the phone follows smoothly.
+    private func runPositionLoop() {
+        positionTask?.cancel()
+        positionTask = Task {
+            while !Task.isCancelled {
+                let deadline = ContinuousClock.now + .milliseconds(200)
+                await locateOnce()
+                try? await Task.sleep(until: deadline, clock: .continuous)
+            }
+        }
+    }
+
+    private func locateOnce() async {
+        guard isTracking, case .ready = engineStatus, let map = lastConfirmed,
+              Date.now.timeIntervalSince(map.at) < 10 else { return }
+        let capture = self.capture, region = minimapRect
+        guard let frame = try? await Task.detached(operation: { try capture.frame(region: region, previewOnly: false) }).value,
+              let png = frame.minimapImage,
+              let found = try? await engine.locate(png, frameHeight: frame.frameHeight, mapID: map.id),
+              !Task.isCancelled, isTracking, lastConfirmed?.id == map.id
+        else { return }
+        lastPosition = found
+        if isPhoneConnected {
+            helper?.send(.position(id: map.id, x: Int(found.x.rounded()), y: Int(found.y.rounded()), observedAt: .now))
+        }
+    }
+
     private func runTrackingLoop() {
+        runPositionLoop()
         trackingTask?.cancel()
         lastSearchingSent = nil
         noMatchSince = .now

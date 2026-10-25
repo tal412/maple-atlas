@@ -13,15 +13,19 @@ import (
 // phone sends carries it ("macUfrag:phoneUfrag"). A check only counts when its
 // MESSAGE-INTEGRITY verifies with the Mac's ICE password, which exists only in
 // the QR, so another device on the network cannot claim the session.
+//
+// Each distinct phone username is reported once: a phone that comes back after
+// being paused opens a new peer connection with a new username.
 type sniffConn struct {
 	net.PacketConn
 	localUfrag, localPwd string
-	once                 sync.Once
+	mu                   sync.Mutex
+	last                 string
 	found                chan string
 }
 
 func newSniffConn(conn net.PacketConn, ufrag, pwd string) *sniffConn {
-	return &sniffConn{PacketConn: conn, localUfrag: ufrag, localPwd: pwd, found: make(chan string, 1)}
+	return &sniffConn{PacketConn: conn, localUfrag: ufrag, localPwd: pwd, found: make(chan string, 4)}
 }
 
 func (c *sniffConn) ReadFrom(b []byte) (int, net.Addr, error) {
@@ -51,5 +55,14 @@ func (c *sniffConn) inspect(packet []byte) {
 	if stun.MessageIntegrity([]byte(c.localPwd)).Check(m) != nil {
 		return
 	}
-	c.once.Do(func() { c.found <- remote })
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if remote == c.last {
+		return
+	}
+	c.last = remote
+	select {
+	case c.found <- remote:
+	default: // a waiting link takes the newest one; stale entries are drained below
+	}
 }

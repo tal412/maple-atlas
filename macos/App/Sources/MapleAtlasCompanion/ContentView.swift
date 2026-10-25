@@ -82,6 +82,10 @@ private struct PhoneSection: View {
             HStack {
                 if model.helperProblem != nil {
                     Button("Restart helper") { model.restartHelper() }
+                } else if model.hasPairedPhone {
+                    Button("Pair a new phone") { model.newCode() }
+                        .disabled(!model.isHelperRunning)
+                        .help("Forget the paired phone and show a code for another one")
                 } else {
                     Button("New code") { model.newCode() }
                         .disabled(!model.isHelperRunning)
