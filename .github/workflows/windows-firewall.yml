@@ -34,7 +34,7 @@ jobs:
           Get-NetConnectionProfile | Format-Table Name, NetworkCategory
           function Check { (& $exe --check-firewall | Out-String).Trim() | ConvertFrom-Json }
           function Mine { @(Get-NetFirewallApplicationFilter | Where-Object { [Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $exe } | Get-NetFirewallRule | Where-Object Direction -eq 'Inbound') }
-          function Expect($what, $state) { $r = Check; Write-Host "$what -> $($r.state) $($r.detail)"; if ($r.state -ne $state) { throw "$what: expected $state, got $($r.state)" } }
+          function Expect($what, $state) { $r = Check; Write-Host "$what -> $($r.state) $($r.detail)"; if ($r.state -ne $state) { throw "${what}: expected $state, got $($r.state)" } }
           Expect 'fresh install, no rules' 'missing'
           # What Windows saves when its first-run prompt is cancelled.
           New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Block -Protocol UDP -Profile Any | Out-Null
