@@ -85,10 +85,11 @@ SectionEnd
 Section "Uninstall"
   nsExec::Exec 'taskkill /IM "${EXE}" /F'
   Sleep 500
+  ; The app removes its own firewall rules, so it runs before its files are deleted.
+  ExecWait '"$INSTDIR\${EXE}" --remove-firewall' $0
   Delete "$INSTDIR\${EXE}"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
-  ExecWait '"$INSTDIR\${EXE}" --remove-firewall' $0
   SetShellVarContext all
   Delete "$SMPROGRAMS\${APP}.lnk"
   Delete "$DESKTOP\${APP}.lnk"
