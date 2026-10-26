@@ -69,7 +69,7 @@ jobs:
           $nsis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
           if (-not $nsis) { $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe" }
           if (-not (Test-Path $nsis)) { choco install nsis -y --no-progress | Out-Null; $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe" }
-          Push-Location windows; & $nsis -V2 -DVERSION=0.0.1 installer.nsi; if ($LASTEXITCODE -ne 0) { throw 'makensis failed' }; Pop-Location
+          Push-Location windows; & $nsis -V2 '-DVERSION=0.0.1' installer.nsi; if ($LASTEXITCODE -ne 0) { throw 'makensis failed' }; Pop-Location
           Start-Process windows/build/MapleAtlasCompanion-Setup.exe -ArgumentList '/S' -Wait
           $installed = "$env:ProgramFiles\Maple Atlas Companion\MapleAtlasCompanion.exe"
           if (-not (Test-Path $installed)) { throw 'not installed' }
