@@ -1,7 +1,7 @@
 ; Maple Atlas Companion for Windows: the setup program (built by windows/build.sh).
 ; Installs to Program Files, adds Start menu and desktop shortcuts, an entry in
-; Settings > Apps for uninstalling, and a Windows Firewall rule so the phone can
-; reach the app on the Wi-Fi (also when Windows marks the network as Public).
+; Settings > Apps for uninstalling, and Windows Firewall rules (added by the app
+; itself, see --repair-firewall) so the phone can reach it on any Wi-Fi.
 Unicode true
 !include "MUI2.nsh"
 
@@ -63,11 +63,9 @@ Section "Install"
   Delete "$SMPROGRAMS\${APP}.lnk"
   DeleteRegKey HKCU "${UNINSTALL_KEY}"
   DeleteRegKey HKCU "Software\${APP}"
-  ; Inbound connections from the phone (WebRTC over UDP on the local network).
-  nsExec::Exec 'netsh advfirewall firewall delete rule name=all program="$INSTDIR\${EXE}"'
-  nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP}"'
-  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=any protocol=udp'
-  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="${APP}" dir=in action=allow program="$INSTDIR\${EXE}" enable=yes profile=any protocol=tcp'
+  ; Inbound connections from the phone: the app adds its own Windows Firewall
+  ; rules through the Windows Firewall API (setup already runs as administrator).
+  ExecWait '"$INSTDIR\${EXE}" --repair-firewall' $0
   SetShellVarContext all
   CreateShortcut "$SMPROGRAMS\${APP}.lnk" "$INSTDIR\${EXE}"
   CreateShortcut "$DESKTOP\${APP}.lnk" "$INSTDIR\${EXE}"
@@ -90,7 +88,7 @@ Section "Uninstall"
   Delete "$INSTDIR\${EXE}"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
-  nsExec::Exec 'netsh advfirewall firewall delete rule name="${APP}"'
+  ExecWait '"$INSTDIR\${EXE}" --remove-firewall' $0
   SetShellVarContext all
   Delete "$SMPROGRAMS\${APP}.lnk"
   Delete "$DESKTOP\${APP}.lnk"

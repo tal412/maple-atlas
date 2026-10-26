@@ -54,7 +54,7 @@
     }catch(_){return 'unknown';}
   }
   $('firewall-fix').onclick=async()=>{
-    $('firewall-fix').disabled=true;$('firewall-hint').textContent='Choose Yes in the Windows prompt…';
+    $('firewall-fix').disabled=true;$('firewall-hint').textContent='Choose Yes when Windows asks about Maple Atlas Companion…';
     const r=await fetch('/api/firewall',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>null);
     if(!r||!r.ok){$('firewall-fix').disabled=false;$('firewall-hint').textContent='Windows did not allow it. Try again and choose Yes.';return;}
     for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,1500));if(await checkFirewall()==='ok'){$('firewall-hint').textContent='';break;}}

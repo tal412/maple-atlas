@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -114,7 +115,14 @@ func (c *controller) close() {
 // desktopMain is set by desktop.go when built with the desktopui tag.
 var desktopMain func(site, stateDir string, ui bool)
 
+// firewallCommand handles --repair-firewall and --remove-firewall on Windows (set
+// by firewall_windows.go); the setup program and the window's repair button run them.
+var firewallCommand func(arg string) int
+
 func main() {
+	if len(os.Args) == 2 && strings.HasSuffix(os.Args[1], "-firewall") && firewallCommand != nil {
+		os.Exit(firewallCommand(os.Args[1]))
+	}
 	engineDir := flag.String("engine-dir", "", "directory with engine.html and the visual index")
 	site := flag.String("site", "https://tal412.github.io/maple-atlas/", "Maple Atlas site the phone opens")
 	stateDir := flag.String("state-dir", "", "folder that keeps the pairing so the phone reconnects after restarts")

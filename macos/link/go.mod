@@ -3,6 +3,7 @@ module maple-link
 go 1.27.3
 
 require (
+	github.com/go-ole/go-ole v1.3.0
 	github.com/pion/ice/v4 v4.4.8
 	github.com/pion/stun/v4 v4.0.1
 	github.com/pion/webrtc/v4 v4.2.25

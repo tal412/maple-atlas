@@ -1,0 +1,86 @@
+# Checks the Windows app's firewall handling on a real Windows machine: the check
+# the window runs at launch, the repair (--repair-firewall), and the setup program.
+name: Windows firewall check
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'macos/link/firewall_windows.go'
+      - 'windows/installer.nsi'
+      - '.github/workflows/windows-firewall.yml'
+permissions:
+  contents: read
+jobs:
+  firewall:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: macos/link/go.mod
+      - name: Build the app (window files replaced by a stub)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force macos/link/webui | Out-Null
+          Set-Content macos/link/webui/index.html '<!doctype html><title>stub</title>'
+          cd macos/link
+          go build -tags desktopui -o "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" .
+      - name: Firewall scenarios
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe"
+          Set-NetFirewallProfile -All -Enabled True
+          Get-NetConnectionProfile | Format-Table Name, NetworkCategory
+          function Check { (& $exe --check-firewall | Out-String).Trim() | ConvertFrom-Json }
+          function Mine { @(Get-NetFirewallApplicationFilter | Where-Object { [Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $exe } | Get-NetFirewallRule | Where-Object Direction -eq 'Inbound') }
+          function Expect($what, $state) { $r = Check; Write-Host "$what -> $($r.state) $($r.detail)"; if ($r.state -ne $state) { throw "$what: expected $state, got $($r.state)" } }
+          Expect 'fresh install, no rules' 'missing'
+          # What Windows saves when its first-run prompt is cancelled.
+          New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Block -Protocol UDP -Profile Any | Out-Null
+          Expect 'cancelled prompt (block rule)' 'blocked'
+          & $exe --repair-firewall; if ($LASTEXITCODE -ne 0) { throw "repair exit $LASTEXITCODE" }
+          $rules = Mine; $rules | Format-Table DisplayName, Action, Profile, Enabled
+          if (@($rules | Where-Object Action -eq 'Block').Count) { throw 'block rule survived the repair' }
+          if (@($rules | Where-Object Action -eq 'Allow').Count -ne 2) { throw 'expected two allow rules' }
+          Expect 'after repair' 'ok'
+          # Allowed only on Private while the network is Public (the default "Allow" click).
+          $rules | Remove-NetFirewallRule
+          Get-NetConnectionProfile | ForEach-Object { try { Set-NetConnectionProfile -InterfaceIndex $_.InterfaceIndex -NetworkCategory Public } catch { Write-Host "cannot set category: $_" } }
+          New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Allow -Protocol UDP -Profile Private | Out-Null
+          $cats = (Get-NetConnectionProfile).NetworkCategory -join ','; Write-Host "network: $cats"
+          if ($cats -match 'Public') { Expect 'allowed on Private only, network Public' 'missing' }
+          # A path stored with %ProgramFiles%-style variables and other letter case.
+          (Mine) | Remove-NetFirewallRule
+          & $exe --repair-firewall
+          Expect 'repair again' 'ok'
+          & $exe --remove-firewall; if ($LASTEXITCODE -ne 0) { throw "remove exit $LASTEXITCODE" }
+          if ((Mine).Count) { throw 'rules left after --remove-firewall' }
+          Expect 'after remove' 'missing'
+          Write-Host 'PASS: firewall check, repair and removal'
+      - name: Setup program (silent install and uninstall)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force windows/build/installer | Out-Null
+          Copy-Item "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" windows/build/
+          python -c "from PIL import Image" 2>$null; if ($LASTEXITCODE -ne 0) { python -m pip install --quiet pillow }
+          python -c "from PIL import Image; Image.new('RGBA',(256,256),(37,100,222,255)).save('windows/build/installer/icon.ico', sizes=[(256,256),(48,48),(32,32),(16,16)])"
+          $nsis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
+          if (-not $nsis) { $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe" }
+          if (-not (Test-Path $nsis)) { choco install nsis -y --no-progress | Out-Null; $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe" }
+          Push-Location windows; & $nsis -V2 -DVERSION=0.0.1 installer.nsi; if ($LASTEXITCODE -ne 0) { throw 'makensis failed' }; Pop-Location
+          Start-Process windows/build/MapleAtlasCompanion-Setup.exe -ArgumentList '/S' -Wait
+          $installed = "$env:ProgramFiles\Maple Atlas Companion\MapleAtlasCompanion.exe"
+          if (-not (Test-Path $installed)) { throw 'not installed' }
+          $rules = @(Get-NetFirewallApplicationFilter | Where-Object { [Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $installed } | Get-NetFirewallRule)
+          $rules | Format-Table DisplayName, Action, Profile, Direction
+          if (@($rules | Where-Object { $_.Action -eq 'Allow' -and $_.Direction -eq 'Inbound' }).Count -ne 2) { throw 'setup did not add the two allow rules' }
+          $r = (& $installed --check-firewall | Out-String).Trim() | ConvertFrom-Json; Write-Host "installed app check -> $($r.state)"
+          if ($r.state -ne 'ok') { throw "installed app reports $($r.state)" }
+          Get-Process MapleAtlasCompanion -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Process "$env:ProgramFiles\Maple Atlas Companion\Uninstall.exe" -ArgumentList '/S' -Wait
+          Start-Sleep 8
+          $left = @(Get-NetFirewallApplicationFilter | Where-Object { [Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $installed } | Get-NetFirewallRule)
+          if ($left.Count) { throw 'uninstall left firewall rules' }
+          Write-Host 'PASS: setup adds the firewall rules, uninstall removes them'
