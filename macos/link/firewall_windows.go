@@ -44,12 +44,15 @@ func firewallStatus() firewallReport {
 $p=` + psQuote(exe) + `
 $on=@(Get-NetFirewallProfile | Where-Object {$_.Enabled -eq 'True'} | ForEach-Object {"$($_.Name)"})
 $cats=@(Get-NetConnectionProfile | ForEach-Object {$c="$($_.NetworkCategory)"; if($c -eq 'DomainAuthenticated'){'Domain'}else{$c}})
-$rules=@(Get-NetFirewallApplicationFilter -Program $p | Get-NetFirewallRule | Where-Object {$_.Direction -eq 'Inbound' -and $_.Enabled -eq 'True'})
+$mine=@(Get-NetFirewallApplicationFilter | Where-Object {[Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $p})
+$rules=@($mine | Get-NetFirewallRule | Where-Object {$_.Direction -eq 'Inbound' -and $_.Enabled -eq 'True'})
+$shield=@(Get-NetFirewallProfile | Where-Object {$_.Enabled -eq 'True' -and $_.AllowInboundRules -eq 'False'} | ForEach-Object {"$($_.Name)"})
 $covers={param($r,$cat) $f="$($r.Profile)"; $f -eq 'Any' -or $f -match $cat}
 $active=@($cats | Where-Object {$on -contains $_})
 $blocked=@($rules | Where-Object {$_.Action -eq 'Block'}).Count
 $missing=@($active | Where-Object {$cat=$_; -not @($rules | Where-Object {$_.Action -eq 'Allow' -and (& $covers $_ $cat)}).Count})
-[pscustomobject]@{on=$on.Count; active=($active -join ','); blocked=$blocked; missing=($missing -join ',')} | ConvertTo-Json -Compress`
+$shielded=@($active | Where-Object {$shield -contains $_})
+[pscustomobject]@{on=$on.Count; active=($active -join ','); blocked=$blocked; missing=($missing -join ','); shielded=($shielded -join ',')} | ConvertTo-Json -Compress`
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-EncodedCommand", powershellEncoded(script))
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
 	out, err := cmd.Output()
@@ -57,15 +60,18 @@ $missing=@($active | Where-Object {$cat=$_; -not @($rules | Where-Object {$_.Act
 		return firewallReport{State: "unknown"}
 	}
 	var r struct {
-		On      int    `json:"on"`
-		Active  string `json:"active"`
-		Blocked int    `json:"blocked"`
-		Missing string `json:"missing"`
+		On       int    `json:"on"`
+		Active   string `json:"active"`
+		Blocked  int    `json:"blocked"`
+		Missing  string `json:"missing"`
+		Shielded string `json:"shielded"`
 	}
 	if json.Unmarshal(out, &r) != nil {
 		return firewallReport{State: "unknown"}
 	}
 	switch {
+	case r.Shielded != "":
+		return firewallReport{State: "shielded", Detail: "Windows Firewall is set to block all incoming connections on this network. In Windows Security > Firewall & network protection > " + r.Shielded + " network, turn off \"Block all incoming connections\"."}
 	case r.Blocked > 0:
 		return firewallReport{State: "blocked", Detail: "Windows Firewall is set to block Maple Atlas Companion."}
 	case r.On == 0:
@@ -85,7 +91,7 @@ func fixFirewall() error {
 		return err
 	}
 	script := `$p=` + psQuote(exe) + `
-Get-NetFirewallApplicationFilter -Program $p -ErrorAction SilentlyContinue | Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {$_.Direction -eq 'Inbound'} | Remove-NetFirewallRule
+Get-NetFirewallApplicationFilter | Where-Object {[Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $p} | Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {$_.Direction -eq 'Inbound'} | Remove-NetFirewallRule
 New-NetFirewallRule -DisplayName 'Maple Atlas Companion' -Direction Inbound -Program $p -Action Allow -Profile Any -Protocol UDP | Out-Null
 New-NetFirewallRule -DisplayName 'Maple Atlas Companion' -Direction Inbound -Program $p -Action Allow -Profile Any -Protocol TCP | Out-Null`
 	verb, _ := syscall.UTF16PtrFromString("runas")
