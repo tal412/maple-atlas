@@ -85,5 +85,10 @@ jobs:
           # _?= runs the uninstaller in place, so -Wait covers the whole uninstall.
           Start-Process "$env:ProgramFiles\Maple Atlas Companion\Uninstall.exe" -ArgumentList '/S', "_?=$env:ProgramFiles\Maple Atlas Companion" -Wait
           $left = @(Get-NetFirewallApplicationFilter | Where-Object { [Environment]::ExpandEnvironmentVariables("$($_.Program)") -ieq $installed } | Get-NetFirewallRule)
-          if ($left.Count) { throw 'uninstall left firewall rules' }
+          if ($left.Count) {
+            Write-Host 'Files left:'; Get-ChildItem "$env:ProgramFiles\Maple Atlas Companion" -ErrorAction SilentlyContinue | Format-Table Name
+            $left | Format-Table DisplayName, Action, Direction
+            if (Test-Path $installed) { $p = Start-Process $installed -ArgumentList '--remove-firewall' -Wait -PassThru; Write-Host "manual --remove-firewall exit: $($p.ExitCode)" }
+            throw 'uninstall left firewall rules'
+          }
           Write-Host 'PASS: setup adds the firewall rules, uninstall removes them'
