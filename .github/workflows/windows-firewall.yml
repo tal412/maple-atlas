@@ -64,6 +64,9 @@ jobs:
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force windows/build/installer | Out-Null
           Copy-Item "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" windows/build/
+          Get-ChildItem windows/build -Recurse | Format-Table FullName, Length
+          Get-MpThreatDetection -ErrorAction SilentlyContinue | Format-List
+          Start-Sleep 5; Get-ChildItem windows/build | Format-Table Name, Length
           python -c "from PIL import Image" 2>$null; if ($LASTEXITCODE -ne 0) { python -m pip install --quiet pillow }
           python -c "from PIL import Image; Image.new('RGBA',(256,256),(37,100,222,255)).save('windows/build/installer/icon.ico', sizes=[(256,256),(48,48),(32,32),(16,16)])"
           $nsis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
