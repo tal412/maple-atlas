@@ -13,7 +13,7 @@ Unicode true
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\MapleAtlasCompanion"
 
 Name "${APP}"
-OutFile "build/MapleAtlasCompanion-Setup.exe"
+OutFile "build\MapleAtlasCompanion-Setup.exe"
 InstallDir "$PROGRAMFILES64\${APP}"
 InstallDirRegKey HKLM "Software\${APP}" "InstallDir"
 RequestExecutionLevel admin
@@ -26,8 +26,8 @@ VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "Maple Atlas contributors"
 
-!define MUI_ICON "build/installer/icon.ico"
-!define MUI_UNICON "build/installer/icon.ico"
+!define MUI_ICON "build\installer\icon.ico"
+!define MUI_UNICON "build\installer\icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Install ${APP}"
 !define MUI_WELCOMEPAGE_TEXT "Follow your MapleStory Classic World game on your phone: your map and your position, live.$\r$\n$\r$\nEverything stays on your Wi-Fi. No account, no server, nothing sent to the internet.$\r$\n$\r$\nClick Install to continue."
@@ -53,7 +53,7 @@ Section "Install"
   nsExec::Exec 'taskkill /IM "${EXE}" /F'
   Sleep 500
   SetOutPath "$INSTDIR"
-  File "build/${EXE}"
+  File "build\${EXE}"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   ; The 0.2.0 preview installed per user: remove that copy, its shortcuts and any
   ; firewall rules (including a "block" saved when the firewall prompt was dismissed).
