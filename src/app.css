@@ -267,3 +267,8 @@
 #maple-atlas-concept .mc-now-next {margin:10px 0 0;color:var(--mc-muted);font-size:13px;}
 #maple-atlas-concept .mc-allsteps {margin-top:16px;}
 #maple-atlas-concept .mc-allsteps summary {cursor:pointer;color:var(--mc-blue);font-size:14px;padding:8px 0;}
+#maple-atlas-concept .mc-local-spawns {position:absolute;inset:0;pointer-events:none;}
+#maple-atlas-concept .mc-local-spawns i {position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#e5393599;border:2px solid #fff;}
+#maple-atlas-concept .mc-local-spot {position:absolute;transform:translate(-50%,-50%);min-width:48px;min-height:48px;border:3px dashed #ffd54f;border-radius:50%;background:#ffd54f26;box-shadow:0 0 0 2px #0006;pointer-events:none;}
+#maple-atlas-concept .mc-local-spot[hidden] {display:none;}
+#maple-atlas-concept .mc-local-spot span {position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;padding:5px 10px;background:#5c4400;border:2px solid #fff;border-radius:10px;color:#fff;font-size:12px;font-weight:500;}

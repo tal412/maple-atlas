@@ -87,8 +87,9 @@
   // Portal hops from your current map, or null when there is no recorded route.
   function hops(id){if(!get(id))return null;if(String(id)===state.from)return 0;const seen=new Set([state.from]);let frontier=[state.from];for(let d=1;frontier.length&&d<60;d++){const next=[];for(const at of frontier)for(const e of get(at)?.portals||[]){const to=String(e.to);if(seen.has(to)||!maps.has(to))continue;if(to===String(id))return d;seen.add(to);next.push(to);}frontier=next;}return null;}
   // Directions from your current map (or the live companion location) to a map.
-  function navigateTo(id){const m=get(id);if(!m)return;for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
-    $('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();}
+  // hunt: {monster, name} when the trip is to hunt a monster there (its best spot is shown).
+  function navigateTo(id,hunt=null){const m=get(id);if(!m)return;for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();state.hunt=hunt?{map:String(id),monster:String(hunt.monster),name:String(hunt.name||'')}:null;navDismissed=false;state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
+    setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();}
   const search=MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
     onMap:(id,kind)=>{if(['monster','npc','quest'].includes(kind))state.category={monster:'monsters',npc:'npcs',quest:'quests'}[kind];inspect(id);},
     onNavigate:navigateTo,routeLength:hops,spawns:(monster,map)=>spawnCount.get(String(map)+':'+String(monster))||0,
@@ -108,10 +109,11 @@
   $('#mc-desktop-quests').onclick=()=>{state.panel='progress';setSheet(true);detail();camera();save();};
   // Navigation: the live map opens by itself during a route on a phone, until you close it.
   let navDismissed=false;
+  const huntOn=id=>state.hunt&&state.hunt.map===String(id)?state.hunt:null;
   function autoNavigate(){
-    if(!mobile.matches||!state.routeActive||navDismissed||$('#mc-local-dialog').open||state.route.length<2)return;
+    if(!mobile.matches||!state.routeActive||navDismissed||$('#mc-local-dialog').open||!state.route.length)return;
     const at=liveFresh&&state.route.includes(liveLocation)?liveLocation:state.route[Math.min(state.step,state.route.length-1)],i=state.route.indexOf(at);
-    if(i>=0&&i<state.route.length-1)localMaps.open(at,state.route[i+1]);
+    if(i>=0&&(i<state.route.length-1||huntOn(at)))localMaps.open(at,state.route[i+1]||'',huntOn(at));
   }
   let liveLocation=null,liveFresh=false,livePosition=null,liveHint='',liveAt=0,linkPhase='',searchTimer=null;
   const GRACE=15000;
@@ -148,7 +150,7 @@
     if($('#mc-local-dialog').open&&!navigating)$('#mc-local-dialog').close();
     state.from=String(m.id);state.selected=String(m.id);hasInspected=true;$('#mc-from').value=m.name;
     if(state.routeActive)plan();
-    if(navigating){const i=state.route.indexOf(String(m.id));if(i>=0)localMaps.open(String(m.id),state.route[i+1]||'');else $('#mc-local-dialog').close();}
+    if(navigating){const i=state.route.indexOf(String(m.id));if(i>=0)localMaps.open(String(m.id),state.route[i+1]||'',huntOn(m.id));else $('#mc-local-dialog').close();}
     else autoNavigate();
     const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
     render();camera();
@@ -184,7 +186,9 @@
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   const changes=n=>n===1?'1 map change':n+' map changes';
-  function endRoute(){navDismissed=false;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
+  // At a hunt destination: where its best spot is.
+  function huntText(id){const h=huntOn(id),spot=h&&get(id)?.bestSpots?.[h.monster];if(!h)return '';return spot?'You have arrived. The best spot for '+h.name+' is marked on the map: '+spot.n+' of its '+spot.total+' spawn points are there.':'You have arrived. Hunt '+h.name+' here.';}
+  function endRoute(){navDismissed=false;state.hunt=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
   const byHand=()=>{if(state.routeActive)navDismissed=true;};
   $('#mc-local-close').addEventListener('click',byHand);$('#mc-local-dialog').addEventListener('cancel',byHand);$('#mc-local-dialog').addEventListener('click',e=>{if(e.target===$('#mc-local-dialog'))byHand();});
   $('#mc-clear-route').onclick=endRoute;$('#mc-route-chip').onclick=endRoute;
@@ -213,9 +217,9 @@
       if(n>=0){
         const s=stepOf(now),then=s.next?get(s.next):null;
         body='<section class="mc-now" aria-label="Current map"><div class="mc-now-head"><div><div class="mc-eyebrow">'+(isLive?'You are here':'Step '+(now+1)+' of '+(n+1))+'</div><button type="button" data-inspect="'+s.id+'" class="mc-step-name">'+esc(s.p.name)+'</button></div></div>'
-          +'<p class="mc-now-text">'+esc(s.edge?MapleLocalMaps.instruction(s.edge,then?.name):'You have arrived.')+'</p>'
+          +'<p class="mc-now-text">'+esc(s.edge?MapleLocalMaps.instruction(s.edge,then?.name):huntText(s.id)||'You have arrived.')+'</p>'
           +(liveHint&&s.id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')
-          +(s.next?'<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+(isLive?'Live map · you and the way to the portal':'Map · the portal to take')+'</button>':'')
+          +(s.next||huntOn(s.id)?'<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+(s.next?(isLive?'Live map · you and the way to the portal':'Map · the portal to take'):(isLive?'Live map · you and the best spot':'Map · the best spot'))+'</button>':'')
           +(then?'<p class="mc-now-next">Then: '+esc(then.name)+'</p>':'')+'</section>'
           +'<div class="mc-secondary" style="margin-top:10px">'+(isLive?'Position from your screen':'Connect the companion to follow your position')+'</div>'
           +'<details class="mc-allsteps"><summary>All steps ('+(n+1)+')</summary><ol class="mc-steplist">'+state.route.map((id,i)=>{const t=stepOf(i);return '<li'+(i===now?' aria-current="step"':'')+'><span class="mc-step-badge">'+t.badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(t.p.name)+'</button><p>'+esc(t.edge?MapleLocalMaps.instruction(t.edge,get(t.next)?.name):'You have arrived.')+'</p></li>';}).join('')+'</ol></details>';
@@ -223,7 +227,7 @@
       box.innerHTML='<div class="mc-route-head"><div class="mc-eyebrow">Your route</div><button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button></div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':changes(n)+' · Fewest recorded portals')+'</div>'+body;
       // Ending the route lives in the route bar on the map; the panel only offers a change.
       $('#mc-edit-route').onclick=openRoute;
-      if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const s=stepOf(now);navDismissed=false;localMaps.open(s.id,s.next||'');};
+      if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const s=stepOf(now);navDismissed=false;localMaps.open(s.id,s.next||'',huntOn(s.id));};
     }else if(state.panel==='progress'){
       const history=DATA.quests.filter(q=>['completed','skipped'].includes(state.status[q.id]));
       const html=questPanel.html()+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'')+'<div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>';
@@ -364,7 +368,7 @@
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');
-  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();navDismissed=false;plan();setSheet(!mobile.matches);render();setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections'+(liveFresh&&state.from===liveLocation?' · Screen detected start':' · Starting place set manually'):'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
+  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();navDismissed=false;state.hunt=null;plan();setSheet(!mobile.matches);render();setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections'+(liveFresh&&state.from===liveLocation?' · Screen detected start':' · Starting place set manually'):'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
   $('#mc-from').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};$('#mc-to').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};
   $('#mc-pickstart').onclick=()=>{state.pick=!state.pick;$('#mc-pickstart').textContent=state.pick?'Select a point…':'Pick start on map';$('#mc-status').textContent=state.pick?'Click any map point to set your current location.':'Location set manually';if(mobile.matches&&state.pick){$('#mc-route-dialog').close();setSheet(false);camera();notice('Tap a map point to set your starting location.');}};
   $$('.mc-tabs button').forEach(b=>b.onclick=()=>{state.panel=b.dataset.panel;setSheet(true);detail();camera();save();});

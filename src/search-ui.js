@@ -127,7 +127,7 @@
       for(const id of mob?.maps||[]){const m=index.get('map:'+id);if(!m?.covered)continue;const n=spawns(mob.id,m.id),d=routeLength(m.id);
         const reach=d!==null,bestReach=best&&best.d!==null;
         const better=!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity))));
-        if(better)best={id:m.id,name:m.name,d,n};}
+        if(better)best={id:m.id,name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
       return best;
     }
     const away=t=>t&&t.d!=null?(t.d?t.d+' portal'+(t.d===1?'':'s')+' away':'You are here'):'';
@@ -135,7 +135,7 @@
     function sourceRow({img,iconName,title,detail,extra='',target,key}){
       const main=(key?'<button type="button" class="mc-get-main" data-entity="'+esc(key)+'">':'<div class="mc-get-main">')+thumb(img,iconName)+
         '<span class="mc-get-copy"><strong>'+esc(title)+'</strong>'+(detail?'<small>'+detail+'</small>':'')+'</span>'+extra+(key?'</button>':'</div>');
-      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'" aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
+      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'"'+(target.monster?' data-hunt="'+esc(target.monster)+'" data-hunt-name="'+esc(target.monsterName)+'"':'')+' aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
     }
     function group(iconName,label,rows){
       if(!rows.length)return '';
@@ -228,7 +228,7 @@
         (e.type==='monster'?'<p class="mc-record-note">These are recorded spawn locations. Live spawns and monster drop tables are not available in this snapshot.</p>':'')+
         (e.type==='item'?apiInfo(e):'')+
         '<footer class="mc-search-provenance">Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
-      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate);});
+      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate,b.dataset.hunt?{monster:b.dataset.hunt,name:b.dataset.huntName}:null);});
       if($('#mc-sources-retry'))$('#mc-sources-retry').onclick=()=>{void loadSources(e,true);renderEntity(key,false);};
       detail.querySelectorAll('[data-quest]').forEach(select=>select.onchange=()=>{onStatus(select.dataset.quest,select.value);renderEntity(key);});
       if($('#mc-item-retry'))$('#mc-item-retry').onclick=()=>{void loadItem(key,true);renderEntity(key,false);};

@@ -24,7 +24,14 @@
       return best;
     }
     const away=t=>t?.d==null?'':t.d===0?'You are here':t.d+' portal'+(t.d===1?'':'s')+' away';
-    const huntFor=name=>{const mob=monsterMaps.get(MapleQuestHelper.normalize(name));return mob?{mob,at:nearest(mob.maps)}:null;};
+    // Where to hunt: the reachable map with the most spawns of the monster (nearer on a tie).
+    function densest(mob){
+      let best=null;
+      for(const m of mob.maps){const n=(m.monsters||[]).find(x=>String(x.id)===String(mob.id))?.spawns||0,d=hops(m.id),reach=d!==null,bestReach=best&&best.d!==null;
+        if(!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity)))))best={id:String(m.id),name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
+      return best;
+    }
+    const huntFor=name=>{const mob=monsterMaps.get(MapleQuestHelper.normalize(name));return mob?{mob,at:densest(mob)}:null;};
     const npcAt=name=>nearest(npcMaps.get(MapleQuestHelper.normalize(name)));
 
     function loadItem(name){
@@ -40,7 +47,7 @@
       if(info.state==='loading')return {text:'Looking up where to get it…'};
       if(info.state==='error')return {text:'Couldn’t reach the MapleClassic Wiki.'};
       const s=info.sources,drops=s.drops.map(d=>({...d,hunt:huntFor(d.monster)})).filter(d=>d.hunt?.at);
-      drops.sort((a,b)=>(a.hunt.at.d??99)-(b.hunt.at.d??99)||(b.rate??0)-(a.rate??0));
+      drops.sort((a,b)=>(b.rate??0)-(a.rate??0)||(a.hunt.at.d??99)-(b.hunt.at.d??99));
       if(drops.length){const d=drops[0];return {text:'Dropped by '+d.monster+(d.rate!=null?' ('+(d.rate>=10?Math.round(d.rate):d.rate.toFixed(1))+'%)':'')+' · Hunt at '+d.hunt.at.name+(away(d.hunt.at)?' · '+away(d.hunt.at):''),target:d.hunt.at,more:s.drops.length+s.shops.length>1};}
       const shops=s.shops.map(x=>({...x,at:nearest(maps.filter(m=>m.name===x.map||m.npcs?.some(n=>n.name===x.npc)))||nearest(maps.filter(m=>m.name===x.town))})).filter(x=>x.at);
       if(shops.length){const x=shops[0];return {text:'Buy from '+x.npc+(x.price!=null?' · '+x.price.toLocaleString()+' '+(/^mesos$/i.test(x.currency)?'mesos':x.currency):'')+' · '+x.at.name,target:x.at,more:s.shops.length>1||s.drops.length>0};}
@@ -85,7 +92,7 @@
         if(isMob){const h=huntFor(p.name);hint=h?.at?{text:'Hunt at '+h.at.name+(away(h.at)?' · '+away(h.at):''),target:h.at}:{text:'No recorded map with this monster.'};}
         else hint=itemHint(p.name);
       }
-      const actions=hint?(hint.target?'<button type="button" class="mc-nav" data-qh-nav="'+esc(hint.target.id)+'" aria-label="Navigate to '+esc(hint.target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+
+      const actions=hint?(hint.target?'<button type="button" class="mc-nav" data-qh-nav="'+esc(hint.target.id)+'"'+(hint.target.monster?' data-qh-hunt="'+esc(hint.target.monster)+'" data-qh-hunt-name="'+esc(hint.target.monsterName)+'"':'')+' aria-label="Navigate to '+esc(hint.target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+
         (!isMob?'<button type="button" class="mc-qh-more" data-qh-entity="item" data-qh-name="'+esc(p.name)+'">'+icon('compass')+'<span>How to get</span></button>':'<button type="button" class="mc-qh-more" data-qh-entity="monster" data-qh-name="'+esc(p.name)+'">'+icon('info')+'<span>Monster</span></button>'):'';
       return '<li class="mc-qh-objective" data-done="'+Boolean(p.done)+'">'+art+'<div class="mc-qh-objective-copy"><div class="mc-qh-line"><strong>'+esc(p.name)+'</strong>'+(p.done?'<span class="mc-qh-check">'+icon('check')+'</span>':'')+count+'</div>'+
         '<span class="mc-qh-bar" aria-hidden="true"><span style="width:'+(p.done?100:pct(p.have,p.need))+'%"></span></span>'+
@@ -131,7 +138,7 @@
     setInterval(refreshAgo,5000);
     function bind(box){
       shownBox=box;refreshAgo();
-      box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav));
+      box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav,b.dataset.qhHunt?{monster:b.dataset.qhHunt,name:b.dataset.qhHuntName}:null));
       box.querySelectorAll('[data-qh-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.qhEntity,b.dataset.qhName));
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
       box.querySelectorAll('[data-qh-connect]').forEach(b=>b.onclick=openCompanion);

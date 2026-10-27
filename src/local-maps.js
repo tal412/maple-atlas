@@ -21,26 +21,39 @@
     const dialog = $('#mc-local-dialog'), image = $('#mc-local-image');
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
     const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
-    let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null;
+    let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null, hunt = null, spawnPoints = null;
+    // Hunting: the monster's spawn points and its best spot (densest group) on this map.
+    const spawnLayer = document.createElement('div'); spawnLayer.className = 'mc-local-spawns'; spawnLayer.setAttribute('aria-hidden', 'true');
+    const spot = document.createElement('div'); spot.className = 'mc-local-spot'; spot.hidden = true; spot.innerHTML = '<span></span>';
+    const loadSpawns = () => spawnPoints ??= fetch('./data/spawn-points.json').then(r => r.ok ? r.json() : {maps: {}}).then(d => d.maps || {}).catch(() => { spawnPoints = null; return {}; });
+    const bestSpot = () => hunt && current?.bestSpots?.[hunt.monster] || null;
     // Navigation arrow (Google Maps style): a moving dashed line from your dot to the next
     // portal and a heading chevron next to you. Built here so the template stays unchanged.
     const path = document.createElement('div'); path.className = 'mc-local-path'; path.hidden = true; path.setAttribute('aria-hidden', 'true');
     const heading = document.createElement('div'); heading.className = 'mc-local-heading'; heading.hidden = true; heading.setAttribute('aria-hidden', 'true');
     heading.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 12 21 3l-5 9 5 9z"/></svg>';
-    stage.prepend(path); stage.append(heading);
+    stage.prepend(spawnLayer, spot, path); stage.append(heading);
     const loader=MapleMapImages.createLoader({image,timeoutMs:20000,onState:state=>{
       ready=state==='ready';stage.hidden=!ready;$('#mc-local-feedback').hidden=ready;
       $('#mc-local-retry').hidden=state!=='error';
       $('#mc-local-state').textContent=state==='error'?'The map image could not load. Check your connection and try again.':'Loading game map…';
-      if(ready){$('#mc-local-fit').disabled=false;layout();}
+      if(ready){$('#mc-local-fit').disabled=false;layout();drawSpawns();}
       else{marker.hidden=true;you.hidden=true;for(const button of root.querySelectorAll('[data-local-zoom]'))button.disabled=true;}
     }});
     function layout(focus = false) {
       if (!ready || !dialog.open) return;
       const fit = Math.min((viewport.clientWidth - 48) / image.naturalWidth, (viewport.clientHeight - 48) / image.naturalHeight, 1);
       stage.style.width = Math.max(1, image.naturalWidth * fit * zoom) + 'px';
-      const point = position(edge, image.naturalWidth, image.naturalHeight);
-      marker.hidden = !point;
+      const exit = position(edge, image.naturalWidth, image.naturalHeight), best = bestSpot();
+      const spotAt = best ? position(best, image.naturalWidth, image.naturalHeight) : null;
+      // The arrow leads to the portal, or on a hunt map without one to the best spot.
+      const point = exit || spotAt;
+      marker.hidden = !exit;
+      spot.hidden = !spotAt;
+      if (spotAt) {
+        Object.assign(spot.style, {left: spotAt.x * 100 + '%', top: spotAt.y * 100 + '%', width: 2 * best.r / image.naturalWidth * 100 + '%', height: 2 * best.r / image.naturalHeight * 100 + '%'});
+        spot.querySelector('span').textContent = 'Best spot · ' + best.n + ' ' + hunt.name;
+      }
       if (point) {
         marker.style.left = point.x * 100 + '%';
         marker.style.top = point.y * 100 + '%';
@@ -68,6 +81,7 @@
       $('#mc-local-minus').disabled = zoom <= 1;
       $('#mc-local-plus').disabled = zoom >= 12;
       $('#mc-local-focus').disabled = !point;
+      $('#mc-local-focus').textContent = exit ? 'Focus exit' : spotAt ? 'Focus best spot' : 'Focus exit';
     }
     // Navigation view: zoom so you and the portal both fit (up to 6x), and scroll only when
     // either would leave the middle of the view, so the map does not jitter at 5 readings a second.
@@ -90,8 +104,10 @@
     // The portal instruction, plus live guidance from your dot toward the selected portal.
     function describe() {
       const destination = edge ? get(edge.to)?.name : '';
-      const live = edge && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, {x: Number(edge.x), y: Number(edge.y)}) : null;
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+      const best = bestSpot(), goal = edge ? {x: Number(edge.x), y: Number(edge.y)} : best;
+      const live = goal && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, goal) : null;
+      const huntLine = best ? 'Best spot for ' + hunt.name + ': ' + best.n + ' of its ' + best.total + ' spawn points, circled on the map.' : hunt ? 'Hunt ' + hunt.name + ' on this map.' : '';
+      $('#mc-local-instruction').textContent = !edge && hunt ? huntLine + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
     }
     function choose(index) {
       edge = current.portals[index];
@@ -101,10 +117,25 @@
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
-    function open(id, next) {
+    // Spawn points of the hunted monster, drawn small; the best spot is circled.
+    function drawSpawns() {
+      spawnLayer.replaceChildren();
+      if (!hunt || !current) return;
+      const id = String(current.id), monster = hunt.monster;
+      loadSpawns().then(all => {
+        if (!current || String(current.id) !== id || hunt?.monster !== monster || !image.naturalWidth) return;
+        spawnLayer.replaceChildren(...(all[id]?.[monster] || []).map(([x, y]) => {
+          const p = position({x, y}, image.naturalWidth, image.naturalHeight); if (!p) return document.createComment('');
+          const dot = document.createElement('i'); dot.style.left = p.x * 100 + '%'; dot.style.top = p.y * 100 + '%'; return dot;
+        }));
+      });
+    }
+    // hunt: {monster, name} on the map where it is hunted, else null.
+    function open(id, next, huntHere = null) {
       const map = get(id);
       if (!map?.image) return;
       current = map; zoom = 1; ready = false; userZoomed = false; lastFollow = null;
+      hunt = huntHere ? {monster: String(huntHere.monster), name: String(huntHere.name || 'monster')} : null; spawnLayer.replaceChildren(); spot.hidden = true;
       stage.hidden = true; marker.hidden = true; you.hidden = true;
       $('#mc-local-title').textContent = map.name;
       $('#mc-local-state').textContent = 'Loading game map…';

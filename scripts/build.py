@@ -97,6 +97,23 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
                 break
             frontier = nxt
         m['parentSpot'] = parent
+    # Spawn points per monster (map-image pixels, data/spawn-points.json) and the best spot to
+    # hunt each: the point with the most spawns of that monster around it on about the same
+    # ground (within 420 px across and 80 px up or down), with the circle that holds them.
+    spawn_raw = (project / 'data/spawn-points.json').read_text()
+    spawn_maps = json.loads(spawn_raw)['maps']
+    # The points themselves load only when a hunt map opens (docs/data/spawn-points.json).
+    (project / 'docs/data/spawn-points.json').write_text(spawn_raw)
+    for m in data['maps']:
+        points = spawn_maps.get(str(m['id']), {})
+        best = {}
+        for monster, ps in points.items():
+            near = lambda p: [q for q in ps if abs(q[0] - p[0]) <= 420 and abs(q[1] - p[1]) <= 80]
+            group = max((near(p) for p in ps), key=lambda g: (len(g), -(max(q[0] for q in g) - min(q[0] for q in g))))
+            cx, cy = sum(q[0] for q in group) / len(group), sum(q[1] for q in group) / len(group)
+            r = max(140, min(520, max(((q[0] - cx) ** 2 + (q[1] - cy) ** 2) ** .5 for q in group) + 90))
+            best[monster] = {'x': round(cx), 'y': round(cy), 'r': round(r), 'n': len(group), 'total': len(ps)}
+        m['bestSpots'] = best
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     palette = json.loads((project / 'data/night-palette.json').read_text())
