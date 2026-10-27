@@ -121,9 +121,12 @@
     $('#mc-status').textContent='Visual map match · '+m.name;
     if(!changed){if(!wasFresh&&state.panel==='route')detail();return;}
     if(!get(value.id)){state.routeActive=false;state.route=[];state.fitAll=true;render();$('#mc-status').textContent='Visual map match · '+m.name+' · Outside route coverage';localMaps.open(value.id);return;}
-    if($('#mc-local-dialog').open)$('#mc-local-dialog').close();
+    // In the live view, walking into the next map switches the view to it (navigation mode).
+    const navigating=$('#mc-local-dialog').open&&state.routeActive;
+    if($('#mc-local-dialog').open&&!navigating)$('#mc-local-dialog').close();
     state.from=String(m.id);state.selected=String(m.id);hasInspected=true;$('#mc-from').value=m.name;
     if(state.routeActive)plan();
+    if(navigating){const i=state.route.indexOf(String(m.id));if(i>=0)localMaps.open(String(m.id),state.route[i+1]||'');else $('#mc-local-dialog').close();}
     const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
     render();camera();
   },onPosition:value=>{
@@ -181,8 +184,10 @@
         const p=get(id),next=state.route[i+1],edge=p.portals.find(e=>String(e.to)===next),badge=i===0?'A':i===n?'B':i;
         return '<li'+(i===state.step?' aria-current="step"':'')+'><span class="mc-step-badge">'+badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(p.name)+'</button><p>'+esc(edge?MapleLocalMaps.instruction(edge,get(next)?.name):'You have arrived.')+'</p>'+(liveHint&&id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')+mapPreview(p,next)+'</li>';
       }).join('')+'</ol>'+(liveFresh&&state.from===liveLocation?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')+'<div class="mc-secondary" style="margin-top:10px">'+(liveFresh&&state.from===liveLocation?'Screen detected':'Manual position')+' · '+esc(get(state.route[state.step]).name)+'</div>':'<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>');
+      if(liveFresh&&state.route.includes(liveLocation))box.insertAdjacentHTML('afterbegin','<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+'Live view</button>');
       box.insertAdjacentHTML('afterbegin','<div class="mc-route-buttons"><button type="button" id="mc-end-route" class="mc-end-route">End route</button><button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button></div>');
       $('#mc-edit-route').onclick=openRoute;$('#mc-end-route').onclick=endRoute;
+      if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const i=state.route.indexOf(liveLocation);localMaps.open(liveLocation,state.route[i+1]||'');};
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const history=DATA.quests.filter(q=>['completed','skipped'].includes(state.status[q.id]));
