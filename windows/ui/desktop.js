@@ -75,6 +75,7 @@
       $('update').hidden=!r.available;$('update').textContent='Update to '+r.latest;
     }catch(_){}
   }
+  $('update-check').onclick=async()=>{$('update-check').disabled=true;$('update-check').textContent='Checking…';await checkUpdate();$('update-check').disabled=false;$('update-check').textContent='Check for updates';};
   $('update').onclick=()=>{$('update').disabled=true;$('update-text').textContent='Starting the update…';fetch('/api/update',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>{$('update').disabled=false;});};
   checkUpdate();setInterval(checkUpdate,6*3600*1000);
 
@@ -89,21 +90,29 @@
       stopCapture();stream=next;video=document.createElement('video');video.muted=true;video.playsInline=true;video.srcObject=stream;await video.play();
       const track=stream.getVideoTracks()[0];$('window-name').textContent=track.label||'Game window';cmd({cmd:'window',title:track.label||''});
       track.addEventListener('ended',()=>{if(stream===next){stopCapture();$('window-name').textContent='Game window no longer shared. Choose it again.';}});
-      $('preview').hidden=false;$('region-row').hidden=false;$('track').disabled=false;$('choose').textContent='Change window…';drawPreview();
+      $('preview').hidden=false;$('region-row').hidden=false;$('box-switch').hidden=false;$('track').disabled=false;$('choose').textContent='Change window…';drawPreview();
     }catch(e){if(e?.name!=='NotAllowedError')$('window-name').textContent='Could not share the window: '+e.message;}
   };
-  function stopCapture(){stopTracking();stream?.getTracks().forEach(t=>t.stop());stream=null;video=null;$('preview').hidden=true;$('region-row').hidden=true;$('track').disabled=true;$('choose').textContent='Choose game window…';}
+  function stopCapture(){stopTracking();stream?.getTracks().forEach(t=>t.stop());stream=null;video=null;$('preview').hidden=true;$('region-row').hidden=true;$('box-switch').hidden=true;$('track').disabled=true;$('choose').textContent='Choose game window…';}
 
   // Minimap box: normalized, top-left origin, remembered on this PC.
   function loadBox(){try{const b=JSON.parse(localStorage.getItem(BOX_KEY));if(b&&[b.x,b.y,b.w,b.h].every(Number.isFinite)&&b.w>.02&&b.h>.02)return b;}catch(_){}return {...DEFAULT_BOX};}
   function saveBox(){try{localStorage.setItem(BOX_KEY,JSON.stringify(box));}catch(_){}atlasEngine.reset();noMatchSince=Date.now();placeBox();}
-  function placeBox(){Object.assign($('box').style,{left:box.x*100+'%',top:box.y*100+'%',width:box.w*100+'%',height:box.h*100+'%'});}
+  function placeBox(){
+    const put=(el,b)=>Object.assign(el.style,{left:b.x*100+'%',top:b.y*100+'%',width:b.w*100+'%',height:b.h*100+'%'});
+    put($('box'),box);put($('qbox'),qbox);$('box').classList.toggle('passive',editQuest);$('qbox').classList.toggle('passive',!editQuest);
+  }
+  // Quest Helper box: drawn by the player around the panel (else the top-right corner is searched).
+  const QBOX_KEY='maple-atlas-companion-quest-box',DEFAULT_QBOX={x:.55,y:0,w:.45,h:.5};
+  let qbox={...DEFAULT_QBOX},qmarked=false,editQuest=false;
+  try{const b=JSON.parse(localStorage.getItem(QBOX_KEY));if(b&&[b.x,b.y,b.w,b.h].every(Number.isFinite)&&b.w>.03&&b.h>.03){qbox=b;qmarked=true;}}catch(_){}
+  $('mode-map').onchange=$('mode-quest').onchange=()=>{editQuest=$('mode-quest').checked;placeBox();};
   let dragStart=null;
   const point=e=>{const r=$('preview').getBoundingClientRect();return {x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))};};
   $('preview').onpointerdown=e=>{dragStart=point(e);$('preview').setPointerCapture(e.pointerId);};
-  $('preview').onpointermove=e=>{if(!dragStart)return;const p=point(e);box={x:Math.min(p.x,dragStart.x),y:Math.min(p.y,dragStart.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};placeBox();};
-  $('preview').onpointerup=()=>{dragStart=null;if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
-  $('reset-box').onclick=()=>{box={...DEFAULT_BOX};saveBox();};
+  $('preview').onpointermove=e=>{if(!dragStart)return;const p=point(e),b={x:Math.min(p.x,dragStart.x),y:Math.min(p.y,dragStart.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};if(editQuest)qbox=b;else box=b;placeBox();};
+  $('preview').onpointerup=()=>{dragStart=null;if(editQuest){if(qbox.w<.03||qbox.h<.03){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}}else{qmarked=true;try{localStorage.setItem(QBOX_KEY,JSON.stringify(qbox));}catch(_){}}placeBox();return;}if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
+  $('reset-box').onclick=()=>{if(editQuest){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}placeBox();return;}box={...DEFAULT_BOX};saveBox();};
   placeBox();
   function drawPreview(){
     if(!video?.videoWidth)return;const c=$('preview-canvas'),scale=Math.min(1,560/video.videoWidth);
@@ -143,9 +152,9 @@
   async function readQuests(){
     questBusy=true;lastQuestRead=Date.now();
     try{
-      const w=video.videoWidth,h=video.videoHeight,r=await atlasEngine.readQuestsFrame(video,{x:Math.round(w*.55),y:0,w:Math.round(w*.45),h:Math.round(h*.5)});
+      const w=video.videoWidth,h=video.videoHeight,r=await atlasEngine.readQuestsFrame(video,{x:Math.round(qbox.x*w),y:Math.round(qbox.y*h),w:Math.max(16,Math.round(qbox.w*w)),h:Math.max(16,Math.round(qbox.h*h))},{marked:qmarked});
       if(!tracking)return;
-      $('quests').textContent=!r.visible?'Not visible (top right of the game)':r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
+      $('quests').textContent=!r.visible?(qmarked?'Not found in its box':'Not found · draw its box (Quest Helper box)'):r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
       if(phase==='connected'&&(r.changed||Date.now()-questsSentAt>=15000)){cmd({cmd:'quests',visible:r.visible,quests:r.quests,observedAt:Date.now()});questsSentAt=Date.now();}
     }catch(_){}finally{questBusy=false;}
   }

@@ -113,6 +113,7 @@ final class CompanionModel {
     private enum Keys {
         static let site = "site"
         static let minimapRects = "minimapRects"
+        static let questRects = "questRects"
     }
 
     init() {
@@ -131,6 +132,9 @@ final class CompanionModel {
             self.captureProblem = nil
             self.regionKey = key
             self.minimapRect = Self.storedMinimapRect(for: key) ?? Self.defaultMinimapRect
+            let quest = Self.storedRect(for: key, in: Keys.questRects)
+            self.questRect = quest ?? Self.defaultQuestRect
+            self.questMarked = quest != nil
             self.previewImage = nil
             self.log("Reading window: \(label)")
             if self.isTracking { self.runTrackingLoop() }
@@ -369,16 +373,43 @@ final class CompanionModel {
         if isTracking { Task { await engine.reset() } }
     }
 
-    private static func storedMinimapRect(for key: String) -> CGRect? {
-        let all = UserDefaults.standard.dictionary(forKey: Keys.minimapRects) as? [String: [Double]]
+    private static func storedMinimapRect(for key: String) -> CGRect? { storedRect(for: key, in: Keys.minimapRects) }
+    private static func storeMinimapRect(_ rect: CGRect, for key: String) { storeRect(rect, for: key, in: Keys.minimapRects) }
+
+    private static func storedRect(for key: String, in store: String) -> CGRect? {
+        let all = UserDefaults.standard.dictionary(forKey: store) as? [String: [Double]]
         guard let values = all?[key], values.count == 4 else { return nil }
         return CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
     }
 
-    private static func storeMinimapRect(_ rect: CGRect, for key: String) {
-        var all = (UserDefaults.standard.dictionary(forKey: Keys.minimapRects) as? [String: [Double]]) ?? [:]
-        all[key] = [rect.minX, rect.minY, rect.width, rect.height].map { Double($0) }
-        UserDefaults.standard.set(all, forKey: Keys.minimapRects)
+    private static func storeRect(_ rect: CGRect?, for key: String, in store: String) {
+        var all = (UserDefaults.standard.dictionary(forKey: store) as? [String: [Double]]) ?? [:]
+        all[key] = rect.map { [$0.minX, $0.minY, $0.width, $0.height].map { Double($0) } }
+        UserDefaults.standard.set(all, forKey: store)
+    }
+
+    // MARK: Quest Helper region
+
+    /// Where the game puts the Quest Helper: the top-right part of the window.
+    static let defaultQuestRect = CGRect(x: 0.55, y: 0, width: 0.45, height: 0.5)
+    /// The area read for the Quest Helper (normalized, top-left origin).
+    private(set) var questRect = CompanionModel.defaultQuestRect
+    /// True when the player drew the box: the engine then reads it even when it cannot find the
+    /// panel by its colours.
+    private(set) var questMarked = false
+
+    func setQuestRect(_ rect: CGRect) {
+        let clamped = rect.standardized.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard !clamped.isNull, clamped.width >= 0.03, clamped.height >= 0.03 else { return }
+        questRect = clamped
+        questMarked = true
+        Self.storeRect(clamped, for: regionKey, in: Keys.questRects)
+    }
+
+    func resetQuestRect() {
+        questRect = Self.defaultQuestRect
+        questMarked = false
+        Self.storeRect(nil, for: regionKey, in: Keys.questRects)
     }
 
     // MARK: Preview
@@ -477,11 +508,12 @@ final class CompanionModel {
     private func readQuestsOnce() async {
         guard isTracking, case .ready = engineStatus else { return }
         let capture = self.capture
-        guard let png = try? await Task.detached(operation: { try capture.questPanelImage() }).value else { return }
+        let region = questRect, marked = questMarked
+        guard let png = try? await Task.detached(operation: { try capture.questPanelImage(region: region) }).value else { return }
         do {
-            let reading = try await engine.readQuests(png)
+            let reading = try await engine.readQuests(png, marked: marked)
             guard !Task.isCancelled, isTracking else { return }
-            let summary = !reading.visible ? "Quest Helper not visible (top right of the game)"
+            let summary = !reading.visible ? (questMarked ? "Quest Helper not found in its box" : "Quest Helper not found · draw its box (Quest Helper tab)")
                 : reading.quests.isEmpty ? "Quest Helper open · no quests read"
                 : "\(reading.quests.count) quest\(reading.quests.count == 1 ? "" : "s") tracked"
             if summary != questSummary || (reading.changed && reading.text != nil) {

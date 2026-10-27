@@ -1,11 +1,16 @@
 import AppKit
 import SwiftUI
 
-/// Live window thumbnail with the minimap region drawn on top. Dragging draws a new region.
-/// `region` is normalized to the window (0–1, top-left origin).
+/// Live window thumbnail with the region being edited drawn on top (and the other region as a
+/// dashed outline). Dragging draws a new region. Regions are normalized to the window (0–1,
+/// top-left origin).
 struct MinimapRegionEditor: View {
     let image: CGImage?
     let region: CGRect
+    var label = "Minimap"
+    var color = Color.accentColor
+    var other: CGRect? = nil
+    var otherLabel = ""
     let onChange: (CGRect) -> Void
 
     @State private var draft: CGRect?
@@ -40,13 +45,23 @@ struct MinimapRegionEditor: View {
                     path.addRect(box)
                 }
                 .fill(Color.black.opacity(0.45), style: FillStyle(eoFill: true))
+                if let other {
+                    let o = CGRect(x: other.minX * size.width, y: other.minY * size.height,
+                                   width: other.width * size.width, height: other.height * size.height)
+                    Path { $0.addRect(o) }
+                        .stroke(Color.white.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    Text(otherLabel)
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .offset(x: o.minX + 3, y: o.minY + 3)
+                }
                 Path { $0.addRect(box) }
-                    .stroke(Color.accentColor, lineWidth: 2)
-                Text("Minimap")
+                    .stroke(color, lineWidth: 2)
+                Text(label)
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 3))
+                    .background(color, in: RoundedRectangle(cornerRadius: 3))
                     .foregroundStyle(.white)
                     .offset(x: box.minX + 3, y: box.minY + 3)
             }
@@ -68,7 +83,7 @@ struct MinimapRegionEditor: View {
         .aspectRatio(aspectRatio, contentMode: .fit)
         .frame(maxWidth: .infinity, maxHeight: 260)
         .clipShape(RoundedRectangle(cornerRadius: 6))
-        .accessibilityLabel("Game window preview with the minimap area marked")
+        .accessibilityLabel("Game window preview with the \(label) area marked")
     }
 
     private func normalized(from start: CGPoint, to end: CGPoint, in size: CGSize) -> CGRect {

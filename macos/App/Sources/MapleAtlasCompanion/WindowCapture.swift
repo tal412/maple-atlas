@@ -75,9 +75,9 @@ final class GameCapture: NSObject {
     /// before the ≤ 960 px downscale, so the minimap keeps its detail.
     /// The top-right part of the window, where the game's Quest Helper panel sits, as
     /// a PNG data URL (at most 1600 px on the long side).
-    nonisolated func questPanelImage() throws -> String {
+    nonisolated func questPanelImage(region: CGRect) throws -> String {
         guard let image = sink.latest else { throw CaptureError.noFrameYet }
-        let corner = Self.cropped(image, to: CGRect(x: 0.55, y: 0, width: 0.45, height: 0.5)) ?? image
+        let corner = Self.cropped(image, to: region) ?? image
         return try Self.pngDataURL(from: Self.downscaled(corner, maxSide: 1600))
     }
 

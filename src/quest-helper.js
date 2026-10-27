@@ -62,8 +62,9 @@
   // ---- Reading its text ----
   // "30 / 30 Dark Stump". The slash is often read as 7, l, I or |, or "1 / 1" squeezed into "111".
   function progressLine(line){
-    const m=line.match(/^(\d{1,4})\s*[/7lI|\\£#{(f]\s*(\d{1,4})\s+(.{2,})$/);
-    if(m)return {have:Number(m[1]),need:Number(m[2]),name:m[3]};
+    // The name may follow the number with no space ("8/20PigsRibbon").
+    const m=line.match(/^(\d{1,4})\s*[/7lI|\\£#{(f]\s*(\d{1,4})(?:\s+(.{2,})|([^\d\s/].+))$/);
+    if(m)return {have:Number(m[1]),need:Number(m[2]),name:m[3]||m[4]};
     const glued=line.match(/^(\d{1,4})\s+[17](\d{1,4})\s+(\D.+)$/);
     if(glued)return {have:Number(glued[1]),need:Number(glued[2]),name:glued[3]};
     const squeezed=line.match(/^(\d{3,7})\s+(\D.+)$/);
@@ -73,15 +74,18 @@
     }
     return null;
   }
+  // The panel's own title, "Quest Helper (2/5)", even misread ("QuestHeper 25)").
+  const isHeader=line=>{const t=normalize(line).replace(/ /g,'').slice(0,11);return /quest\s*helper/i.test(line)||(t.length>=8&&editDistance(t,'questhelper'.slice(0,t.length))<=2);};
   // Every tracked quest: a title line followed by its "have / need name" lines.
   function parse(text){
     const quests=[];
     for(const raw of String(text).split('\n')){
-      const line=raw.trim();
-      if(!line||/quest\s*helper/i.test(line))continue;
+      // Stray marks from the panel's edge come before a line ("¥ 10/10 Slime Bubble").
+      const line=raw.trim().replace(/^(?:[^\p{L}\p{N}\s]+\s*|[^\d\s]\s+(?=\d))+/u,'');
+      if(!line||isHeader(line))continue;
       const m=progressLine(line);
       if(m){
-        const current=quests.at(-1),name=m.name.replace(/[^\p{L}\p{N}' -]+/gu,'').trim();
+        const current=quests.at(-1),name=m.name.replace(/[^\p{L}\p{N}' -]+/gu,'').trim().replace(/(?:\s+\S)+$/u,'').trim();   // stray marks from the box edge
         if(current&&m.need>0&&name)current.progress.push({have:m.have,need:m.need,name,done:m.have>=m.need});
         continue;
       }
@@ -173,13 +177,15 @@
   // words) or null.
   function countSpan(words){
     const lead=[];
-    for(const w of words||[]){
+    let i=0;
+    while(i<(words||[]).length&&/^(?:[^\p{L}\p{N}]+|[^\d\s])$/u.test(String(words[i]?.text||'').trim()))i++;   // stray edge marks
+    for(const w of (words||[]).slice(i)){
       const t=String(w?.text||'').trim();if(!t)continue;
       const digits=/\d/.test(t)&&/^[\d/7lI|\\£#{(\[\]!.,:;]+$/.test(t),slash=lead.length&&/^[/7lI|\\]+$/.test(t);
       if(digits||slash)lead.push(w);else break;
     }
     if(!lead.length||!/\d/.test(lead[0].text))return null;
-    const rest=(words||[]).slice(lead.length).map(w=>String(w.text||'').trim()).filter(Boolean).join(' ');
+    const rest=(words||[]).slice(i+lead.length).map(w=>String(w.text||'').trim()).filter(Boolean).join(' ');
     if(!/\p{L}{2}/u.test(rest))return null;
     const box={x0:Math.min(...lead.map(w=>w.bbox.x0)),y0:Math.min(...lead.map(w=>w.bbox.y0)),x1:Math.max(...lead.map(w=>w.bbox.x1)),y1:Math.max(...lead.map(w=>w.bbox.y1))};
     return {box,rest,lead};

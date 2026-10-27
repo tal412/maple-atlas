@@ -163,12 +163,13 @@ final class EngineHost: NSObject {
         let text: String?
     }
 
-    func readQuests(_ dataURL: String) async throws -> QuestReading {
+    /// marked: the player drew the box, so the whole box is read when the panel is not found.
+    func readQuests(_ dataURL: String, marked: Bool) async throws -> QuestReading {
         guard !questReading else { throw EngineError.busy }
         questReading = true
         defer { questReading = false }
-        let script = "return JSON.stringify(await window.atlasEngine.readQuests(frame));"
-        let result = try await webView.callAsyncJavaScript(script, arguments: ["frame": dataURL], contentWorld: .page)
+        let script = "return JSON.stringify(await window.atlasEngine.readQuests(frame, {marked}));"
+        let result = try await webView.callAsyncJavaScript(script, arguments: ["frame": dataURL, "marked": marked], contentWorld: .page)
         guard let json = result as? String,
               let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
               let visible = value["visible"] as? Bool

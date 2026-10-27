@@ -20,6 +20,9 @@ struct ContentView: View {
                 if model.updater.canInstall {
                     Button("Update") { Task { await model.updater.install() } }
                         .buttonStyle(.borderedProminent)
+                } else {
+                    Button(model.updater.isChecking ? "Checking…" : "Check for updates") { Task { await model.updater.check() } }
+                        .disabled(model.updater.isChecking || model.updater.isBusy)
                 }
                 Spacer()
                 Button("Diagnostics") { openWindow(id: "log") }
@@ -172,6 +175,8 @@ private struct PairingView: View {
 // MARK: - Game window
 
 private struct GameWindowSection: View {
+    /// Which box the preview edits: the minimap (false) or the Quest Helper (true).
+    @State private var editingQuest = false
     let model: CompanionModel
 
     var body: some View {
@@ -193,17 +198,38 @@ private struct GameWindowSection: View {
 
             if model.hasGameWindow {
                 VStack(alignment: .leading, spacing: 8) {
-                    MinimapRegionEditor(
-                        image: model.previewImage,
-                        region: model.minimapRect,
-                        onChange: { model.setMinimapRect($0) })
-                    HStack {
-                        Text("Drag a box around the in-game minimap and its map name")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Reset to top-left") { model.resetMinimapRect() }
-                            .disabled(model.isDefaultMinimapRect)
+                    Picker("Box", selection: $editingQuest) {
+                        Text("Minimap").tag(false)
+                        Text("Quest Helper").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    if editingQuest {
+                        MinimapRegionEditor(
+                            image: model.previewImage, region: model.questRect, label: "Quest Helper", color: .orange,
+                            other: model.minimapRect, otherLabel: "Minimap",
+                            onChange: { model.setQuestRect($0) })
+                        HStack {
+                            Text(model.questMarked ? "Drag a box around the game\u{2019}s Quest Helper panel" : "Drag a box around the game\u{2019}s Quest Helper panel (now: the top-right corner)")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Reset") { model.resetQuestRect() }
+                                .disabled(!model.questMarked)
+                        }
+                    } else {
+                        MinimapRegionEditor(
+                            image: model.previewImage, region: model.minimapRect,
+                            other: model.questRect, otherLabel: "Quest Helper",
+                            onChange: { model.setMinimapRect($0) })
+                        HStack {
+                            Text("Drag a box around the in-game minimap and its map name")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Reset to top-left") { model.resetMinimapRect() }
+                                .disabled(model.isDefaultMinimapRect)
+                        }
                     }
                     Text("Maple Atlas reads the map name at the top of the minimap. Press + on the in-game minimap until the name shows (for example \u{201C}Victoria Road \u{00B7} Henesys\u{201D}), and keep it inside the box.")
                         .font(.callout)

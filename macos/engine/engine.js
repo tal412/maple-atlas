@@ -142,14 +142,18 @@
   // Reads the tracked quests from `source` (its `crop`: the top-right part of the game
   // window). Returns {visible, quests (MapleQuestHelper.pack form), changed, text}.
   // The panel is read again only when it looks different, or every 30 s.
-  async function readQuestsFrame(source,crop){
+  // opts.marked: the player drew a box around the Quest Helper. Then the panel is looked for
+  // inside it, and when it is not found by its colours the whole box is read.
+  async function readQuestsFrame(source,crop,opts={}){
     if(questBusy)throw Error('The quest panel is already being read.');
     questBusy=true;const started=performance.now();
     try{
       const w=crop?crop.w:source.videoWidth||source.width,h=crop?crop.h:source.videoHeight||source.height,scale=Math.min(1,1600/Math.max(w,h));
       questCanvas.width=Math.max(16,Math.round(w*scale));questCanvas.height=Math.max(16,Math.round(h*scale));
       if(crop)questContext.drawImage(source,crop.x,crop.y,crop.w,crop.h,0,0,questCanvas.width,questCanvas.height);else questContext.drawImage(source,0,0,questCanvas.width,questCanvas.height);
-      const image=questContext.getImageData(0,0,questCanvas.width,questCanvas.height),panel=MapleQuestHelper.find(image);
+      const image=questContext.getImageData(0,0,questCanvas.width,questCanvas.height);
+      // About 10.5 AUTO-button widths across the panel body: the zoom the reader is tuned for.
+      const panel=MapleQuestHelper.find(image)||(opts.marked?{x:0,y:0,w:questCanvas.width,h:questCanvas.height,button:questCanvas.width/10.5}:null);
       if(!panel){questSeen=null;return {visible:false,quests:[],changed:true,elapsed:Math.round(performance.now()-started)};}
       const body=questContext.getImageData(panel.x,panel.y,panel.w,panel.h),signature=MapleQuestHelper.signature(body);
       if(questSeen&&!MapleQuestHelper.changed(signature,questSeen.signature)&&performance.now()-questSeen.at<30000)
@@ -173,7 +177,7 @@
   // Data-URL entry points used by the Mac app (frameHeight in that image's pixels).
   async function read(dataURL,frameHeight){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight);}finally{bitmap.close();}}
   async function locate(dataURL,frameHeight,id){const bitmap=await bitmapOf(dataURL);try{return await locateFrame(bitmap,null,frameHeight,id);}finally{bitmap.close();}}
-  async function readQuests(dataURL){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null);}finally{bitmap.close();}}
+  async function readQuests(dataURL,opts={}){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null,opts);}finally{bitmap.close();}}
   // The panel text of a prepared (inked) canvas, counts read twice. For tests and diagnostics.
   async function readQuestText(image){const {data}=await (await reader()).recognize(image,{},{text:true,blocks:true});return {first:String(data.text||'').trim(),text:await recheckCounts(data,image)||String(data.text||'').trim()};}
   window.atlasEngine={readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};

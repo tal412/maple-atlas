@@ -32,3 +32,11 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.counts('2/'), null);
   console.log('quest-helper: count re-read passes');
 }
+// A box drawn by hand around the panel: edge marks before lines, the misread title, a name glued to its count.
+{
+  const read = Q.parse('QuestHeper 25) po OE\nMake a Match Cards Set )\n"15 #15 Monster Card\n] Mrs: Ming Ming\'s First Worry\n¥ 10/10 Slime Buble |\n. 8/20PigsRikbon B |');
+  assert.deepEqual(read.map(q => q.title.replace(/[^A-Za-z' ]/g, '').trim()), ['Make a Match Cards Set', "Mrs Ming Ming's First Worry"]);
+  assert.deepEqual(read[1].progress.map(p => [p.have, p.need]), [[10, 10], [8, 20]]);
+  assert.deepEqual(read[0].progress.map(p => [p.have, p.need]), [[15, 15]]);
+  console.log('quest-helper: marked box reading passes');
+}

@@ -50,6 +50,9 @@ final class Updater {
         }
     }
 
+    var isChecking: Bool { if case .checking = state { true } else { false } }
+    /// Downloading or installing: no new check meanwhile.
+    var isBusy: Bool { if case .downloading = state { true } else { false } }
     var canInstall: Bool {
         if case .available = state { return true }
         return false
