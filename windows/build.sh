@@ -9,7 +9,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LINK="$REPO/macos/link"
 WEBUI="$LINK/webui"
 OUT="$REPO/windows/build"
-VERSION="${VERSION:-0.3.3}"
+VERSION="${VERSION:-0.3.4}"
 WINRES="$(command -v go-winres || echo "$HOME/go/bin/go-winres")"
 
 echo "==> Collecting the window and engine files"
@@ -30,6 +30,17 @@ marks = {str(m["id"]): [[float(p["x"]), float(p["y"])] for p in m.get("portals",
          if int(p.get("type", 0)) == 2 and p.get("x") is not None and p.get("y") is not None]
          for m in world["maps"]}
 json.dump({k: v for k, v in marks.items() if v}, open(sys.argv[2], "w"), separators=(",", ":"))
+PY
+
+python3 - "$REPO/data/world.json" "$WEBUI/data/map-neighbors.json" <<'PY'
+import json, sys
+world = json.load(open(sys.argv[1]))
+out = {}
+for m in world["maps"]:
+    ids = sorted({str(p["to"]) for p in m.get("portals", []) if str(p.get("to")) != str(m["id"])})
+    if ids:
+        out[str(m["id"])] = ids[:30]
+json.dump(out, open(sys.argv[2], "w"), separators=(",", ":"))
 PY
 
 echo "==> App icon and version"

@@ -16,9 +16,9 @@ async function initialize(){
  })().catch(e=>{initializing=null;throw e;});return initializing;
 }
 self.onmessage=async event=>{
- const {type,id,image}=event.data||{};
+ const {type,id,image,options}=event.data||{};
  try{
   if(type==='init'){const catalog=await initialize();postMessage({type:'ready',id,maps:catalog.maps,unavailable:catalog.unavailable});}
-  if(type==='match'){await initialize();const started=performance.now(),result=engine.match(image);postMessage({type:'result',id,result:{...result,elapsed:Math.round(performance.now()-started)}});}
+  if(type==='match'){await initialize();const started=performance.now(),result=engine.match(image,options&&typeof options==='object'?{kinds:Array.isArray(options.kinds)?options.kinds.filter(k=>['minimap','scene'].includes(k)):null,prefer:Array.isArray(options.prefer)?options.prefer.slice(0,40).map(String):null,limit:Math.max(8,Math.min(64,Number(options.limit)||28))}:{});postMessage({type:'result',id,result:{...result,elapsed:Math.round(performance.now()-started)}});}
  }catch(e){postMessage({type:'error',id,message:e?.message||'The image could not be matched.'});}
 };

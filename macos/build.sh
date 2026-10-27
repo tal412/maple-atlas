@@ -16,7 +16,7 @@ step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 step "Building Swift app"
 # Universal (Apple silicon and Intel) unless ARCHS says otherwise.
 ARCHS="${ARCHS:-arm64 x86_64}"
-VERSION="${VERSION:-0.3.3}"
+VERSION="${VERSION:-0.3.4}"
 SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
 (cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
 BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
@@ -97,6 +97,17 @@ for m in world["maps"]:
     if points:
         marks[str(m["id"])] = points
 json.dump(marks, open(sys.argv[2], "w"), separators=(",", ":"))
+PY
+
+python3 - "$REPO/data/world.json" "$ENGINE/data/map-neighbors.json" <<'PY'
+import json, sys
+world = json.load(open(sys.argv[1]))
+out = {}
+for m in world["maps"]:
+    ids = sorted({str(p["to"]) for p in m.get("portals", []) if str(p.get("to")) != str(m["id"])})
+    if ids:
+        out[str(m["id"])] = ids[:30]
+json.dump(out, open(sys.argv[2], "w"), separators=(",", ":"))
 PY
 
 step "Writing Info.plist"

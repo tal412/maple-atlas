@@ -12,12 +12,16 @@
     });
     const total=records.reduce((n,r)=>n+r.count,0),head=new Int32Array(8*65536).fill(-1),frequency=new Uint32Array(8*65536),next=new Int32Array(total*8),owner=new Uint16Array(total);let base=0;
     for(const r of records){for(let row=0;row<r.count;row++){owner[base+row]=r.i;for(let table=0;table<8;table++){const [a,b]=pairs[table],key=table*65536+r.bytes[row*32+a]*256+r.bytes[row*32+b],node=(base+row)*8+table;next[node]=head[key];head[key]=node;frequency[key]++;}}base+=r.count;}
-    function shortlist(bytes,count){
+    // kinds: which references to consider (the companion reads minimaps only);
+    // prefer: map ids always verified, e.g. the maps next to the last one found.
+    function shortlist(bytes,count,{kinds=null,prefer=null,limit=28}={}){
       const votes=new Float32Array(records.length);
       // Common brick/grass patterns carry little location evidence. Skip their
       // entire bucket instead of truncating it, which would bias by map order.
       for(let row=0;row<count;row++)for(let table=0;table<8;table++){const [a,b]=pairs[table],key=table*65536+bytes[row*32+a]*256+bytes[row*32+b],n=frequency[key];if(n>200)continue;let node=head[key];while(node!==-1){votes[owner[Math.floor(node/8)]]+=1/Math.sqrt(n);node=next[node];}}
-      return records.map((r,i)=>[r,votes[i]]).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]).slice(0,28).map(([r])=>r);
+      const allowed=r=>!kinds||kinds.includes(r.kind),ranked=records.map((r,i)=>[r,votes[i]]).filter(([r,n])=>n>0&&allowed(r)).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(([r])=>r);
+      if(prefer?.size)for(const r of records)if(prefer.has(String(r.id))&&allowed(r)&&!ranked.includes(r))ranked.push(r);
+      return ranked;
     }
     function verify(q,kp,r,width,height){
       const matches=new cv.DMatchVectorVector(),seen=new Set(),good=[];let from,to,mask,h;
@@ -42,25 +46,26 @@
         return {id:r.id,kind:r.kind,inliers:n,matches:good.length,ratio,score:n*(.5+.5*ratio),landmarks,points:query.slice(0,80).map(([x,y])=>[x/width,y/height]),referencePoints:inliers.slice(0,80).map(([x,y])=>[x/r.width,y/r.height]),matrix,width,height,referenceWidth:r.width,referenceHeight:r.height};
       }finally{matches.delete();from?.delete();to?.delete();mask?.delete();h?.delete();}
     }
-    function matchOnce({width,height,data}){
+    function matchOnce({width,height,data},options={}){
       if(!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width*height>1600000||data.length!==width*height*4)throw Error('Invalid image dimensions.');
       const rgba=cv.matFromArray(height,width,cv.CV_8UC4,data),gray=new cv.Mat(),kp=new cv.KeyPointVector(),desc=new cv.Mat();
       try{
         cv.cvtColor(rgba,gray,cv.COLOR_RGBA2GRAY);orb.detectAndCompute(gray,empty,kp,desc);
         if(desc.rows<12)return {candidates:[],features:desc.rows};
-        const ranked=shortlist(desc.data,desc.rows).map(r=>verify(desc,kp,r,width,height)).filter(Boolean).sort((a,b)=>b.score-a.score),unique=new Map();
+        const ranked=shortlist(desc.data,desc.rows,options).map(r=>verify(desc,kp,r,width,height)).filter(Boolean).sort((a,b)=>b.score-a.score),unique=new Map();
         for(const r of ranked)if(!unique.has(r.id))unique.set(r.id,r);
         const candidates=Array.from(unique.values()).slice(0,5),best=candidates[0],runner=candidates[1];
         const strong=!!best&&best.inliers>=18&&best.ratio>=.55&&(!runner||best.score>=runner.score*1.65&&best.score-runner.score>=8);
         return {candidates,strong,features:desc.rows};
       }finally{rgba.delete();gray.delete();kp.delete();desc.delete();}
     }
-    function match(image){
-      const first=matchOnce(image);if(first.strong||Math.min(image.width,image.height)<80)return first;
+    function match(image,options={}){
+      options={...options,prefer:options.prefer?new Set(options.prefer.map(String)):null};
+      const first=matchOnce(image,options);if(first.strong||Math.min(image.width,image.height)<80)return first;
       const src=cv.matFromArray(image.height,image.width,cv.CV_8UC4,image.data),small=new cv.Mat();
       try{
         cv.resize(src,small,new cv.Size(Math.round(image.width/2),Math.round(image.height/2)),0,0,cv.INTER_AREA);
-        const second=matchOnce({width:small.cols,height:small.rows,data:small.data}),byMap=new Map();
+        const second=matchOnce({width:small.cols,height:small.rows,data:small.data},options),byMap=new Map();
         // Preserve competing evidence from either scale; shrinking an ambiguous
         // image must not silently erase a plausible alternative location.
         for(const c of [...first.candidates,...second.candidates])if(!byMap.has(c.id)||byMap.get(c.id).score<c.score)byMap.set(c.id,c);

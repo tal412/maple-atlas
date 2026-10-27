@@ -11,7 +11,7 @@
    loading=request('init',{},[],90000).then(value=>{catalog=value;return value;}).catch(e=>{stop();throw e;});}
    return loading;
   }
-  async function match(image){await ready();return (await request('match',{image:{width:image.width,height:image.height,data:image.data}},[image.data.buffer])).result;}
+  async function match(image,options){await ready();return (await request('match',{image:{width:image.width,height:image.height,data:image.data},options},[image.data.buffer])).result;}
   return {ready,match,stop,get catalog(){return catalog;}};
  }
  scope.MapleVisualClient={create};

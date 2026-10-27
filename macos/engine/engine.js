@@ -11,7 +11,7 @@
   const vision=MapleVisualClient.create({onProgress:message=>notify({type:'progress',message})});
   const tracker=MapleVisualTracker.create(),canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   const dotCanvas=document.createElement('canvas'),dotContext=dotCanvas.getContext('2d',{willReadFrequently:true});
-  let names=new Map(),busy=false,marks=null,scaleMemory=[],loading=null;
+  let names=new Map(),busy=false,marks=null,neighbors={},scaleMemory=[],loading=null,lastMap=null;
   // Scene references are ignored; "strong" is recomputed with the matcher's own rule.
   function minimapOnly(result){
     const candidates=(result.candidates||[]).filter(c=>c.kind==='minimap'),best=candidates[0],runner=candidates[1];
@@ -23,6 +23,7 @@
       const catalog=await vision.ready();
       names=new Map(catalog.maps.map(m=>[String(m.id),m.name]));
       marks=await fetch('./data/portal-marks.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+      neighbors=await fetch('./data/map-neighbors.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
       notify({type:'progress',message:'Map matcher ready · '+catalog.maps.length+' maps'});
       return {maps:catalog.maps.map(m=>({id:String(m.id),name:m.name}))};
     })().catch(e=>{loading=null;throw e;});
@@ -53,12 +54,16 @@
       const scale=draw(canvas,context,source,crop);
       // The matcher takes ownership of its pixel buffer, so the dot search gets its own copy.
       const pixels=context.getImageData(0,0,canvas.width,canvas.height);
-      const result=minimapOnly(await vision.match(context.getImageData(0,0,canvas.width,canvas.height)));
+      // Minimap references only, more of them, and always the last map and the maps next to it:
+      // a tall or dark map's partial minimap can rank low on the quick vote alone.
+      const prefer=lastMap?[lastMap,...(neighbors[lastMap]||[])]:null;
+      const result=minimapOnly(await vision.match(context.getImageData(0,0,canvas.width,canvas.height),{kinds:['minimap'],limit:40,prefer}));
       const observation=tracker.read(result),match=observation.match,elapsed=Math.round(performance.now()-started);
       if(!match)return {phase:'searching',text:'Reading the minimap… Keep the in-game minimap visible inside the box.',elapsed};
       const name=names.get(String(match.id))||'Map '+match.id;
       const base={id:String(match.id),name,inliers:match.inliers,kind:'minimap',confidence:Math.min(100,Math.round(match.ratio*100)),elapsed};
       if(observation.phase==='confirmed'){
+        lastMap=String(match.id);
         const where=position(String(match.id),pixels,Math.round((frameHeight||canvas.height/scale)*scale));
         return {...base,phase:'confirmed',position:where.reason?null:where,positionNote:where.reason||null,text:name+' · '+match.inliers+' aligned landmarks'+(where.reason?'':' · you are on the map')};
       }
@@ -118,5 +123,5 @@
   async function read(dataURL,frameHeight){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight);}finally{bitmap.close();}}
   async function locate(dataURL,frameHeight,id){const bitmap=await bitmapOf(dataURL);try{return await locateFrame(bitmap,null,frameHeight,id);}finally{bitmap.close();}}
   async function readQuests(dataURL){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null);}finally{bitmap.close();}}
-  window.atlasEngine={ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>tracker.reset()};
+  window.atlasEngine={ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{tracker.reset();lastMap=null;}};
 })();

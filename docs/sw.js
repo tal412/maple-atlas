@@ -1,4 +1,4 @@
-const CACHE="maple-atlas-offline-main-7b2bfff718f2",FILES=["index.html", "favicon.svg", "vendor/lucide.js", "vendor/roboto-latin.woff2", "data/search-f707bdb0dbbd1dc3.json", "vendor/companion/qr.js"],BASE=new URL('./',self.location.href),CHANNEL="main";
+const CACHE="maple-atlas-offline-main-1851f84f37d5",FILES=["index.html", "favicon.svg", "vendor/lucide.js", "vendor/roboto-latin.woff2", "data/search-f707bdb0dbbd1dc3.json", "vendor/companion/qr.js"],BASE=new URL('./',self.location.href),CHANNEL="main";
 self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting());});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const name of await caches.keys())if(name.startsWith('maple-atlas-offline-'+CHANNEL+'-')&&name!==CACHE)await caches.delete(name);await self.clients.claim();})());});
 const canonical=request=>{const url=new URL(request.url);url.search='';url.hash='';if(url.pathname===BASE.pathname)url.pathname+='index.html';return url.href;};
