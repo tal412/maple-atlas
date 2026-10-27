@@ -44,12 +44,22 @@
       let best=-1,bestShare=.55;
       for(let x=from;x<to;x++){let light=0,n=0;for(let y=top;y<=y1;y+=2){const [r,g,b]=at(image,x,y);n++;if((r+g+b)/3>=150&&Math.max(r,g,b)-Math.min(r,g,b)<=90)light++;}if(light/n>bestShare){bestShare=light/n;best=x;}}
       if(best>=0)left=Math.min(left,best+2);
+      // Else follow the light title bar ("Quest Helper (2/5)") left from the AUTO button: it runs
+      // to the panel's left edge (dark title letters are short gaps in it).
+      else{
+        const ty=Math.max(0,group[0].y+Math.round((header.bottom-group[0].y)/2)),barLight=(r,g,b)=>(r+g+b)/3>=150;
+        let x=header.autoX-2,gap=0,edge=header.autoX;
+        for(;x>=0;x--){const [r,g,b]=at(image,x,ty);if(barLight(r,g,b)){gap=0;edge=x;}else if(++gap>header.autoW*.7)break;}
+        if(edge<left)left=Math.max(0,edge+2);
+      }
     }
     const x0=left+header.autoW,x1=Math.min(width-1,header.right-header.autoW);
     if(x1<=x0)return null;
     const lum=y=>{let sum=0;for(let x=x0;x<=x1;x++){const [r,g,b]=at(image,x,y);sum+=(r+g+b)/3;}return sum/(x1-x0+1);};
     let bottom=-1;
-    for(let y=top+header.autoW;y<height-3;y++){const v=lum(y);if(v>=110&&v-Math.max(lum(y-2),lum(y+3))>=12){bottom=y;break;}}
+    // The bottom border is light across nearly the whole width (a bright edge in the scenery is not).
+    const lightShare=y=>{let n=0;for(let x=x0;x<=x1;x++){const [r,g,b]=at(image,x,y);if((r+g+b)/3>=140)n++;}return n/(x1-x0+1);};
+    for(let y=top+header.autoW;y<height-3;y++){const v=lum(y);if(v>=110&&v-Math.max(lum(y-2),lum(y+3))>=12&&lightShare(y)>=.7){bottom=y;break;}}
     if(bottom<0||bottom-top<header.autoW)return null;
     return {x:left,y:top,w:Math.max(1,header.right-left-Math.round(header.autoW*.9)),h:bottom-top,button:header.autoW};
   }
@@ -255,6 +265,17 @@
     }
     return null;
   }
-  const exported={splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Ink for one count line from its colour pixels: darker than halfway between the line's
+  // darkest text (5th percentile) and its background (median). Soft, scaled text (a game in
+  // full screen) keeps its thin strokes, which a fixed cut breaks apart. Returns ImageData-like.
+  function inkAdaptive(image){
+    const {width,height,data}=image,lum=new Float32Array(width*height);
+    for(let i=0;i<lum.length;i++)lum[i]=data[i*4]*.299+data[i*4+1]*.587+data[i*4+2]*.114;
+    const sorted=Float32Array.from(lum).sort(),dark=sorted[Math.floor(sorted.length*.05)],mid=sorted[Math.floor(sorted.length*.5)];
+    const cut=dark+(mid-dark)*.5,out=new Uint8ClampedArray(data.length);
+    for(let i=0;i<lum.length;i++){const v=lum[i]<cut?0:255;out[i*4]=out[i*4+1]=out[i*4+2]=v;out[i*4+3]=255;}
+    return {width,height,data:out,dark,mid};
+  }
+  const exported={inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

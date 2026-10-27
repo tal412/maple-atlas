@@ -120,17 +120,18 @@
       .catch(e=>{digits=null;throw e;});
     return digits;
   }
-  // A third reader for one digit at a time (single-character mode).
-  let glyphs=null;
-  function glyphReader(){
-    glyphs??=Tesseract.createWorker('eng',1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr/tesseract-core-simd-lstm.wasm.js',langPath:'./ocr/lang',workerBlobURL:false,gzip:true})
-      .then(async worker=>{await worker.setParameters({tessedit_pageseg_mode:'10',tessedit_char_whitelist:'0123456789'});return worker;})
-      .catch(e=>{glyphs=null;throw e;});
-    return glyphs;
+  // A third reader for one line of digits and spaces ("8 20" once the slash is painted out).
+  let lineWorker=null;
+  function lineReader(){
+    lineWorker??=Tesseract.createWorker('eng',1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr/tesseract-core-simd-lstm.wasm.js',langPath:'./ocr/lang',workerBlobURL:false,gzip:true})
+      .then(async worker=>{await worker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:'0123456789 '});return worker;})
+      .catch(e=>{lineWorker=null;throw e;});
+    return lineWorker;
   }
   // Rebuilds the panel text with every count line's numbers read again by the digits reader.
   // Returns null when the layout is missing, so the plain text is used.
-  async function recheckCounts(data,image){
+  // colour: the panel's colour pixels at the same size as image (before inking).
+  async function recheckCounts(data,image,colour){
     const lines=(data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
     if(!lines.length)return null;
     const pixels=image.getContext('2d',{willReadFrequently:true}).getImageData(0,0,image.width,image.height);
@@ -146,22 +147,34 @@
       // else the general reader's slash (minus a digit drawn on it); else the digits reader on
       // the whole count area.
       let c=null;
-      const split=MapleQuestHelper.splitCounts(pixels,{x0:rectangle.left,y0:rectangle.top,x1:rectangle.left+rectangle.width-1,y1:rectangle.top+rectangle.height-1});
-      // Each digit glyph read on its own (single-character mode, enlarged, white around it): the
-      // slash is never read, and no neighbour can leak into a digit.
-      if(split&&split.haveGlyphs.length<=4&&split.needGlyphs.length<=4)try{
-        const glyph=async g=>{
-          const w=g.x1-g.x0+1,h=split.y1-split.y0+1,k=Math.max(1,64/h),cut=document.createElement('canvas');
-          cut.width=Math.round((w+h)*k);cut.height=Math.round(h*1.6*k);
+      // Glyphs are found in this line's own adaptive ink, and each digit is read from the
+      // contrast-stretched grey pixels: soft, scaled text keeps its thin strokes.
+      let split=null,local=null;
+      if(colour){
+        const r=rectangle,crop=new ImageData(r.width,r.height);
+        for(let y=0;y<r.height;y++)crop.data.set(colour.data.subarray(((r.top+y)*colour.width+r.left)*4,((r.top+y)*colour.width+r.left+r.width)*4),y*r.width*4);
+        local=MapleQuestHelper.inkAdaptive(crop);
+        const s=MapleQuestHelper.splitCounts(local,{x0:0,y0:0,x1:r.width-1,y1:r.height-1});
+        if(s){const sh=g=>({x0:g.x0+r.left,x1:g.x1+r.left});split={...s,y0:s.y0+r.top,y1:s.y1+r.top,haveGlyphs:s.haveGlyphs.map(sh),needGlyphs:s.needGlyphs.map(sh),slash:sh(s.slash),have:sh(s.have),need:sh(s.need)};}
+      }
+      if(!split)split=MapleQuestHelper.splitCounts(pixels,{x0:rectangle.left,y0:rectangle.top,x1:rectangle.left+rectangle.width-1,y1:rectangle.top+rectangle.height-1});
+      // The whole count area with the slash painted white, read by a digits-and-spaces reader
+      // ("8 20"): first in the line's adaptive ink, else from its contrast-stretched grey.
+      // Measured on three real panels (blue sky, busy scenery, full screen): 9 of 9 counts.
+      if(split&&local){
+        const r=rectangle;
+        const area=grey=>{const o=new ImageData(r.width,r.height);for(let i=0;i<r.width*r.height;i++){let v;if(grey){const k=((r.top+Math.floor(i/r.width))*colour.width+r.left+i%r.width)*4,l=colour.data[k]*.299+colour.data[k+1]*.587+colour.data[k+2]*.114;v=Math.max(0,Math.min(255,(l-local.dark)/Math.max(1,local.mid-local.dark)*255));}else v=local.data[i*4];o.data[i*4]=o.data[i*4+1]=o.data[i*4+2]=v;o.data[i*4+3]=255;}
+          for(let y=0;y<r.height;y++)for(let x=split.slash.x0-r.left-1;x<=split.slash.x1-r.left+1;x++)if(x>=0&&x<r.width){const k=(y*r.width+x)*4;o.data[k]=o.data[k+1]=o.data[k+2]=255;}return o;};
+        const read=async id=>{
+          const k=Math.max(1,64/r.height),cut=document.createElement('canvas');cut.width=Math.round((id.width+r.height)*k);cut.height=Math.round(r.height*1.6*k);
           const cx=cut.getContext('2d',{willReadFrequently:true});cx.fillStyle='#fff';cx.fillRect(0,0,cut.width,cut.height);
-          cx.imageSmoothingEnabled=false;cx.drawImage(image,g.x0,split.y0,w,h,Math.round(h*k/2),Math.round(h*.3*k),Math.round(w*k),Math.round(h*k));
-          const {data:d}=await (await glyphReader()).recognize(cut);return String(d.text||'').replace(/\D/g,'');
+          const tmp=document.createElement('canvas');tmp.width=id.width;tmp.height=id.height;tmp.getContext('2d').putImageData(id,0,0);
+          cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';cx.drawImage(tmp,Math.round(r.height*k/2),Math.round(r.height*.3*k),Math.round(id.width*k),Math.round(id.height*k));
+          const {data:d}=await (await lineReader()).recognize(cut),m=String(d.text||'').trim().match(/^(\d{1,4})\s+(\d{1,4})$/);
+          return m&&Number(m[2])>0?{have:Number(m[1]),need:Number(m[2])}:null;
         };
-        let have='',need='';
-        for(const g of split.haveGlyphs)have+=await glyph(g);
-        for(const g of split.needGlyphs)need+=await glyph(g);
-        if(/^\d{1,4}$/.test(have)&&/^\d{1,4}$/.test(need)&&have.length===split.haveGlyphs.length&&need.length===split.needGlyphs.length&&Number(need)>0)c={have:Number(have),need:Number(need)};
-      }catch(_){}
+        try{c=await read(area(false))||await read(area(true));}catch(_){}
+      }
       if(!c)c=MapleQuestHelper.countsFromBoxes(span.lead);
       if(!c)try{const {data:d}=await (await digitReader()).recognize(image,{rectangle});c=MapleQuestHelper.counts(d.text);}catch(_){}
       out.push(c?c.have+' / '+c.need+' '+span.rest:plain);
@@ -205,7 +218,7 @@
         const ink=new ImageData(new Uint8ClampedArray(colour.data),colour.width,colour.height);
         textContext.putImageData(MapleQuestHelper.inkDark(ink,cut),0,0);
         const {data}=await worker.recognize(textCanvas,{},{text:true,blocks:true});
-        const text=await recheckCounts(data,textCanvas)||String(data.text||'').trim(),parsed=MapleQuestHelper.parse(text),value=score(parsed);
+        const text=await recheckCounts(data,textCanvas,colour)||String(data.text||'').trim(),parsed=MapleQuestHelper.parse(text),value=score(parsed);
         if(!best||value>best.value)best={text,parsed,value};
         if(cut===75&&value>=3*parsed.reduce((t,q)=>t+q.progress.length,0)&&parsed.length&&!/[^\x20-\x7e\n]/.test(text))break;   // clean already
       }
