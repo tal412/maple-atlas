@@ -7,6 +7,8 @@
   const maps=new Map(DATA.maps.map(m=>[String(m.id),m]));
   const visualMaps=new Map(DATA.visualMaps.map(m=>[String(m.id),m]));
   const spots=new Map(DATA.spots.map(s=>[String(s.id),s]));
+  // Spawn slots per map and monster ("mapId:monsterId"), for hunting a drop where it is densest.
+  const spawnCount=new Map(DATA.maps.flatMap(m=>(m.monsters||[]).map(x=>[String(m.id)+':'+String(x.id),Number(x.spawns)||0])));
   const get=id=>maps.get(String(id));
   // A map's own world-map dot, or for an inner map (shop, park, dungeon floor) the dot it sits under.
   const spotOf=id=>get(id)?.spot||get(id)?.parentSpot||null;
@@ -89,7 +91,7 @@
     $('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();}
   const search=MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
     onMap:(id,kind)=>{if(['monster','npc','quest'].includes(kind))state.category={monster:'monsters',npc:'npcs',quest:'quests'}[kind];inspect(id);},
-    onNavigate:navigateTo,routeLength:hops,
+    onNavigate:navigateTo,routeLength:hops,spawns:(monster,map)=>spawnCount.get(String(map)+':'+String(monster))||0,
     questMarkup:id=>questRows(DATA.quests.filter(q=>q.id===id)),
     onStatus:(id,value)=>{state.status[id]=value;if(['completed','skipped'].includes(value))expandedQuests.delete(id);detail();markers();save();},
     currentQuestIds:()=>new Set(currentQuests().map(q=>q.id)),
