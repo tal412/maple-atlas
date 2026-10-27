@@ -89,7 +89,7 @@ body {background:light-dark(#d7e9e9,#142937);}
   #maple-atlas-concept .mc-mobile-mapactions button {width:48px;height:48px;min-height:48px;padding:12px;display:grid;place-items:center;border:0;box-shadow:0 2px 8px var(--mc-shadow);}
   #maple-atlas-concept #mc-mobile-locate {border-radius:50%;}
   #maple-atlas-concept #mc-mobile-directions {border-radius:16px;background:var(--mc-blue);color:var(--mc-on-blue);}
-  #maple-atlas-concept.mc-sheet-open .mc-mobile-mapactions,#maple-atlas-concept.mc-sheet-open .mc-zooms {display:none;}
+  #maple-atlas-concept.mc-sheet-open .mc-mobile-mapactions,#maple-atlas-concept.mc-sheet-open .mc-zooms,#maple-atlas-concept.mc-sheet-open #mc-companion-badge {display:none;}
   #maple-atlas-concept #mc-map-notice {bottom:calc(var(--mc-nav-height) + var(--mc-peek-height) + 16px);max-width:calc(100% - 92px);left:16px;transform:none;font-size:12px;}
   #maple-atlas-concept .mc-place .mc-dot {width:10px;height:10px;border-width:1.5px;box-shadow:0 0 0 1px #596d5c66;}
   #maple-atlas-concept .mc-place[data-town=true] .mc-dot {width:12px;height:12px;}
@@ -103,7 +103,7 @@ body {background:light-dark(#d7e9e9,#142937);}
   #maple-atlas-concept #mc-route-dialog .mc-field {padding:14px;}
   #maple-atlas-concept #mc-route-dialog #mc-caption {display:none;}
   #maple-atlas-concept .mc-mapfooter {display:none;}
-  #maple-atlas-concept .mc-edit-route {display:block;float:right;padding:4px 10px;min-height:32px;margin:0 0 12px 8px;font-size:11px;}
+  #maple-atlas-concept .mc-edit-route {display:inline-flex;align-items:center;padding:4px 12px;min-height:32px;margin:0;font-size:12px;}
 }
 @media(max-width:700px) and (max-height:650px) {
   #maple-atlas-concept {--mc-peek-height:76px;--mc-sheet-height:60dvh;}

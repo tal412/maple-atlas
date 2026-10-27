@@ -69,6 +69,34 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     for m in data['maps']:
         m['localImage'] = './' + assets[m['id']]['image']['path']
         m['localMinimap'] = './' + assets[m['id']]['preview']['path'] if 'preview' in assets[m['id']] else None
+    # Inner maps (shops, parks, dungeon floors) have no world-map dot of their own. Each gets
+    # the dot you reach by walking out through portals, same street first, so the phone can
+    # show you there ("Pig Park, in Henesys").
+    by_id = {str(m['id']): m for m in data['maps']}
+    links = {i: set() for i in by_id}
+    for m in data['maps']:
+        for p in m.get('portals', []):
+            a, b = str(m['id']), str(p.get('to'))
+            if b in by_id and a != b:
+                links[a].add(b); links[b].add(a)
+    for m in data['maps']:
+        if m.get('spot'):
+            continue
+        seen, frontier, parent = {str(m['id'])}, [str(m['id'])], None
+        for _ in range(12):
+            hits, nxt = [], []
+            for x in frontier:
+                for y in sorted(links[x]):
+                    if y not in seen:
+                        seen.add(y); nxt.append(y)
+                        if by_id[y].get('spot'):
+                            hits.append(y)
+            if hits:
+                same = [h for h in hits if by_id[h].get('street') == m.get('street')] or hits
+                parent = by_id[sorted(same)[0]]['spot']
+                break
+            frontier = nxt
+        m['parentSpot'] = parent
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     palette = json.loads((project / 'data/night-palette.json').read_text())
