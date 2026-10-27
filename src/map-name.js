@@ -43,14 +43,26 @@
     }
     return null;
   }
-  // Letters -> black, everything else -> white. In place. Letters are the near-white pixels
-  // clearly brighter than the strip itself (its median brightness + 40).
+  // Letters -> black, everything else -> white. In place. Letters are the pale pixels clearly
+  // brighter than the strip itself (its median brightness + 28): white on a screen, bluish
+  // white when the colours are shifted.
   function ink(image){
     const {data}=image,ls=[];
     for(let i=0;i<data.length;i+=16)if(isStrip(data[i],data[i+1],data[i+2]))ls.push(lum(data[i],data[i+1],data[i+2]));
-    ls.sort((a,b)=>a-b);const floor=Math.min(215,Math.max(150,(ls.length?ls[ls.length>>1]:170)+40));
-    for(let i=0;i<data.length;i+=4){const on=isLetter(data[i],data[i+1],data[i+2],floor);data[i]=data[i+1]=data[i+2]=on?0:255;data[i+3]=255;}
+    ls.sort((a,b)=>a-b);const floor=Math.min(225,Math.max(150,(ls.length?ls[ls.length>>1]:180)+28));
+    for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2],on=lum(r,g,b)>=floor&&Math.max(r,g,b)-Math.min(r,g,b)<=75;data[i]=data[i+1]=data[i+2]=on?0:255;data[i+3]=255;}
     return image;
+  }
+  // Right edge of the area emblem: the dark block at the strip's left end (0 when none).
+  // Measured on the strip's own pixels, before ink().
+  function emblemEnd(image){
+    const {width,height}=image,dark=x=>{let n=0;for(let y=0;y<height;y+=2){const [r,g,b]=px(image,x,y);if(lum(r,g,b)<95)n++;}return n/Math.ceil(height/2);};
+    const limit=Math.min(width,Math.round(height*2));let x=0,start=-1;
+    for(;x<limit;x++){if(dark(x)>=.3){start=x;break;}}
+    if(start<0||start>height*.6)return 0;   // no emblem near the left end
+    let quiet=0;
+    for(x=start;x<limit;x++){if(dark(x)<.08){if(++quiet>=4)return Math.min(width,x+Math.round(height*.06));}else quiet=0;}
+    return 0;
   }
   // Drops ink touching the left edge block (the area emblem) so only the text remains.
   // `emblem`: width in pixels to blank from the left.
@@ -92,7 +104,7 @@
     if(rival&&top.name<.97&&top.score-rival.score<.06)return null;
     return {id:String(top.m.id),name:top.m.name,street:top.m.street||'',score:Math.round(top.name*100)/100,ids:same};
   }
-  const api={find,ink,blankLeft,signature,changed,lines,match,similarity,normalize};
+  const api={find,ink,emblemEnd,blankLeft,signature,changed,lines,match,similarity,normalize};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   scope.MapleMapName=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

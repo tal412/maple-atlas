@@ -58,11 +58,12 @@
     nameCanvas.width=Math.round(strip.w*zoom);nameCanvas.height=Math.round(strip.h*zoom);
     nameContext.imageSmoothingEnabled=true;nameContext.imageSmoothingQuality='high';
     nameContext.drawImage(canvas,strip.x,strip.y,strip.w,strip.h,0,0,nameCanvas.width,nameCanvas.height);
-    let pixels=MapleMapName.ink(nameContext.getImageData(0,0,nameCanvas.width,nameCanvas.height));
+    const raw=nameContext.getImageData(0,0,nameCanvas.width,nameCanvas.height),emblem=MapleMapName.emblemEnd(raw);
+    let pixels=MapleMapName.ink(raw);
     const signature=MapleMapName.signature(pixels);
     const box={x:strip.x/canvas.width,y:strip.y/canvas.height,w:strip.w/canvas.width,h:strip.h/canvas.height};
     if(seen?.found&&!MapleMapName.changed(signature,seen.signature)&&performance.now()-seen.at<20000)return {...seen,strip:box,fresh:false};
-    pixels=MapleMapName.blankLeft(pixels,Math.round(nameCanvas.height*1.05));   // the area emblem
+    pixels=MapleMapName.blankLeft(pixels,emblem);   // the area emblem
     nameContext.putImageData(pixels,0,0);
     const worker=await reader(),{data}=await worker.recognize(nameCanvas),text=String(data.text||'').trim();
     const found=MapleMapName.match(text,maps);

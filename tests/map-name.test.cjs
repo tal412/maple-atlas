@@ -65,3 +65,6 @@ assert.equal(name.match('Dungeon\nTree Dungeon, Forest Up North Il', maps).id, '
 assert.equal(name.match('Dungeon\nTree Dungeon, Forest Up North 11', maps).id, '10002073');
 assert.equal(name.match('Dungeon\nTree Dungeon, Forest Up North l', maps).id, '10002072');
 console.log('map-name: numerals pass');
+// A dungeon road on "Warning Street" (as read from a real header).
+assert.equal(name.match('Warning Street\nThe Roar to the Dungeon\n', [...maps, { id: '10001090', name: 'The Road to the Dungeon', street: 'Warning Street' }]).id, '10001090');
+console.log('map-name: Warning Street passes');
