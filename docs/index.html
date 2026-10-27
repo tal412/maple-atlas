@@ -2724,7 +2724,44 @@ window.mapleStorageReady.then(() => {
       return {title:q.title,quest,progress,complete};
     });
   }
-  const exported={find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // ---- Second read of the counts ----
+  // The count part of a recognized line ("2 / 10 Slime Bubble"): its leading words that hold
+  // digits, or only the characters a "/" is misread as. words: [{text,bbox:{x0,y0,x1,y1}}].
+  // Returns {box, rest, lead} (the box around the counts, the name after them, the count
+  // words) or null.
+  function countSpan(words){
+    const lead=[];
+    for(const w of words||[]){
+      const t=String(w?.text||'').trim();if(!t)continue;
+      const digits=/\d/.test(t)&&/^[\d/7lI|\\£#{(\[\]!.,:;]+$/.test(t),slash=lead.length&&/^[/7lI|\\]+$/.test(t);
+      if(digits||slash)lead.push(w);else break;
+    }
+    if(!lead.length||!/\d/.test(lead[0].text))return null;
+    const rest=(words||[]).slice(lead.length).map(w=>String(w.text||'').trim()).filter(Boolean).join(' ');
+    if(!/\p{L}{2}/u.test(rest))return null;
+    const box={x0:Math.min(...lead.map(w=>w.bbox.x0)),y0:Math.min(...lead.map(w=>w.bbox.y0)),x1:Math.max(...lead.map(w=>w.bbox.x1)),y1:Math.max(...lead.map(w=>w.bbox.y1))};
+    return {box,rest,lead};
+  }
+  // "2/10" as the digits-only reader returns it; null when it is not a clean count.
+  function counts(text){
+    const m=String(text||'').replace(/\s+/g,'').match(/^(\d{1,4})\/(\d{1,4})$/);
+    return m&&Number(m[2])>0?{have:Number(m[1]),need:Number(m[2])}:null;
+  }
+  // The counts from the general reader's character boxes. A slash is sometimes read as "1/"
+  // or "/1": the extra digit sits on top of the slash, so digits overlapping a separator are
+  // dropped. words: the count span's words with their symbols. Returns {have,need} or null
+  // (no single separator found).
+  function countsFromBoxes(words){
+    const symbols=(words||[]).flatMap(w=>(w.symbols||[]).map(s=>({t:String(s.text||''),x0:s.bbox.x0,x1:s.bbox.x1})));
+    const separators=symbols.filter(s=>/^[/|\\]$/.test(s.t));
+    if(separators.length!==1)return null;
+    const sep=separators[0],overlap=s=>Math.max(0,Math.min(s.x1,sep.x1)-Math.max(s.x0,sep.x0))/Math.max(1,s.x1-s.x0);
+    const digits=symbols.filter(s=>/^\d$/.test(s.t)&&overlap(s)<.4);
+    const have=digits.filter(s=>s.x1<=(sep.x0+sep.x1)/2).map(s=>s.t).join(''),need=digits.filter(s=>s.x0>=(sep.x0+sep.x1)/2).map(s=>s.t).join('');
+    if(!have||!need||have.length>4||need.length>4||Number(need)<=0)return null;
+    return {have:Number(have),need:Number(need)};
+  }
+  const exported={countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);
 

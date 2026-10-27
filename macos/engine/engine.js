@@ -111,6 +111,34 @@
       .catch(e=>{ocr=null;throw e;});
     return ocr;
   }
+  // A second reader that knows only digits and "/", for the "have / need" counts: the
+  // general reader sometimes reads the slash as an extra digit ("2 / 10" as "21 / 10").
+  let digits=null;
+  function digitReader(){
+    digits??=Tesseract.createWorker('eng',1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr/tesseract-core-simd-lstm.wasm.js',langPath:'./ocr/lang',workerBlobURL:false,gzip:true})
+      .then(async worker=>{await worker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:'0123456789/'});return worker;})
+      .catch(e=>{digits=null;throw e;});
+    return digits;
+  }
+  // Rebuilds the panel text with every count line's numbers read again by the digits reader.
+  // Returns null when the layout is missing, so the plain text is used.
+  async function recheckCounts(data,image){
+    const lines=(data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
+    if(!lines.length)return null;
+    const out=[];
+    for(const line of lines){
+      const plain=String(line.text||'').trim(),span=MapleQuestHelper.countSpan(line.words);
+      if(!span){out.push(plain);continue;}
+      const pad=Math.max(3,Math.round((span.box.y1-span.box.y0)*.25));
+      const rectangle={left:Math.max(0,span.box.x0-pad),top:Math.max(0,span.box.y0-pad),width:Math.min(image.width,span.box.x1+pad)-Math.max(0,span.box.x0-pad),height:Math.min(image.height,span.box.y1+pad)-Math.max(0,span.box.y0-pad)};
+      // The general reader's slash, minus any digit drawn on top of it; only without a slash
+      // the digits-only reader decides.
+      let c=MapleQuestHelper.countsFromBoxes(span.lead);
+      if(!c)try{const {data:d}=await (await digitReader()).recognize(image,{rectangle});c=MapleQuestHelper.counts(d.text);}catch(_){}
+      out.push(c?c.have+' / '+c.need+' '+span.rest:plain);
+    }
+    return out.join('\n');
+  }
   // Reads the tracked quests from `source` (its `crop`: the top-right part of the game
   // window). Returns {visible, quests (MapleQuestHelper.pack form), changed, text}.
   // The panel is read again only when it looks different, or every 30 s.
@@ -133,7 +161,8 @@
       textContext.drawImage(questCanvas,panel.x,panel.y,panel.w,panel.h,0,0,textCanvas.width,textCanvas.height);
       const pixels=MapleQuestHelper.inkDark(textContext.getImageData(0,0,textCanvas.width,textCanvas.height),75);
       textContext.putImageData(pixels,0,0);
-      const worker=await reader(),{data}=await worker.recognize(textCanvas),text=String(data.text||'').trim();
+      const worker=await reader(),{data}=await worker.recognize(textCanvas,{},{text:true,blocks:true});
+      const text=await recheckCounts(data,textCanvas)||String(data.text||'').trim();
       const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(text));
       const changed=JSON.stringify(quests)!==JSON.stringify(questSeen?.quests);
       questSeen={signature,at:performance.now(),quests};
@@ -145,5 +174,7 @@
   async function read(dataURL,frameHeight){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight);}finally{bitmap.close();}}
   async function locate(dataURL,frameHeight,id){const bitmap=await bitmapOf(dataURL);try{return await locateFrame(bitmap,null,frameHeight,id);}finally{bitmap.close();}}
   async function readQuests(dataURL){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null);}finally{bitmap.close();}}
-  window.atlasEngine={ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
+  // The panel text of a prepared (inked) canvas, counts read twice. For tests and diagnostics.
+  async function readQuestText(image){const {data}=await (await reader()).recognize(image,{},{text:true,blocks:true});return {first:String(data.text||'').trim(),text:await recheckCounts(data,image)||String(data.text||'').trim()};}
+  window.atlasEngine={readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
 })();
