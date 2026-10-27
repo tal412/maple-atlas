@@ -40,3 +40,25 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.deepEqual(read[0].progress.map(p => [p.have, p.need]), [[15, 15]]);
   console.log('quest-helper: marked box reading passes');
 }
+// The game font's slash, found by its shape between two numbers (drawn: "10 / 10").
+{
+  const W = 60, H = 12, data = new Uint8ClampedArray(W * H * 4).fill(255);
+  const dot = (x, y) => { const i = (y * W + x) * 4; data[i] = data[i + 1] = data[i + 2] = 0; };
+  const one = x => { for (let y = 1; y < 11; y++) dot(x, y); };
+  const zero = x => { for (let y = 1; y < 11; y++) { dot(x, y); dot(x + 4, y); } for (let k = 0; k < 5; k++) { dot(x + k, 1); dot(x + k, 10); } };
+  one(2); zero(5);                       // 10
+  for (let y = 1; y < 11; y++) dot(22 + Math.round((10 - y) * .35), y);   // a steep slash
+  one(34); zero(37);                     // 10
+  const split = Q.splitCounts({ width: W, height: H, data }, { x0: 0, y0: 0, x1: W - 1, y1: H - 1 });
+  assert.ok(split && split.have.x1 < 22 && split.need.x0 > 25, JSON.stringify(split));
+  console.log('quest-helper: slash found by shape');
+}
+// A name garbled by busy scenery pairs with the objective that needs the same count.
+{
+  const quests = [{ id: 'q1', name: 'Make a Match Cards Set', objectives: [{ type: 'item', name: 'Monster Card', count: 15 }] }];
+  const [r] = Q.resolve([{ title: 'Make a Match Cards Set', progress: [{ have: 15, need: 15, name: 'Monstepmg py', done: true }] }], quests);
+  assert.equal(r.progress.length, 1);
+  assert.equal(r.progress[0].name, 'Monster Card');
+  assert.equal(r.progress[0].have, 15);
+  console.log('quest-helper: garbled name pairs by count');
+}

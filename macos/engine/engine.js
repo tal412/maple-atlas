@@ -120,11 +120,20 @@
       .catch(e=>{digits=null;throw e;});
     return digits;
   }
+  // A third reader for one digit at a time (single-character mode).
+  let glyphs=null;
+  function glyphReader(){
+    glyphs??=Tesseract.createWorker('eng',1,{workerPath:'./ocr/worker.min.js',corePath:'./ocr/tesseract-core-simd-lstm.wasm.js',langPath:'./ocr/lang',workerBlobURL:false,gzip:true})
+      .then(async worker=>{await worker.setParameters({tessedit_pageseg_mode:'10',tessedit_char_whitelist:'0123456789'});return worker;})
+      .catch(e=>{glyphs=null;throw e;});
+    return glyphs;
+  }
   // Rebuilds the panel text with every count line's numbers read again by the digits reader.
   // Returns null when the layout is missing, so the plain text is used.
   async function recheckCounts(data,image){
     const lines=(data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(p=>p.lines||[]));
     if(!lines.length)return null;
+    const pixels=image.getContext('2d',{willReadFrequently:true}).getImageData(0,0,image.width,image.height);
     const out=[];
     for(const line of lines){
       const plain=String(line.text||'').trim(),span=MapleQuestHelper.countSpan(line.words);
@@ -133,7 +142,27 @@
       const rectangle={left:Math.max(0,span.box.x0-pad),top:Math.max(0,span.box.y0-pad),width:Math.min(image.width,span.box.x1+pad)-Math.max(0,span.box.x0-pad),height:Math.min(image.height,span.box.y1+pad)-Math.max(0,span.box.y0-pad)};
       // The general reader's slash, minus any digit drawn on top of it; only without a slash
       // the digits-only reader decides.
-      let c=MapleQuestHelper.countsFromBoxes(span.lead);
+      // First the slash by its shape, then each number read alone with the digits-only reader;
+      // else the general reader's slash (minus a digit drawn on it); else the digits reader on
+      // the whole count area.
+      let c=null;
+      const split=MapleQuestHelper.splitCounts(pixels,{x0:rectangle.left,y0:rectangle.top,x1:rectangle.left+rectangle.width-1,y1:rectangle.top+rectangle.height-1});
+      // Each digit glyph read on its own (single-character mode, enlarged, white around it): the
+      // slash is never read, and no neighbour can leak into a digit.
+      if(split&&split.haveGlyphs.length<=4&&split.needGlyphs.length<=4)try{
+        const glyph=async g=>{
+          const w=g.x1-g.x0+1,h=split.y1-split.y0+1,k=Math.max(1,64/h),cut=document.createElement('canvas');
+          cut.width=Math.round((w+h)*k);cut.height=Math.round(h*1.6*k);
+          const cx=cut.getContext('2d',{willReadFrequently:true});cx.fillStyle='#fff';cx.fillRect(0,0,cut.width,cut.height);
+          cx.imageSmoothingEnabled=false;cx.drawImage(image,g.x0,split.y0,w,h,Math.round(h*k/2),Math.round(h*.3*k),Math.round(w*k),Math.round(h*k));
+          const {data:d}=await (await glyphReader()).recognize(cut);return String(d.text||'').replace(/\D/g,'');
+        };
+        let have='',need='';
+        for(const g of split.haveGlyphs)have+=await glyph(g);
+        for(const g of split.needGlyphs)need+=await glyph(g);
+        if(/^\d{1,4}$/.test(have)&&/^\d{1,4}$/.test(need)&&have.length===split.haveGlyphs.length&&need.length===split.needGlyphs.length&&Number(need)>0)c={have:Number(have),need:Number(need)};
+      }catch(_){}
+      if(!c)c=MapleQuestHelper.countsFromBoxes(span.lead);
       if(!c)try{const {data:d}=await (await digitReader()).recognize(image,{rectangle});c=MapleQuestHelper.counts(d.text);}catch(_){}
       out.push(c?c.have+' / '+c.need+' '+span.rest:plain);
     }
@@ -153,7 +182,10 @@
       if(crop)questContext.drawImage(source,crop.x,crop.y,crop.w,crop.h,0,0,questCanvas.width,questCanvas.height);else questContext.drawImage(source,0,0,questCanvas.width,questCanvas.height);
       const image=questContext.getImageData(0,0,questCanvas.width,questCanvas.height);
       // About 10.5 AUTO-button widths across the panel body: the zoom the reader is tuned for.
-      const panel=MapleQuestHelper.find(image)||(opts.marked?{x:0,y:0,w:questCanvas.width,h:questCanvas.height,button:questCanvas.width/10.5}:null);
+      let panel=MapleQuestHelper.find(image)||(opts.marked?{x:0,y:0,w:questCanvas.width,h:questCanvas.height,button:questCanvas.width/10.5}:null);
+      // A box the player drew holds the whole panel: never cut tighter than it on the left or at
+      // the bottom (a bright edge in the scenery behind can look like the panel's bottom border).
+      if(panel&&opts.marked)panel={...panel,x:0,w:questCanvas.width,h:questCanvas.height-panel.y};
       if(!panel){questSeen=null;return {visible:false,quests:[],changed:true,elapsed:Math.round(performance.now()-started)};}
       const body=questContext.getImageData(panel.x,panel.y,panel.w,panel.h),signature=MapleQuestHelper.signature(body);
       if(questSeen&&!MapleQuestHelper.changed(signature,questSeen.signature)&&performance.now()-questSeen.at<30000)
@@ -163,11 +195,21 @@
       textCanvas.width=Math.round(panel.w*zoom);textCanvas.height=Math.round(panel.h*zoom);
       textContext.imageSmoothingEnabled=true;textContext.imageSmoothingQuality='high';
       textContext.drawImage(questCanvas,panel.x,panel.y,panel.w,panel.h,0,0,textCanvas.width,textCanvas.height);
-      const pixels=MapleQuestHelper.inkDark(textContext.getImageData(0,0,textCanvas.width,textCanvas.height),75);
-      textContext.putImageData(pixels,0,0);
-      const worker=await reader(),{data}=await worker.recognize(textCanvas,{},{text:true,blocks:true});
-      const text=await recheckCounts(data,textCanvas)||String(data.text||'').trim();
-      const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(text));
+      const colour=textContext.getImageData(0,0,textCanvas.width,textCanvas.height),worker=await reader();
+      // The panel is see-through: over some scenery the text is lighter and breaks up at the usual
+      // cut, so a second, more generous cut is tried.
+      // Read at two cuts and keep the one with more clean "have / need" lines.
+      const score=list=>list.reduce((t,q)=>t+q.progress.filter(p=>p.have<=p.need*3&&p.have<=9999).length*3+(q.progress.length?1:0),0);
+      let best=null;
+      for(const cut of [75,100]){
+        const ink=new ImageData(new Uint8ClampedArray(colour.data),colour.width,colour.height);
+        textContext.putImageData(MapleQuestHelper.inkDark(ink,cut),0,0);
+        const {data}=await worker.recognize(textCanvas,{},{text:true,blocks:true});
+        const text=await recheckCounts(data,textCanvas)||String(data.text||'').trim(),parsed=MapleQuestHelper.parse(text),value=score(parsed);
+        if(!best||value>best.value)best={text,parsed,value};
+        if(cut===75&&value>=3*parsed.reduce((t,q)=>t+q.progress.length,0)&&parsed.length&&!/[^\x20-\x7e\n]/.test(text))break;   // clean already
+      }
+      const text=best.text,quests=MapleQuestHelper.pack(best.parsed);
       const changed=JSON.stringify(quests)!==JSON.stringify(questSeen?.quests);
       questSeen={signature,at:performance.now(),quests};
       return {visible:true,quests,changed,text:text.slice(0,600),elapsed:Math.round(performance.now()-started)};

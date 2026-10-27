@@ -9,7 +9,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LINK="$REPO/macos/link"
 WEBUI="$LINK/webui"
 OUT="$REPO/windows/build"
-VERSION="${VERSION:-0.3.9}"
+VERSION="${VERSION:-0.3.10}"
 WINRES="$(command -v go-winres || echo "$HOME/go/bin/go-winres")"
 
 echo "==> Collecting the window and engine files"

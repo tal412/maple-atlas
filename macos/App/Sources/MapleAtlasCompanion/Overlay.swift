@@ -22,10 +22,14 @@ final class OverlayController {
     private var panel: NSPanel?
     private var timer: Timer?
     private var windowID: CGWindowID?
+    /// Told when the card is shown or hidden for a new reason (for Diagnostics).
+    var onReason: ((String) -> Void)?
+    private var reason = ""
+    private func report(_ text: String) { if text != reason { reason = text; onReason?(text) } }
     private static let size = CGSize(width: 460, height: 96)
 
-    func update(nav: NavInfo?, position: EngineReading.Position?, onMap: String?, windowID: CGWindowID?, enabled: Bool) {
-        guard enabled, let nav else { hide(); return }
+    func update(nav: NavInfo?, position: EngineReading.Position?, onMap: String?, windowID: CGWindowID?, enabled: Bool, why: String? = nil) {
+        guard enabled, let nav else { hide(); report(why ?? "hidden"); return }
         self.windowID = windowID
         state.kind = nav.target.kind
         state.label = nav.target.label
@@ -51,13 +55,18 @@ final class OverlayController {
             p.isOpaque = false
             p.backgroundColor = .clear
             p.hasShadow = false
-            p.level = .floating
+            // Above a game in full screen (its own Space): the overlay level, allowed in every
+            // Space including full-screen ones, and brought forward again when the Space changes.
+            p.level = .screenSaver
             p.ignoresMouseEvents = true
             p.hidesOnDeactivate = false
             p.isReleasedWhenClosed = false
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
             p.contentView = NSHostingView(rootView: OverlayCard(state: state))
             panel = p
+            NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.place(forceFront: true) }
+            }
         }
         place()
         if timer == nil {
@@ -68,29 +77,32 @@ final class OverlayController {
     }
 
     /// Top centre of the game window, just below its title bar.
-    private func place() {
+    private func place(forceFront: Bool = false) {
         guard let panel else { return }
         guard let frame = gameFrame() else { panel.orderOut(nil); return }
+        report("shown on the game window at \(Int(frame.minX)),\(Int(frame.minY)) (\(Int(frame.width))×\(Int(frame.height)))")
         let width = min(Self.size.width, max(240, frame.width - 40))
         let origin = CGPoint(x: frame.midX - width / 2, y: frame.maxY - 48 - Self.size.height)
         panel.setFrame(CGRect(origin: origin, size: CGSize(width: width, height: Self.size.height)), display: true)
-        if !panel.isVisible { panel.orderFrontRegardless() }
+        if forceFront || !panel.isVisible || !panel.isOnActiveSpace { panel.orderFrontRegardless() }
     }
 
     /// The game window's frame in AppKit screen coordinates, or nil when it is not on screen.
     private func gameFrame() -> CGRect? {
-        guard let id = windowID,
-              let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]],
-              let window = info.first,
-              (window[kCGWindowIsOnscreen as String] as? Bool) ?? true,
+        guard let id = windowID else { report("hidden · the game window's id is unknown (choose the window again)"); return nil }
+        guard let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]], let window = info.first,
               let bounds = window[kCGWindowBounds as String] as? NSDictionary,
               let rect = CGRect(dictionaryRepresentation: bounds),
               let primary = NSScreen.screens.first?.frame
-        else { return nil }
+        else { report("hidden · the game window \(id) is not listed"); return nil }
+        if (window[kCGWindowIsOnscreen as String] as? Bool) == false { report("hidden · the game window is not on screen"); return nil }
         // Only while the game (or this app) is in front, so the card never floats over other apps.
-        let front = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        if let owner = window[kCGWindowOwnerPID as String] as? pid_t, let front,
-           front != owner, front != ProcessInfo.processInfo.processIdentifier { return nil }
+        let front = NSWorkspace.shared.frontmostApplication
+        if let owner = window[kCGWindowOwnerPID as String] as? pid_t, let pid = front?.processIdentifier,
+           pid != owner, pid != ProcessInfo.processInfo.processIdentifier {
+            report("hidden · \(front?.localizedName ?? "another app") is in front, not the game")
+            return nil
+        }
         return CGRect(x: rect.minX, y: primary.height - rect.maxY, width: rect.width, height: rect.height)
     }
 }

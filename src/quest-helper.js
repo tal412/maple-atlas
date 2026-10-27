@@ -35,8 +35,16 @@
     const group=rows.filter(row=>row.y-rows[0].y<rows[0].autoW*1.2&&Math.abs(row.autoX-rows[0].autoX)<=4);
     if(group.length<3)return null;
     const header={bottom:group.at(-1).y,autoX:group[0].autoX,autoW:group[0].autoW,right:Math.max(...group.map(r=>r.right))};
-    const left=Math.max(0,Math.round(header.autoX-header.autoW*9.8));
     const top=header.bottom+Math.max(2,Math.round(header.autoW*.15));
+    // The panel's light frame on its left: the column (left of the title) that is light on most
+    // rows. Panels are of different widths, so a fixed width from the AUTO button cuts text.
+    let left=Math.max(0,Math.round(header.autoX-header.autoW*9.8));
+    {
+      const from=Math.max(0,Math.round(header.autoX-header.autoW*16)),to=Math.max(0,Math.round(header.autoX-header.autoW*5)),y1=Math.min(height-1,top+header.autoW*5);
+      let best=-1,bestShare=.55;
+      for(let x=from;x<to;x++){let light=0,n=0;for(let y=top;y<=y1;y+=2){const [r,g,b]=at(image,x,y);n++;if((r+g+b)/3>=150&&Math.max(r,g,b)-Math.min(r,g,b)<=90)light++;}if(light/n>bestShare){bestShare=light/n;best=x;}}
+      if(best>=0)left=Math.min(left,best+2);
+    }
     const x0=left+header.autoW,x1=Math.min(width-1,header.right-header.autoW);
     if(x1<=x0)return null;
     const lum=y=>{let sum=0;for(let x=x0;x<=x1;x++){const [r,g,b]=at(image,x,y);sum+=(r+g+b)/3;}return sum/(x1-x0+1);};
@@ -165,6 +173,12 @@
         const o=best!==null?objectives[best]:null;
         return {...p,name:o?.name||p.name,objective:o||null,need:p.need??o?.count??null};
       });
+      // A garbled name still pairs with the one unmatched objective that needs the same count.
+      progress.forEach((p,k)=>{
+        if(p.objective||p.need==null)return;
+        const free=objectives.map((o,i)=>i).filter(i=>!used.has(i)&&objectives[i].count===p.need);
+        if(free.length===1){used.add(free[0]);const o=objectives[free[0]];progress[k]={...p,name:o.name,objective:o};}
+      });
       objectives.forEach((o,i)=>{if(!used.has(i))progress.push({have:null,need:o.count,name:o.name,done:false,unknown:true,objective:o});});
       const complete=progress.length>0&&progress.every(p=>p.done);
       return {title:q.title,quest,progress,complete};
@@ -200,15 +214,47 @@
   // dropped. words: the count span's words with their symbols. Returns {have,need} or null
   // (no single separator found).
   function countsFromBoxes(words){
-    const symbols=(words||[]).flatMap(w=>(w.symbols||[]).map(s=>({t:String(s.text||''),x0:s.bbox.x0,x1:s.bbox.x1})));
+    const symbols=(words||[]).flatMap(w=>(w.symbols||[]).map(s=>({t:String(s.text||''),x0:s.bbox.x0,x1:s.bbox.x1,h:Math.max(1,s.bbox.y1-s.bbox.y0)})));
     const separators=symbols.filter(s=>/^[/|\\]$/.test(s.t));
     if(separators.length!==1)return null;
     const sep=separators[0],overlap=s=>Math.max(0,Math.min(s.x1,sep.x1)-Math.max(s.x0,sep.x0))/Math.max(1,s.x1-s.x0);
-    const digits=symbols.filter(s=>/^\d$/.test(s.t)&&overlap(s)<.4);
+    // A 7 or 1 touching the slash (closer than a space) is the slash's own stroke misread.
+    const gap=s=>s.x0>=sep.x1?s.x0-sep.x1:sep.x0-s.x1,touching=s=>/^[71]$/.test(s.t)&&gap(s)<s.h*.22;
+    const digits=symbols.filter(s=>/^\d$/.test(s.t)&&overlap(s)<.4&&!touching(s));
     const have=digits.filter(s=>s.x1<=(sep.x0+sep.x1)/2).map(s=>s.t).join(''),need=digits.filter(s=>s.x0>=(sep.x0+sep.x1)/2).map(s=>s.t).join('');
     if(!have||!need||have.length>4||need.length>4||Number(need)<=0)return null;
     return {have:Number(have),need:Number(need)};
   }
-  const exported={countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Finds the slash by its shape in an inked count area ("10 / 10"): the game font's slash is a
+  // thin, steep stroke that text recognition reads as 7, 4 or 1. image: ImageData-like, ink black;
+  // box: {x0,y0,x1,y1}. Returns the two number areas {have:{x0,x1}, need:{x0,x1}, y0, y1} or null.
+  function splitCounts(image,box){
+    const {width,height,data}=image,ink=(x,y)=>data[(y*width+x)*4]<128;
+    const x0=Math.max(0,Math.floor(box.x0)),x1=Math.min(width-1,Math.ceil(box.x1)),y0=Math.max(0,Math.floor(box.y0)),y1=Math.min(height-1,Math.ceil(box.y1)),h=y1-y0+1;
+    if(x1-x0<h||h<6)return null;
+    const segs=[];
+    for(let x=x0,start=-1;x<=x1+1;x++){let on=false;if(x<=x1)for(let y=y0;y<=y1;y++)if(ink(x,y)){on=true;break;}if(on&&start<0)start=x;if(!on&&start>=0){segs.push({x0:start,x1:x-1});start=-1;}}
+    const shape=s=>{
+      let top=y1,bottom=y0,widest=0;const rows=[];
+      for(let y=y0;y<=y1;y++){let a=-1,b=-1;for(let x=s.x0;x<=s.x1;x++)if(ink(x,y)){if(a<0)a=x;b=x;}if(a>=0){top=Math.min(top,y);bottom=Math.max(bottom,y);widest=Math.max(widest,b-a+1);rows.push([y,(a+b)/2]);}}
+      if(!rows.length)return null;
+      const span=bottom-top+1,third=span/3,mean=list=>list.reduce((t,r)=>t+r[1],0)/Math.max(1,list.length);
+      return {span,widest,lean:mean(rows.filter(r=>r[0]<top+third))-mean(rows.filter(r=>r[0]>bottom-third))};
+    };
+    // A slash broken by a one-pixel gap is one stroke.
+    for(let i=segs.length-1;i>0;i--)if(segs[i].x0-segs[i-1].x1-1<=Math.max(1,Math.round(h*.04))&&(shape(segs[i])?.widest??99)<=h*.42&&(shape(segs[i-1])?.widest??99)<=h*.42){segs[i-1]={x0:segs[i-1].x0,x1:segs[i].x1};segs.splice(i,1);}
+    const thin=s=>{const f=shape(s);return f&&s.x1-s.x0+1<=h*.6&&f.widest<=h*.42;};
+    for(let i=1;i<segs.length-1;i++){
+      const s=segs[i],f=shape(s);if(!f)continue;
+      if(s.x1-s.x0+1<=h*.6&&f.widest<=h*.42&&f.span>=h*.55&&f.lean>=h*.1){
+        // Fragments of the same stroke right after it are not the first digit.
+        let j=i+1;while(j<segs.length-1&&thin(segs[j])&&segs[j].x0-segs[j-1].x1<=h*.12&&(shape(segs[j]).lean>=0))j++;
+        return {have:{x0:segs[0].x0,x1:segs[i-1].x1},need:{x0:segs[j].x0,x1:segs.at(-1).x1},slash:{x0:s.x0,x1:segs[j-1].x1},
+          haveGlyphs:segs.slice(0,i),needGlyphs:segs.slice(j),y0,y1};
+      }
+    }
+    return null;
+  }
+  const exported={splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

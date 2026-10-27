@@ -73,11 +73,16 @@ final class CompanionModel {
     var showOverlay = UserDefaults.standard.object(forKey: "showOverlay") as? Bool ?? true {
         didSet { UserDefaults.standard.set(showOverlay, forKey: "showOverlay"); refreshOverlay() }
     }
-    @ObservationIgnored private let overlay = OverlayController()
+    @ObservationIgnored private lazy var overlay: OverlayController = {
+        let o = OverlayController()
+        o.onReason = { [weak self] reason in self?.log("Overlay: \(reason)") }
+        return o
+    }()
 
     private func refreshOverlay() {
+        let why = !showOverlay ? "off in Settings" : !isTracking ? "hidden · not tracking" : !isPhoneConnected ? "hidden · phone not connected" : nav == nil ? "hidden · no route on the phone" : nil
         overlay.update(nav: isPhoneConnected ? nav : nil, position: lastPosition, onMap: lastConfirmed?.id,
-                       windowID: capture.windowID, enabled: showOverlay && isTracking)
+                       windowID: capture.windowID, enabled: showOverlay && isTracking, why: why)
     }
     /// What the game's Quest Helper panel showed at the last read.
     private(set) var questSummary = "Not read yet"
@@ -265,6 +270,7 @@ final class CompanionModel {
             hasPairedPhone = true
             log("Using the saved phone pairing (\(addresses.joined(separator: ", ")))")
         case .state(let newPhase, let message):
+            if newPhase != phase { log("Phone link: \(newPhase)" + (message.isEmpty ? "" : " · \(message)")) }
             let wasConnected = isPhoneConnected
             phase = newPhase
             phaseMessage = message
@@ -285,6 +291,9 @@ final class CompanionModel {
             lastError = message
             log("helper error: \(message)")
         case .nav(let info):
+            if info?.map != nav?.map || info?.step != nav?.step || info?.target.kind != nav?.target.kind || (info == nil) != (nav == nil) {
+                log(info.map { "Route from phone: step \($0.step) of \($0.steps) on map \($0.map) · \($0.target.kind) · \($0.target.label)" } ?? "Route from phone: none")
+            }
             if info != nav { nav = info }
         }
     }
@@ -512,6 +521,7 @@ final class CompanionModel {
         guard let png = try? await Task.detached(operation: { try capture.questPanelImage(region: region) }).value else { return }
         do {
             let reading = try await engine.readQuests(png, marked: marked)
+            saveQuestSnapshotIfAsked(png: png, text: reading.text)
             guard !Task.isCancelled, isTracking else { return }
             let summary = !reading.visible ? (questMarked ? "Quest Helper not found in its box" : "Quest Helper not found · draw its box (Quest Helper tab)")
                 : reading.quests.isEmpty ? "Quest Helper open · no quests read"
@@ -613,6 +623,38 @@ final class CompanionModel {
         let stamp = Date.now.formatted(date: .omitted, time: .standard)
         logLines.append("\(stamp)  \(message)")
         if logLines.count > 1000 { logLines.removeFirst(logLines.count - 1000) }
+        appendToLogFile("\(Date.now.ISO8601Format())  \(message)\n")
+    }
+
+    /// The Diagnostics lines are also kept in companion.log next to the pairing (cut back to
+    /// the newest half when it passes 2 MB), so they survive a restart and can be sent.
+    @ObservationIgnored private lazy var logFile = Self.stateDirectory(for: site).appendingPathComponent("companion.log")
+    private func appendToLogFile(_ line: String) {
+        let data = Data(line.utf8), url = logFile
+        if let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]) as? Int, size > 2_000_000,
+           let old = try? Data(contentsOf: url) {
+            try? old.suffix(1_000_000).write(to: url)
+        }
+        if let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
+            try? data.write(to: url)
+        }
+    }
+
+    /// When a file named "debug-snapshot" is in the app's folder, the next Quest Helper image and
+    /// its reading are saved there (quest-snapshot.png, .txt) and the flag is removed.
+    private func saveQuestSnapshotIfAsked(png: String, text: String?) {
+        let dir = Self.stateDirectory(for: site), flag = dir.appendingPathComponent("debug-snapshot")
+        guard FileManager.default.fileExists(atPath: flag.path) else { return }
+        try? FileManager.default.removeItem(at: flag)
+        if let comma = png.firstIndex(of: ","), let data = Data(base64Encoded: String(png[png.index(after: comma)...])) {
+            try? data.write(to: dir.appendingPathComponent("quest-snapshot.png"))
+        }
+        try? (text ?? "").write(to: dir.appendingPathComponent("quest-snapshot.txt"), atomically: true, encoding: .utf8)
+        log("Saved a Quest Helper snapshot (quest-snapshot.png)")
     }
 
     func clearLog() { logLines.removeAll() }
