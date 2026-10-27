@@ -81,6 +81,12 @@ final class GameCapture: NSObject {
         return try Self.pngDataURL(from: Self.downscaled(corner, maxSide: 1600))
     }
 
+    /// The same part of the window as an image, for on-device text recognition.
+    nonisolated func questPanelCGImage(region: CGRect) throws -> CGImage {
+        guard let image = sink.latest else { throw CaptureError.noFrameYet }
+        return Self.downscaled(Self.cropped(image, to: region) ?? image, maxSide: 1600)
+    }
+
     nonisolated func frame(region: CGRect, previewOnly: Bool) throws -> Frame {
         guard let image = sink.latest else { throw CaptureError.noFrameYet }
         let preview = Self.downscaled(image, maxSide: Self.previewMaxSide)
@@ -185,7 +191,7 @@ final class GameCapture: NSObject {
         return context.makeImage() ?? image
     }
 
-    nonisolated private static func pngDataURL(from image: CGImage) throws -> String {
+    nonisolated static func pngDataURL(from image: CGImage) throws -> String {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil)
         else { throw CaptureError.encodingFailed }

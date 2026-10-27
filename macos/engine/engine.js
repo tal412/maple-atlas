@@ -235,5 +235,13 @@
   async function readQuests(dataURL,opts={}){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null,opts);}finally{bitmap.close();}}
   // The panel text of a prepared (inked) canvas, counts read twice. For tests and diagnostics.
   async function readQuestText(image){const {data}=await (await reader()).recognize(image,{},{text:true,blocks:true});return {first:String(data.text||'').trim(),text:await recheckCounts(data,image)||String(data.text||'').trim()};}
-  window.atlasEngine={readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
+  // Panel text read by the platform's own text recognition (Apple Vision on the Mac):
+  // only parsed here. null: no panel seen.
+  let textSeen=null;
+  function questsFromText(text){
+    if(text==null){const changed=textSeen!==null;textSeen=null;return {visible:false,quests:[],changed};}
+    const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(String(text))),key=JSON.stringify(quests),changed=key!==textSeen;
+    textSeen=key;return {visible:true,quests,changed,text:String(text).slice(0,600)};
+  }
+  window.atlasEngine={questsFromText,readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
 })();

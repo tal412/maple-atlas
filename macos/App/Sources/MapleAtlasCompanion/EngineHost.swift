@@ -178,6 +178,18 @@ final class EngineHost: NSObject {
                             quests: value["quests"] as? [Any] ?? [], text: value["text"] as? String)
     }
 
+    /// The quests in panel text read on the Mac (QuestText); nil text: no panel seen.
+    func questsFromText(_ text: String?) async throws -> QuestReading {
+        let script = "return JSON.stringify(window.atlasEngine.questsFromText(text));"
+        let result = try await webView.callAsyncJavaScript(script, arguments: ["text": text ?? NSNull()], contentWorld: .page)
+        guard let json = result as? String,
+              let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+              let visible = value["visible"] as? Bool
+        else { throw EngineError.badResult }
+        return QuestReading(visible: visible, changed: value["changed"] as? Bool ?? true,
+                            quests: value["quests"] as? [Any] ?? [], text: value["text"] as? String)
+    }
+
     func reset() async {
         _ = try? await webView.callAsyncJavaScript(
             "window.atlasEngine?.reset?.(); return true;", contentWorld: .page)

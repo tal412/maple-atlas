@@ -337,6 +337,7 @@ final class CompanionModel {
                 let count = try await engine.ready()
                 guard !Task.isCancelled else { return }
                 engineStatus = .ready(mapCount: count)
+                QuestText.warmUp()
                 log("Engine ready with \(count) maps.")
             } catch EngineHost.EngineError.superseded {
                 return
@@ -518,10 +519,14 @@ final class CompanionModel {
         guard isTracking, case .ready = engineStatus else { return }
         let capture = self.capture
         let region = questRect, marked = questMarked
-        guard let png = try? await Task.detached(operation: { try capture.questPanelImage(region: region) }).value else { return }
+        // Apple's on-device text recognition reads the panel; the engine only parses it.
+        guard let read = try? await Task.detached(operation: { () -> (CGImage, String?) in
+            let image = try capture.questPanelCGImage(region: region)
+            return (image, QuestText.panelText(image, marked: marked))
+        }).value else { return }
         do {
-            let reading = try await engine.readQuests(png, marked: marked)
-            saveQuestSnapshotIfAsked(png: png, text: reading.text)
+            let reading = try await engine.questsFromText(read.1)
+            saveQuestSnapshotIfAsked(image: read.0, text: reading.text)
             guard !Task.isCancelled, isTracking else { return }
             let summary = !reading.visible ? (questMarked ? "Quest Helper not found in its box" : "Quest Helper not found · draw its box (Quest Helper tab)")
                 : reading.quests.isEmpty ? "Quest Helper open · no quests read"
@@ -646,10 +651,11 @@ final class CompanionModel {
 
     /// When a file named "debug-snapshot" is in the app's folder, the next Quest Helper image and
     /// its reading are saved there (quest-snapshot.png, .txt) and the flag is removed.
-    private func saveQuestSnapshotIfAsked(png: String, text: String?) {
+    private func saveQuestSnapshotIfAsked(image: CGImage, text: String?) {
         let dir = Self.stateDirectory(for: site), flag = dir.appendingPathComponent("debug-snapshot")
         guard FileManager.default.fileExists(atPath: flag.path) else { return }
         try? FileManager.default.removeItem(at: flag)
+        guard let png = try? GameCapture.pngDataURL(from: image) else { return }
         if let comma = png.firstIndex(of: ","), let data = Data(base64Encoded: String(png[png.index(after: comma)...])) {
             try? data.write(to: dir.appendingPathComponent("quest-snapshot.png"))
         }

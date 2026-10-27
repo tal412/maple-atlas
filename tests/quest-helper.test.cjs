@@ -62,3 +62,28 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(r.progress[0].have, 15);
   console.log('quest-helper: garbled name pairs by count');
 }
+// The slash read as a letter ("14 r 20"): still one count span, and the name is clean.
+{
+  const w=(text,x0)=>({text,bbox:{x0,y0:0,x1:x0+10,y1:12}});
+  const sp=Q.countSpan([w('14',0),w('r',14),w('20',24),w("Pig'z",40),w('Rikabon',70)]);
+  assert.ok(sp&&sp.lead.length===3&&sp.box.x1===34,JSON.stringify(sp));
+  assert.equal(sp.rest,"Pig'z Rikabon");
+  // A real one-letter word after the counts is not taken as the slash.
+  assert.equal(Q.countSpan([w('3/5',0),w('a',30),w('Snail',40)]).lead.length,1);
+  console.log('quest-helper: misread slash token passes');
+}
+// One stray mark glued to the digits ("10 F10", "T0710").
+{
+  const w=(text,x0)=>({text,bbox:{x0,y0:0,x1:x0+10,y1:12}});
+  assert.equal(Q.countSpan([w('10',0),w('F10',14),w('Slime',40),w('Bubble',70)]).lead.length,2);
+  assert.equal(Q.countSpan([w('T0710',0),w('Slime',40),w('Bubble',70)]).rest,'Slime Bubble');
+  assert.equal(Q.countSpan([w('Slime',0),w('Bubble',40)]),null);
+  console.log('quest-helper: glued stray mark passes');
+}
+// A short scenery blob before the counts ("Ne 10710 Slime Bubble").
+{
+  const w=(text,x0)=>({text,bbox:{x0,y0:0,x1:x0+10,y1:12}});
+  const sp=Q.countSpan([w('Ne',0),w('10710',20),w('Slime',60),w('Bubble',90)]);
+  assert.ok(sp&&sp.box.x0===20&&sp.rest==='Slime Bubble',JSON.stringify(sp));
+  console.log('quest-helper: leading scenery blob passes');
+}

@@ -202,14 +202,23 @@
   function countSpan(words){
     const lead=[];
     let i=0;
+    // Digits and slash look-alikes; a token of 3+ marks may hold one other stray mark glued on
+    // by the reader ("F10", "T0710"): the pixels decide the numbers later.
+    const isDigits=t=>/\d/.test(t)&&t.replace(/[\d/7lI|\\£#{(\[\]!.,:;]/g,'').length<=(t.length>=3?1:0);
     while(i<(words||[]).length&&/^(?:[^\p{L}\p{N}]+|[^\d\s])$/u.test(String(words[i]?.text||'').trim()))i++;   // stray edge marks
-    for(const w of (words||[]).slice(i)){
-      const t=String(w?.text||'').trim();if(!t)continue;
-      const digits=/\d/.test(t)&&/^[\d/7lI|\\£#{(\[\]!.,:;]+$/.test(t),slash=lead.length&&/^[/7lI|\\]+$/.test(t);
-      if(digits||slash)lead.push(w);else break;
+    // Scenery inside a drawn box can add a short letter blob before the counts ("Ne 10710").
+    const txt=k=>String(words?.[k]?.text||'').trim();
+    while(i<(words||[]).length-1&&txt(i).length<=2&&!/\d/.test(txt(i))&&isDigits(txt(i+1)))i++;
+    const rest0=(words||[]).slice(i);
+    for(let k=0;k<rest0.length;k++){
+      const w=rest0[k],t=String(w?.text||'').trim();if(!t)continue;
+      const slash=lead.length&&/^[/7lI|\\]+$/.test(t);
+      // A slash misread as one or two other marks ("14 r 20"): taken when digits follow it.
+      const odd=lead.length&&t.length<=2&&!/\d/.test(t)&&isDigits(String(rest0[k+1]?.text||'').trim());
+      if(isDigits(t)||slash||odd)lead.push(w);else break;
     }
     if(!lead.length||!/\d/.test(lead[0].text))return null;
-    const rest=(words||[]).slice(i+lead.length).map(w=>String(w.text||'').trim()).filter(Boolean).join(' ');
+    const rest=(words||[]).slice((words||[]).indexOf(lead[lead.length-1])+1).map(w=>String(w.text||'').trim()).filter(Boolean).join(' ');
     if(!/\p{L}{2}/u.test(rest))return null;
     const box={x0:Math.min(...lead.map(w=>w.bbox.x0)),y0:Math.min(...lead.map(w=>w.bbox.y0)),x1:Math.max(...lead.map(w=>w.bbox.x1)),y1:Math.max(...lead.map(w=>w.bbox.y1))};
     return {box,rest,lead};
@@ -238,7 +247,7 @@
   // Finds the slash by its shape in an inked count area ("10 / 10"): the game font's slash is a
   // thin, steep stroke that text recognition reads as 7, 4 or 1. image: ImageData-like, ink black;
   // box: {x0,y0,x1,y1}. Returns the two number areas {have:{x0,x1}, need:{x0,x1}, y0, y1} or null.
-  function splitCounts(image,box){
+  function splitCounts(image,box,info=null){
     const {width,height,data}=image,ink=(x,y)=>data[(y*width+x)*4]<128;
     const x0=Math.max(0,Math.floor(box.x0)),x1=Math.min(width-1,Math.ceil(box.x1)),y0=Math.max(0,Math.floor(box.y0)),y1=Math.min(height-1,Math.ceil(box.y1)),h=y1-y0+1;
     if(x1-x0<h||h<6)return null;
@@ -254,6 +263,7 @@
     // A slash broken by a one-pixel gap is one stroke.
     for(let i=segs.length-1;i>0;i--)if(segs[i].x0-segs[i-1].x1-1<=Math.max(1,Math.round(h*.04))&&(shape(segs[i])?.widest??99)<=h*.42&&(shape(segs[i-1])?.widest??99)<=h*.42){segs[i-1]={x0:segs[i-1].x0,x1:segs[i].x1};segs.splice(i,1);}
     const thin=s=>{const f=shape(s);return f&&s.x1-s.x0+1<=h*.6&&f.widest<=h*.42;};
+    if(info)for(const g of segs){const f=shape(g);info.push({x0:g.x0,x1:g.x1,w:g.x1-g.x0+1,h,widest:f?.widest,span:f?.span,lean:f&&Math.round(f.lean*10)/10});}
     for(let i=1;i<segs.length-1;i++){
       const s=segs[i],f=shape(s);if(!f)continue;
       if(s.x1-s.x0+1<=h*.6&&f.widest<=h*.42&&f.span>=h*.55&&f.lean>=h*.1){
