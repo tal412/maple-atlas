@@ -48,6 +48,7 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{c
   <h2 id="game-title">Game window</h2>
   <div class="row"><button class="primary" id="choose">Choose game window…</button><span id="window-name" class="hint">No game window chosen</span></div>
   <div class="preview" id="preview" hidden><canvas id="preview-canvas"></canvas><div class="box" id="box"><span>Minimap</span></div></div>
+  <label class="row hint" for="overlay"><input type="checkbox" id="overlay" checked> Show navigation on the game window during a route (clicks pass through it)</label>
   <div class="row" id="region-row" hidden><span class="hint">Drag a box around the in-game minimap and its map name. Press + on the minimap until the name shows (for example “Victoria Road · Henesys”).</span><button id="reset-box">Reset to top-left</button></div>
   <p class="hint">Windows asks which window to share; pick the game. Frames stay on this PC; only the map, your position and the quests in your Quest Helper go to your phone.</p>
   <div class="row"><button class="primary" id="track" disabled>Start tracking</button></div>

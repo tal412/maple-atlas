@@ -115,7 +115,14 @@ func runDesktop(site, stateDir string, _ bool) {
 	}
 	logger := log.New(logOut, "", log.LstdFlags)
 	h := &hub{clients: map[chan []byte]struct{}{}, logger: logger}
-	ctrl := &controller{site: site, stateDir: stateDir, emit: h.emit}
+	// Navigation from the phone also feeds the on-game overlay (overlay_windows.go).
+	emit := func(v map[string]any) {
+		if v["event"] == "nav" {
+			overlayNav(v)
+		}
+		h.emit(v)
+	}
+	ctrl := &controller{site: site, stateDir: stateDir, emit: emit}
 	token := randomHex(16)
 
 	files, _ := fs.Sub(webui, "webui")

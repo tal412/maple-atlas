@@ -62,7 +62,23 @@ final class CompanionModel {
     private(set) var readingText = "Not tracking"
     private(set) var lastConfirmed: ConfirmedMap?
     /// Latest player position on the confirmed map, in the portal data's coordinates.
-    private(set) var lastPosition: EngineReading.Position?
+    private(set) var lastPosition: EngineReading.Position? {
+        didSet { refreshOverlay() }
+    }
+    /// The phone's route on the map you are on, for the overlay on the game window.
+    private(set) var nav: NavInfo? {
+        didSet { refreshOverlay() }
+    }
+    /// Show the navigation card on top of the game window during a route.
+    var showOverlay = UserDefaults.standard.object(forKey: "showOverlay") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(showOverlay, forKey: "showOverlay"); refreshOverlay() }
+    }
+    @ObservationIgnored private let overlay = OverlayController()
+
+    private func refreshOverlay() {
+        overlay.update(nav: isPhoneConnected ? nav : nil, position: lastPosition, onMap: lastConfirmed?.id,
+                       windowID: capture.windowID, enabled: showOverlay && isTracking)
+    }
     /// What the game's Quest Helper panel showed at the last read.
     private(set) var questSummary = "Not read yet"
 
@@ -254,6 +270,7 @@ final class CompanionModel {
                 pairing = nil
                 qrImage = nil
             }
+            if isPhoneConnected != wasConnected { refreshOverlay() }
             if isPhoneConnected && !wasConnected {
                 lastSearchingSent = nil
                 if !isTracking { helper?.send(.tracking(state: "paused")) }
@@ -263,6 +280,8 @@ final class CompanionModel {
         case .error(let message):
             lastError = message
             log("helper error: \(message)")
+        case .nav(let info):
+            if info != nav { nav = info }
         }
     }
 
@@ -388,6 +407,7 @@ final class CompanionModel {
         guard !isTracking, hasGameWindow else { return }
         isTracking = true
         readingText = "Reading the map name…"
+        refreshOverlay()
         // Keep App Nap from stretching the capture interval while the game is in front.
         trackingActivity = ProcessInfo.processInfo.beginActivity(
             options: [.userInitiatedAllowingIdleSystemSleep], reason: "Tracking the game window")
@@ -403,6 +423,7 @@ final class CompanionModel {
         questTask?.cancel()
         questTask = nil
         isTracking = false
+        refreshOverlay()
         readingText = "Not tracking"
         if let activity = trackingActivity {
             ProcessInfo.processInfo.endActivity(activity)

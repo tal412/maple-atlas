@@ -397,13 +397,14 @@ func (s *session) replace() {
 }
 
 type message struct {
-	Kind    string `json:"kind"`
-	V       int    `json:"v"`
-	Session string `json:"session"`
-	Role    string `json:"role"`
-	Nonce   string `json:"nonce"`
-	Seq     int    `json:"seq"`
-	Proof   string `json:"proof"`
+	Kind    string          `json:"kind"`
+	V       int             `json:"v"`
+	Session string          `json:"session"`
+	Role    string          `json:"role"`
+	Nonce   string          `json:"nonce"`
+	Seq     int             `json:"seq"`
+	Proof   string          `json:"proof"`
+	Nav     json.RawMessage `json:"nav"`
 }
 
 func (s *session) onMessage(l *link, data []byte) {
@@ -448,6 +449,11 @@ func (s *session) onMessage(l *link, data []byte) {
 	case m.Kind == "hello-ack" && l.nonce != "" && m.Nonce == l.nonce:
 		l.helloAck = true
 		s.confirmLocked(l)
+	case m.Kind == "nav" && l.verified && m.V == 1:
+		// Navigation from the phone for the on-game overlay; checked field by field.
+		if ev, ok := navEvent(m.Nav); ok {
+			go s.emit(ev)
+		}
 	case m.Kind == "ping" && l.verified && m.Seq > 0:
 		s.sendLocked(l, map[string]any{"kind": "pong", "v": 2, "session": s.id, "seq": m.Seq})
 	case m.Kind == "pong" && l.verified && m.Seq > l.pongSeq && m.Seq <= l.pingSeq:

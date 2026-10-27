@@ -199,7 +199,9 @@
         if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
-    return {join,stop,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    // Navigation for the computer's on-game overlay; true when it went out.
+    function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
+    return {join,stop,nav,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

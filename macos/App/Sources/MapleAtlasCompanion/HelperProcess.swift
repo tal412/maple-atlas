@@ -9,6 +9,24 @@ struct PairingCode: Equatable, Sendable {
 }
 
 /// Events the `maple-link` helper prints on stdout (one JSON object per line).
+/// Where the phone's route goes next on the map you are on (map-image pixels).
+struct NavInfo: Sendable, Equatable {
+    struct Target: Decodable, Sendable, Equatable {
+        let kind: String   // "portal", "spot" (best hunting spot) or "arrived"
+        let label: String
+        let x: Double?
+        let y: Double?
+    }
+    let map: String
+    let name: String
+    let dest: String
+    let step: Int
+    let steps: Int
+    let live: Bool
+    let hint: String
+    let target: Target
+}
+
 enum HelperEvent: Sendable {
     case engine(URL)
     case code(PairingCode)
@@ -17,6 +35,8 @@ enum HelperEvent: Sendable {
     case state(phase: String, message: String)
     case log(String)
     case error(String)
+    /// Navigation from the phone for the on-game overlay; nil when no route is active.
+    case nav(NavInfo?)
 
     private struct Raw: Decodable {
         let event: String
@@ -28,6 +48,15 @@ enum HelperEvent: Sendable {
         let phase: String?
         let message: String?
         let from: String?
+        let active: Bool?
+        let map: String?
+        let name: String?
+        let dest: String?
+        let step: Int?
+        let steps: Int?
+        let live: Bool?
+        let hint: String?
+        let target: NavInfo.Target?
     }
 
     /// Returns nil for unknown or malformed events, which the contract says to ignore.
@@ -52,6 +81,11 @@ enum HelperEvent: Sendable {
             self = .log("A phone with this code reached the Mac (\(raw.from ?? "?")).")
         case "error":
             self = .error(raw.message ?? "Unknown error")
+        case "nav":
+            guard raw.active == true else { self = .nav(nil); return }
+            guard let map = raw.map, let step = raw.step, let steps = raw.steps, let target = raw.target else { return nil }
+            self = .nav(NavInfo(map: map, name: raw.name ?? "", dest: raw.dest ?? "", step: step, steps: steps,
+                                live: raw.live ?? false, hint: raw.hint ?? "", target: target))
         default:
             return nil
         }

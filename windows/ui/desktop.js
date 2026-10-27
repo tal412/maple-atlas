@@ -36,6 +36,10 @@
   }
   setInterval(()=>{if(code&&!paired){const s=Math.max(0,Math.round((code.expires-Date.now())/1000));$('qr-expiry').textContent=s?'Expires in '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):'Code expired — press New code';}},1000);
   $('new-code').onclick=()=>{paired=false;cmd({cmd:'pair'});};
+  // The navigation card on top of the game during a route on the phone (drawn by the app).
+  const OVERLAY_KEY='maple-atlas-companion-overlay';let overlayOn=true;try{overlayOn=localStorage.getItem(OVERLAY_KEY)!=='off';}catch(_){}
+  $('overlay').checked=overlayOn;cmd({cmd:'overlay',on:overlayOn});
+  $('overlay').onchange=()=>{overlayOn=$('overlay').checked;try{localStorage.setItem(OVERLAY_KEY,overlayOn?'on':'off');}catch(_){}cmd({cmd:'overlay',on:overlayOn});};
   $('disconnect').onclick=()=>cmd({cmd:'stop'});
 
   // Whether the phone's connection attempts arrive at all (a blocked network looks the same as no try).
@@ -83,7 +87,7 @@
     try{
       const next=await navigator.mediaDevices.getDisplayMedia({video:{displaySurface:'window',frameRate:10},audio:false,preferCurrentTab:false,selfBrowserSurface:'exclude'});
       stopCapture();stream=next;video=document.createElement('video');video.muted=true;video.playsInline=true;video.srcObject=stream;await video.play();
-      const track=stream.getVideoTracks()[0];$('window-name').textContent=track.label||'Game window';
+      const track=stream.getVideoTracks()[0];$('window-name').textContent=track.label||'Game window';cmd({cmd:'window',title:track.label||''});
       track.addEventListener('ended',()=>{if(stream===next){stopCapture();$('window-name').textContent='Game window no longer shared. Choose it again.';}});
       $('preview').hidden=false;$('region-row').hidden=false;$('track').disabled=false;$('choose').textContent='Change window…';drawPreview();
     }catch(e){if(e?.name!=='NotAllowedError')$('window-name').textContent='Could not share the window: '+e.message;}

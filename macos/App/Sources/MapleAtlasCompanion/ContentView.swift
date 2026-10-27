@@ -321,6 +321,10 @@ struct SettingsView: View {
                     }
                 }
             }
+            Toggle("Show navigation on the game window", isOn: $model.showOverlay)
+            Text("During a route on your phone, a card on top of the game shows the way to the next portal or the best hunting spot. Clicks pass through it.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
             Text("The phone opens \(model.site.url). Update checks contact GitHub only.")
                 .font(.callout)
                 .foregroundStyle(.secondary)

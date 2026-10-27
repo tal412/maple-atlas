@@ -38,6 +38,8 @@ final class GameCapture: NSObject {
     var onStopped: ((_ message: String) -> Void)?
 
     private(set) var isCapturing = false
+    /// The captured game window, for placing the navigation overlay on it.
+    private(set) var windowID: CGWindowID?
     private var stream: SCStream?
     private let sink = FrameSink()
     private var observing = false
@@ -113,6 +115,7 @@ final class GameCapture: NSObject {
         }
         self.stream = stream
         isCapturing = true
+        if #available(macOS 15.2, *) { windowID = filter.includedWindows.first?.windowID } else { windowID = nil }
         onSelected?(Self.label(for: filter), Self.key(for: filter))
         Task {
             do {

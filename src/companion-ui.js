@@ -173,7 +173,7 @@
       $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;if(/Mac/i.test(navigator.platform||navigator.userAgent)){$('#mc-get-mac').classList.add('mc-primary');$('#mc-get-windows').classList.remove('mc-primary');root.querySelector('.mc-get-app-links').prepend($('#mc-get-mac'));}
       $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
       $('#mc-companion-desktop').onclick=open;
-      return {open,enterFullscreen};
+      return {open,enterFullscreen,nav:()=>false};
     }
     // One tap: open the companion and, when a paired computer isn't connected, reconnect.
     const tap=()=>{open();if(remembered()&&!link.connected&&!busy.includes(currentState.phase))void resume({manual:true});};
@@ -197,7 +197,7 @@
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen};
+    return {open,enterFullscreen,nav:value=>link.nav(value)};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);

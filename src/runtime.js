@@ -137,7 +137,20 @@
     return MapleMinimapPosition.guidance(livePosition,{x:Number(portal.x),y:Number(portal.y)})?.text||'';
   }
   function clearPosition(){livePosition=null;liveHint='';localMaps.setPlayer(null);}
-  MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onLocation:value=>{
+  // Navigation for the computer's overlay on the game: the map you are on, where to go on it
+  // (portal or best spot, in map pixels), the step and the live hint. Sent when it changes.
+  let navSent='',navSentAt=0;
+  function navState(){
+    if(!state.routeActive||!state.route.length)return {active:false};
+    const isLive=liveFresh&&state.route.includes(liveLocation),i=isLive?state.route.indexOf(liveLocation):Math.max(0,Math.min(state.step,state.route.length-1));
+    const id=state.route[i],p=get(id),next=state.route[i+1],edge=p?.portals.find(e=>String(e.to)===next),h=huntOn(id),spot=h&&p?.bestSpots?.[h.monster];
+    const target=edge&&Number.isFinite(Number(edge.x))&&Number.isFinite(Number(edge.y))?{kind:'portal',label:MapleLocalMaps.instruction(edge,get(next)?.name),x:Math.round(Number(edge.x)),y:Math.round(Number(edge.y))}
+      :spot?{kind:'spot',label:'Best spot · '+spot.n+' '+h.name,x:spot.x,y:spot.y}:{kind:'arrived',label:huntText(id)||'You have arrived.'};
+    return {active:true,map:String(id),name:p?.name||'',dest:get(state.to)?.name||'',step:i+1,steps:state.route.length,live:isLive,target,hint:liveHint||''};
+  }
+  function pushNav(force=false){const v=navState(),key=JSON.stringify(v);if(!force&&key===navSent&&Date.now()-navSentAt<10000)return;if(companion?.nav?.(v)){navSent=key;navSentAt=Date.now();}}
+  setInterval(()=>pushNav(),5000);
+  const companion=MapleCompanionUI.create({root,maps:DATA.maps,visualMaps:DATA.visualMaps,onLocation:value=>{
     const m=get(value.id)||visualMaps.get(value.id);if(!m)return;
     liveAt=Date.now();linkPhase='live';clearTimeout(searchTimer);
     const changed=liveLocation!==value.id||(get(value.id)&&state.from!==value.id),wasFresh=liveFresh;if(liveLocation!==value.id)clearPosition();liveLocation=value.id;liveFresh=true;
@@ -161,6 +174,7 @@
     const hint=hintText();
     $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
     if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
+    pushNav();
   },onQuests:value=>questPanel.update(value),onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
@@ -169,6 +183,7 @@
     if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Tracking paused · Last location retained';}
     if(phase==='searching'){liveFresh=false;showSearching();}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
+    if(phase==='connected')setTimeout(()=>pushNav(true),500);
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
     if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
@@ -364,7 +379,7 @@
     cancelAnimationFrame(routeAnim);routeAnim=requestAnimationFrame(frame);
     setTimeout(()=>{if(drawnRoute===full)finish();},duration+600);
   }
-  function render(){const chip=$('#mc-route-chip');chip.hidden=!state.routeActive;if(state.routeActive)chip.querySelector('span').textContent='Route to '+(get(state.to)?.name||'destination');detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
+  function render(){setTimeout(()=>pushNav(),0);const chip=$('#mc-route-chip');chip.hidden=!state.routeActive;if(state.routeActive)chip.querySelector('span').textContent='Route to '+(get(state.to)?.name||'destination');detail();markers();['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).setAttribute('aria-pressed',String(state.layer===['all','quests','shops'][i])));}
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');

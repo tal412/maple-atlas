@@ -31,6 +31,9 @@ type command struct {
 	// quests: what the game's Quest Helper shows (MapleQuestHelper.pack form).
 	Visible bool            `json:"visible"`
 	Quests  json.RawMessage `json:"quests"`
+	// window: the captured game window's title; overlay: show the on-game navigation card.
+	Title string `json:"title"`
+	On    bool   `json:"on"`
 }
 
 // controller runs one pairing session at a time and applies app commands to it.
@@ -80,11 +83,17 @@ func (c *controller) handle(cmd command) {
 			}
 			c.emit(map[string]any{"event": "code", "code": info.Code, "link": info.Link, "expires": info.Expires, "addresses": info.Addresses})
 		}
+	case "window":
+		overlayWindow(cmd.Title)
+	case "overlay":
+		overlayEnabled(cmd.On)
 	case "location":
+		overlayTracking("tracking")
 		if c.current != nil {
 			c.current.sendLocation(cmd.ID, cmd.Confidence, cmd.ObservedAt)
 		}
 	case "position":
+		overlayPosition(cmd.ID, cmd.X, cmd.Y)
 		if c.current != nil {
 			c.current.sendPosition(cmd.ID, cmd.X, cmd.Y, cmd.ObservedAt)
 		}
@@ -93,6 +102,7 @@ func (c *controller) handle(cmd command) {
 			c.current.sendQuests(cmd.Visible, cmd.Quests, cmd.ObservedAt)
 		}
 	case "tracking":
+		overlayTracking(cmd.State)
 		if c.current != nil {
 			c.current.sendTracking(cmd.State)
 		}
@@ -119,7 +129,14 @@ var desktopMain func(site, stateDir string, ui bool)
 // by firewall_windows.go); the setup program and the window's repair button run them.
 var firewallCommand func(arg string) int
 
+// overlayDemo handles --overlay-demo on Windows (overlay_demo_windows.go): a self-check of the
+// on-game navigation card against a stand-in game window, for CI.
+var overlayDemo func() int
+
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--overlay-demo" && overlayDemo != nil {
+		os.Exit(overlayDemo())
+	}
 	if len(os.Args) == 2 && strings.HasSuffix(os.Args[1], "-firewall") && firewallCommand != nil {
 		os.Exit(firewallCommand(os.Args[1]))
 	}
