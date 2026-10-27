@@ -148,12 +148,9 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     if channel == 'dev':
         output.write_text(page.replace('<title>Maple Atlas</title>', '<title>Maple Atlas · Dev</title>'), encoding='utf-8')
     offline_files = ['index.html', 'favicon.svg', 'vendor/lucide.js', 'vendor/roboto-latin.woff2', 'data/' + search_name]
-    # The phone only scans QR codes; map recognition runs in the companion apps, which
-    # bundle the matcher files built below.
+    # The phone only scans QR codes; the companion apps read the map name from the minimap.
     offline_files += ['vendor/companion/qr.js']
-    for name in ['vision-worker.js', 'visual-matcher.js']:
-        (docs / name).write_text(read(name))
-    cache_version = hashlib.sha256((docs / 'vendor/companion/versions.json').read_bytes() + visual['sha256'].encode() + read('visual-matcher.js').encode() + read('vision-worker.js').encode() + (docs / 'vendor/lucide.js').read_bytes() + (docs / 'vendor/roboto-latin.woff2').read_bytes()).hexdigest()[:12]
+    cache_version = hashlib.sha256((docs / 'vendor/companion/versions.json').read_bytes() + visual['sha256'].encode() + (docs / 'vendor/lucide.js').read_bytes() + (docs / 'vendor/roboto-latin.woff2').read_bytes()).hexdigest()[:12]
     worker = read('service-worker.js').replace('__CACHE_NAME__', json.dumps('maple-atlas-offline-' + channel + '-' + cache_version)).replace('__OFFLINE_FILES__', json.dumps(offline_files)).replace('__CHANNEL__', json.dumps(channel))
     (docs / 'sw.js').write_text(worker)
     print(f"Built {output.relative_to(project)}: {len(page.encode('utf-8')):,} bytes; {len(audit.ids)} unique IDs; no iframe.")

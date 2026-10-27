@@ -1,6 +1,6 @@
 /* Maple Atlas Companion for Windows: the window's logic. Mirrors the Mac app
  * (macos/App/.../CompanionModel.swift): helper events in, commands out, game-window
- * capture, the minimap box, map recognition every 1.5 s and the dot ~5 times a second. */
+ * capture, the minimap box, reading the map name every 1.5 s and the dot ~5 times a second. */
 (function(){
   const $=id=>document.getElementById(id);
   const token=new URLSearchParams(location.search).get('t')||'';
@@ -109,7 +109,7 @@
 
   // Tracking.
   $('track').onclick=()=>tracking?stopTracking():startTracking();
-  function startTracking(){if(!video)return;tracking=true;atlasEngine.reset();noMatchSince=Date.now();lastSearching=0;$('track').textContent='Stop tracking';$('reading').textContent='Reading the minimap…';}
+  function startTracking(){if(!video)return;tracking=true;atlasEngine.reset();noMatchSince=Date.now();lastSearching=0;$('track').textContent='Stop tracking';$('reading').textContent='Reading the map name…';}
   function stopTracking(){if(!tracking)return;tracking=false;$('track').textContent='Start tracking';$('reading').textContent='Not tracking';cmd({cmd:'tracking',state:'paused'});}
   async function readMap(){
     readBusy=true;lastRead=Date.now();
@@ -117,13 +117,13 @@
       const r=await atlasEngine.readFrame(video,crop(),video.videoHeight);if(!tracking)return;
       if(r.phase==='confirmed'){
         noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
-        $('reading').textContent=(phase==='connected'?'Following on phone · ':'Minimap match · ')+r.name;
+        $('reading').textContent=(phase==='connected'?'Following on phone · ':'Map name · ')+r.name;
         cmd({cmd:'location',id:r.id,confidence:r.confidence||0,observedAt:Date.now()});
         if(r.position)sendPosition(r.id,r.position);
         return;
       }
-      if(r.phase==='candidate'){noMatchSince=Date.now();$('reading').textContent='Checking the minimap…'+(r.name?' · '+r.name+'?':'');}
-      else $('reading').textContent=Date.now()-noMatchSince>12000?'No map found in the selected minimap area. Adjust the box around the minimap.':'Reading the minimap…';
+      if(r.phase==='candidate'){noMatchSince=Date.now();$('reading').textContent='Reading the map name…'+(r.name?' · '+r.name+'?':'');}
+      else $('reading').textContent=Date.now()-noMatchSince>12000?(r.text||'No map name found in the box. Press + on the in-game minimap so its name shows, and keep it inside the box.'):'Reading the map name…';
       if(Date.now()-lastSearching>5000){cmd({cmd:'tracking',state:'searching'});lastSearching=Date.now();}
     }catch(e){$('reading').textContent=e.message;}
     finally{readBusy=false;}

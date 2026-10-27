@@ -55,7 +55,7 @@
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
       lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
     },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onReading:state=>{
-      lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the minimap visible while your computer identifies the map.');onConnection(state==='paused'?'stale':'searching');
+      lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the map name showing on the in-game minimap (press + on it) while your computer reads it.');onConnection(state==='paused'?'stale':'searching');
     },onState:value=>{
       paint(value);
       if(value.phase==='connected'){

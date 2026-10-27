@@ -381,13 +381,13 @@ final class CompanionModel {
 
     // MARK: Tracking
 
-    /// How long the minimap can go without any candidate before the status suggests moving the box.
+    /// How long the map name can go unread before the status explains how to show it.
     private static let noMatchHint: TimeInterval = 12
 
     func startTracking() {
         guard !isTracking, hasGameWindow else { return }
         isTracking = true
-        readingText = "Reading the minimap…"
+        readingText = "Reading the map name…"
         // Keep App Nap from stretching the capture interval while the game is in front.
         trackingActivity = ProcessInfo.processInfo.beginActivity(
             options: [.userInitiatedAllowingIdleSystemSleep], reason: "Tracking the game window")
@@ -530,7 +530,7 @@ final class CompanionModel {
                 kind: reading.kind, at: .now)
             lastPosition = reading.position
             let place = reading.position == nil ? "" : " · your dot found"
-            readingText = (isPhoneConnected ? "Following on phone · " : "Minimap match · ") + name + place
+            readingText = (isPhoneConnected ? "Following on phone · " : "Map name · ") + name + place
             if isPhoneConnected {
                 helper?.send(.location(id: id, confidence: reading.confidence ?? 0, observedAt: .now))
                 if let position = reading.position {
@@ -541,11 +541,11 @@ final class CompanionModel {
         }
         if reading.phase == "candidate" {
             noMatchSince = .now
-            readingText = "Checking the minimap…" + (reading.name.map { " · \($0)?" } ?? "")
+            readingText = "Reading the map name…" + (reading.name.map { " · \($0)?" } ?? "")
         } else if Date.now.timeIntervalSince(noMatchSince) >= Self.noMatchHint {
-            readingText = "No map found in the selected minimap area. Adjust the box around the minimap."
+            readingText = reading.text ?? "No map name found in the box. Press + on the in-game minimap so its name shows, and keep it inside the box."
         } else {
-            readingText = "Reading the minimap…"
+            readingText = "Reading the map name…"
         }
         if isPhoneConnected, lastSearchingSent.map({ Date.now.timeIntervalSince($0) >= 5 }) ?? true {
             helper?.send(.tracking(state: "searching"))

@@ -16,14 +16,14 @@ step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 step "Building Swift app"
 # Universal (Apple silicon and Intel) unless ARCHS says otherwise.
 ARCHS="${ARCHS:-arm64 x86_64}"
-VERSION="${VERSION:-0.3.4}"
+VERSION="${VERSION:-0.3.5}"
 SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
 (cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
 BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
 
 step "Assembling $APP"
 rm -rf "$APP"
-mkdir -p "$CONTENTS/MacOS" "$ENGINE/vendor/vision" "$ENGINE/data"
+mkdir -p "$CONTENTS/MacOS" "$ENGINE/data"
 cp "$BIN_DIR/MapleAtlasCompanion" "$CONTENTS/MacOS/$APP_NAME"
 
 if [[ -n "${MAPLE_LINK_BIN:-}" ]]; then
@@ -68,24 +68,19 @@ if [[ -f "$MACOS_DIR/engine/engine.html" ]]; then
 else
   warn "macos/engine/engine.html not found; the engine page is missing from the bundle."
 fi
-copy src/visual-client.js visual-client.js
-copy src/visual-tracker.js visual-tracker.js
-copy docs/vision-worker.js vision-worker.js
-copy docs/visual-matcher.js visual-matcher.js
-copy docs/vendor/vision/opencv.js vendor/vision/opencv.js
-copy docs/vendor/vision/LICENSE vendor/vision/LICENSE
-copy docs/data/visual-index.json data/visual-index.json
-INDEX_JSON="$REPO/docs/data/visual-index.json"
-INDEX_BIN="$(/usr/bin/plutil -extract data raw -o - "$INDEX_JSON" 2>/dev/null \
-  || sed -n 's/^{[^{]*"data"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$INDEX_JSON")"
-INDEX_BIN="${INDEX_BIN#./}"
-[[ "$INDEX_BIN" == data/*.bin ]] || { echo "error: unexpected data field in visual-index.json: $INDEX_BIN" >&2; exit 1; }
-copy "docs/$INDEX_BIN" "$INDEX_BIN"
+copy src/map-name.js map-name.js
 copy src/minimap-position.js minimap-position.js
 copy macos/engine/engine.js engine.js
 copy src/quest-helper.js quest-helper.js
 # On-device text recognition for the Quest Helper panel (Apache-2.0).
 for f in tesseract.min.js worker.min.js tesseract-core-simd-lstm.wasm.js LICENSE lang/eng.traineddata.gz; do copy "macos/engine/ocr/$f" "ocr/$f"; done
+# Every map's name and street, for reading the name in the minimap header (src/map-name.js).
+/usr/bin/python3 - "$REPO/docs/data/visual-index.json" "$ENGINE/data/map-names.json" <<'PY'
+import json, sys
+maps = json.load(open(sys.argv[1]))["maps"]
+json.dump([{"id": str(m["id"]), "name": m["name"].strip(), "street": (m.get("street") or "").strip()} for m in maps],
+          open(sys.argv[2], "w"), separators=(",", ":"))
+PY
 # Visible portal positions per map, for placing the player dot (see src/minimap-position.js).
 /usr/bin/python3 - "$REPO/data/world.json" "$ENGINE/data/portal-marks.json" <<'PY'
 import json, sys

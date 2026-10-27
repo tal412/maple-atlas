@@ -7,9 +7,9 @@ self.addEventListener('fetch',event=>{
   if(request.method!=='GET'||url.origin!==BASE.origin||!url.pathname.startsWith(BASE.pathname)||(CHANNEL==='main'&&relative.startsWith('dev/')))return;
   // Market refreshes have their own dated IndexedDB cache and failure states.
   // Do not disguise a failed refresh as a successful service-worker cache hit.
-  if(!['','index.html','favicon.svg','vision-worker.js','visual-matcher.js','data/visual-index.json'].includes(relative)&&!relative.startsWith('assets/')&&!relative.startsWith('vendor/')&&!/^data\/(?:search-[a-f0-9]+\.json|visual-[a-f0-9]+\.bin)$/.test(relative))return;
+  if(!['','index.html','favicon.svg','data/visual-index.json'].includes(relative)&&!relative.startsWith('assets/')&&!relative.startsWith('vendor/')&&!/^data\/(?:search-[a-f0-9]+\.json|visual-[a-f0-9]+\.bin)$/.test(relative))return;
   event.respondWith((async()=>{
-    const cache=await caches.open(CACHE),key=canonical(request),saved=await cache.match(key),fresh=request.mode==='navigate'||['data/visual-index.json','vision-worker.js','visual-matcher.js'].includes(relative);
+    const cache=await caches.open(CACHE),key=canonical(request),saved=await cache.match(key),fresh=request.mode==='navigate'||relative==='data/visual-index.json';
     if(saved&&!fresh)return saved;
     try{const response=await fetch(request);if(response.ok){try{await cache.put(key,response.clone());}catch(_){}return response;}if(saved)return saved;return response;}catch(e){if(saved)return saved;throw e;}
   })());

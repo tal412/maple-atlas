@@ -102,7 +102,7 @@ Location can be entered manually or received from the optional visual companion.
 
 Every one of the 246 location records includes a full-resolution game map, with 218 minimaps for lightweight previews. All 464 exact image files are hosted alongside the app in `docs/assets/`. Preview PNGs total about 3.9 MB across the entire catalog; only the selected preview and visible/nearby route previews load. Maps without a minimap show an open-map button without downloading a full image for the card. Open a local map from a place or route step; choose an exit, zoom, fit the map or focus the recorded portal. Portal overlays use the source image pixel coordinates and never invent an internal walking path. Full-resolution images load on demand. Their dimensions and all 457 portal coordinates are checked in `data/map-image-audit.json`.
 
-Game sprites and local map images come from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Map images load from this site first, using immutable source-hash filenames; the original image CDN is a fallback. Requests have bounded timeouts, failures hide the broken image, and the full-map viewer offers an explicit retry. `python3 scripts/vendor-map-images.py` restores missing or changed assets and verifies their Git blob hashes. Builds require no image download. Roboto, Lucide and the visual matcher are self-hosted. Game sprites can still require their source CDN; market and item-detail refreshes require internet. The atlas illustration and route geometry are included in the source.
+Game sprites and local map images come from a pinned [OSMS data repository](https://github.com/ohmi69/osms_datamine_dashboard) snapshot. Map images load from this site first, using immutable source-hash filenames; the original image CDN is a fallback. Requests have bounded timeouts, failures hide the broken image, and the full-map viewer offers an explicit retry. `python3 scripts/vendor-map-images.py` restores missing or changed assets and verifies their Git blob hashes. Builds require no image download. Roboto and Lucide are self-hosted. Game sprites can still require their source CDN; market and item-detail refreshes require internet. The atlas illustration and route geometry are included in the source.
 
 ## Verify a change
 
@@ -129,44 +129,18 @@ The live companion follows your game on your phone. **Maple Atlas Companion** ru
 1. Open the companion app. It shows a QR (until a phone is paired).
 2. On the phone, scan it with the camera app (it opens the site with the code in the URL fragment), or use **Live companion → Scan the companion's code**. A QR image or the pasted link also works.
 3. The phone connects with no second step. It remembers the computer (`localStorage`, per site) and reconnects by itself when Maple Atlas is on screen, or with one tap on **Reconnect** or the status badge. **Forget this computer** removes the pairing; **Pair a new phone** in the app replaces it.
-4. In the app, choose the game window, check the minimap box, and start tracking. The phone shows a gold **You** dot on the local game map and live hints toward the next route portal.
+4. In the game, press **+** on the minimap until its map name shows. In the app, choose the game window, put the box around the minimap and its name, and start tracking. The phone shows a gold **You** dot on the local game map and live hints toward the next route portal.
 
-Both devices must be on the same reachable local network. Guest Wi-Fi, VPNs and firewalls can block the link; on Windows, allow the app on private networks. Map recognition runs every 1.5 s and the dot about five times a second, on the computer only: screenshots never leave it. The link is an encrypted WebRTC data channel with no signaling, STUN or TURN server; the app is an ICE-lite peer, and the phone proves the QR secret over its own DTLS certificate. Pairing codes (`MA2…`) carry the app's ICE credentials, DTLS fingerprint, LAN addresses, session, expiry and secret. The channel carries confirmations, heartbeats, map IDs, positions, tracking status and sequence numbers, never images. The earlier browser-to-browser pairing (two scans) has been removed; its codes are refused.
+Both devices must be on the same reachable local network. Guest Wi-Fi, VPNs and firewalls can block the link; on Windows, allow the app on private networks. The map name is read every 1.5 s and the dot about five times a second, on the computer only: screenshots never leave it. The link is an encrypted WebRTC data channel with no signaling, STUN or TURN server; the app is an ICE-lite peer, and the phone proves the QR secret over its own DTLS certificate. Pairing codes (`MA2…`) carry the app's ICE credentials, DTLS fingerprint, LAN addresses, session, expiry and secret. The channel carries confirmations, heartbeats, map IDs, positions, tracking status and sequence numbers, never images. The earlier browser-to-browser pairing (two scans) has been removed; its codes are refused.
 
-### Rebuilding and checking the visual index
+### Reading the map name
 
-Normal builds use committed artifacts. To regenerate dependencies, run `npm ci --ignore-scripts && npm run vendor`. To rebuild map descriptors:
+The companion apps read the map name shown at the top of the in-game minimap ("Victoria Road" / "Henesys"): press **+** on the minimap until the name shows, and keep the whole minimap with its name inside the app's box. `src/map-name.js` finds the light-blue name strip, prepares its white letters, and matches the recognized street and map name to the 336 maps in `docs/data/visual-index.json`; text recognition runs on the computer (Tesseract, `macos/engine/ocr`, Apache-2.0), the same reader as the Quest Helper. Maps with the very same name and street (for example the Coconut Harvest copies) are told apart by the map you came from. Reading the map from the minimap picture was removed in 0.3.5.
 
 ```sh
-python3 -m venv .openai/vision-env
-.openai/vision-env/bin/pip install -r scripts/requirements-vision.txt
-.openai/vision-env/bin/python scripts/visual-index.py --download
-python3 scripts/build.py --channel dev
-node tests/visual-matcher.test.cjs
-node tests/visual-tracker.test.cjs
+node tests/map-name.test.cjs
+node tests/minimap-position.test.cjs
 node tests/companion-link.test.cjs
 node tests/companion-device.test.cjs
 node tests/offline.test.cjs
 ```
-
-`data/visual-sources.json` pins every source image to the OSMS export commit and Git blob hash. `scripts/visual-index.py --sources` regenerates that inventory only when the pinned raw export is present in the ignored research directory. The binary index has a content-hashed filename, byte length and SHA-256 checked by the worker before use. The uploaded photograph used during development stays outside the published files.
-
-The October 24, 2026 test run used the same matcher as the browser worker:
-
-| Input | Confidently correct | Uncertain/rejected | Confidently wrong |
-| --- | ---: | ---: | ---: |
-| 336 cropped reference views | 288 | 48 | 0 |
-| 8 cropped full game scenes | 7 | 1 | 0 |
-| 1 real monitor photo, tested whole and in four crops | 5 | 0 | 0 |
-| Wall-only crop, solid image, random noise | 0 | 3 | 0 |
-
-These are controlled reference-image tests plus one real photo, not a measured accuracy rate across live gameplay. Similar Free Market rooms account for many uncertain results. The supplied photo of Construction Site North of Kerning City also passed in the actual browser UI with 203 geometrically aligned landmarks. Map titles were not read. Walking, moving overlays, different game settings and device performance still need real-play testing.
-
-Reproduce the public-image benchmark with the pinned Python environment above:
-
-```sh
-.openai/vision-env/bin/python scripts/benchmark-vision.py
-node scripts/benchmark-vision.cjs
-```
-
-It prepares 336 map crops, eight scene crops and two negative images, and writes the results under ignored `.openai/vision-benchmark/`. Use `--photo /path/to/photo.jpg --expected MAP_ID` to add a private image locally. The standard test suite also checks vector integrity, three representative image cases, temporal confirmation, stale-location handling, data-channel validation and offline cache behavior.

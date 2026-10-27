@@ -186,7 +186,7 @@ private struct GameWindowSection: View {
                 Spacer()
                 Button(model.hasGameWindow ? "Change window…" : "Choose game window…") { model.chooseGameWindow() }
             }
-            Text("macOS shows its own window picker; click your game window. No Screen Recording permission is needed. Frames stay on this Mac; only the map ID is sent to your phone.")
+            Text("macOS shows its own window picker; click your game window. No Screen Recording permission is needed. Frames stay on this Mac; only the map ID and your dot are sent to your phone.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -198,13 +198,17 @@ private struct GameWindowSection: View {
                         region: model.minimapRect,
                         onChange: { model.setMinimapRect($0) })
                     HStack {
-                        Text("Drag a box around the in-game minimap")
+                        Text("Drag a box around the in-game minimap and its map name")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                         Spacer()
                         Button("Reset to top-left") { model.resetMinimapRect() }
                             .disabled(model.isDefaultMinimapRect)
                     }
+                    Text("Maple Atlas reads the map name at the top of the minimap. Press + on the in-game minimap until the name shows (for example \u{201C}Victoria Road \u{00B7} Henesys\u{201D}), and keep it inside the box.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.vertical, 4)
             }

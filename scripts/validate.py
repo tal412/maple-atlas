@@ -158,14 +158,15 @@ for record in visual['records']:
     offset += record['count'] * 40
 assert offset == len(vectors)
 assert set(source_maps) - {r['id'] for r in visual['records']} == {'900000003'}
-for name in ('vision-worker.js', 'visual-matcher.js'):
-    assert (ROOT / 'src' / name).read_bytes() == (ROOT / 'docs' / name).read_bytes()
+# Map recognition by picture was removed: the companion reads the map name in the minimap header.
+for gone in ('src/visual-matcher.js', 'src/vision-worker.js', 'src/visual-client.js', 'src/visual-tracker.js', 'docs/visual-matcher.js', 'docs/vision-worker.js', 'docs/vendor/vision/opencv.js'):
+    assert not (ROOT / gone).exists(), gone + ' must stay removed'
 versions = json.loads((ROOT / 'docs/vendor/companion/versions.json').read_text())
-assert hashlib.sha256((ROOT / 'docs/vendor/vision/opencv.js').read_bytes()).hexdigest() == versions['visionSha256']
+assert 'visionSha256' not in versions
 for name, digest in versions['files'].items():
     assert hashlib.sha256((ROOT / 'docs/vendor/companion' / name).read_bytes()).hexdigest() == digest
 service_worker = (ROOT / 'docs/sw.js').read_text()
-# The phone no longer runs the matcher; the companion apps bundle it from docs/.
+# The phone never runs map recognition.
 assert visual['data'][2:] not in service_worker and 'vendor/companion/qr.js' in service_worker and '__OFFLINE_FILES__' not in service_worker
 assert 'Tesseract' not in page and 'MapleVisualClient' not in page, 'The website no longer runs the matcher or OCR'
 assert 'MapleCompanionDevice.detect' in page

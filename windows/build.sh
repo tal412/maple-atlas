@@ -9,20 +9,21 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LINK="$REPO/macos/link"
 WEBUI="$LINK/webui"
 OUT="$REPO/windows/build"
-VERSION="${VERSION:-0.3.4}"
+VERSION="${VERSION:-0.3.5}"
 WINRES="$(command -v go-winres || echo "$HOME/go/bin/go-winres")"
 
 echo "==> Collecting the window and engine files"
-rm -rf "$WEBUI" && mkdir -p "$WEBUI/vendor/vision" "$WEBUI/data" "$OUT"
+rm -rf "$WEBUI" && mkdir -p "$WEBUI/data" "$OUT"
 cp "$REPO/windows/ui/index.html" "$REPO/windows/ui/desktop.js" "$WEBUI/"
 cp "$REPO/src/favicon.svg" "$REPO/docs/vendor/companion/qr.js" "$WEBUI/"
-cp "$REPO/macos/engine/engine.js" "$REPO/src/visual-client.js" "$REPO/src/visual-tracker.js" "$REPO/src/minimap-position.js" "$REPO/src/quest-helper.js" "$WEBUI/"
+cp "$REPO/macos/engine/engine.js" "$REPO/src/map-name.js" "$REPO/src/minimap-position.js" "$REPO/src/quest-helper.js" "$WEBUI/"
 cp -R "$REPO/macos/engine/ocr" "$WEBUI/ocr"
-cp "$REPO/docs/vision-worker.js" "$REPO/docs/visual-matcher.js" "$WEBUI/"
-cp "$REPO/docs/vendor/vision/opencv.js" "$REPO/docs/vendor/vision/LICENSE" "$WEBUI/vendor/vision/"
-cp "$REPO/docs/data/visual-index.json" "$WEBUI/data/"
-BIN="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['data'][2:])" "$REPO/docs/data/visual-index.json")"
-cp "$REPO/docs/$BIN" "$WEBUI/$BIN"
+python3 - "$REPO/docs/data/visual-index.json" "$WEBUI/data/map-names.json" <<'PY'
+import json, sys
+maps = json.load(open(sys.argv[1]))["maps"]
+json.dump([{"id": str(m["id"]), "name": m["name"].strip(), "street": (m.get("street") or "").strip()} for m in maps],
+          open(sys.argv[2], "w"), separators=(",", ":"))
+PY
 python3 - "$REPO/data/world.json" "$WEBUI/data/portal-marks.json" <<'PY'
 import json, sys
 world = json.load(open(sys.argv[1]))

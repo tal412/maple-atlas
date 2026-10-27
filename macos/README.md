@@ -2,7 +2,7 @@
 
 **Download:** [MapleAtlasCompanion-mac.dmg](https://github.com/tal412/maple-atlas/releases/latest/download/MapleAtlasCompanion-mac.dmg) (Apple silicon and Intel, macOS 14+). Open it and drag the app to Applications. Windows: [MapleAtlasCompanion-Setup.exe](https://github.com/tal412/maple-atlas/releases/latest/download/MapleAtlasCompanion-Setup.exe). To build the installers yourself: `macos/package.sh` and `windows/build.sh`.
 
-A native macOS app that replaces the browser on the computer side of the live companion. It captures the game window, recognizes the current map with the same matcher as the website, and sends the map ID to your phone. Pairing takes **one scan**: point the phone's camera at the QR in the app. No camera is needed on the Mac, and nothing is sent to the internet.
+A native macOS app that replaces the browser on the computer side of the live companion. It captures the game window, reads the map name shown at the top of the in-game minimap, and sends the map ID to your phone. Press **+** on the in-game minimap until its name shows (for example "Victoria Road · Henesys") and keep it inside the app's box. Pairing takes **one scan**: point the phone's camera at the QR in the app. No camera is needed on the Mac, and nothing is sent to the internet.
 
 ## Build and run
 
@@ -23,9 +23,9 @@ The phone uses the website (Main by default; switch to Dev in Settings). The sit
 
 ## Your position and portal guidance
 
-Map recognition runs every 1.5 s. Between those reads the app locates only your dot, about **5 times a second**, on the confirmed map (a few milliseconds per read), so the phone follows smoothly. On every confirmed minimap match, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".
+The map name is read every 1.5 s. Between those reads the app locates only your dot, about **5 times a second**, on the confirmed map (a few milliseconds per read), so the phone follows smoothly. On every confirmed map, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".
 
-Dot, ring and title colors, the fit and the guidance wording are adapted from [Maple Route](https://github.com/maplerouteadmin-dev/maple-route) (MIT; its notice is in `src/minimap-position.js`). Map identity still comes from this project's landmark matcher, not from reading the map name.
+Dot, ring and title colors, the fit and the guidance wording are adapted from [Maple Route](https://github.com/maplerouteadmin-dev/maple-route) (MIT; its notice is in `src/minimap-position.js`). Map identity comes from reading the map name in the minimap's title strip (`src/map-name.js`, on-device text recognition).
 
 ## How it works
 
@@ -33,12 +33,12 @@ Dot, ring and title colors, the fit and the guidance wording are adapted from [M
 Phone (website)  ──WebRTC data channel, same Wi-Fi──>  maple-link (Go, Pion)
                                                           │ stdin/stdout JSON
 Game window ──ScreenCaptureKit──> Swift app ──frames──> hidden WKWebView
-                                                          (engine.html: OpenCV ORB matcher, minimap references)
+                                                          (engine.html: map-name reader, dot finder, Quest Helper reader)
 ```
 
 - **`App/`** — SwiftUI app: pairing QR and status, the system window picker with a 2 fps ScreenCaptureKit stream, the minimap box, a 1.5 s matching loop, and the hidden web view that runs `engine.html`. Frames stay in memory on the Mac; only map IDs are sent.
 - **`link/`** — `maple-link` helper. Runs a WebRTC peer in ICE-lite mode on one UDP port, serves the engine files on `127.0.0.1`, and speaks the same data-channel protocol as the browser computer role in `src/companion-link.js`.
-- **`engine/engine.html`** — wraps the website's `visual-client.js`, `vision-worker.js`, `visual-matcher.js` and `visual-tracker.js` unchanged. `build.sh` copies them and the visual index into the app.
+- **`engine/engine.html`** — loads `map-name.js`, `minimap-position.js`, `quest-helper.js`, the on-device text reader (`ocr/`) and `engine.js`. `build.sh` copies them and writes the map list (`data/map-names.json`) into the app.
 
 ### Why one scan is enough
 
