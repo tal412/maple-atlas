@@ -91,7 +91,7 @@
     function describe() {
       const destination = edge ? get(edge.to)?.name : '';
       const live = edge && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, {x: Number(edge.x), y: Number(edge.y)}) : null;
-      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : '') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+      $('#mc-local-instruction').textContent = edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
     }
     function choose(index) {
       edge = current.portals[index];

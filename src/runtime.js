@@ -104,6 +104,13 @@
   function openProfile(){$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
   $('#mc-desktop-quests').onclick=()=>{state.panel='progress';setSheet(true);detail();camera();save();};
+  // Navigation: the live map opens by itself during a route on a phone, until you close it.
+  let navDismissed=false;
+  function autoNavigate(){
+    if(!mobile.matches||!state.routeActive||navDismissed||$('#mc-local-dialog').open||state.route.length<2)return;
+    const at=liveFresh&&state.route.includes(liveLocation)?liveLocation:state.route[Math.min(state.step,state.route.length-1)],i=state.route.indexOf(at);
+    if(i>=0&&i<state.route.length-1)localMaps.open(at,state.route[i+1]);
+  }
   let liveLocation=null,liveFresh=false,livePosition=null,liveHint='',liveAt=0,linkPhase='',searchTimer=null;
   const GRACE=15000;
   // While the computer briefly cannot read the map name, keep showing the last map; after
@@ -140,6 +147,7 @@
     state.from=String(m.id);state.selected=String(m.id);hasInspected=true;$('#mc-from').value=m.name;
     if(state.routeActive)plan();
     if(navigating){const i=state.route.indexOf(String(m.id));if(i>=0)localMaps.open(String(m.id),state.route[i+1]||'');else $('#mc-local-dialog').close();}
+    else autoNavigate();
     const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
     render();camera();
   },onPosition:value=>{
@@ -174,7 +182,9 @@
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   const changes=n=>n===1?'1 map change':n+' map changes';
-  function endRoute(){state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
+  function endRoute(){navDismissed=false;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
+  const byHand=()=>{if(state.routeActive)navDismissed=true;};
+  $('#mc-local-close').addEventListener('click',byHand);$('#mc-local-dialog').addEventListener('cancel',byHand);$('#mc-local-dialog').addEventListener('click',e=>{if(e.target===$('#mc-local-dialog'))byHand();});
   $('#mc-clear-route').onclick=endRoute;$('#mc-route-chip').onclick=endRoute;
   $$('[data-mobile-panel]').forEach(b=>b.onclick=()=>{
     if(b.dataset.mobilePanel==='route'&&!state.routeActive){openRoute();return;}
@@ -193,15 +203,26 @@
     }else if(state.panel==='route'&&!state.routeActive){
       box.innerHTML='<div class="mc-eyebrow">Directions</div><h3>Where to?</h3><div class="mc-secondary">You are at '+esc(get(state.from)?.name||'an unknown map')+'. Choose a destination above, or tap Directions on any place.</div>';
     }else if(state.panel==='route'){
-      const n=state.route.length-1;
-      const live=liveFresh&&state.route.includes(liveLocation)?'<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+'Live view</button>':'';
-      box.innerHTML='<div class="mc-route-head"><div class="mc-eyebrow">Your route</div><button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button></div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':changes(n)+' · Fewest recorded portals')+'</div>'+live+(n>=0?'<ol class="mc-steplist">'+state.route.map((id,i)=>{
-        const p=get(id),next=state.route[i+1],edge=p.portals.find(e=>String(e.to)===next),badge=i===0?'A':i===n?'B':i;
-        return '<li'+(i===state.step?' aria-current="step"':'')+'><span class="mc-step-badge">'+badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(p.name)+'</button><p>'+esc(edge?MapleLocalMaps.instruction(edge,get(next)?.name):'You have arrived.')+'</p>'+(liveHint&&id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')+mapPreview(p,next)+'</li>';
-      }).join('')+'</ol>'+(liveFresh&&state.from===liveLocation?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')+'<div class="mc-secondary" style="margin-top:10px">'+(liveFresh&&state.from===liveLocation?'Screen detected':'Manual position')+' · '+esc(get(state.route[state.step]).name)+'</div>':'<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>');
+      // Navigation shows the map you are on now; the whole list folds into "All steps".
+      const n=state.route.length-1,isLive=liveFresh&&state.route.includes(liveLocation);
+      const now=isLive?state.route.indexOf(liveLocation):Math.max(0,Math.min(state.step,n));
+      const stepOf=i=>{const id=state.route[i],p=get(id),next=state.route[i+1];return {id,p,next,edge:p.portals.find(e=>String(e.to)===next),badge:i===0?'A':i===n?'B':i};};
+      let body='<div class="mc-empty">Try a different start. Some scripted destinations are not included in this snapshot.</div>';
+      if(n>=0){
+        const s=stepOf(now),then=s.next?get(s.next):null;
+        body='<section class="mc-now" aria-label="Current map"><div class="mc-now-head"><div><div class="mc-eyebrow">'+(isLive?'You are here':'Step '+(now+1)+' of '+(n+1))+'</div><button type="button" data-inspect="'+s.id+'" class="mc-step-name">'+esc(s.p.name)+'</button></div></div>'
+          +'<p class="mc-now-text">'+esc(s.edge?MapleLocalMaps.instruction(s.edge,then?.name):'You have arrived.')+'</p>'
+          +(liveHint&&s.id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')
+          +(s.next?'<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+(isLive?'Live map · you and the way to the portal':'Map · the portal to take')+'</button>':'')
+          +(then?'<p class="mc-now-next">Then: '+esc(then.name)+'</p>':'')+'</section>'
+          +(isLive?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')
+          +'<div class="mc-secondary" style="margin-top:10px">'+(isLive?'Position from your screen':'Manual position · Connect the companion for your live position')+'</div>'
+          +'<details class="mc-allsteps"><summary>All steps ('+(n+1)+')</summary><ol class="mc-steplist">'+state.route.map((id,i)=>{const t=stepOf(i);return '<li'+(i===now?' aria-current="step"':'')+'><span class="mc-step-badge">'+t.badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(t.p.name)+'</button><p>'+esc(t.edge?MapleLocalMaps.instruction(t.edge,get(t.next)?.name):'You have arrived.')+'</p></li>';}).join('')+'</ol></details>';
+      }
+      box.innerHTML='<div class="mc-route-head"><div class="mc-eyebrow">Your route</div><button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button></div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':changes(n)+' · Fewest recorded portals')+'</div>'+body;
       // Ending the route lives in the route bar on the map; the panel only offers a change.
       $('#mc-edit-route').onclick=openRoute;
-      if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const i=state.route.indexOf(liveLocation);localMaps.open(liveLocation,state.route[i+1]||'');};
+      if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const s=stepOf(now);navDismissed=false;localMaps.open(s.id,s.next||'');};
       if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const history=DATA.quests.filter(q=>['completed','skipped'].includes(state.status[q.id]));
@@ -343,7 +364,7 @@
   function syncFields(){ $('#mc-from').value=get(state.from).name;$('#mc-to').value=get(state.to).name; }
   syncFields();
   $('#mc-towns').innerHTML=DATA.maps.map(m=>'<option value="'+esc(m.name)+'"></option>').join('');
-  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();plan();setSheet(!mobile.matches);render();$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections'+(liveFresh&&state.from===liveLocation?' · Screen detected start':' · Starting place set manually'):'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
+  $('#mc-form').onsubmit=e=>{e.preventDefault();const a=find($('#mc-from').value),b=find($('#mc-to').value);if(!a||!b){$('#mc-status').textContent='Select a map name from the suggestions.';$('#mc-route-note').textContent='Choose a valid starting map and destination.';return;}state.from=String(a.id);state.to=String(b.id);state.panel='route';if($('#mc-route-dialog').open)$('#mc-route-dialog').close();navDismissed=false;plan();setSheet(!mobile.matches);render();setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Route follows recorded portal connections'+(liveFresh&&state.from===liveLocation?' · Screen detected start':' · Starting place set manually'):'No recorded portal route. Try another start.';if(!state.route.length){setSheet(true);detail();camera();}save();};
   $('#mc-from').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};$('#mc-to').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};
   $('#mc-pickstart').onclick=()=>{state.pick=!state.pick;$('#mc-pickstart').textContent=state.pick?'Select a point…':'Pick start on map';$('#mc-status').textContent=state.pick?'Click any map point to set your current location.':'Location set manually';if(mobile.matches&&state.pick){$('#mc-route-dialog').close();setSheet(false);camera();notice('Tap a map point to set your starting location.');}};
   $$('.mc-tabs button').forEach(b=>b.onclick=()=>{state.panel=b.dataset.panel;setSheet(true);detail();camera();save();});
