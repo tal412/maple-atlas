@@ -248,7 +248,7 @@ func (o *overlayState) run() {
 	pRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc)))
 	hwnd, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTransparent|wsExTopmost|wsExToolWindow|wsExNoActivate,
 		uintptr(unsafe.Pointer(class)), uintptr(unsafe.Pointer(utf16("Maple Atlas navigation"))), wsPopup,
-		0, 0, 460, 96, 0, 0, 0, 0)
+		0, 0, 460, 102, 0, 0, 0, 0)
 	if hwnd == 0 {
 		return
 	}
@@ -347,7 +347,7 @@ func (o *overlayState) tick(hwnd uintptr) {
 	var r winRect
 	pGetWindowRect.Call(game, uintptr(unsafe.Pointer(&r)))
 	scale := dpiScale(game)
-	w, h := int32(460*scale), int32(96*scale)
+	w, h := int32(460*scale), int32(102*scale)
 	if gw := r.Right - r.Left - int32(40*scale); w > gw {
 		w = gw
 	}
@@ -457,9 +457,9 @@ func (o *overlayState) paint(hwnd uintptr) {
 		pSelectObject.Call(hdc, oldF)
 		pDeleteObject.Call(font)
 	}
-	text(label, px(10), px(50), px(17), 600, rgb(255, 255, 255), dtWordBreak)
-	text(hint, px(52), px(72), px(16), 500, rgb(255, 214, 79), dtSingleLine)
-	text(step, px(73), px(92), px(13), 400, rgb(180, 184, 190), dtSingleLine)
+	text(label, px(8), px(50), px(15), 600, rgb(255, 255, 255), dtWordBreak)
+	text(hint, px(53), px(73), px(15), 500, rgb(255, 214, 79), dtSingleLine)
+	text(step, px(76), px(94), px(12), 400, rgb(180, 184, 190), dtSingleLine)
 }
 
 func makeFont(height int32, weight uintptr) uintptr {
