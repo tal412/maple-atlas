@@ -217,15 +217,13 @@
           +(liveHint&&s.id===livePosition?.id?'<p class="mc-live-hint" role="status">'+esc(liveHint)+'</p>':'')
           +(s.next?'<button type="button" id="mc-live-view" class="mc-primary mc-live-view">'+icon('navigation')+(isLive?'Live map · you and the way to the portal':'Map · the portal to take')+'</button>':'')
           +(then?'<p class="mc-now-next">Then: '+esc(then.name)+'</p>':'')+'</section>'
-          +(isLive?'':'<button type="button" class="mc-primary cursor-interaction" id="mc-step">'+(state.step>=n?'Restart route':'I reached the next map')+'</button>')
-          +'<div class="mc-secondary" style="margin-top:10px">'+(isLive?'Position from your screen':'Manual position · Connect the companion for your live position')+'</div>'
+          +'<div class="mc-secondary" style="margin-top:10px">'+(isLive?'Position from your screen':'Connect the companion to follow your position')+'</div>'
           +'<details class="mc-allsteps"><summary>All steps ('+(n+1)+')</summary><ol class="mc-steplist">'+state.route.map((id,i)=>{const t=stepOf(i);return '<li'+(i===now?' aria-current="step"':'')+'><span class="mc-step-badge">'+t.badge+'</span><button type="button" data-inspect="'+id+'" class="mc-step-name">'+esc(t.p.name)+'</button><p>'+esc(t.edge?MapleLocalMaps.instruction(t.edge,get(t.next)?.name):'You have arrived.')+'</p></li>';}).join('')+'</ol></details>';
       }
       box.innerHTML='<div class="mc-route-head"><div class="mc-eyebrow">Your route</div><button type="button" id="mc-edit-route" class="mc-edit-route">Change route</button></div><h3>'+esc(get(state.to).name)+'</h3><div class="mc-secondary">'+(n<0?'No recorded route found':changes(n)+' · Fewest recorded portals')+'</div>'+body;
       // Ending the route lives in the route bar on the map; the panel only offers a change.
       $('#mc-edit-route').onclick=openRoute;
       if($('#mc-live-view'))$('#mc-live-view').onclick=()=>{const s=stepOf(now);navDismissed=false;localMaps.open(s.id,s.next||'');};
-      if($('#mc-step'))$('#mc-step').onclick=()=>{state.step=state.step>=n?0:state.step+1;state.selected=state.route[state.step];render();save();};
     }else if(state.panel==='progress'){
       const history=DATA.quests.filter(q=>['completed','skipped'].includes(state.status[q.id]));
       const html=questPanel.html()+(history.length?'<details class="mc-quest-history"'+(questHistoryOpen?' open':'')+'><summary>Completed & skipped <span>'+history.length+'</span>'+icon('chevron-down')+'</summary><p>Review a quest or change its status.</p>'+questRows(history)+'</details>':'')+'<div id="mc-journal-storage" class="mc-datahint" role="status">'+esc($('#mc-save-status').textContent)+'</div>';
