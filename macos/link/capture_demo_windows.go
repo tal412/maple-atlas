@@ -5,8 +5,8 @@ package main
 // --capture-demo [image.png]: opens a stand-in game window titled "Fake MapleStory" that
 // shows a Quest Helper panel (drawn text, or the given picture), then finds it by title,
 // captures it and reads it with Windows' text recognition, as the app does. Prints the
-// lines as JSON and exits 0 when the window was found and "18 / 20 Pig's Ribbon" was read
-// (with a picture: when any line was read).
+// lines as JSON and exits 0 when the window was found and all three counts were read
+// exactly (with a picture: when any line was read).
 
 import (
 	"encoding/json"
@@ -112,13 +112,20 @@ func runCaptureDemo(picture string) int {
 	if pic != nil {
 		return demoReport(report, map[bool]int{true: 0, false: 1}[len(lines) > 0])
 	}
-	want := regexp.MustCompile(`^18\s*/\s*20\s+Pig'?s Ribbon$`)
-	for _, l := range lines {
-		if want.MatchString(strings.TrimSpace(l.Text)) {
-			return demoReport(report, 0)
+	// Every count must be read exactly; names may slip (the phone pairs them by count).
+	missing := []string{}
+	for _, count := range []string{"15 / 15", "10 / 10", "18 / 20"} {
+		want := regexp.MustCompile(`^` + strings.ReplaceAll(count, " / ", `\s*/\s*`) + `\s+\S`)
+		ok := false
+		for _, l := range lines {
+			ok = ok || want.MatchString(strings.TrimSpace(l.Text))
+		}
+		if !ok {
+			missing = append(missing, count)
 		}
 	}
-	return demoReport(report, 1)
+	report["missing"] = missing
+	return demoReport(report, map[bool]int{true: 0, false: 1}[len(missing) == 0])
 }
 
 func demoReport(report map[string]any, code int) int {

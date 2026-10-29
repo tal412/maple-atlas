@@ -93,7 +93,10 @@
     return null;
   }
   // The panel's own title, "Quest Helper (2/5)", even misread ("QuestHeper 25)").
-  const isHeader=line=>{const t=normalize(line).replace(/ /g,'').slice(0,11);return /quest\s*helper/i.test(line)||(t.length>=8&&editDistance(t,'questhelper'.slice(0,t.length))<=2);};
+  // "Quest Helper (2/5)", allowing a few misread letters ("Quest Het)er"): letters only.
+  const isHeader=line=>{const t=String(line||'').toLowerCase().replace(/[^a-z]/g,'').slice(0,11);if(/quest\s*helper/i.test(line))return true;if(t.length<8||!t.startsWith('q'))return false;
+    // the title's "(2/5)" lets one more slip through; a quest named "Quest Hunter …" has none
+    const d=editDistance(t,'questhelper'.slice(0,Math.max(t.length,10)));return d<=2||(d<=3&&/\(\s*\d[\d\s/|lI]*\)/.test(line));};
   // Every tracked quest: a title line followed by its "have / need name" lines.
   function parse(text){
     const quests=[];

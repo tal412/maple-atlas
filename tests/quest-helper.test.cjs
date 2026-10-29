@@ -101,3 +101,13 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.panelText([L('3 / 5 Snail Shell',0,0)],{marked:true}),'3 / 5 Snail Shell');
   console.log('quest-helper: system recognizer lines pass');
 }
+// Windows OCR on a drawn panel (real output): a slipped title is still the header.
+{
+  const lines=[{text:'Quest Het)er (2/5)',x:95.5,y:30.5,w:141.5,h:16},{text:'Make a Match Cards Set',x:96,y:56.5,w:183,h:13},{text:'15 / 15 Monster Card',x:96.5,y:82.5,w:159.5,h:15},{text:"Mrs. Mng Ming's First Worry",x:95.5,y:134.5,w:214.5,h:16},{text:'10 / 10 Slirne Bubble',x:96.5,y:160.5,w:152.5,h:15},{text:"18 / 20 Pig's Rbbon",x:96.5,y:186.5,w:147.5,h:16}];
+  const q=Q.pack(Q.parse(Q.panelText(lines)));
+  assert.deepEqual(q.map(x=>x.p.map(p=>p[0]+'/'+p[1])),[['15/15'],['10/10','18/20']]);
+  // Quest titles are not taken for the header.
+  for(const t of ['Quest for the Snail Shell','Questions for Helena','Quest Hunter Rookie'])assert.equal(Q.pack(Q.parse('Quest Helper\n'+t+'\n1 / 2 Shell'))[0]?.t,t,t);
+  assert.equal(Q.pack(Q.parse('Quest Helper\nQuest for the Snail Shell\n1 / 2 Shell'))[0].t,'Quest for the Snail Shell');
+  console.log('quest-helper: slipped header passes');
+}

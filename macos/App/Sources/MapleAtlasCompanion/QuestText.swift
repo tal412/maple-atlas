@@ -77,7 +77,10 @@ enum QuestText {
     static func isHeader(_ text: String) -> Bool {
         let letters = text.lowercased().filter { $0.isLetter }
         guard letters.count >= 9 else { return false }
-        return editDistance(String(letters.prefix(11)), "questhelper") <= 3
+        guard letters.first == "q" else { return false }
+        // The title's "(2/5)" lets one more slip through; a quest named "Quest Hunter …" has none.
+        let distance = editDistance(String(letters.prefix(11)), "questhelper")
+        return distance <= 2 || (distance <= 3 && text.range(of: #"\(\s*\d[\d\s/|lI]*\)"#, options: .regularExpression) != nil)
     }
 
     private static func editDistance(_ a: String, _ b: String) -> Int {
