@@ -286,6 +286,28 @@
     for(let i=0;i<lum.length;i++){const v=lum[i]<cut?0:255;out[i*4]=out[i*4+1]=out[i*4+2]=v;out[i*4+3]=255;}
     return {width,height,data:out,dark,mid};
   }
-  const exported={inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Lines from a system text recognizer (Windows OCR; Apple Vision does the same in Swift):
+  // [{text,x,y,w,h}] in pixels, top-left origin. Returns the panel's text from its
+  // "Quest Helper" title down, in reading order, or null when no panel is seen. The title
+  // row's buttons (AUTO) are dropped; it also sets the panel's right edge. marked: the
+  // player drew a box around the panel, so without a readable title every line is taken.
+  function panelText(lines,{marked=false}={}){
+    const all=(lines||[]).filter(l=>l&&String(l.text||'').trim()&&l.h>0).map(l=>({...l,text:String(l.text).trim()}));
+    const over=(a,b)=>Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y)>Math.min(a.h,b.h)*.5;
+    all.sort((a,b)=>over(a,b)?a.x-b.x:(a.y+a.h/2)-(b.y+b.h/2));
+    if(!all.length)return null;
+    const header=all.find(l=>isHeader(l.text));
+    if(!header)return marked?all.map(l=>l.text).join('\n'):null;
+    const lh=Math.max(1,header.h),right=Math.max(...all.filter(l=>over(l,header)).map(l=>l.x+l.w))+lh;
+    const kept=[header];let bottom=header.y+header.h;
+    for(const l of all){
+      if(l.y+l.h/2<=header.y+header.h)continue;
+      if(l.x<header.x-lh*1.5||l.x>=right)continue;
+      if(l.y-bottom>lh*3.5)break;   // past the panel's end
+      kept.push(l);bottom=Math.max(bottom,l.y+l.h);
+    }
+    return kept.map(l=>l.text).join('\n');
+  }
+  const exported={panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

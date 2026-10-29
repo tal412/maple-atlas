@@ -1,0 +1,48 @@
+# Checks the Windows app's game-window finding, capture and Quest Helper reading on a real
+# Windows machine: a stand-in "MapleStory" window shows a drawn Quest Helper panel; the app
+# must find it by title, capture it and read "18 / 20 Pig's Ribbon" with Windows' OCR.
+name: Windows capture check
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'macos/link/gamecap_windows.go'
+      - 'macos/link/winocr_windows.go'
+      - 'macos/link/capture_demo_windows.go'
+      - 'macos/link/gameapi.go'
+      - 'macos/link/frames.go'
+      - '.github/workflows/windows-capture.yml'
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: macos/link/go.mod
+      - name: Build the app (window files replaced by a stub)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force macos/link/webui | Out-Null
+          Set-Content macos/link/webui/index.html '<!doctype html><title>stub</title>'
+          cd macos/link
+          go vet -tags desktopui .
+          go test ./...
+          go build -tags desktopui -o "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" .
+      - name: Capture and OCR self-check
+        shell: pwsh
+        run: |
+          cd $env:RUNNER_TEMP
+          $out = & "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" --capture-demo | Out-String
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 0) { throw "capture self-check failed ($code)" }
+          Write-Host 'PASS: game window found, captured and read'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capture-demo
+          path: ${{ runner.temp }}/capture-demo.bmp
+          if-no-files-found: warn

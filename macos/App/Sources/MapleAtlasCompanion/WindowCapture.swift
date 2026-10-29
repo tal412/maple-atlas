@@ -62,6 +62,28 @@ final class GameCapture: NSObject {
         picker.present(using: .window)
     }
 
+    /// Whether windows can be listed (Screen Recording allowed in System Settings): then the
+    /// game window is found without the picker.
+    nonisolated static var canListWindows: Bool { CGPreflightScreenCaptureAccess() }
+
+    /// Finds the game's window by its app or title ("MapleStory Classic World") and starts
+    /// reading it. Returns false when none is open or windows cannot be listed.
+    func findGameWindow() async -> Bool {
+        guard Self.canListWindows, !isCapturing,
+              let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+        else { return false }
+        let own = Bundle.main.bundleIdentifier
+        let candidates = content.windows.filter { window in
+            guard let app = window.owningApplication, app.bundleIdentifier != own, window.windowLayer == 0,
+                  window.frame.width >= 320, window.frame.height >= 240 else { return false }
+            return "\(app.applicationName) \(app.bundleIdentifier) \(window.title ?? "")".lowercased().contains("maplestory")
+        }
+        guard !isCapturing, let window = candidates.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })
+        else { return false }
+        start(with: SCContentFilter(desktopIndependentWindow: window), windowID: window.windowID)
+        return true
+    }
+
     func stop() {
         let current = stream
         stream = nil
@@ -99,7 +121,7 @@ final class GameCapture: NSObject {
             frameHeight: Int((Double(image.height) * factor).rounded()))
     }
 
-    fileprivate func start(with filter: SCContentFilter) {
+    fileprivate func start(with filter: SCContentFilter, windowID knownID: CGWindowID? = nil) {
         stop()
         let scale = CGFloat(filter.pointPixelScale)
         let configuration = SCStreamConfiguration()
@@ -121,7 +143,7 @@ final class GameCapture: NSObject {
         }
         self.stream = stream
         isCapturing = true
-        if #available(macOS 15.2, *) { windowID = filter.includedWindows.first?.windowID } else { windowID = nil }
+        if #available(macOS 15.2, *) { windowID = knownID ?? filter.includedWindows.first?.windowID } else { windowID = knownID }
         onSelected?(Self.label(for: filter), Self.key(for: filter))
         Task {
             do {

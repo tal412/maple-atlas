@@ -133,9 +133,20 @@ var firewallCommand func(arg string) int
 // on-game navigation card against a stand-in game window, for CI.
 var overlayDemo func() int
 
+// captureDemo handles --capture-demo [image.png] on Windows (capture_demo_windows.go): finds,
+// captures and reads a stand-in game window showing a Quest Helper panel, for CI.
+var captureDemo func(image string) int
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "--overlay-demo" && overlayDemo != nil {
 		os.Exit(overlayDemo())
+	}
+	if len(os.Args) >= 2 && os.Args[1] == "--capture-demo" && captureDemo != nil {
+		image := ""
+		if len(os.Args) > 2 {
+			image = os.Args[2]
+		}
+		os.Exit(captureDemo(image))
 	}
 	if len(os.Args) == 2 && strings.HasSuffix(os.Args[1], "-firewall") && firewallCommand != nil {
 		os.Exit(firewallCommand(os.Args[1]))

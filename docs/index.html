@@ -2798,10 +2798,14 @@ window.mapleStorageReady.then(() => {
   function countSpan(words){
     const lead=[];
     let i=0;
-    while(i<(words||[]).length&&/^(?:[^\p{L}\p{N}]+|[^\d\s])$/u.test(String(words[i]?.text||'').trim()))i++;   // stray edge marks
     // Digits and slash look-alikes; a token of 3+ marks may hold one other stray mark glued on
     // by the reader ("F10", "T0710"): the pixels decide the numbers later.
-    const isDigits=t=>/\d/.test(t)&&t.replace(/[\d/7lI|\\£#{(\[\]!.,:;]/g,'').length<=(t.length>=3?1:0),rest0=(words||[]).slice(i);
+    const isDigits=t=>/\d/.test(t)&&t.replace(/[\d/7lI|\\£#{(\[\]!.,:;]/g,'').length<=(t.length>=3?1:0);
+    while(i<(words||[]).length&&/^(?:[^\p{L}\p{N}]+|[^\d\s])$/u.test(String(words[i]?.text||'').trim()))i++;   // stray edge marks
+    // Scenery inside a drawn box can add a short letter blob before the counts ("Ne 10710").
+    const txt=k=>String(words?.[k]?.text||'').trim();
+    while(i<(words||[]).length-1&&txt(i).length<=2&&!/\d/.test(txt(i))&&isDigits(txt(i+1)))i++;
+    const rest0=(words||[]).slice(i);
     for(let k=0;k<rest0.length;k++){
       const w=rest0[k],t=String(w?.text||'').trim();if(!t)continue;
       const slash=lead.length&&/^[/7lI|\\]+$/.test(t);
@@ -2878,7 +2882,29 @@ window.mapleStorageReady.then(() => {
     for(let i=0;i<lum.length;i++){const v=lum[i]<cut?0:255;out[i*4]=out[i*4+1]=out[i*4+2]=v;out[i*4+3]=255;}
     return {width,height,data:out,dark,mid};
   }
-  const exported={inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Lines from a system text recognizer (Windows OCR; Apple Vision does the same in Swift):
+  // [{text,x,y,w,h}] in pixels, top-left origin. Returns the panel's text from its
+  // "Quest Helper" title down, in reading order, or null when no panel is seen. The title
+  // row's buttons (AUTO) are dropped; it also sets the panel's right edge. marked: the
+  // player drew a box around the panel, so without a readable title every line is taken.
+  function panelText(lines,{marked=false}={}){
+    const all=(lines||[]).filter(l=>l&&String(l.text||'').trim()&&l.h>0).map(l=>({...l,text:String(l.text).trim()}));
+    const over=(a,b)=>Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y)>Math.min(a.h,b.h)*.5;
+    all.sort((a,b)=>over(a,b)?a.x-b.x:(a.y+a.h/2)-(b.y+b.h/2));
+    if(!all.length)return null;
+    const header=all.find(l=>isHeader(l.text));
+    if(!header)return marked?all.map(l=>l.text).join('\n'):null;
+    const lh=Math.max(1,header.h),right=Math.max(...all.filter(l=>over(l,header)).map(l=>l.x+l.w))+lh;
+    const kept=[header];let bottom=header.y+header.h;
+    for(const l of all){
+      if(l.y+l.h/2<=header.y+header.h)continue;
+      if(l.x<header.x-lh*1.5||l.x>=right)continue;
+      if(l.y-bottom>lh*3.5)break;   // past the panel's end
+      kept.push(l);bottom=Math.max(bottom,l.y+l.h);
+    }
+    return kept.map(l=>l.text).join('\n');
+  }
+  const exported={panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);
 

@@ -87,3 +87,17 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.ok(sp&&sp.box.x0===20&&sp.rest==='Slime Bubble',JSON.stringify(sp));
   console.log('quest-helper: leading scenery blob passes');
 }
+// System recognizer lines -> panel text: title down, AUTO dropped, scenery to the side and
+// far below ignored.
+{
+  const L=(text,x,y,w=200,h=20)=>({text,x,y,w,h});
+  const lines=[L('AUTO',260,10,40),L('Quest Helper (2/5)',40,10),L('Make a Match Cards Set',50,40),L('15 /15 Monster Card',50,65),
+    L('Henesys',600,70,80),L('Mrs. Ming Ming\'s First Worry',50,110),L('10 / 10 Slime Bubble',50,135),L('18 / 20 Pig\'s Ribbon',50,160),L('Snail',60,400,40)];
+  const text=Q.panelText(lines);
+  assert.equal(text,"Quest Helper (2/5)\nMake a Match Cards Set\n15 /15 Monster Card\nMrs. Ming Ming's First Worry\n10 / 10 Slime Bubble\n18 / 20 Pig's Ribbon");
+  const quests=Q.pack(Q.parse(text));
+  assert.deepEqual(quests[1].p,[[10,10,'Slime Bubble'],[18,20,"Pig's Ribbon"]]);
+  assert.equal(Q.panelText([L('Henesys',0,0)]),null);
+  assert.equal(Q.panelText([L('3 / 5 Snail Shell',0,0)],{marked:true}),'3 / 5 Snail Shell');
+  console.log('quest-helper: system recognizer lines pass');
+}

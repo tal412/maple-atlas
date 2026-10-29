@@ -191,10 +191,18 @@ private struct GameWindowSection: View {
                 Spacer()
                 Button(model.hasGameWindow ? "Change window…" : "Choose game window…") { model.chooseGameWindow() }
             }
-            Text("macOS shows its own window picker; click your game window. No Screen Recording permission is needed. Frames stay on this Mac; only the map ID and your dot are sent to your phone.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if model.canFindWindow {
+                Text("The MapleStory window is found by itself and tracking starts on its own. Frames stay on this Mac; only the map ID, your dot and your quests are sent to your phone.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("To find the MapleStory window by itself, turn on Maple Atlas Companion in System Settings \u{203A} Privacy & Security \u{203A} Screen Recording, then reopen this app. Until then, choose the window in macOS\u{2019}s picker. Frames stay on this Mac.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Open Screen Recording settings") { model.openScreenRecordingSettings() }
+            }
 
             if model.hasGameWindow {
                 VStack(alignment: .leading, spacing: 8) {
@@ -245,7 +253,7 @@ private struct GameWindowSection: View {
 
             HStack {
                 if model.isTracking {
-                    Button("Stop tracking") { model.stopTracking() }
+                    Button("Stop tracking") { model.stopTrackingByPlayer() }
                 } else {
                     Button("Start tracking") { model.startTracking() }
                         .buttonStyle(.borderedProminent)

@@ -11,6 +11,10 @@ import (
 
 // openWindow is for running the desktop mode on a Mac or Linux during development.
 func openWindow(url, profile string) error {
+	if os.Getenv("MAPLE_LINK_NO_WINDOW") != "" { // headless page tests
+		fmt.Println("page:", url)
+		return nil
+	}
 	if runtime.GOOS == "darwin" {
 		chrome := "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 		if _, err := os.Stat(chrome); err == nil {

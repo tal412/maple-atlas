@@ -171,6 +171,7 @@ func runDesktop(site, stateDir string, _ bool) {
 			}
 		}
 	})
+	registerGameAPI(mux, token, logger.Printf)
 	mux.HandleFunc("/api/cmd", func(w http.ResponseWriter, r *http.Request) {
 		// Only this window may send commands: same origin and the launch token.
 		if r.Method != http.MethodPost || r.Header.Get("X-Companion-Token") != token || r.Header.Get("Origin") != origin {

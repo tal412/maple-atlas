@@ -142,6 +142,7 @@ final class CompanionModel {
             self.questMarked = quest != nil
             self.previewImage = nil
             self.log("Reading window: \(label)")
+            self.stoppedByPlayer = false
             if self.isTracking { self.runTrackingLoop() }
         }
         capture.onStopped = { [weak self] message in
@@ -185,10 +186,49 @@ final class CompanionModel {
         updater.start()
         launchHelper()
         startPreviewLoop()
+        startAutoLoop()
+    }
+
+    /// Whether the game window can be found without the picker (Screen Recording allowed).
+    private(set) var canFindWindow = GameCapture.canListWindows
+    @ObservationIgnored private var autoTask: Task<Void, Never>?
+    /// The player pressed Stop: tracking is not restarted by itself until a window is chosen
+    /// or found again, or Start is pressed.
+    @ObservationIgnored private var stoppedByPlayer = false
+
+    /// Every 2 s: finds the MapleStory window when none is being read, and starts tracking
+    /// as soon as there is a window and the engine is ready.
+    private func startAutoLoop() {
+        if !canFindWindow { _ = CGRequestScreenCaptureAccess() }   // macOS asks once
+        autoTask?.cancel()
+        autoTask = Task {
+            while !Task.isCancelled {
+                canFindWindow = GameCapture.canListWindows
+                if canFindWindow, !capture.isCapturing, await capture.findGameWindow() {
+                    stoppedByPlayer = false
+                    log("Found the game window by itself")
+                }
+                if hasGameWindow, case .ready = engineStatus, !isTracking, !stoppedByPlayer { startTracking() }
+                try? await Task.sleep(for: .seconds(2))
+            }
+        }
+    }
+
+    /// Stop pressed in the window.
+    func stopTrackingByPlayer() {
+        stoppedByPlayer = true
+        stopTracking()
+    }
+
+    func openScreenRecordingSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     /// Called from `applicationWillTerminate`: stop, close stdin, terminate.
     func shutdown() {
+        autoTask?.cancel()
         trackingTask?.cancel()
         previewTask?.cancel()
         positionTask?.cancel()
