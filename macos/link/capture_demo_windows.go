@@ -53,7 +53,7 @@ func runCaptureDemo(picture string) int {
 			if m == wmPaint {
 				var ps paintStruct
 				hdc, _, _ := pBeginPaint.Call(h, uintptr(unsafe.Pointer(&ps)))
-				paintDemo(hdc, pic)
+				paintDemo(hdc, h, pic)
 				pEndPaint.Call(h, uintptr(unsafe.Pointer(&ps)))
 				return 0
 			}
@@ -64,7 +64,7 @@ func runCaptureDemo(picture string) int {
 		wc.Size = uint32(unsafe.Sizeof(wc))
 		pRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc)))
 		const overlapped, visible = 0x00CF0000, 0x10000000
-		h, _, _ := pCreateWindowExW.Call(0, uintptr(unsafe.Pointer(class)), uintptr(unsafe.Pointer(utf16("Fake MapleStory"))), overlapped|visible, 80, 80, 1280, 760, 0, 0, 0, 0)
+		h, _, _ := pCreateWindowExW.Call(0, uintptr(unsafe.Pointer(class)), uintptr(unsafe.Pointer(utf16("Fake MapleStory"))), overlapped|visible, 0, 0, 1000, 700, 0, 0, 0, 0)
 		ready <- h
 		var m winMsg
 		for {
@@ -129,9 +129,10 @@ func demoReport(report map[string]any, code int) int {
 
 // paintDemo draws the stand-in game: green scenery and, at the top right, a light-blue
 // Quest Helper panel with dark text; or the given picture at the top right.
-func paintDemo(hdc uintptr, pic *image.RGBA) {
+func paintDemo(hdc, hwnd uintptr, pic *image.RGBA) {
 	var rc winRect
-	rc.Right, rc.Bottom = 4000, 3000
+	pGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&rc)))
+	right := rc.Right
 	bg, _, _ := pCreateSolidBrush.Call(rgb(70, 140, 80))
 	pFillRect.Call(hdc, uintptr(unsafe.Pointer(&rc)), bg)
 	pDeleteObject.Call(bg)
@@ -144,11 +145,11 @@ func paintDemo(hdc uintptr, pic *image.RGBA) {
 		for i := 0; i < len(bgra); i += 4 {
 			bgra[i], bgra[i+1], bgra[i+2], bgra[i+3] = pic.Pix[i+2], pic.Pix[i+1], pic.Pix[i], 255
 		}
-		pStretchDIBits.Call(hdc, uintptr(1264-w), 0, uintptr(w), uintptr(h), 0, 0, uintptr(w), uintptr(h),
+		pStretchDIBits.Call(hdc, uintptr(max(0, int(right)-w)), 0, uintptr(w), uintptr(h), 0, 0, uintptr(w), uintptr(h),
 			uintptr(unsafe.Pointer(&bgra[0])), uintptr(unsafe.Pointer(&bi)), 0, 0x00CC0020)
 		return
 	}
-	panel := winRect{Left: 900, Top: 20, Right: 1250, Bottom: 230}
+	panel := winRect{Left: right - 360, Top: 20, Right: right - 10, Bottom: 230}
 	blue, _, _ := pCreateSolidBrush.Call(rgb(150, 190, 235))
 	pFillRect.Call(hdc, uintptr(unsafe.Pointer(&panel)), blue)
 	pDeleteObject.Call(blue)
@@ -158,7 +159,7 @@ func paintDemo(hdc uintptr, pic *image.RGBA) {
 	pSetBkMode.Call(hdc, 1)
 	pSetTextColor.Call(hdc, rgb(25, 25, 30))
 	for i, line := range demoPanel {
-		box := winRect{Left: 912, Top: int32(28 + i*26), Right: 1245, Bottom: int32(28 + i*26 + 24)}
+		box := winRect{Left: right - 348, Top: int32(28 + i*26), Right: right - 14, Bottom: int32(28 + i*26 + 24)}
 		pDrawTextW.Call(hdc, uintptr(unsafe.Pointer(utf16(line))), ^uintptr(0), uintptr(unsafe.Pointer(&box)), 0x20|0x800) // DT_SINGLELINE|DT_NOPREFIX
 	}
 	pSelectObject.Call(hdc, old)
