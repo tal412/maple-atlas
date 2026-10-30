@@ -90,6 +90,7 @@ jobs:
           Write-Host "after: $($r.state) | repair: $($r.repair | ConvertTo-Json -Compress) | $($r.rules -join ' ; ')"
           if (-not $r.repair.approved -or -not $r.repair.finished -or $r.repair.error) { throw 'the repair did not report success' }
           if ($r.state -ne 'ok') { throw "expected ok after the button, got $($r.state)" }
+          Start-Sleep 3
           $diag = Invoke-WebRequest "$url/api/diagnostics" -Headers $h -UseBasicParsing
           $text = $diag.Content
           Write-Host ($text.Substring(0, [Math]::Min(2500, $text.Length)))

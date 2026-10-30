@@ -411,11 +411,13 @@ func (s *session) heartbeat(udp *net.UDPConn, port int) {
 	t := time.NewTicker(1500 * time.Millisecond)
 	defer t.Stop()
 	announced := false
-	for {
-		select {
-		case <-s.done:
-			return
-		case <-t.C:
+	for first := true; ; first = false {
+		if !first {
+			select {
+			case <-s.done:
+				return
+			case <-t.C:
+			}
 		}
 		s.mu.Lock()
 		connected := s.phase == "connected"
