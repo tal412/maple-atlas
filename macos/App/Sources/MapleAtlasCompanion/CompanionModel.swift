@@ -200,10 +200,14 @@ final class CompanionModel {
     /// as soon as there is a window and the engine is ready.
     private func startAutoLoop() {
         if !canFindWindow { _ = CGRequestScreenCaptureAccess() }   // macOS asks once
+        log(canFindWindow ? "Screen Recording allowed · looking for the MapleStory window"
+            : "Screen Recording not allowed · choose the game window, or allow it in System Settings and reopen the app")
         autoTask?.cancel()
         autoTask = Task {
             while !Task.isCancelled {
-                canFindWindow = GameCapture.canListWindows
+                let allowed = GameCapture.canListWindows
+                if allowed != canFindWindow { log(allowed ? "Screen Recording now allowed" : "Screen Recording no longer allowed") }
+                canFindWindow = allowed
                 if canFindWindow, !capture.isCapturing, await capture.findGameWindow() {
                     stoppedByPlayer = false
                     log("Found the game window by itself")
