@@ -26,8 +26,17 @@ type sniffConn struct {
 	// contact is told (at most every few seconds) that a phone holding this code
 	// reached this computer, even before its check verifies: that tells a blocked
 	// network apart from a phone that never tried.
-	contact   func(from string)
-	contactAt time.Time
+	contact     func(from string)
+	contactAt   time.Time
+	contactFrom string
+}
+
+// lastContact: when and from where a phone holding this code last reached this computer
+// (zero time: never).
+func (c *sniffConn) lastContact() (time.Time, string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.contactAt, c.contactFrom
 }
 
 func newSniffConn(conn net.PacketConn, ufrag, pwd string) *sniffConn {
@@ -62,6 +71,7 @@ func (c *sniffConn) inspect(packet []byte, from net.Addr) {
 	if c.contact != nil && time.Since(c.contactAt) > 3*time.Second {
 		c.contactAt = time.Now()
 		host, _, _ := net.SplitHostPort(from.String())
+		c.contactFrom = host
 		go c.contact(host)
 	}
 	c.mu.Unlock()

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -96,6 +97,34 @@ func mustECDSAKey() *ecdsa.PrivateKey {
 	return key
 }
 
+// networkInventory describes every network adapter for the log: its IPv4 addresses and
+// whether the phone is offered it, plus the addresses in the code and the port.
+func networkInventory(offered []string, port int) string {
+	var parts []string
+	ifaces, _ := net.Interfaces()
+	for _, ifc := range ifaces {
+		addrs, _ := ifc.Addrs()
+		var v4 []string
+		for _, a := range addrs {
+			if ipn, ok := a.(*net.IPNet); ok && ipn.IP.To4() != nil && !ipn.IP.IsLoopback() {
+				v4 = append(v4, ipn.IP.String())
+			}
+		}
+		if len(v4) == 0 {
+			continue
+		}
+		state := "used"
+		switch {
+		case ifc.Flags&net.FlagUp == 0:
+			state = "down"
+		case !interfaceAllowed(ifc.Name):
+			state = "skipped (virtual adapter)"
+		}
+		parts = append(parts, fmt.Sprintf("%s %s %s", ifc.Name, strings.Join(v4, ","), state))
+	}
+	return fmt.Sprintf("Network: code offers %s port %d · adapters: %s", strings.Join(offered, ", "), port, strings.Join(parts, " | "))
+}
+
 func interfaceAllowed(name string) bool {
 	// macOS virtual interfaces, then Windows virtual adapters (Hyper-V/WSL, VPNs, VMs).
 	for _, skip := range []string{"lo", "utun", "awdl", "llw", "bridge", "anpi", "ap", "gif", "stf", "vmnet", "vboxnet", "ipsec", "ppp",
@@ -113,7 +142,7 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 	note := ""
 	udp, err := net.ListenUDP("udp4", &net.UDPAddr{Port: ident.Port})
 	if err != nil && ident.Port != 0 {
-		note = "The network port this Mac used before is busy, so the phone needs to scan once more."
+		note = "The network port this computer used before is busy, so the phone needs to scan once more."
 		udp, err = net.ListenUDP("udp4", &net.UDPAddr{})
 	}
 	if err != nil {
@@ -146,7 +175,7 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 	}
 	fingerprint, mid, cands, err := fromSDP(sdp)
 	if err == nil && len(cands) == 0 {
-		err = errors.New("this Mac has no local network address; connect to Wi-Fi or Ethernet")
+		err = errors.New("this computer has no local network address; connect to Wi-Fi or Ethernet")
 	}
 	if err != nil {
 		first.pc.Close()
@@ -163,12 +192,13 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 	}
 	// A saved pairing only works while the phone's code still points at this Mac.
 	if ident.Paired && note == "" && !overlaps(s.addresses, ident.Addresses) {
-		note = "This Mac's network address changed, so the phone needs to scan once more."
+		note = "This computer's network address changed, so the phone needs to scan once more."
 	}
 	if note != "" {
 		ident.Paired = false
 	}
 	s.paired = ident.Paired
+	s.emit(map[string]any{"event": "log", "message": networkInventory(s.addresses, ident.Port)})
 	expires := time.Now().Add(pairingTTL).Truncate(time.Second).Add(time.Second)
 	code, err := offerCode{Session: s.id, ExpiresMs: expires.UnixMilli(), Mid: mid, Ufrag: ident.Ufrag, Pwd: ident.Pwd, Fingerprint: fingerprint, Candidates: cands, Secret: s.secret}.encode()
 	var link string
@@ -260,6 +290,18 @@ func (s *session) newLink() (*link, string, error) {
 		return nil, "", err
 	}
 	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) { s.onConnectionState(l, state) })
+	// Every step of the link goes to the log, so a failed connection can be explained.
+	pc.OnICEConnectionStateChange(func(state webrtc.ICEConnectionState) {
+		msg := "Phone link step: " + state.String()
+		if state == webrtc.ICEConnectionStateConnected {
+			if sctp := pc.SCTP(); sctp != nil {
+				if pair, err := sctp.Transport().ICETransport().GetSelectedCandidatePair(); err == nil && pair != nil {
+					msg += fmt.Sprintf(" (this computer %s:%d ↔ phone %s:%d)", pair.Local.Address, pair.Local.Port, pair.Remote.Address, pair.Remote.Port)
+				}
+			}
+		}
+		s.emit(map[string]any{"event": "log", "message": msg})
+	})
 	l.dc.OnOpen(func() { s.onOpen(l) })
 	l.dc.OnClose(func() { s.lost(l, "channel", "The phone closed the connection.") })
 	l.dc.OnMessage(func(m webrtc.DataChannelMessage) {
@@ -298,7 +340,7 @@ func (s *session) awaitPhone(l *link) {
 	}
 	resuming := s.paired
 	l.connectT = time.AfterFunc(connectTimeout, func() {
-		s.lost(l, "timeout", "Connection timed out. Keep Maple Atlas open on both devices on the same Wi-Fi network, then create a new code.")
+		s.lost(l, "timeout", "Connection timed out. "+s.unreachableMessage())
 	})
 	s.mu.Unlock()
 	if resuming {
@@ -321,7 +363,7 @@ func (s *session) awaitPhone(l *link) {
 func (s *session) onConnectionState(l *link, state webrtc.PeerConnectionState) {
 	switch state {
 	case webrtc.PeerConnectionStateFailed:
-		s.lost(l, "network", "The phone could not reach this Mac. Use the same Wi-Fi network; guest Wi-Fi, VPNs or a firewall can block the link.")
+		s.lost(l, "network", s.unreachableMessage())
 	case webrtc.PeerConnectionStateDisconnected:
 		s.mu.Lock()
 		current := l == s.cur && l.verified && !s.closed
@@ -333,6 +375,23 @@ func (s *session) onConnectionState(l *link, state webrtc.PeerConnectionState) {
 			s.emit(map[string]any{"event": "state", "phase": "reconnecting", "message": "Connection interrupted. Waiting for the phone to respond…"})
 		}
 	}
+}
+
+func firewallName() string {
+	if runtime.GOOS == "windows" {
+		return "Windows Firewall"
+	}
+	return "the firewall"
+}
+
+// unreachableMessage tells a phone that never got through apart from a link that broke.
+func (s *session) unreachableMessage() string {
+	at, from := s.sniffer.lastContact()
+	where := strings.Join(s.addresses, ", ")
+	if at.IsZero() {
+		return "Your phone never reached this computer (" + where + "). Check that both are on the same Wi-Fi network (not guest Wi-Fi or mobile data) and that " + firewallName() + " or another security program allows Maple Atlas Companion."
+	}
+	return "Your phone (" + from + ") reached this computer but the link did not hold. A VPN, a security program or Wi-Fi \"client isolation\" on the router can cause this."
 }
 
 func (s *session) onOpen(l *link) {
@@ -423,7 +482,7 @@ func (s *session) onMessage(l *link, data []byte) {
 			return
 		}
 		if m.V != 3 || !s.verifyAuth(l, m.Proof) {
-			s.lost(l, "verification", "This phone could not prove it scanned the code on this Mac. Create a new code and scan it again.")
+			s.lost(l, "verification", "This phone could not prove it scanned the code on this computer. Create a new code and scan it again.")
 			return
 		}
 		s.mu.Lock()

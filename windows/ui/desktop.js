@@ -52,8 +52,8 @@
   async function checkFirewall(){
     try{
       const r=await fetch('/api/firewall',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
-      const bad=['blocked','missing','shielded'].includes(r.state);showRules(r);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
-      if(bad)$('firewall-text').textContent=(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
+      const unknown=r.state==='unknown'&&!!r.detail,bad=['blocked','missing','shielded'].includes(r.state)||unknown;showRules(r);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
+      if(bad)$('firewall-text').textContent=unknown?r.detail+'. If your phone cannot connect, press Allow phone connections, or allow Maple Atlas Companion in your security program.':(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
       return r.state;
     }catch(_){return 'unknown';}
   }

@@ -2388,10 +2388,13 @@ window.mapleStorageReady.then(() => {
       clear();
       if(!Peer){state('failed','This browser cannot connect directly to another device.',{reason:'unsupported'});throw Error('Use a browser with WebRTC support.');}
       const version=epoch;session=value.session;expires=value.expires;secret=value.secret;joined=code;
+      // The computer's addresses in the code: named in failures, so they can be compared with
+      // the address the computer shows (a different network is the usual cause).
+      const tried=[...new Set([...String(value.sdp||'').matchAll(/a=candidate:\S+ \d+ \w+ \d+ ([\d.]+) (\d+) typ/g)].map(m=>m[1]+':'+m[2]))].join(', ')||'the address in the code';
       pc=new Peer({iceServers:[],iceTransportPolicy:'all'});const current=pc;
       pc.onconnectionstatechange=()=>{
         if(!pc)return;
-        if(pc.connectionState==='failed')fail('Your phone could not reach the computer. Use the same Wi-Fi network; guest Wi-Fi, VPNs or a firewall can block the link.','network');
+        if(pc.connectionState==='failed')fail('Your phone could not reach the computer at '+tried+'. Use the same Wi-Fi network on both (not guest Wi-Fi or mobile data); a VPN or the computer\u2019s firewall can also block it.','network');
         else if(pc.connectionState==='disconnected'&&verified)state('reconnecting','Connection interrupted. Waiting for your computer…');
         else if(pc.connectionState==='connected'&&verified&&now()-lastPong<9000)ping();
       };
@@ -2400,7 +2403,7 @@ window.mapleStorageReady.then(() => {
         await current.setRemoteDescription({type:'offer',sdp:value.sdp});await current.setLocalDescription(await current.createAnswer());
         if(version!==epoch)throw Error('Pairing was cancelled.');
         state('connecting',resume?'Reconnecting to your computer…':'Connecting to your computer…',{deadline:now()+25000,resume});
-        connectTimer=timers.setTimeout(()=>fail(resume?'Could not reconnect. Make sure Maple Atlas Companion is open on the same Wi-Fi network.':'Could not reach Maple Atlas Companion. Keep it open and use the same Wi-Fi network on both devices.','timeout'),25000);
+        connectTimer=timers.setTimeout(()=>fail((resume?'Could not reconnect to the computer at ':'Could not reach Maple Atlas Companion at ')+tried+'. Keep it open, use the same Wi-Fi network on both devices (not guest Wi-Fi or mobile data), and check that the computer\u2019s firewall allows it.','timeout'),25000);
         if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }

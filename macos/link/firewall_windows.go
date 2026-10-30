@@ -190,7 +190,7 @@ func ownRules(policy *ole.IDispatch, exe string) ([]fwRule, error) {
 func firewallStatus() firewallReport {
 	exe, err := os.Executable()
 	if err != nil {
-		return firewallReport{State: "unknown"}
+		return firewallReport{State: "unknown", Detail: "Could not find this program's path: " + err.Error()}
 	}
 	var report firewallReport
 	err = withFirewall(func(policy *ole.IDispatch) error {
@@ -253,7 +253,9 @@ func firewallStatus() firewallReport {
 		return nil
 	})
 	if err != nil {
-		return firewallReport{State: "unknown"}
+		// Shown in the window and the log: another security program may have replaced
+		// Windows Firewall, or its service is stopped.
+		return firewallReport{State: "unknown", Detail: "Could not check Windows Firewall: " + err.Error()}
 	}
 	return report
 }

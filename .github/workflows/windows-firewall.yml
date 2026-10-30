@@ -8,6 +8,7 @@ on:
       - 'macos/link/firewall_windows.go'
       - 'macos/link/diagnostics.go'
       - 'macos/link/desktop.go'
+      - 'macos/link/session.go'
       - 'windows/installer.nsi'
       - '.github/workflows/windows-firewall.yml'
 permissions:
@@ -87,6 +88,8 @@ jobs:
           $code = (Select-String -Path "$env:RUNNER_TEMP\app.out","$env:RUNNER_TEMP\app.err" -Pattern '"code":"([A-Z0-9]{20,})"' -ErrorAction SilentlyContinue | Select-Object -First 1)
           if ($code -and $text.Contains($code.Matches[0].Groups[1].Value)) { throw 'the pairing code leaked into diagnostics' }
           if (-not $text.Contains('Firewall:') -or -not $text.Contains('"state": "ok"')) { throw 'diagnostics are missing the firewall state' }
+          if (-not $text.Contains('Network: code offers')) { throw 'diagnostics are missing the network adapters' }
+          ($text -split "`n" | Select-String 'Network: code offers' | Select-Object -First 1).Line
           Stop-Process $p -Force
           & $exe --remove-firewall
           Write-Host 'PASS: the Allow button repairs the firewall, reports it, and diagnostics hide the pairing code'
