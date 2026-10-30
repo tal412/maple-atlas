@@ -33,6 +33,7 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{c
   <h2 id="firewall-title">Allow your phone to connect</h2>
   <p id="firewall-text">Windows Firewall is blocking connections from your phone to this app.</p>
   <div class="row"><button class="primary" id="firewall-fix">Allow phone connections</button><span class="hint" id="firewall-hint">Windows asks once whether to allow Maple Atlas Companion.</span></div>
+  <ul class="hint" id="firewall-rules" hidden></ul>
 </section>
 
 <section aria-labelledby="phone-title">
@@ -59,6 +60,7 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}dt{c
   <h2 id="tracking-title">Tracking</h2>
   <dl><dt>Map engine</dt><dd id="engine">Loading the map index…</dd><dt>Reading</dt><dd id="reading">Not tracking</dd><dt>Last match</dt><dd id="last-map">—</dd><dt>Your position</dt><dd id="position">—</dd><dt>Quest Helper</dt><dd id="quests">Not read yet</dd></dl>
   <p class="update" id="update-row"><span id="update-text">Version …</span><span><button type="button" id="update-check">Check for updates</button> <button type="button" id="update" hidden>Update</button></span></p>
+  <p class="update"><span class="hint" id="diag-hint">Something not working? Copy a report and send it to whoever helps you.</span><span><button type="button" id="diag">Copy diagnostics</button></span></p>
 </section>
 
 <script src="./qr.js"></script>

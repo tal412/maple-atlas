@@ -6,6 +6,8 @@ on:
   push:
     paths:
       - 'macos/link/firewall_windows.go'
+      - 'macos/link/diagnostics.go'
+      - 'macos/link/desktop.go'
       - 'windows/installer.nsi'
       - '.github/workflows/windows-firewall.yml'
 permissions:
@@ -58,6 +60,36 @@ jobs:
           if ((Mine).Count) { throw 'rules left after --remove-firewall' }
           Expect 'after remove' 'missing'
           Write-Host 'PASS: firewall check, repair and removal'
+      - name: Allow button through the app (as the window does it)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe"
+          $state = "$env:RUNNER_TEMP\state"; New-Item -ItemType Directory -Force $state | Out-Null
+          & $exe --remove-firewall
+          New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Block -Protocol UDP -Profile Any | Out-Null
+          $env:MAPLE_LINK_NO_WINDOW = '1'
+          $p = Start-Process $exe -ArgumentList '-ui','-state-dir',$state -RedirectStandardOutput "$env:RUNNER_TEMP\app.out" -RedirectStandardError "$env:RUNNER_TEMP\app.err" -PassThru
+          $url = $null
+          for ($i = 0; $i -lt 60 -and -not $url; $i++) { Start-Sleep -Milliseconds 500; $m = Select-String -Path "$env:RUNNER_TEMP\app.out" -Pattern 'page: (http://[^/]+)/\?t=(\w+)' -ErrorAction SilentlyContinue; if ($m) { $url = $m.Matches[0].Groups[1].Value; $token = $m.Matches[0].Groups[2].Value } }
+          if (-not $url) { Get-Content "$env:RUNNER_TEMP\app.err"; throw 'the app did not start its page' }
+          $h = @{ 'X-Companion-Token' = $token; 'Origin' = $url }
+          $before = Invoke-RestMethod "$url/api/firewall" -Headers $h
+          Write-Host "before: $($before.state) $($before.detail) | $($before.rules -join ' ; ')"
+          if ($before.state -ne 'blocked') { throw "expected blocked before, got $($before.state)" }
+          $r = Invoke-RestMethod "$url/api/firewall" -Method Post -Headers $h -TimeoutSec 90
+          Write-Host "after: $($r.state) | repair: $($r.repair | ConvertTo-Json -Compress) | $($r.rules -join ' ; ')"
+          if (-not $r.repair.approved -or -not $r.repair.finished -or $r.repair.error) { throw 'the repair did not report success' }
+          if ($r.state -ne 'ok') { throw "expected ok after the button, got $($r.state)" }
+          $diag = Invoke-WebRequest "$url/api/diagnostics" -Headers $h -UseBasicParsing
+          $text = $diag.Content
+          Write-Host ($text.Substring(0, [Math]::Min(2500, $text.Length)))
+          $code = (Select-String -Path "$env:RUNNER_TEMP\app.out","$env:RUNNER_TEMP\app.err" -Pattern '"code":"([A-Z0-9]{20,})"' -ErrorAction SilentlyContinue | Select-Object -First 1)
+          if ($code -and $text.Contains($code.Matches[0].Groups[1].Value)) { throw 'the pairing code leaked into diagnostics' }
+          if (-not $text.Contains('Firewall:') -or -not $text.Contains('"state": "ok"')) { throw 'diagnostics are missing the firewall state' }
+          Stop-Process $p -Force
+          & $exe --remove-firewall
+          Write-Host 'PASS: the Allow button repairs the firewall, reports it, and diagnostics hide the pairing code'
       - name: Setup program (silent install and uninstall)
         shell: pwsh
         run: |

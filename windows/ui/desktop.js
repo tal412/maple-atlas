@@ -52,17 +52,23 @@
   async function checkFirewall(){
     try{
       const r=await fetch('/api/firewall',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
-      const bad=['blocked','missing','shielded'].includes(r.state);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
+      const bad=['blocked','missing','shielded'].includes(r.state);showRules(r);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
       if(bad)$('firewall-text').textContent=(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
       return r.state;
     }catch(_){return 'unknown';}
   }
+  // The repair waits for Windows' approval and reports exactly what happened.
+  function showRules(r){const ul=$('firewall-rules');ul.replaceChildren(...(r.rules||[]).map(t=>Object.assign(document.createElement('li'),{textContent:t})));ul.hidden=!(r.rules||[]).length||r.state==='ok';}
   $('firewall-fix').onclick=async()=>{
     $('firewall-fix').disabled=true;$('firewall-hint').textContent='Choose Yes when Windows asks about Maple Atlas Companion…';
-    const r=await fetch('/api/firewall',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>null);
-    if(!r||!r.ok){$('firewall-fix').disabled=false;$('firewall-hint').textContent='Windows did not allow it. Try again and choose Yes.';return;}
-    for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,1500));if(await checkFirewall()==='ok'){$('firewall-hint').textContent='';break;}}
-    $('firewall-fix').disabled=false;$('firewall-hint').textContent=$('firewall').hidden?'':'Still blocked. Try again and choose Yes.';
+    let r=null;
+    try{const res=await fetch('/api/firewall',{method:'POST',headers:{'X-Companion-Token':token}});r=await res.json();}catch(e){r={repair:{error:'The app did not answer: '+e.message}};}
+    $('firewall-fix').disabled=false;
+    const rep=r.repair||{};
+    if(r.state==='ok'){$('firewall').hidden=true;$('firewall-hint').textContent='';await checkFirewall();return;}
+    $('firewall-hint').textContent=rep.error?rep.error+' ':!rep.approved?'Windows did not allow it. Try again and choose Yes. ':'Allowed, but Windows still reports a problem: '+(r.detail||r.state)+' ';
+    if(rep.approved&&!rep.error&&r.state)$('firewall-hint').textContent+='If it stays, press Copy diagnostics at the bottom and send the report.';
+    showRules(r);await checkFirewall();
   };
   checkFirewall();
 
@@ -78,6 +84,22 @@
   $('update-check').onclick=async()=>{$('update-check').disabled=true;$('update-check').textContent='Checking…';await checkUpdate();$('update-check').disabled=false;$('update-check').textContent='Check for updates';};
   $('update').onclick=()=>{$('update').disabled=true;$('update-text').textContent='Starting the update…';fetch('/api/update',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>{$('update').disabled=false;});};
   checkUpdate();setInterval(checkUpdate,6*3600*1000);
+
+  // Diagnostics: the helper's report plus what this window shows, copied for sending.
+  $('diag').onclick=async()=>{
+    $('diag').disabled=true;
+    try{
+      const server=await fetch('/api/diagnostics',{headers:{'X-Companion-Token':token}}).then(r=>r.text());
+      const page=['Window:','  phone: '+$('phone-state').textContent+' · '+$('phone-message').textContent,'  firewall: '+($('firewall').hidden?'ok':$('firewall-text').textContent+' / '+$('firewall-hint').textContent),
+        '  game window: '+$('window-name').textContent+(helperGame?' (found automatically, '+helperGame.width+'×'+helperGame.height+')':video?' (chosen in picker)':''),
+        '  engine: '+$('engine').textContent,'  tracking: '+tracking+' · '+$('reading').textContent,'  quests: '+($('quests')?.textContent||'')+(ocrBroken?' · OCR unavailable: '+ocrBroken:''),
+        '  browser: '+navigator.userAgent].join('\n');
+      const text=page+'\n\n'+server;
+      try{await navigator.clipboard.writeText(text);$('diag-hint').textContent='Copied. Paste it into a message to whoever helps you.';}
+      catch(_){const w=window.open('','_blank');if(w){w.document.title='Maple Atlas diagnostics';const pre=w.document.createElement('pre');pre.textContent=text;w.document.body.append(pre);}$('diag-hint').textContent='Could not copy; the report opened in a new window instead.';}
+    }catch(e){$('diag-hint').textContent='Could not make the report: '+e.message;}
+    finally{$('diag').disabled=false;}
+  };
 
   // Engine.
   window.addEventListener('atlas-engine',e=>{if(!engineReady&&e.detail?.message)$('engine').textContent=e.detail.message;});

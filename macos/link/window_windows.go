@@ -15,6 +15,10 @@ import (
 // Windows 10/11) or Chrome. A separate profile lets the flags apply: background
 // timers keep running while the game window is in front.
 func openWindow(url, profile string) error {
+	if os.Getenv("MAPLE_LINK_NO_WINDOW") != "" { // automated checks drive the page's API directly
+		os.Stdout.WriteString("page: " + url + "\n")
+		return nil
+	}
 	var candidates []string
 	for _, env := range []string{"ProgramFiles(x86)", "ProgramFiles", "LocalAppData"} {
 		if base := os.Getenv(env); base != "" {

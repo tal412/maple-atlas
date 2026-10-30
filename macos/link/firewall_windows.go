@@ -14,7 +14,9 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -22,11 +24,6 @@ import (
 	ole "github.com/go-ole/go-ole"
 	"github.com/go-ole/go-ole/oleutil"
 )
-
-type firewallReport struct {
-	State  string `json:"state"` // ok, blocked, missing, shielded, unknown
-	Detail string `json:"detail,omitempty"`
-}
 
 const (
 	fwDomain  = 1
@@ -45,11 +42,21 @@ const (
 var profileNames = map[int]string{fwDomain: "domain", fwPrivate: "private", fwPublic: "public"}
 
 func init() {
-	firewallCommand = func(arg string) int {
+	firewallCommand = func(args []string) int {
 		var err error
-		switch arg {
+		switch args[0] {
 		case "--repair-firewall":
 			err = withFirewall(allowSelf)
+			// The window that asked for the repair waits for this file (it cannot see an
+			// elevated program's output).
+			if len(args) > 1 {
+				result := map[string]any{"ok": err == nil, "after": firewallStatus()}
+				if err != nil {
+					result["error"] = err.Error()
+				}
+				b, _ := json.MarshalIndent(result, "", "  ")
+				os.WriteFile(args[1], b, 0o644)
+			}
 		case "--remove-firewall":
 			err = withFirewall(removeSelf)
 		case "--check-firewall": // diagnostics: prints what the window would report
@@ -202,6 +209,11 @@ func firewallStatus() firewallReport {
 				shielded = profileNames[p]
 			}
 		}
+		var profiles []string
+		for _, p := range active {
+			profiles = append(profiles, profileNames[p])
+		}
+		defer func() { report.Profiles = profiles }()
 		if len(active) == 0 {
 			report = firewallReport{State: "ok"}
 			return nil
@@ -214,6 +226,7 @@ func firewallStatus() firewallReport {
 		if err != nil {
 			return err
 		}
+		defer func() { report.Rules = describeRules(rules) }()
 		udp := func(r fwRule) bool { return r.enabled && (r.proto == protoUDP || r.proto == protoAny || r.proto == 0) }
 		missing := ""
 		for _, p := range active {
@@ -243,6 +256,27 @@ func firewallStatus() firewallReport {
 		return firewallReport{State: "unknown"}
 	}
 	return report
+}
+
+// describeRules: "Allow UDP on private, public · on · Maple Atlas Companion".
+func describeRules(rules []fwRule) []string {
+	var out []string
+	for _, r := range rules {
+		action := map[int]string{fwBlock: "Block", fwAllow: "Allow"}[r.action]
+		proto := map[int]string{protoTCP: "TCP", protoUDP: "UDP", protoAny: "any", 0: "any"}[r.proto]
+		var on []string
+		for _, p := range []int{fwDomain, fwPrivate, fwPublic} {
+			if r.profiles&p != 0 {
+				on = append(on, profileNames[p])
+			}
+		}
+		state := "off"
+		if r.enabled {
+			state = "on"
+		}
+		out = append(out, action+" "+proto+" on "+strings.Join(on, ", ")+" · "+state+" · "+r.name)
+	}
+	return out
 }
 
 // removeSelf deletes every inbound rule for this program, including "block" rules
@@ -319,20 +353,65 @@ func allowSelf(policy *ole.IDispatch) error {
 	return nil
 }
 
-// fixFirewall runs this program again with --repair-firewall as administrator, so
-// Windows' approval prompt names Maple Atlas Companion itself.
-func fixFirewall() error {
+// fixFirewall runs this program again with --repair-firewall as administrator (Windows'
+// approval prompt names Maple Atlas Companion itself) and waits for it, so the window can
+// say what happened: declined, failed (and why), or done.
+func fixFirewall(stateDir string) firewallRepair {
 	exe, err := os.Executable()
 	if err != nil {
-		return err
+		return firewallRepair{Error: err.Error()}
 	}
-	verb, _ := syscall.UTF16PtrFromString("runas")
-	file, _ := syscall.UTF16PtrFromString(exe)
-	args, _ := syscall.UTF16PtrFromString("--repair-firewall")
-	shell := syscall.NewLazyDLL("shell32.dll").NewProc("ShellExecuteW")
-	r, _, _ := shell.Call(0, uintptr(unsafe.Pointer(verb)), uintptr(unsafe.Pointer(file)), uintptr(unsafe.Pointer(args)), 0, 0)
-	if r <= 32 {
-		return errors.New("Windows did not allow it")
+	result := filepath.Join(stateDir, "firewall-repair.json")
+	os.Remove(result)
+	type shellExecuteInfo struct {
+		Size                        uint32
+		Mask                        uint32
+		Hwnd                        uintptr
+		Verb, File, Parameters, Dir *uint16
+		Show                        int32
+		InstApp, IDList             uintptr
+		Class                       *uint16
+		KeyClass                    uintptr
+		HotKey                      uint32
+		IconOrMonitor, Process      uintptr
 	}
-	return nil
+	const maskNoCloseProcess, maskNoAsync, maskFlagNoUI = 0x40, 0x100, 0x400
+	info := shellExecuteInfo{Mask: maskNoCloseProcess | maskNoAsync}
+	info.Size = uint32(unsafe.Sizeof(info))
+	info.Verb, _ = syscall.UTF16PtrFromString("runas")
+	info.File, _ = syscall.UTF16PtrFromString(exe)
+	info.Parameters, _ = syscall.UTF16PtrFromString(`--repair-firewall "` + result + `"`)
+	shell := syscall.NewLazyDLL("shell32.dll").NewProc("ShellExecuteExW")
+	ok, _, callErr := shell.Call(uintptr(unsafe.Pointer(&info)))
+	if ok == 0 {
+		if errno, isErrno := callErr.(syscall.Errno); isErrno && errno == 1223 { // ERROR_CANCELLED
+			return firewallRepair{Error: "Windows asked for approval and the answer was No."}
+		}
+		return firewallRepair{Error: "Windows could not start the repair: " + callErr.Error()}
+	}
+	out := firewallRepair{Approved: true}
+	if info.Process == 0 {
+		out.Error = "Windows started the repair but gave no way to follow it."
+		return out
+	}
+	defer syscall.CloseHandle(syscall.Handle(info.Process))
+	if ev, _ := syscall.WaitForSingleObject(syscall.Handle(info.Process), 60000); ev != syscall.WAIT_OBJECT_0 {
+		out.Error = "The repair did not finish within a minute."
+		return out
+	}
+	var code uint32
+	syscall.GetExitCodeProcess(syscall.Handle(info.Process), &code)
+	out.Exit, out.Finished = int(code), true
+	var r struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if b, err := os.ReadFile(result); err != nil {
+		out.Error = "The repair ran (exit " + strconv.Itoa(int(code)) + ") but left no result: " + err.Error()
+	} else if json.Unmarshal(b, &r) == nil && !r.OK {
+		out.Error = "The repair failed: " + r.Error
+	} else if code != 0 {
+		out.Error = "The repair stopped with code " + strconv.Itoa(int(code)) + "."
+	}
+	return out
 }

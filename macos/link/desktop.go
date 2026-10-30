@@ -109,7 +109,7 @@ func runDesktop(site, stateDir string, _ bool) {
 		fatal("Maple Atlas Companion could not create " + stateDir + ": " + err.Error())
 	}
 	logOut := io.Writer(os.Stderr)
-	if f, err := os.OpenFile(filepath.Join(stateDir, "companion.log"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600); err == nil {
+	if f := openLog(stateDir); f != nil {
 		defer f.Close()
 		logOut = io.MultiWriter(os.Stderr, f)
 	}
@@ -193,19 +193,29 @@ func runDesktop(site, stateDir string, _ bool) {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodPost {
-			if err := fixFirewall(); err != nil {
-				logger.Printf("firewall fix: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusAccepted)
+			// Waits for Windows' approval and the repair, then reports both and the new state.
+			repair := fixFirewall(stateDir)
+			report := firewallStatus()
+			logger.Printf("firewall repair: approved=%v finished=%v exit=%d error=%q -> %s %s rules=%q profiles=%q",
+				repair.Approved, repair.Finished, repair.Exit, repair.Error, report.State, report.Detail, report.Rules, report.Profiles)
+			json.NewEncoder(w).Encode(map[string]any{"repair": repair, "state": report.State, "detail": report.Detail, "rules": report.Rules, "profiles": report.Profiles})
 			return
 		}
 		report := firewallStatus()
-		logger.Printf("firewall: %s %s", report.State, report.Detail)
-		w.Header().Set("Content-Type", "application/json")
+		logger.Printf("firewall: %s %s rules=%q profiles=%q", report.State, report.Detail, report.Rules, report.Profiles)
 		json.NewEncoder(w).Encode(report)
+	})
+	// Diagnostics: a text report the player can copy and send to whoever helps them.
+	mux.HandleFunc("/api/diagnostics", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Companion-Token") != token {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		io.WriteString(w, diagnosticsText(stateDir, h))
 	})
 	// Updates: GET checks the latest release; POST downloads its setup and starts it.
 	// Progress arrives as "update" events.

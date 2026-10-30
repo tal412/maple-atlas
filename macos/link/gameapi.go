@@ -76,6 +76,30 @@ func (g *gameSource) grab() (frame, string, error) {
 	return f, title, nil
 }
 
+var ocrNote struct {
+	sync.Mutex
+	text string
+}
+
+func noteOCR(n int, took time.Duration, err error) {
+	ocrNote.Lock()
+	defer ocrNote.Unlock()
+	if err != nil {
+		ocrNote.text = "failed: " + err.Error()
+		return
+	}
+	ocrNote.text = strconv.Itoa(n) + " lines in " + took.Round(time.Millisecond).String() + " at " + time.Now().Format("15:04:05")
+}
+
+func ocrStatus() string {
+	ocrNote.Lock()
+	defer ocrNote.Unlock()
+	if ocrNote.text == "" {
+		return "not used yet"
+	}
+	return ocrNote.text
+}
+
 // gameLog writes to the companion log (set when the API is registered).
 var gameLog = func(string, ...any) {}
 
@@ -162,7 +186,9 @@ func registerGameAPI(mux *http.ServeMux, token string, logf func(string, ...any)
 			x, y, cw, ch := region(r)
 			f, _ = cropScale(full, x, y, cw, ch, 2600)
 		}
+		started := time.Now()
 		lines, err := recognizeText(f)
+		noteOCR(len(lines), time.Since(started), err)
 		w.Header().Set("Content-Type", "application/json")
 		if err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)

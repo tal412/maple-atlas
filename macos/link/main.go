@@ -127,7 +127,7 @@ var desktopMain func(site, stateDir string, ui bool)
 
 // firewallCommand handles --repair-firewall and --remove-firewall on Windows (set
 // by firewall_windows.go); the setup program and the window's repair button run them.
-var firewallCommand func(arg string) int
+var firewallCommand func(args []string) int
 
 // overlayDemo handles --overlay-demo on Windows (overlay_demo_windows.go): a self-check of the
 // on-game navigation card against a stand-in game window, for CI.
@@ -148,8 +148,8 @@ func main() {
 		}
 		os.Exit(captureDemo(image))
 	}
-	if len(os.Args) == 2 && strings.HasSuffix(os.Args[1], "-firewall") && firewallCommand != nil {
-		os.Exit(firewallCommand(os.Args[1]))
+	if len(os.Args) >= 2 && len(os.Args) <= 3 && strings.HasSuffix(os.Args[1], "-firewall") && firewallCommand != nil {
+		os.Exit(firewallCommand(os.Args[1:]))
 	}
 	engineDir := flag.String("engine-dir", "", "directory with engine.html and the visual index")
 	site := flag.String("site", "https://tal412.github.io/maple-atlas/", "Maple Atlas site the phone opens")
