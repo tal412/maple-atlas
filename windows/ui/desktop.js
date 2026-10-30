@@ -53,12 +53,25 @@
     try{
       const r=await fetch('/api/firewall',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
       const unknown=r.state==='unknown'&&!!r.detail,bad=['blocked','missing','shielded'].includes(r.state)||unknown;showRules(r);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
-      if(bad)$('firewall-text').textContent=unknown?r.detail+'. If your phone cannot connect, press Allow phone connections, or allow Maple Atlas Companion in your security program.':(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
+      if(bad)$('firewall-text').textContent=unknown?r.detail+'. If your phone cannot connect, press Allow phone connections, or allow Maple Atlas Companion in your security program.'
+        :r.state==='blocked'?(r.detail||'Windows Firewall has a rule that blocks Maple Atlas Companion.')+' Press Allow phone connections: after your approval the block is replaced by allow rules for every network type. Or open Windows Firewall settings and tick the app under both Private and Public.'
+        :(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
       return r.state;
     }catch(_){return 'unknown';}
   }
   // The repair waits for Windows' approval and reports exactly what happened.
-  function showRules(r){const ul=$('firewall-rules');ul.replaceChildren(...(r.rules||[]).map(t=>Object.assign(document.createElement('li'),{textContent:t})));ul.hidden=!(r.rules||[]).length||r.state==='ok';}
+  function showRules(r){
+    const li=t=>Object.assign(document.createElement('li'),{textContent:t});
+    const ul=$('firewall-rules');ul.replaceChildren(...(r.rules||[]).map(t=>li('Rule for this app: '+t)));ul.hidden=!(r.rules||[]).length||r.state==='ok';
+    // Why a rule may not be enough: policy, another firewall product, rules for another copy.
+    const notes=[];
+    if(r.policy&&r.policy!=='ok')notes.push('Windows policy: '+r.policy+'.');
+    for(const o of r.others||[])notes.push('Another firewall is installed: '+o+'. If your phone cannot connect, allow Maple Atlas Companion in that program too.');
+    const own=new Set((r.rules||[]).map(t=>t.split(' \u00b7 ').pop()));
+    for(const t of r.related||[])if(!(r.rules||[]).length||!t.includes('program "'+(r.exe||'')+'"'))notes.push('Firewall rule mentioning the app: '+t);
+    const nl=$('firewall-notes');nl.replaceChildren(...notes.map(li));nl.hidden=!notes.length||r.state==='ok';
+  }
+  $('firewall-settings').onclick=()=>{fetch('/api/firewall/settings',{method:'POST',headers:{'X-Companion-Token':token}}).catch(()=>{});setTimeout(checkFirewall,8000);setTimeout(checkFirewall,20000);};
   $('firewall-fix').onclick=async()=>{
     $('firewall-fix').disabled=true;$('firewall-hint').textContent='Choose Yes when Windows asks about Maple Atlas Companion…';
     let r=null;
@@ -67,6 +80,7 @@
     const rep=r.repair||{};
     if(r.state==='ok'){$('firewall').hidden=true;$('firewall-hint').textContent='';await checkFirewall();return;}
     $('firewall-hint').textContent=rep.error?rep.error+' ':!rep.approved?'Windows did not allow it. Try again and choose Yes. ':'Allowed, but Windows still reports a problem: '+(r.detail||r.state)+' ';
+    if(rep.method)$('firewall-hint').textContent+='('+(rep.method==='netsh'?'done with Windows\u2019 netsh tool':'done through the firewall API')+') ';
     if(rep.approved&&!rep.error&&r.state)$('firewall-hint').textContent+='If it stays, press Copy diagnostics at the bottom and send the report.';
     showRules(r);await checkFirewall();
   };

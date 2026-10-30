@@ -13,7 +13,9 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -46,11 +48,12 @@ func init() {
 		var err error
 		switch args[0] {
 		case "--repair-firewall":
-			err = withFirewall(allowSelf)
+			method, output, rerr := repairSelf()
+			err = rerr
 			// The window that asked for the repair waits for this file (it cannot see an
 			// elevated program's output).
 			if len(args) > 1 {
-				result := map[string]any{"ok": err == nil, "after": firewallStatus()}
+				result := map[string]any{"ok": err == nil, "method": method, "output": output, "after": firewallStatus()}
 				if err != nil {
 					result["error"] = err.Error()
 				}
@@ -148,8 +151,33 @@ func expandWindowsVars(s string) string {
 	}
 }
 
+// selfPath: this program's path as Windows resolves it (junctions and short names
+// followed), which is how the firewall compares a rule's program to a connection.
+func selfPath() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		return resolved, nil
+	}
+	return exe, nil
+}
+
+// samePath: two program paths that mean the same file.
+func samePath(a, b string) bool {
+	norm := func(p string) string {
+		p = expandWindowsVars(p)
+		if r, err := filepath.EvalSymlinks(p); err == nil {
+			p = r
+		}
+		return strings.ToLower(filepath.Clean(p))
+	}
+	return norm(a) == norm(b)
+}
+
 // ownRules lists the inbound rules that name this program, however Windows stored
-// the path (letter case, %ProgramFiles%).
+// the path (letter case, %ProgramFiles%, short names).
 func ownRules(policy *ole.IDispatch, exe string) ([]fwRule, error) {
 	rulesV, err := oleutil.GetProperty(policy, "Rules")
 	if err != nil {
@@ -168,7 +196,7 @@ func ownRules(policy *ole.IDispatch, exe string) ([]fwRule, error) {
 		if a := prop(d, "ApplicationName"); a != nil {
 			app = a.ToString()
 		}
-		if app == "" || !strings.EqualFold(expandWindowsVars(app), exe) {
+		if app == "" || !samePath(app, exe) {
 			return nil
 		}
 		r := fwRule{direction: intOf(prop(d, "Direction")), action: intOf(prop(d, "Action")),
@@ -188,12 +216,17 @@ func ownRules(policy *ole.IDispatch, exe string) ([]fwRule, error) {
 }
 
 func firewallStatus() firewallReport {
-	exe, err := os.Executable()
+	exe, err := selfPath()
 	if err != nil {
 		return firewallReport{State: "unknown", Detail: "Could not find this program's path: " + err.Error()}
 	}
 	var report firewallReport
 	err = withFirewall(func(policy *ole.IDispatch) error {
+		defer func() {
+			report.Exe = exe
+			report.Policy = policyState(policy)
+			report.Related = relatedRules(policy)
+		}()
 		current := intOf(prop(policy, "CurrentProfileTypes"))
 		var active []int
 		shielded := ""
@@ -238,7 +271,20 @@ func firewallStatus() firewallReport {
 				}
 			}
 			if blocked {
-				report = firewallReport{State: "blocked", Detail: "Windows Firewall is set to block Maple Atlas Companion."}
+				// Windows' own prompt, answered with only "Private networks" ticked (its
+				// default), allows the app on Private networks and blocks it on Public ones;
+				// Windows 11 puts new Wi-Fi networks on Public.
+				allowedElsewhere := false
+				for _, r := range rules {
+					if udp(r) && r.action == fwAllow && r.profiles&p == 0 {
+						allowedElsewhere = true
+					}
+				}
+				detail := "Windows Firewall has a rule that blocks Maple Atlas Companion on this " + profileNames[p] + " network."
+				if allowedElsewhere {
+					detail = "Windows allowed Maple Atlas Companion on other network types only (the ticked boxes in its own prompt) and blocked it on this " + profileNames[p] + " network, which is what this Wi-Fi counts as."
+				}
+				report = firewallReport{State: "blocked", Detail: detail}
 				return nil
 			}
 			if !allowed && missing == "" {
@@ -246,18 +292,212 @@ func firewallStatus() firewallReport {
 			}
 		}
 		if missing != "" {
-			report = firewallReport{State: "missing", Detail: "Maple Atlas Companion is not allowed on this " + missing + " network yet."}
+			report = firewallReport{State: "missing", Detail: "Maple Atlas Companion is not allowed on this " + missing + " network yet (Windows puts most new Wi-Fi networks on \"public\")."}
 		} else {
 			report = firewallReport{State: "ok"}
 		}
 		return nil
 	})
+	report.Others = otherFirewalls()
 	if err != nil {
 		// Shown in the window and the log: another security program may have replaced
 		// Windows Firewall, or its service is stopped.
-		return firewallReport{State: "unknown", Detail: "Could not check Windows Firewall: " + err.Error()}
+		report.State, report.Detail = "unknown", "Could not check Windows Firewall: "+err.Error()
 	}
 	return report
+}
+
+// policyState: whether rules added here can take effect at all.
+func policyState(policy *ole.IDispatch) string {
+	switch intOf(prop(policy, "LocalPolicyModifyState")) {
+	case 1:
+		return "group policy overrides local rules (a managed PC: an administrator must allow the app)"
+	case 2:
+		return "all inbound connections are blocked by policy"
+	}
+	return "ok"
+}
+
+// otherFirewalls: firewall products registered with Windows Security besides Windows
+// Firewall, with whether they report themselves on.
+func otherFirewalls() []string {
+	var out []string
+	withCOM(func() error {
+		unknown, err := oleutil.CreateObject("WbemScripting.SWbemLocator")
+		if err != nil {
+			return err
+		}
+		defer unknown.Release()
+		locator, err := unknown.QueryInterface(ole.IID_IDispatch)
+		if err != nil {
+			return err
+		}
+		defer locator.Release()
+		serviceV, err := oleutil.CallMethod(locator, "ConnectServer", ".", `root\SecurityCenter2`)
+		if err != nil {
+			return err
+		}
+		service := serviceV.ToIDispatch()
+		defer service.Release()
+		resultV, err := oleutil.CallMethod(service, "ExecQuery", "SELECT displayName, productState FROM FirewallProduct")
+		if err != nil {
+			return err
+		}
+		result := resultV.ToIDispatch()
+		defer result.Release()
+		return oleutil.ForEach(result, func(v *ole.VARIANT) error {
+			item := v.ToIDispatch()
+			if item == nil {
+				return nil
+			}
+			defer item.Release()
+			name := ""
+			if n := prop(item, "displayName"); n != nil {
+				name = n.ToString()
+			}
+			state := intOf(prop(item, "productState"))
+			on := "off"
+			if state&0x1000 != 0 {
+				on = "on"
+			}
+			if name != "" && !strings.Contains(strings.ToLower(name), "windows") {
+				out = append(out, fmt.Sprintf("%s (%s, state 0x%x)", name, on, state))
+			}
+			return nil
+		})
+	})
+	return out
+}
+
+// withCOM runs fn on a COM-initialized thread.
+func withCOM(fn func() error) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	if err := ole.CoInitializeEx(0, ole.COINIT_APARTMENTTHREADED); err != nil {
+		if oe, ok := err.(*ole.OleError); !ok || oe.Code() != 1 {
+			return err
+		}
+	}
+	defer ole.CoUninitialize()
+	return fn()
+}
+
+// relatedRules: every inbound rule whose name or program mentions the app, exactly as
+// Windows stores it. A rule for another copy (an old install path, a download folder) shows
+// up here and not in the app's own rules.
+func relatedRules(policy *ole.IDispatch) []string {
+	rulesV, err := oleutil.GetProperty(policy, "Rules")
+	if err != nil {
+		return []string{"could not list rules: " + err.Error()}
+	}
+	rules := rulesV.ToIDispatch()
+	defer rules.Release()
+	var out []string
+	oleutil.ForEach(rules, func(v *ole.VARIANT) error {
+		d := v.ToIDispatch()
+		if d == nil {
+			return nil
+		}
+		defer d.Release()
+		text := func(name string) string {
+			if p := prop(d, name); p != nil {
+				return p.ToString()
+			}
+			return ""
+		}
+		name, app := text("Name"), text("ApplicationName")
+		if intOf(prop(d, "Direction")) != fwIn || !(strings.Contains(strings.ToLower(name), "maple") || strings.Contains(strings.ToLower(app), "maple")) {
+			return nil
+		}
+		action := map[int]string{fwBlock: "Block", fwAllow: "Allow"}[intOf(prop(d, "Action"))]
+		proto := map[int]string{protoTCP: "TCP", protoUDP: "UDP", protoAny: "any", 0: "any"}[intOf(prop(d, "Protocol"))]
+		enabled := "off"
+		if e := prop(d, "Enabled"); e != nil && e.Value() == true {
+			enabled = "on"
+		}
+		profiles := intOf(prop(d, "Profiles"))
+		var on []string
+		for _, p := range []int{fwDomain, fwPrivate, fwPublic} {
+			if profiles&p != 0 {
+				on = append(on, profileNames[p])
+			}
+		}
+		extra := ""
+		for _, k := range []string{"LocalPorts", "RemoteAddresses", "InterfaceTypes", "serviceName", "Grouping"} {
+			if t := text(k); t != "" && t != "*" && t != "All" {
+				extra += " " + k + "=" + t
+			}
+		}
+		out = append(out, fmt.Sprintf("%q: %s %s on %s · %s · program %q%s", name, action, proto, strings.Join(on, ","), enabled, app, extra))
+		return nil
+	})
+	return out
+}
+
+// repairSelf allows this program through Windows Firewall: through the firewall API, else
+// (or when MAPLE_LINK_FIREWALL_METHOD=netsh) with netsh, Windows' own command. Returns the
+// method used and netsh's output.
+func repairSelf() (method, output string, err error) {
+	if os.Getenv("MAPLE_LINK_FIREWALL_METHOD") != "netsh" {
+		if err = withFirewall(allowSelf); err == nil {
+			if after := firewallStatus(); after.State == "ok" || after.State == "shielded" {
+				return "com", "", nil
+			}
+			err = errors.New("the rules were added but Windows still reports: " + firewallStatus().Detail)
+		}
+	}
+	comErr := err
+	exe, exeErr := selfPath()
+	if exeErr != nil {
+		return "com", "", exeErr
+	}
+	output, err = netshRepair(exe)
+	if err != nil {
+		if comErr != nil {
+			err = fmt.Errorf("firewall API: %v; netsh: %v", comErr, err)
+		}
+		return "netsh", output, err
+	}
+	return "netsh", output, nil
+}
+
+// netshRepair removes every inbound rule for the program and adds allow rules with netsh.
+func netshRepair(exe string) (string, error) {
+	var log strings.Builder
+	run := func(args ...string) error {
+		cmd := exec.Command("netsh", append([]string{"advfirewall", "firewall"}, args...)...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		out, err := cmd.CombinedOutput()
+		fmt.Fprintf(&log, "> netsh advfirewall firewall %s\n%s", strings.Join(args, " "), strings.TrimSpace(string(out)))
+		if err != nil {
+			fmt.Fprintf(&log, "\n(%v)", err)
+			return fmt.Errorf("%s: %s", args[0], strings.TrimSpace(string(out)))
+		}
+		log.WriteString("\n")
+		return nil
+	}
+	// Deleting rules that do not exist is an error for netsh: not one for us.
+	run("delete", "rule", "name=all", "dir=in", "program="+exe)
+	for _, proto := range []string{"udp", "tcp"} {
+		if err := run("add", "rule", "name="+ruleName, "dir=in", "action=allow", "program="+exe, "enable=yes", "profile=any", "protocol="+proto,
+			"description=Lets your phone connect to Maple Atlas Companion over your Wi-Fi."); err != nil {
+			return log.String(), err
+		}
+	}
+	return log.String(), nil
+}
+
+// openFirewallSettings opens Windows' own "Allow an app through Windows Firewall" page.
+func openFirewallSettings() error {
+	verb, _ := syscall.UTF16PtrFromString("open")
+	file, _ := syscall.UTF16PtrFromString("control.exe")
+	args, _ := syscall.UTF16PtrFromString("/name Microsoft.WindowsFirewall /page pageConfigureApps")
+	shell := syscall.NewLazyDLL("shell32.dll").NewProc("ShellExecuteW")
+	r, _, _ := shell.Call(0, uintptr(unsafe.Pointer(verb)), uintptr(unsafe.Pointer(file)), uintptr(unsafe.Pointer(args)), 0, 1)
+	if r <= 32 {
+		return errors.New("Windows could not open the firewall settings")
+	}
+	return nil
 }
 
 // describeRules: "Allow UDP on private, public · on · Maple Atlas Companion".
@@ -284,7 +524,7 @@ func describeRules(rules []fwRule) []string {
 // removeSelf deletes every inbound rule for this program, including "block" rules
 // Windows saved when its prompt was cancelled.
 func removeSelf(policy *ole.IDispatch) error {
-	exe, err := os.Executable()
+	exe, err := selfPath()
 	if err != nil {
 		return err
 	}
@@ -312,7 +552,7 @@ func removeSelf(policy *ole.IDispatch) error {
 // allowSelf replaces this program's inbound rules with "allow" (UDP and TCP) on
 // every network type.
 func allowSelf(policy *ole.IDispatch) error {
-	exe, err := os.Executable()
+	exe, err := selfPath()
 	if err != nil {
 		return err
 	}
@@ -405,13 +645,18 @@ func fixFirewall(stateDir string) firewallRepair {
 	syscall.GetExitCodeProcess(syscall.Handle(info.Process), &code)
 	out.Exit, out.Finished = int(code), true
 	var r struct {
-		OK    bool   `json:"ok"`
-		Error string `json:"error"`
+		OK     bool   `json:"ok"`
+		Error  string `json:"error"`
+		Method string `json:"method"`
+		Output string `json:"output"`
 	}
 	if b, err := os.ReadFile(result); err != nil {
 		out.Error = "The repair ran (exit " + strconv.Itoa(int(code)) + ") but left no result: " + err.Error()
 	} else if json.Unmarshal(b, &r) == nil && !r.OK {
+		out.Method, out.Output = r.Method, r.Output
 		out.Error = "The repair failed: " + r.Error
+	} else if json.Unmarshal(b, &r) == nil && r.OK {
+		out.Method, out.Output = r.Method, r.Output
 	} else if code != 0 {
 		out.Error = "The repair stopped with code " + strconv.Itoa(int(code)) + "."
 	}

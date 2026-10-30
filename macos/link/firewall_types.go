@@ -8,6 +8,15 @@ type firewallReport struct {
 	Detail   string   `json:"detail,omitempty"`
 	Profiles []string `json:"profiles,omitempty"` // active network types with the firewall on
 	Rules    []string `json:"rules,omitempty"`    // this program's inbound rules, readable
+	// Why a rule might not help: group policy overriding local rules, or all inbound blocked.
+	Policy string `json:"policy,omitempty"`
+	// Other firewall products registered with Windows Security (they filter instead of, or
+	// as well as, Windows Firewall).
+	Others []string `json:"others,omitempty"`
+	// Every inbound rule that mentions the app by name or path, as Windows stores it (the raw
+	// program path shows a rule made for another copy of the app).
+	Related []string `json:"related,omitempty"`
+	Exe     string   `json:"exe,omitempty"`
 }
 
 type firewallRepair struct {
@@ -15,4 +24,6 @@ type firewallRepair struct {
 	Finished bool   `json:"finished"` // the repair ran to the end
 	Exit     int    `json:"exit"`
 	Error    string `json:"error,omitempty"`
+	Method   string `json:"method,omitempty"` // com, netsh
+	Output   string `json:"output,omitempty"` // netsh's words when it was used
 }

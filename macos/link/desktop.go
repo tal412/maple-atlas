@@ -35,6 +35,7 @@ type hub struct {
 	clients  map[chan []byte]struct{}
 	pairing  []byte
 	state    []byte
+	contact  []byte // the last time a phone holding this code reached this computer
 	logger   *log.Logger
 	lastGone time.Time
 	ever     bool
@@ -50,6 +51,8 @@ func (h *hub) emit(v map[string]any) {
 		h.pairing = b
 	case "state":
 		h.state = b
+	case "contact":
+		h.contact = b
 	}
 	for c := range h.clients {
 		select {
@@ -206,6 +209,19 @@ func runDesktop(site, stateDir string, _ bool) {
 		report := firewallStatus()
 		logger.Printf("firewall: %s %s rules=%q profiles=%q", report.State, report.Detail, report.Rules, report.Profiles)
 		json.NewEncoder(w).Encode(report)
+	})
+	// The Windows Firewall "Allow an app" settings page, for allowing the app by hand.
+	mux.HandleFunc("/api/firewall/settings", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.Header.Get("X-Companion-Token") != token || r.Header.Get("Origin") != origin {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		if err := openFirewallSettings(); err != nil {
+			logger.Printf("firewall settings: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
 	// Diagnostics: a text report the player can copy and send to whoever helps them.
 	mux.HandleFunc("/api/diagnostics", func(w http.ResponseWriter, r *http.Request) {

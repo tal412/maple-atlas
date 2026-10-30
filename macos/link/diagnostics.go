@@ -38,10 +38,15 @@ func diagnosticsText(stateDir string, h *hub) string {
 	line("Maple Atlas Companion %s · %s · %s/%s", version, osVersion(), runtime.GOOS, runtime.GOARCH)
 	line("Report made %s", time.Now().Format(time.RFC3339))
 	h.mu.Lock()
-	state, pairing := h.state, h.pairing
+	state, pairing, contact := h.state, h.pairing, h.contact
 	h.mu.Unlock()
 	if state != nil {
 		line("Phone link: %s", scrubSecrets(string(state)))
+	}
+	if contact != nil {
+		line("Phone reached this computer: %s", contact)
+	} else {
+		line("Phone reached this computer: never (no packet from a phone holding this code arrived; a firewall or a different network keeps them out)")
 	}
 	var p struct {
 		Addresses []string `json:"addresses"`
@@ -59,6 +64,10 @@ func diagnosticsText(stateDir string, h *hub) string {
 	title, gerr := game.title, game.err
 	game.mu.Unlock()
 	line("Game window: %q %s", title, gerr)
+	if events := firewallEvents(); events != "" {
+		line("Windows Firewall events (2011 = it blocked an app's incoming connection; 2004/2006 = rule added/removed):")
+		line("%s", events)
+	}
 	line("Text recognition: %s", ocrStatus())
 	line("")
 	line("Recent log:")

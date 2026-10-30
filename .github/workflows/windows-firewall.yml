@@ -10,6 +10,8 @@ on:
       - 'macos/link/desktop.go'
       - 'macos/link/session.go'
       - 'macos/link/adapters_windows.go'
+      - 'macos/link/fwevents_windows.go'
+      - 'macos/link/firewall_types.go'
       - 'windows/installer.nsi'
       - '.github/workflows/windows-firewall.yml'
 permissions:
@@ -54,6 +56,11 @@ jobs:
           New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Allow -Protocol UDP -Profile Private | Out-Null
           $cats = (Get-NetConnectionProfile).NetworkCategory -join ','; Write-Host "network: $cats"
           if ($cats -match 'Public') { Expect 'allowed on Private only, network Public' 'missing' }
+          # What Windows' own prompt leaves when only "Private networks" is ticked: Allow on
+          # Private plus Block on Public. On a Public network that must read as blocked, and
+          # say that the app was allowed on other network types only.
+          New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Block -Protocol UDP -Profile Public | Out-Null
+          if ($cats -match 'Public') { $r = Check; Write-Host "prompt with Private ticked only -> $($r.state) $($r.detail)"; if ($r.state -ne 'blocked' -or $r.detail -notmatch 'other network types only') { throw "expected the private-only explanation, got $($r.state): $($r.detail)" } }
           # A path stored with %ProgramFiles%-style variables and other letter case.
           (Mine) | Remove-NetFirewallRule
           & $exe --repair-firewall
@@ -96,9 +103,21 @@ jobs:
           foreach ($adapter in ($net.Matches[0].Groups[2].Value -split ' \| ')) {
             if ($adapter -match 'skipped') { foreach ($ip in $offered) { if ($adapter.Contains(" $ip ")) { throw "the code offers $ip from a skipped adapter: $adapter" } } }
           }
+          if (-not $text.Contains('Windows Firewall events')) { throw 'diagnostics are missing the firewall events' }
+          ($text -split "`n" | Select-String 'Windows Firewall events' -Context 0,6 | Out-String)
           Stop-Process $p -Force
           & $exe --remove-firewall
           Write-Host 'PASS: the Allow button repairs the firewall, reports it, and diagnostics hide the pairing code'
+          # The netsh fallback (used when the firewall API fails): same result.
+          New-NetFirewallRule -DisplayName 'mapleatlascompanion.exe' -Direction Inbound -Program $exe -Action Block -Protocol UDP -Profile Any | Out-Null
+          $env:MAPLE_LINK_FIREWALL_METHOD = 'netsh'
+          & $exe --repair-firewall "$env:RUNNER_TEMP\repair.json"; if ($LASTEXITCODE -ne 0) { Get-Content "$env:RUNNER_TEMP\repair.json"; throw "netsh repair exit $LASTEXITCODE" }
+          $rep = Get-Content "$env:RUNNER_TEMP\repair.json" | ConvertFrom-Json
+          Write-Host "netsh repair: method=$($rep.method) ok=$($rep.ok) after=$($rep.after.state)"; Write-Host $rep.output
+          if ($rep.method -ne 'netsh' -or -not $rep.ok -or $rep.after.state -ne 'ok') { throw 'netsh fallback did not fix the firewall' }
+          Remove-Item Env:MAPLE_LINK_FIREWALL_METHOD
+          & $exe --remove-firewall
+          Write-Host 'PASS: netsh fallback'
       - name: Setup program (silent install and uninstall)
         shell: pwsh
         run: |
