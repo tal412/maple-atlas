@@ -15,7 +15,7 @@
   events.onmessage=e=>{let v;try{v=JSON.parse(e.data);}catch(_){return;}
     if(v.event==='code'){code=v;paired=false;showCode();}
     else if(v.event==='paired'){code=null;paired=true;$('qr').hidden=true;}
-    else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);}
+    else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);paintFirewall();}
     else if(v.event==='contact'){contactAt=Date.now();contactFrom=v.from;paintContact();}
     else if(v.event==='update'){$('update-text').textContent=v.message;$('update').hidden=v.phase!=='failed';$('update').disabled=false;if(v.phase==='failed')$('update').textContent='Try again';}
     else if(v.event==='error'){$('phone-error').textContent=v.message;$('phone-error').hidden=false;}
@@ -49,10 +49,23 @@
   }
   setInterval(paintContact,2000);
   // Windows Firewall: checked at launch; one button asks Windows to allow this app.
+  // The firewall warning is moot while the phone is connected (the app keeps a window
+  // open in Windows Firewall even with no rule): then only a quiet note is shown.
+  let lastFirewall=null,showAnyway=false;
+  function paintFirewall(){
+    const r=lastFirewall;if(!r)return;
+    const unknown=r.state==='unknown'&&!!r.detail,bad=['blocked','missing','shielded'].includes(r.state)||unknown,connected=phase==='connected';
+    $('firewall').hidden=!bad||(connected&&!showAnyway);
+    const quiet=$('firewall-quiet');quiet.hidden=!(bad&&connected&&!showAnyway);
+    if(bad&&connected)$('firewall-quiet-text').textContent=r.state==='missing'?'Your phone is connected. Windows Firewall has no rule for the app yet; the app keeps a window open for the phone instead. '
+      :'Your phone is connected, although Windows Firewall reports: '+(r.detail||r.state)+' ';
+  }
+  $('firewall-permanent').onclick=()=>{showAnyway=true;paintFirewall();$('firewall-fix').click();};
   async function checkFirewall(){
     try{
       const r=await fetch('/api/firewall',{headers:{'X-Companion-Token':token}}).then(r=>r.json());
-      const unknown=r.state==='unknown'&&!!r.detail,bad=['blocked','missing','shielded'].includes(r.state)||unknown;showRules(r);$('firewall').hidden=!bad;$('firewall-fix').hidden=r.state==='shielded';
+      lastFirewall=r;
+      const unknown=r.state==='unknown'&&!!r.detail,bad=['blocked','missing','shielded'].includes(r.state)||unknown;showRules(r);paintFirewall();$('firewall-fix').hidden=r.state==='shielded';
       if(bad)$('firewall-text').textContent=unknown?r.detail+'. If your phone cannot connect, press Allow phone connections, or allow Maple Atlas Companion in your security program.'
         :r.state==='blocked'?(r.detail||'Windows Firewall has a rule that blocks Maple Atlas Companion.')+' Press Allow phone connections: after your approval the block is replaced by allow rules for every network type. Or open Windows Firewall settings and tick the app under both Private and Public.'
         :(r.detail||'Windows Firewall is blocking this app.')+' Your phone cannot connect until it is allowed.';
@@ -84,7 +97,7 @@
     if(rep.approved&&!rep.error&&r.state)$('firewall-hint').textContent+='If it stays, press Copy diagnostics at the bottom and send the report.';
     showRules(r);await checkFirewall();
   };
-  checkFirewall();
+  checkFirewall();setInterval(checkFirewall,60000);
 
   // Updates: checked at launch and every 6 hours; one click downloads and runs the setup.
   async function checkUpdate(){
