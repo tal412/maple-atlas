@@ -97,10 +97,25 @@ func mustECDSAKey() *ecdsa.PrivateKey {
 	return key
 }
 
+// onRealAdapters keeps the candidates on real adapters; all of them when none is.
+func onRealAdapters(cands []hostCandidate, real map[string]bool) []hostCandidate {
+	var keep []hostCandidate
+	for _, c := range cands {
+		if v4 := c.IP.To4(); v4 != nil && real[v4.String()] {
+			keep = append(keep, c)
+		}
+	}
+	if len(keep) == 0 {
+		return cands
+	}
+	return keep
+}
+
 // networkInventory describes every network adapter for the log: its IPv4 addresses and
 // whether the phone is offered it, plus the addresses in the code and the port.
 func networkInventory(offered []string, port int) string {
 	var parts []string
+	real := realAdapterIPs()
 	ifaces, _ := net.Interfaces()
 	for _, ifc := range ifaces {
 		addrs, _ := ifc.Addrs()
@@ -117,8 +132,8 @@ func networkInventory(offered []string, port int) string {
 		switch {
 		case ifc.Flags&net.FlagUp == 0:
 			state = "down"
-		case !interfaceAllowed(ifc.Name):
-			state = "skipped (virtual adapter)"
+		case !real[v4[0]]:
+			state = "skipped (virtual, VPN or no gateway)"
 		}
 		parts = append(parts, fmt.Sprintf("%s %s %s", ifc.Name, strings.Join(v4, ","), state))
 	}
@@ -183,6 +198,10 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 		return nil, nil, err
 	}
 	s.mid = mid
+	// Only real adapters' addresses: the shared socket gathers every local address, and a
+	// virtual one (Hyper-V/WSL "vEthernet", VPN, VirtualBox) could otherwise come first or
+	// push the Wi-Fi address out of the code's few slots.
+	cands = onRealAdapters(cands, realAdapterIPs())
 	// Home networks first, so the code's few addresses are the ones a phone can reach.
 	sort.SliceStable(cands, func(i, j int) bool { return addressRank(cands[i].IP) < addressRank(cands[j].IP) })
 	for i, c := range cands {

@@ -9,6 +9,7 @@ on:
       - 'macos/link/diagnostics.go'
       - 'macos/link/desktop.go'
       - 'macos/link/session.go'
+      - 'macos/link/adapters_windows.go'
       - 'windows/installer.nsi'
       - '.github/workflows/windows-firewall.yml'
 permissions:
@@ -89,7 +90,12 @@ jobs:
           if ($code -and $text.Contains($code.Matches[0].Groups[1].Value)) { throw 'the pairing code leaked into diagnostics' }
           if (-not $text.Contains('Firewall:') -or -not $text.Contains('"state": "ok"')) { throw 'diagnostics are missing the firewall state' }
           if (-not $text.Contains('Network: code offers')) { throw 'diagnostics are missing the network adapters' }
-          ($text -split "`n" | Select-String 'Network: code offers' | Select-Object -First 1).Line
+          $net = ($text -split "`n" | Select-String 'Network: code offers (.+?) port \d+ · adapters: (.+?)"' | Select-Object -First 1)
+          Write-Host $net.Line
+          $offered = $net.Matches[0].Groups[1].Value -split ', '
+          foreach ($adapter in ($net.Matches[0].Groups[2].Value -split ' \| ')) {
+            if ($adapter -match 'skipped') { foreach ($ip in $offered) { if ($adapter.Contains(" $ip ")) { throw "the code offers $ip from a skipped adapter: $adapter" } } }
+          }
           Stop-Process $p -Force
           & $exe --remove-firewall
           Write-Host 'PASS: the Allow button repairs the firewall, reports it, and diagnostics hide the pairing code'
