@@ -311,6 +311,20 @@
     }
     return kept.map(l=>l.text).join('\n');
   }
-  const exported={panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // The monster a quest's own text points at for one of its items ("He said I can easily get
+  // them by defeating Stump, Slime, and Pig"): one the item is named after ("Omok Piece: Pig"
+  // → Pig, "Omok Piece: Mushroom" → Orange Mushroom), else the only one no other objective is
+  // named after ("Omok Table" → Stump). hunt: the quest's named monsters; others: its
+  // objective names. Returns the monster name or null.
+  function questMonster(item,hunt,others){
+    const words=s=>normalize(s).split(' ').filter(Boolean),last=m=>words(m).at(-1);
+    const full=(name,m)=>normalize(name).includes(normalize(m)),named=(name,m)=>full(name,m)||words(name).includes(last(m));
+    const list=hunt||[],self=normalize(item);
+    const direct=list.find(m=>full(item,m))||list.find(m=>named(item,m));
+    if(direct)return direct;
+    const left=list.filter(m=>!(others||[]).some(o=>normalize(o)!==self&&named(o,m)));
+    return left.length===1?left[0]:null;
+  }
+  const exported={questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

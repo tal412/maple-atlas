@@ -40,17 +40,24 @@
       sources.load(name).then(r=>{info.state='ready';info.sources=r.sources;}).catch(()=>{info.state='error';}).finally(()=>onChange());
       return info;
     }
+    // The quest's own text names the monster for this item ("defeating Stump, Slime, and Pig"):
+    // used when the wiki has no drop or shop for it (Omok Table).
+    function questHint(name,quest){
+      const m=quest?.hunt&&MapleQuestHelper.questMonster(name,quest.hunt,(quest.objectives||[]).map(o=>o.name)),h=m&&huntFor(m);
+      return h?.at?{text:'The quest says to defeat '+h.mob.name+' · Hunt at '+h.at.name+(away(h.at)?' · '+away(h.at):''),target:h.at,more:true}:null;
+    }
     // Best way to get an item: the nearest monster that drops it, else the cheapest shop
-    // with a recorded route, else a quest.
-    function itemHint(name){
-      const info=loadItem(name);
-      if(info.state==='loading')return {text:'Looking up where to get it…'};
-      if(info.state==='error')return {text:'Couldn’t reach the MapleClassic Wiki.'};
+    // with a recorded route, else the monster the quest's text names, else a quest.
+    function itemHint(name,quest){
+      const info=loadItem(name),fromQuest=questHint(name,quest);
+      if(info.state==='loading')return fromQuest||{text:'Looking up where to get it…'};
+      if(info.state==='error')return fromQuest||{text:'Couldn’t reach the MapleClassic Wiki.'};
       const s=info.sources,drops=s.drops.map(d=>({...d,hunt:huntFor(d.monster)})).filter(d=>d.hunt?.at);
       drops.sort((a,b)=>(b.rate??0)-(a.rate??0)||(a.hunt.at.d??99)-(b.hunt.at.d??99));
       if(drops.length){const d=drops[0];return {text:'Dropped by '+d.monster+(d.rate!=null?' ('+(d.rate>=10?Math.round(d.rate):d.rate.toFixed(1))+'%)':'')+' · Hunt at '+d.hunt.at.name+(away(d.hunt.at)?' · '+away(d.hunt.at):''),target:d.hunt.at,more:s.drops.length+s.shops.length>1};}
       const shops=s.shops.map(x=>({...x,at:nearest(maps.filter(m=>m.name===x.map||m.npcs?.some(n=>n.name===x.npc)))||nearest(maps.filter(m=>m.name===x.town))})).filter(x=>x.at);
       if(shops.length){const x=shops[0];return {text:'Buy from '+x.npc+(x.price!=null?' · '+x.price.toLocaleString()+' '+(/^mesos$/i.test(x.currency)?'mesos':x.currency):'')+' · '+x.at.name,target:x.at,more:s.shops.length>1||s.drops.length>0};}
+      if(fromQuest)return fromQuest;
       if(s.drops.length)return {text:'Dropped by '+s.drops.slice(0,2).map(d=>d.monster).join(', '),more:true};
       if(s.rewards.length||s.given.length)return {text:'From the quest '+(s.given[0]||s.rewards[0]).quest,more:true};
       return {text:'No source recorded on the wiki yet.'};
@@ -82,7 +89,7 @@
 
     // ---- Rendering ----
     const pct=(have,need)=>need?Math.max(0,Math.min(100,Math.round(100*(have??0)/need))):0;
-    function objectiveRow(p,qi,pi){
+    function objectiveRow(p,qi,pi,quest){
       const o=p.objective,isMob=o?.type==='mob'||(!o&&huntFor(p.name)&&!itemIds.has(MapleQuestHelper.normalize(p.name)));
       const id=o?.id??(isMob?huntFor(p.name)?.mob.id:itemIds.get(MapleQuestHelper.normalize(p.name)));
       const art=id?sprite(isMob?'monster':'item',{id,name:p.name}):'<span class="mc-sprite mc-qh-wiki"><img src="'+esc(MapleItemSources.imageURL(p.name))+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span>';
@@ -90,7 +97,7 @@
       let hint=null;
       if(!p.done){
         if(isMob){const h=huntFor(p.name);hint=h?.at?{text:'Hunt at '+h.at.name+(away(h.at)?' · '+away(h.at):''),target:h.at}:{text:'No recorded map with this monster.'};}
-        else hint=itemHint(p.name);
+        else hint=itemHint(p.name,quest);
       }
       const actions=hint?(hint.target?'<button type="button" class="mc-nav" data-qh-nav="'+esc(hint.target.id)+'"'+(hint.target.monster?' data-qh-hunt="'+esc(hint.target.monster)+'" data-qh-hunt-name="'+esc(hint.target.monsterName)+'"':'')+' aria-label="Navigate to '+esc(hint.target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+
         (!isMob?'<button type="button" class="mc-qh-more" data-qh-entity="item" data-qh-name="'+esc(p.name)+'">'+icon('compass')+'<span>How to get</span></button>':'<button type="button" class="mc-qh-more" data-qh-entity="monster" data-qh-name="'+esc(p.name)+'">'+icon('info')+'<span>Monster</span></button>'):'';
@@ -106,7 +113,7 @@
       const turnIn=npc?'<div class="mc-qh-turnin" data-ready="'+ready+'">'+(quest.npcId?sprite('npc',{id:quest.npcId,name:npc}):'')+'<span><small>'+(ready?'Return to':'Quest from')+'</small><strong>'+esc(npc)+'</strong>'+(where?'<small>'+esc(where.name)+(away(where)?' · '+away(where):'')+'</small>':'')+'</span>'+
         (where&&ready?'<button type="button" class="mc-nav" data-qh-nav="'+esc(where.id)+'" aria-label="Navigate to '+esc(npc)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>':'';
       return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+'</header>'+
-        (total?'<span class="mc-qh-bar mc-qh-total" aria-hidden="true"><span style="width:'+pct(done,total)+'%"></span></span><ul class="mc-qh-objectives">'+q.progress.map((p,pi)=>objectiveRow(p,qi,pi)).join('')+'</ul>':'<p class="mc-qh-note">'+(npc?'Talk to '+esc(npc)+' to continue.':'No counts shown for this quest in game.')+'</p>')+
+        (total?'<span class="mc-qh-bar mc-qh-total" aria-hidden="true"><span style="width:'+pct(done,total)+'%"></span></span><ul class="mc-qh-objectives">'+q.progress.map((p,pi)=>objectiveRow(p,qi,pi,q.quest)).join('')+'</ul>':'<p class="mc-qh-note">'+(npc?'Talk to '+esc(npc)+' to continue.':'No counts shown for this quest in game.')+'</p>')+
         turnIn+(quest?'<button type="button" class="mc-qh-link" data-qh-quest="'+esc(quest.name)+'">Quest details'+icon('chevron-right')+'</button>':'')+'</article>';
     }
     const ago=t=>{const s=Math.round((Date.now()-t)/1000);return s<10?'just now':s<60?s+' s ago':Math.round(s/60)+' min ago';};

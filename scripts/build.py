@@ -114,6 +114,12 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
             r = max(140, min(520, max(((q[0] - cx) ** 2 + (q[1] - cy) ** 2) ** .5 for q in group) + 90))
             best[monster] = {'x': round(cx), 'y': round(cy), 'r': round(r), 'n': len(group), 'total': len(ps)}
         m['bestSpots'] = best
+    # Monsters each quest's own journal text names (data/quest-hints.json): the phone uses
+    # them for quest items the wiki has no source for (Omok Table: Stump).
+    hints = json.loads((project / 'data/quest-hints.json').read_text())['quests']
+    for q in data['quests']:
+        if str(q['id']) in hints:
+            q['hunt'] = hints[str(q['id'])]
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     palette = json.loads((project / 'data/night-palette.json').read_text())

@@ -111,3 +111,14 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.pack(Q.parse('Quest Helper\nQuest for the Snail Shell\n1 / 2 Shell'))[0].t,'Quest for the Snail Shell');
   console.log('quest-helper: slipped header passes');
 }
+// Items with no recorded source: the monster the quest's own text names for them.
+{
+  const omok=['Make a Slime & Mushroom Omok Set','Omok Table','Omok Piece: Slime','Omok Piece: Pig'];
+  assert.equal(Q.questMonster('Omok Table',['Stump','Slime','Pig'],omok),'Stump');
+  assert.equal(Q.questMonster('Omok Piece: Pig',['Stump','Slime','Pig'],omok),'Pig');
+  assert.equal(Q.questMonster('Omok Piece: Mushroom',['Stump','Slime','Orange Mushroom'],['Omok Table','Omok Piece: Slime','Omok Piece: Mushroom']),'Orange Mushroom');
+  // Two monsters left for one item: no guess.
+  assert.equal(Q.questMonster('Mystery Box',['Stump','Slime'],['Mystery Box']),null);
+  assert.equal(Q.questMonster('Omok Table',undefined,omok),null);
+  console.log('quest-helper: quest text monsters pass');
+}
