@@ -17,6 +17,9 @@ type firewallReport struct {
 	// program path shows a rule made for another copy of the app).
 	Related []string `json:"related,omitempty"`
 	Exe     string   `json:"exe,omitempty"`
+	// Whether Windows accepts replies to the app's multicast heartbeat (the way in that
+	// needs no rule), per active network type.
+	Heartbeat string `json:"heartbeat,omitempty"`
 }
 
 type firewallRepair struct {

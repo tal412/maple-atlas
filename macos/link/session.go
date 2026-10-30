@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -165,6 +166,9 @@ func newSession(site string, emit func(map[string]any), ident *identity, stateDi
 	}
 	ident.Port = udp.LocalAddr().(*net.UDPAddr).Port
 	s.udp = udp
+	if runtime.GOOS == "windows" && os.Getenv("MAPLE_LINK_NO_HEARTBEAT") == "" {
+		go s.heartbeat(udp, ident.Port)
+	}
 	s.sniffer = newSniffConn(udp, ident.Ufrag, ident.Pwd)
 	s.sniffer.contact = func(from string) {
 		emit(map[string]any{"event": "contact", "from": from, "at": time.Now().UnixMilli()})
@@ -392,6 +396,43 @@ func (s *session) onConnectionState(l *link, state webrtc.PeerConnectionState) {
 		s.mu.Unlock()
 		if current {
 			s.emit(map[string]any{"event": "state", "phase": "reconnecting", "message": "Connection interrupted. Waiting for the phone to respond…"})
+		}
+	}
+}
+
+// heartbeat lets the phone in without a firewall rule on Windows: after a program sends a
+// multicast or broadcast packet, Windows Firewall accepts unicast replies from any device to
+// that port for three seconds (on by default: "unicast response to multicast or broadcast").
+// A tiny multicast packet goes out from the link's own port every 1.5 s while no phone is
+// connected; the phone retries its connection many times a second, so one attempt lands in
+// a window, and the reply then keeps that pair open as long as traffic flows.
+func (s *session) heartbeat(udp *net.UDPConn, port int) {
+	to := &net.UDPAddr{IP: net.IPv4(239, 255, 255, 250), Port: port}
+	t := time.NewTicker(1500 * time.Millisecond)
+	defer t.Stop()
+	announced := false
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-t.C:
+		}
+		s.mu.Lock()
+		connected := s.phase == "connected"
+		s.mu.Unlock()
+		if connected {
+			continue
+		}
+		if _, err := udp.WriteTo([]byte("maple-atlas"), to); err != nil {
+			if !announced {
+				announced = true
+				s.emit(map[string]any{"event": "log", "message": "Heartbeat for the firewall could not be sent: " + err.Error()})
+			}
+			continue
+		}
+		if !announced {
+			announced = true
+			s.emit(map[string]any{"event": "log", "message": fmt.Sprintf("Heartbeat: a multicast packet leaves port %d every 1.5 s, so Windows Firewall accepts the phone's reply for 3 s after each even without a rule", port)})
 		}
 	}
 }

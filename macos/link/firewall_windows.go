@@ -226,6 +226,18 @@ func firewallStatus() firewallReport {
 			report.Exe = exe
 			report.Policy = policyState(policy)
 			report.Related = relatedRules(policy)
+			var hb []string
+			for _, p := range []int{fwDomain, fwPrivate, fwPublic} {
+				if current&p == 0 {
+					continue
+				}
+				if d := prop(policy, "UnicastResponsesToMulticastBroadcastDisabled", p); d != nil && d.Value() == true {
+					hb = append(hb, profileNames[p]+": replies blocked by policy")
+				} else {
+					hb = append(hb, profileNames[p]+": replies accepted for 3 s after each heartbeat")
+				}
+			}
+			report.Heartbeat = strings.Join(hb, "; ")
 		}()
 		current := intOf(prop(policy, "CurrentProfileTypes"))
 		var active []int

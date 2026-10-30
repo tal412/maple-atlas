@@ -104,6 +104,9 @@ jobs:
             if ($adapter -match 'skipped') { foreach ($ip in $offered) { if ($adapter.Contains(" $ip ")) { throw "the code offers $ip from a skipped adapter: $adapter" } } }
           }
           if (-not $text.Contains('Windows Firewall events')) { throw 'diagnostics are missing the firewall events' }
+          if (-not $text.Contains('Heartbeat: a multicast packet leaves port')) { throw 'the heartbeat did not start' }
+          if (-not $text.Contains('"heartbeat": "')) { throw 'diagnostics are missing the heartbeat policy' }
+          ($text -split "`n" | Select-String 'Heartbeat|"heartbeat"' | Out-String)
           ($text -split "`n" | Select-String 'Windows Firewall events' -Context 0,6 | Out-String)
           Stop-Process $p -Force
           & $exe --remove-firewall
