@@ -222,6 +222,7 @@ func firewallStatus() firewallReport {
 	}
 	var report firewallReport
 	err = withFirewall(func(policy *ole.IDispatch) error {
+		current := intOf(prop(policy, "CurrentProfileTypes"))
 		defer func() {
 			report.Exe = exe
 			report.Policy = policyState(policy)
@@ -239,7 +240,6 @@ func firewallStatus() firewallReport {
 			}
 			report.Heartbeat = strings.Join(hb, "; ")
 		}()
-		current := intOf(prop(policy, "CurrentProfileTypes"))
 		var active []int
 		shielded := ""
 		for _, p := range []int{fwDomain, fwPrivate, fwPublic} {
