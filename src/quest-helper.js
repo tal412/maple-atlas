@@ -113,7 +113,7 @@
       if(/[A-Za-z]{3}/.test(line)&&/^[A-Z]/.test(line.replace(/^[^\p{L}]+/u,''))){
         const cleaned=line.replace(/^[^\p{L}]+/u,'').replace(/[^\p{L}\p{N}.…!?')]+$/u,'');
         const truncated=/(\.{2,}|…)$/.test(cleaned);
-        const title=cleaned.replace(/\s*(\.{2,}|…)$/,'').replace(/[^\p{L}\p{N}'!?,.:() -]+/gu,'').trim();
+        const title=cleaned.replace(/\s*(\.{2,}|…)$/,'').replace(/[^\p{L}\p{N}'!?,.:() &-]+/gu,'').replace(/\s+/g,' ').trim();
         if(title.length>=4)quests.push({title,truncated,progress:[]});
       }
     }
