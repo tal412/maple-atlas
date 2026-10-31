@@ -2602,6 +2602,7 @@ window.mapleStorageReady.then(() => {
   }
   const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});
 
+  const MARKER_LIFT=8;
   // The dot on the map's own minimap picture: the game draws that picture whole inside the
   // minimap window (any size), so where the dot sits in the window is where it sits on the
   // picture. picture: {w, h, dx, dy, scale} (scripts/minimap-geometry.py):
@@ -2642,8 +2643,10 @@ window.mapleStorageReady.then(() => {
         if(best&&Math.abs(best.dx)<300&&Math.abs(best.dy)<400)offs.push(best);
       }
       const median=v=>{const a=[...v].sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:0;};
-      const cx=median(offs.map(o=>o.dx)),cy=median(offs.map(o=>o.dy));
-      return {x:Math.round(placed.x-cx),y:Math.round(placed.y-cy),method:offs.length?'picture+rings':'picture',rings:offs.length,window:win,memory};
+      // Without a ring to measure it, the usual lift: markers sit about 8 picture pixels above the
+      // point (measured on real minimaps: 7.5 and 8.4).
+      const cx=median(offs.map(o=>o.dx)),cy=offs.length?median(offs.map(o=>o.dy)):-MARKER_LIFT*(picture.scale||16);
+      return {x:Math.round(placed.x-cx),y:Math.round(placed.y-cy),method:offs.length?'picture+rings':'picture+lift',rings:offs.length,window:win,memory};
     }
     // Shown in diagnostics: how the window's shape compared with the picture's.
     const shape=picture&&markers.body?Math.round((markers.body.w/markers.body.h)/(picture.w/picture.h)*100)/100:null;

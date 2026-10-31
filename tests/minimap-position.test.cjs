@@ -63,3 +63,11 @@ console.log('PASS: minimap title, dot and portal rings, portal fit, scrolling, l
   assert.equal(M.onPicture(body,{x:20,y:50},null),null);
   console.log('minimap-position: placing on the minimap picture passes');
 }
+// Without a ring, the marker's usual lift (8 picture pixels) is taken off.
+{
+  const P=require('path');const M=require(P.join(__dirname,'../src/minimap-position.js'));
+  const picture={w:204,h:192,dx:8,dy:3,scale:16},body={x:10,y:40,w:408,h:384};
+  const raw=M.onPicture(body,{x:214,y:136},picture);
+  assert.equal(raw.y+8*16, raw.y+128);
+  console.log('minimap-position: marker lift passes');
+}
