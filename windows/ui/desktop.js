@@ -217,8 +217,10 @@
   let autoBox=null,autoQbox=null,panelsAt=0,panelsBusy=false,panelsLost=false,mByHand=false,qByHand=false;
   // fitBox: the found box fitted to the minimap window's edges; dropped on a new map or a failed
   // read (the window's size changes with the map), so the generous found box is read again.
-  let fitBox=null,fitMap=null;
-  const unfit=()=>{if(fitBox){fitBox=null;placeBox();}};
+  let fitBox=null,fitMap=null,refused=null,panelsForcedAt=0;
+  // failed: the fitted box did not hold the minimap, so it is not fitted to again for 10 s.
+  const unfit=(failed=false)=>{if(fitBox){if(failed)refused={...fitBox,until:Date.now()+10000};fitBox=null;placeBox();}};
+  const lost=()=>{unfit(true);if(Date.now()-panelsForcedAt>3000){panelsForcedAt=Date.now();panelsLost=true;}};
   const mb=()=>fitBox||autoBox||box,qb=()=>autoQbox||qbox,qm=()=>!!autoQbox||qmarked;
   const pct=v=>Math.round(v*100)+'%',describe=b=>pct(b.x)+','+pct(b.y)+' '+pct(b.w)+'×'+pct(b.h);
   function paintPanels(){$('panels').textContent=(autoBox?'Minimap found':'Minimap not found yet (keep it open)')+' · '+(autoQbox?'Quest Helper found':'Quest Helper not found yet (keep it open)');}
@@ -250,6 +252,7 @@
     const cur=fitBox||autoBox;
     const m=.012,f={x:Math.max(0,area.x+b.x*area.w-m),y:Math.max(0,area.y+b.y*area.h-m)};
     f.w=Math.min(1-f.x,b.w*area.w+2*m);f.h=Math.min(1-f.y,b.h*area.h+2*m);
+    if(refused&&Date.now()<refused.until&&Math.abs(f.x-refused.x)<.02&&Math.abs(f.y-refused.y)<.02&&Math.abs(f.w-refused.w)<.03&&Math.abs(f.h-refused.h)<.03)return;
     if(Math.abs(f.x-cur.x)>.008||Math.abs(f.y-cur.y)>.008||Math.abs(f.w-cur.w)>.015||Math.abs(f.h-cur.h)>.015){fitBox=f;fitMap=lastMap?.id||null;placeBox();cmd({cmd:'log',message:'Fitted the minimap box to the window: '+describe(f)});}
   }
 
@@ -263,9 +266,9 @@
       const area=mb(),r=await atlasEngine.readFrame(...await minimapSource('map'));if(!tracking)return;
       if(r.phase==='confirmed'&&fitMap&&r.id!==fitMap)unfit();
       if(r.phase!=='confirmed'&&r.phase!=='candidate'&&Date.now()-noMatchSince>3000)unfit();
-      if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||'')){panelsLost=true;unfit();}
+      if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||''))lost();
       if(r.phase==='confirmed'){
-        noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};fitMinimap(r.box,area);$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
+        noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};if(r.position)fitMinimap(r.box,area);$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
         $('reading').textContent=(phase==='connected'?'Following on phone · ':'Map name · ')+r.name;
         cmd({cmd:'location',id:r.id,confidence:r.confidence||0,observedAt:Date.now()});
         if(r.position)sendPosition(r.id,r.position);
@@ -279,7 +282,7 @@
   }
   async function readDot(){
     dotBusy=true;
-    try{const area=mb(),r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);fitMinimap(r.box,area);if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||''))unfit();if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
+    try{const area=mb(),r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);if(r.position)fitMinimap(r.box,area);if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||''))lost();if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
     catch(_){}finally{dotBusy=false;}
   }
   function sendPosition(id,p){lastPosition=p;$('position').textContent='x '+Math.round(p.x)+', y '+Math.round(p.y);cmd({cmd:'position',id,x:p.x,y:p.y,observedAt:Date.now()});}

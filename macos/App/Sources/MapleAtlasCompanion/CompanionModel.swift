@@ -445,6 +445,9 @@ final class CompanionModel {
     /// box is read again and fitted anew).
     @ObservationIgnored private var fittedMinimapRect: CGRect?
     @ObservationIgnored private var fittedForMap: String?
+    /// A fitted box that the next read could not use: not fitted to again for a while.
+    @ObservationIgnored private var refusedFit: (rect: CGRect, until: Date)?
+    @ObservationIgnored private var panelsForcedAt = Date.distantPast
 
     // MARK: Finding the panels
 
@@ -513,6 +516,9 @@ final class CompanionModel {
                             width: box.w * region.width + 2 * m, height: box.h * region.height + 2 * m)
             .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
         let current = fittedMinimapRect ?? autoMinimapRect!
+        if let refused = refusedFit, Date.now < refused.until,
+           abs(fitted.minX - refused.rect.minX) < 0.02, abs(fitted.minY - refused.rect.minY) < 0.02,
+           abs(fitted.width - refused.rect.width) < 0.03, abs(fitted.height - refused.rect.height) < 0.03 { return }
         guard !fitted.isNull,
               abs(fitted.minX - current.minX) > 0.008 || abs(fitted.minY - current.minY) > 0.008 || abs(fitted.width - current.width) > 0.015 || abs(fitted.height - current.height) > 0.015
         else { return }
@@ -522,8 +528,10 @@ final class CompanionModel {
     }
 
     /// Back to the generous found box (the minimap window may have grown or moved).
-    private func unfitMinimapBox(_ why: String) {
-        guard fittedMinimapRect != nil else { return }
+    /// failed: the fitted box did not hold the minimap, so it is not used again for 10 s.
+    private func unfitMinimapBox(_ why: String, failed: Bool = false) {
+        guard let fitted = fittedMinimapRect else { return }
+        if failed { refusedFit = (fitted, Date.now.addingTimeInterval(10)) }
         fittedMinimapRect = nil
         log("Reading the whole found minimap area again (\(why))")
     }
@@ -692,8 +700,9 @@ final class CompanionModel {
               let located = try? await engine.locate(png, frameHeight: frame.frameHeight, mapID: map.id),
               !Task.isCancelled, isTracking, lastConfirmed?.id == map.id
         else { return }
+        // Fitted only from a read that placed the dot: a failed read's window edges can be wrong.
+        if located.position != nil { fitMinimapBox(located.box, in: region) }
         // The log says how the dot was placed, or why it was not, each time that changes.
-        fitMinimapBox(located.box, in: region)
         let note = located.position != nil ? "found (\(located.method ?? "?"))" : (located.positionNote ?? "not found")
         if note != positionNoteLogged.note || map.id != positionNoteLogged.map {
             positionNoteLogged = (map.id, note)
@@ -701,8 +710,11 @@ final class CompanionModel {
         }
         saveMinimapSnapshotIfAsked(png: png, note: "map \(map.id): \(note)")
         if located.positionNote?.hasPrefix("no-minimap") == true || located.positionNote?.hasPrefix("collapsed") == true || located.positionNote?.contains("shape") == true {
-            unfitMinimapBox("the minimap did not fit")
-            Task { await findPanelsIfDue(force: true) }
+            unfitMinimapBox("the minimap did not fit", failed: true)
+            if Date.now.timeIntervalSince(panelsForcedAt) > 3 {
+                panelsForcedAt = .now
+                Task { await findPanelsIfDue(force: true) }
+            }
         }
         // The minimap runs past its box (a big map, zoomed in): read a larger area from the game
         // window's top-left corner, where the game keeps the minimap, from now on.
@@ -795,7 +807,7 @@ final class CompanionModel {
             let reading = try await engine.read(png, frameHeight: frame.frameHeight)
             guard !Task.isCancelled else { return }
             apply(reading)
-            fitMinimapBox(reading.box, in: region)
+            if reading.phase == "confirmed", reading.position != nil { fitMinimapBox(reading.box, in: region) }
         } catch EngineHost.EngineError.busy {
             return
         } catch {

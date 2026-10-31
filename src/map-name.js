@@ -27,13 +27,21 @@
   // sky-blue minimap below it is not taken for it), and the columns it spans. Returns
   // {x,y,w,h} or null.
   function find(image){
-    const {width,height}=image,share=[],runs=[];
-    for(let y=0;y<height;y++){let n=0;for(let x=0;x<width;x+=2)if(isStrip(...px(image,x,y)))n++;share.push(n/Math.ceil(width/2));}
+    const {width,height}=image,rowOn=[],runs=[];
+    // A row is strip when a long stretch of it is strip blue (letters and the emblem may break
+    // it briefly). Measured in pixels, not as a share of the crop: a small minimap window in a
+    // large search area still counts.
+    const longest=Math.max(48,Math.min(width*.28,120));
+    for(let y=0;y<height;y++){
+      let n=0,run=0,best=0,gap=0;
+      for(let x=0;x<width;x+=2){if(isStrip(...px(image,x,y))){n++;run+=2+gap;gap=0;if(run>best)best=run;}else if(run&&gap<12)gap+=2;else{run=0;gap=0;}}
+      rowOn.push(n/Math.ceil(width/2)>=.28||best>=longest);
+    }
     for(let y=0,start=-1;y<=height;y++){
-      const on=y<height&&share[y]>=.28;
+      const on=y<height&&rowOn[y];
       if(on&&start<0)start=y;
       // two lines of text: far taller than the window's thin light-blue borders
-      if(!on&&start>=0){if(y-start>=Math.max(16,height*.06))runs.push({y:start,h:y-start});start=-1;}
+      if(!on&&start>=0){if(y-start>=Math.max(16,Math.min(height*.06,24)))runs.push({y:start,h:y-start});start=-1;}
     }
     for(const run of runs){
       let x0=width,x1=-1;

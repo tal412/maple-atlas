@@ -81,3 +81,19 @@ console.log('map-name: Warning Street passes');
   assert.ok(strip && strip.y >= 18 && strip.y <= 22 && strip.h >= 45 && strip.h <= 52 && strip.w <= 150, JSON.stringify(strip));
   console.log('map-name: sky beside the minimap passes');
 }
+// A small minimap window inside a large search area (the minimap shrank on a new map): the
+// strip covers under a quarter of the width and a few rows dip where the letters are dense.
+{
+  const wide = image(720, 680, (x, y) => {
+    if (y >= 22 && y < 79 && x >= 1 && x < 259) {
+      const dense = y >= 56 && y < 60 && x >= 60 && x < 250 && x % 3 < 2;
+      const letter = dense || (x >= 60 && x < 250 && ((y >= 30 && y < 44) || (y >= 50 && y < 64)) && x % 9 < 4);
+      return letter ? [245, 245, 240] : [145, 175, 195];
+    }
+    if (x >= 259) return y < 400 ? [70, 150, 235] : [60, 110, 40];   // sky, then trees
+    return [30, 32, 40];
+  });
+  const strip = name.find(wide);
+  assert.ok(strip && strip.y >= 20 && strip.y <= 24 && strip.h >= 52 && strip.w <= 262, JSON.stringify(strip));
+  console.log('map-name: small minimap in a large area passes');
+}
