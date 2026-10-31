@@ -423,6 +423,13 @@
   $('#mc-from').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};$('#mc-to').onchange=()=>{if(!mobile.matches)$('#mc-form').requestSubmit();};
   $('#mc-pickstart').onclick=()=>{state.pick=!state.pick;$('#mc-pickstart').textContent=state.pick?'Select a point…':'Pick start on map';$('#mc-status').textContent=state.pick?'Click any map point to set your current location.':'Location set manually';if(mobile.matches&&state.pick){$('#mc-route-dialog').close();setSheet(false);camera();notice('Tap a map point to set your starting location.');}};
   $$('.mc-tabs button').forEach(b=>b.onclick=()=>{state.panel=b.dataset.panel;setSheet(true);detail();camera();save();});
+  // Crafting: the ores and gems that drop on the map you are on (the live map, else the one
+  // chosen), straight on that map's Ores tab.
+  $('#mc-crafting').onclick=()=>{
+    const id=(liveFresh&&get(liveLocation)?liveLocation:null)||(get(state.selected)?state.selected:null)||state.from;
+    if(!get(id))return;
+    inspect(id);state.category='crafting';state.panel='place';setSheet(true);detail();save();
+  };
   ['all','for-you','shops'].forEach((id,i)=>$('#mc-'+id).onclick=()=>{if(i===1&&!questPanel.tracked().length){state.panel='progress';setSheet(true);detail();camera();save();return;}state.layer=['all','quests','shops'][i];state.category=i===2?'connections':i===1?'quests':'monsters';state.panel='place';if(mobile.matches){if(!hasInspected)state.selected=state.from;hasInspected=true;setSheet(true);}render();save();});
   $('#mc-plus').onclick=()=>{state.zoom=Math.min(5,state.zoom*1.2);camera();};$('#mc-minus').onclick=()=>{state.zoom=Math.max(.5,state.zoom/1.2);camera();};$('#mc-fit').onclick=()=>{state.zoom=1;state.dx=0;state.dy=0;state.fitAll=true;state.focus=null;camera();};
   gestures=MapleGestures.create({element:$('#mc-map'),getCamera:()=>{if(animating){cancelAnimationFrame(cameraAnim);animating=false;camera(true);}if(cameraFrame){cancelAnimationFrame(cameraFrame);cameraFrame=0;camera(true);}return{ox,oy,scale,zoom:state.zoom,dx:state.dx,dy:state.dy};},onStart:()=>{if(wheelTimer){clearTimeout(wheelTimer);wheelTimer=0;}},onPan:(dx,dy)=>{state.dx=dx;state.dy=dy;queueCamera();},onZoom:next=>{state.zoom=next.zoom;zoomAnchor=next;queueCamera();},onEnd:queueCamera});
