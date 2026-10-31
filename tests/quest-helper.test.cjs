@@ -187,7 +187,7 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   // A real 1600x900 window: a small minimap (WORLD not read), and the Quest Helper at the far right.
   const real=Q.findPanels([L('mIni MAP',9,9,49,10),L('Victoria Road',58,35,95,14),L('Sunset Sky',60,51,77,14),L('Quest Helper (3/5)',1342,7,112,14),
     L('[Event] Halloween Candies',1347,28,172,16),L('Make a Slime & Octopus Omok St',1347,84,209,16),L('1/1 Omok Piede: Sime',1344,118,145,27),L('Asking Perion for Help',1349,179,147,16)],{w:1600,h:900});
-  assert.ok(real.minimap.w*1600>=200&&real.minimap.w*1600<=520,JSON.stringify(real.minimap));
+  assert.ok(real.minimap.w*1600>=200&&real.minimap.w*1600<=760,JSON.stringify(real.minimap));
   assert.ok(real.quest.x*1600<1342&&Math.abs(real.quest.x+real.quest.w-1)<1e-9,JSON.stringify(real.quest));
   console.log('quest-helper: finding the panels passes');
 }

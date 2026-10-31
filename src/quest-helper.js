@@ -390,7 +390,7 @@
       // is generous, and the minimap reader then reports the window's exact edges.
       const names=all.filter(l=>l.y>title.y&&l.y<title.y+lh*8&&l.x>=title.x-lh&&l.x<title.x+lh*12);
       const nameRight=Math.max(title.x+title.w,...names.map(l=>l.x+l.w));
-      const right=world?world.x+world.w+lh*1.2:Math.min(W,title.x+Math.max(W*.3,(nameRight-title.x)*1.8));
+      const right=world?world.x+world.w+lh*1.2:Math.min(W,title.x+Math.max(W*.45,(nameRight-title.x)*1.8));
       minimap=clamp(title.x-lh*1.6,title.y-lh*1.2,right,Math.min(H,title.y+H*.75));
     }
     const header=all.find(l=>isHeader(l.text));

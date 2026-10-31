@@ -25,7 +25,7 @@
     for(const key of ['from','to']){const m=get(s[key+'Id'])||DATA.maps.find(m=>m.name===s[key]);if(m)state[key]=String(m.id);}
     if(get(p.selected))state.selected=String(p.selected);
     if(['place','route','progress'].includes(p.panel))state.panel=p.panel;
-    if(['monsters','npcs','quests','connections'].includes(p.category))state.category=p.category;
+    if(['monsters','npcs','quests','connections','crafting'].includes(p.category))state.category=p.category;
     if(['all','quests','shops'].includes(p.layer))state.layer=p.layer;
     return true;
   }
@@ -213,6 +213,29 @@
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   const changes=n=>n===1?'1 map change':n+' map changes';
+  // Ores tab: every crafting material (ore, rare ore, gem, Maker item) the monsters on this map
+  // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
+  const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
+  let oreDrops=null,oreState='idle';
+  function renderOres(items,m){
+    const here=new Map((m.monsters||[]).map(x=>[x.name,x]));
+    if(!here.size){items.innerHTML='<div class="mc-empty">No monsters in '+esc(m.name)+', so nothing drops here.</div>';return;}
+    if(!oreDrops){
+      items.innerHTML='<div class="mc-empty">'+(oreState==='error'?'Couldn’t reach the MapleClassic Wiki for drop tables. <button type="button" class="cursor-interaction" id="mc-ores-retry">Try again</button>':'Looking up what drops here…')+'</div>';
+      if($('#mc-ores-retry'))$('#mc-ores-retry').onclick=()=>{oreState='idle';renderOres(items,m);};
+      if(oreState!=='loading'&&oreState!=='error'){oreState='loading';oreSources.craftDrops((DATA.crafting||[]).map(c=>c.name)).then(r=>{oreDrops=r;oreState='ready';}).catch(()=>{oreState='error';}).finally(()=>{if(state.category==='crafting')detail();});}
+      return;
+    }
+    const kinds=new Map((DATA.crafting||[]).map(c=>[c.name,c]));
+    const byItem=new Map();
+    for(const d of oreDrops){if(!here.has(d.monster)||!kinds.has(d.item))continue;const e=byItem.get(d.item)||{item:kinds.get(d.item),from:[]};e.from.push(d);byItem.set(d.item,e);}
+    const list=[...byItem.values()].map(e=>({...e,best:e.from.some(f=>f.rate!=null)?Math.max(...e.from.map(f=>f.rate??0)):null})).sort((a,b)=>(b.best??-1)-(a.best??-1));
+    const pct=v=>v==null?'?':(v>=10?Math.round(v):v>=1?v.toFixed(1):v.toFixed(2))+'%';
+    items.innerHTML=list.length?list.map(e=>{const pic=DATA.sprites.item?.[String(e.item.id)]||MapleItemSources.imageURL(e.item.name);
+      return '<button type="button" class="mc-row mc-ore cursor-interaction" data-ore="'+esc(e.item.name)+'"><span class="mc-sprite"><img src="'+esc(pic)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span><div><strong>'+esc(e.item.name)+'</strong><small>'+esc(e.item.kind)+' · '+(e.best==null?'chance not recorded':'best '+pct(e.best))+'</small><small>'+e.from.sort((a,b)=>(b.rate??0)-(a.rate??0)).map(f=>esc(f.monster)+(f.rate==null?'':' '+pct(f.rate))).join(' · ')+'</small></div></button>';}).join('')+'<div class="mc-datahint">Drop chances per kill from the MapleClassic Wiki (community data, CC BY-NC-SA 4.0).</div>'
+      :'<div class="mc-empty">None of the monsters in '+esc(m.name)+' drops ores or gems, as far as the wiki knows.</div>';
+    items.querySelectorAll('[data-ore]').forEach(b=>b.onclick=()=>{void search.show('item',b.dataset.ore);});
+  }
   // At a hunt destination: the map itself is the goal (no particular spot).
   function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}
   function endRoute(){navDismissed=false;state.hunt=null;state.npc=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
@@ -263,12 +286,13 @@
       shownQuestHtml=html;
     }else{
       const a=anchor(m.id),members=a?a.members.map(get).filter(Boolean):[];
-      const categories=[['monsters','Monsters'],['npcs','NPCs'],['quests','Quests'],['connections','Places']];
+      const categories=[['monsters','Monsters'],['crafting','Ores'],['npcs','NPCs'],['quests','Quests'],['connections','Places']];
       box.innerHTML='<div class="mc-eyebrow">'+esc(m.street)+' · '+(m.town?'Town':'Field')+'</div><h3>'+esc(m.name)+'</h3><div class="mc-secondary">'+m.npcs.length+' NPCs · '+m.monsters.length+' monster types · '+m.portals.length+' recorded exits</div><div class="mc-placeactions"><button type="button" id="mc-go" class="mc-primary cursor-interaction">Directions</button><button type="button" id="mc-start" class="cursor-interaction">Start here</button></div>'+mapPreview(m)+(!a?'<div class="mc-datahint">Atlas position not reviewed. Use the connections below.</div>':a.schematic?'<div class="mc-datahint">◇ Schematic position · Portal connections are recorded; this point is placed to explain the forest path.</div>':'')+'<div class="mc-category">'+categories.map(([c,n])=>'<button type="button" class="cursor-interaction" data-category="'+c+'" aria-pressed="'+(c===state.category)+'">'+n+'</button>').join('')+'</div><div id="mc-items"></div>';
       const items=$('#mc-items');
       if(state.category==='monsters')items.innerHTML=m.monsters.length?m.monsters.map(mon=>'<div class="mc-row">'+sprite('monster',mon)+'<div><strong>'+esc(mon.name)+'</strong><small>Level '+mon.level+' · '+mon.exp+' EXP</small><small>'+mon.spawns+' recorded spawn points</small></div></div>').join('')+'<div class="mc-datahint">Spawn points are map data, not live monsters.</div>':'<div class="mc-empty">No monster placements recorded in this map.</div>';
       if(state.category==='npcs')items.innerHTML=m.npcs.length?m.npcs.map(n=>'<div class="mc-row">'+sprite('npc',n)+'<div><strong>'+esc(n.name)+'</strong><small>'+DATA.quests.filter(q=>q.npc===n.name).length+' quest associations</small></div></div>').join(''):'<div class="mc-empty">No NPCs recorded in '+esc(m.name)+'.</div>';
       if(state.category==='quests')items.innerHTML=questRows(relevantQuests(m));
+      if(state.category==='crafting')renderOres(items,m);
       if(state.category==='connections'){
         items.innerHTML='<div class="mc-eyebrow">Direct exits</div>'+m.portals.map(e=>'<div class="mc-row"><div><strong>'+esc(get(e.to)?.name||e.to)+'</strong><small>'+esc(MapleLocalMaps.instruction(e))+'</small></div><button type="button" class="cursor-interaction" data-inspect="'+e.to+'">Open</button></div>').join('');
         if(members.length>1)items.innerHTML+='<button type="button" id="mc-expand" class="cursor-interaction mc-expand">'+(state.expanded?'Hide':'Expand')+' '+members.length+' maps in this location</button><div id="mc-memberlist" '+(state.expanded?'':'hidden')+'>'+members.map(p=>'<div class="mc-row"><div><strong>'+esc(p.name)+'</strong><small>'+p.npcs.length+' NPCs · '+p.monsters.length+' monster types</small></div><button type="button" class="cursor-interaction" data-inspect="'+p.id+'">Open</button></div>').join('')+'</div>';

@@ -114,6 +114,11 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
             r = max(140, min(520, max(((q[0] - cx) ** 2 + (q[1] - cy) ** 2) ** .5 for q in group) + 90))
             best[monster] = {'x': round(cx), 'y': round(cy), 'r': round(r), 'n': len(group), 'total': len(ps)}
         m['bestSpots'] = best
+    # Crafting materials (ores, rare ores, gems, Maker items) for the map page's Ores tab.
+    mcw = json.loads((project / 'data/mcw-items.json').read_text())['items']
+    mcw = mcw if isinstance(mcw, list) else list(mcw.values())
+    data['crafting'] = [{'id': i['id'], 'name': i['name'], 'kind': i['typeInfo']['subCategory']} for i in mcw
+                        if i.get('typeInfo', {}).get('category') == 'Crafting' and i.get('name')]
     # Monsters each quest's own journal text names (data/quest-hints.json): the phone uses
     # them for quest items the wiki has no source for (Omok Table: Stump).
     # Where each NPC stands on its map (data/npc-positions.json), for guiding you to it.

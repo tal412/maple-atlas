@@ -167,7 +167,20 @@
     const b=markers.body,pad=band.h*.15,win={x:Math.max(0,band.x-pad),y:Math.max(0,band.y-band.h*.9),w:band.w+pad*2,h:b.y+b.h-band.y+band.h*1.4};
     if(!markers.player)return {reason:'no-dot',window:win,memory};
     const placed=onPicture(markers.body,markers.player,picture);
-    if(placed)return {...placed,method:'picture',window:win,memory};
+    if(placed){
+      // The game draws every marker a little above the point it marks (the dot and the portal
+      // rings alike): the visible rings, placed the same way, give that offset against their
+      // known positions, and the dot is corrected by it.
+      const offs=[];
+      for(const ring of markers.portals){
+        const at=onPicture(markers.body,ring,picture);if(!at)continue;
+        let best=null;for(const p of marks||[]){const d=Math.abs(p.x-at.x)+Math.abs(p.y-at.y)*.25;if(!best||d<best.d)best={d,dx:at.x-p.x,dy:at.y-p.y};}
+        if(best&&Math.abs(best.dx)<300&&Math.abs(best.dy)<400)offs.push(best);
+      }
+      const median=v=>{const a=[...v].sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:0;};
+      const cx=median(offs.map(o=>o.dx)),cy=median(offs.map(o=>o.dy));
+      return {x:Math.round(placed.x-cx),y:Math.round(placed.y-cy),method:offs.length?'picture+rings':'picture',rings:offs.length,window:win,memory};
+    }
     // Shown in diagnostics: how the window's shape compared with the picture's.
     const shape=picture&&markers.body?Math.round((markers.body.w/markers.body.h)/(picture.w/picture.h)*100)/100:null;
     if(!marks?.length)return {reason:'no-portal-data',memory};

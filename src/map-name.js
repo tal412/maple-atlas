@@ -17,7 +17,9 @@
   const px=(image,x,y)=>{const i=(y*image.width+x)*4;return [image.data[i],image.data[i+1],image.data[i+2]];};
   // The strip is light blue; the letters are near white with a dark outline. Both tests are
   // relative, so screen gamma and colour settings do not matter much.
-  const isStrip=(r,g,b)=>{const l=(r+g+b)/3;return l>=105&&l<=235&&b-r>=16&&g-r>=6&&b>=g-6;};
+  // Pale grey-blue (about 145,175,195 on screen): a deep sky blue (red far lower, colours far
+  // apart) is not the strip, so a sky beside the minimap never joins it.
+  const isStrip=(r,g,b)=>{const l=(r+g+b)/3;return l>=105&&l<=235&&b-r>=16&&g-r>=6&&b>=g-6&&r>=100&&Math.max(r,g,b)-Math.min(r,g,b)<=85;};
   const lum=(r,g,b)=>r*.299+g*.587+b*.114;
   const isLetter=(r,g,b,floor=185)=>Math.min(r,g,b)>=floor&&Math.max(r,g,b)-Math.min(r,g,b)<=55;
 

@@ -148,6 +148,7 @@ final class CompanionModel {
             self.log("Reading window: \(label)")
             self.wideRect = nil
             self.autoMinimapRect = nil
+            self.fittedMinimapRect = nil
             self.autoQuestRect = nil
             self.panelsTriedAt = .distantPast
             self.stoppedByPlayer = false
@@ -438,7 +439,12 @@ final class CompanionModel {
     /// A larger area read instead of the box when the minimap was found running past it
     /// (cleared when the box changes or another window is read).
     @ObservationIgnored private var wideRect: CGRect?
-    private var readRect: CGRect { wideRect ?? autoMinimapRect ?? minimapRect }
+    private var readRect: CGRect { wideRect ?? fittedMinimapRect ?? autoMinimapRect ?? minimapRect }
+    /// The found box fitted to the minimap window's real edges. The window's size changes with
+    /// the map, so it is dropped on every new map and whenever a read fails (the generous found
+    /// box is read again and fitted anew).
+    @ObservationIgnored private var fittedMinimapRect: CGRect?
+    @ObservationIgnored private var fittedForMap: String?
 
     // MARK: Finding the panels
 
@@ -447,7 +453,7 @@ final class CompanionModel {
     private(set) var autoMinimapRect: CGRect?
     private(set) var autoQuestRect: CGRect?
     /// What the preview shows: the found boxes, else the ones drawn by hand.
-    var shownMinimapRect: CGRect { autoMinimapRect ?? minimapRect }
+    var shownMinimapRect: CGRect { fittedMinimapRect ?? autoMinimapRect ?? minimapRect }
     var shownQuestRect: CGRect { autoQuestRect ?? questRect }
     @ObservationIgnored private var panelsFoundAt = Date.distantPast
     /// A box drawn by hand this session wins over the found one.
@@ -482,6 +488,7 @@ final class CompanionModel {
         let titleMoved = { (a: CGRect?, b: CGRect) in a.map { abs($0.minX - b.minX) > 0.015 || abs($0.minY - b.minY) > 0.02 } ?? true }
         if let m = found.minimap, !minimapByHand, titleMoved(autoMinimapRect, m) {
             autoMinimapRect = m
+            fittedMinimapRect = nil
             wideRect = nil
             noMatchSince = .now
             changes.append("minimap at \(Self.describe(m))")
@@ -500,15 +507,25 @@ final class CompanionModel {
     /// the area it read (region).
     private func fitMinimapBox(_ box: EngineReading.Box?, in region: CGRect) {
         guard let box, autoMinimapRect != nil, wideRect == nil, box.w > 0.05, box.h > 0.05 else { return }
+        // Fitted only from the generous box (or a fitted one that still holds the window whole).
         let m = 0.012
         let fitted = CGRect(x: region.minX + box.x * region.width - m, y: region.minY + box.y * region.height - m,
                             width: box.w * region.width + 2 * m, height: box.h * region.height + 2 * m)
             .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-        guard let current = autoMinimapRect, !fitted.isNull,
+        let current = fittedMinimapRect ?? autoMinimapRect!
+        guard !fitted.isNull,
               abs(fitted.minX - current.minX) > 0.008 || abs(fitted.minY - current.minY) > 0.008 || abs(fitted.width - current.width) > 0.015 || abs(fitted.height - current.height) > 0.015
         else { return }
-        autoMinimapRect = fitted
+        fittedMinimapRect = fitted
+        fittedForMap = lastConfirmed?.id
         log("Fitted the minimap box to the window: \(Self.describe(fitted))")
+    }
+
+    /// Back to the generous found box (the minimap window may have grown or moved).
+    private func unfitMinimapBox(_ why: String) {
+        guard fittedMinimapRect != nil else { return }
+        fittedMinimapRect = nil
+        log("Reading the whole found minimap area again (\(why))")
     }
 
     private static func describe(_ r: CGRect) -> String {
@@ -541,6 +558,7 @@ final class CompanionModel {
         // Drawn by hand: it replaces the found box for this session.
         minimapByHand = true
         autoMinimapRect = nil
+        fittedMinimapRect = nil
         regionChanged()
     }
 
@@ -682,7 +700,8 @@ final class CompanionModel {
             log("Position on map \(map.id): \(note)")
         }
         saveMinimapSnapshotIfAsked(png: png, note: "map \(map.id): \(note)")
-        if located.positionNote?.hasPrefix("no-minimap") == true || located.positionNote?.hasPrefix("collapsed") == true {
+        if located.positionNote?.hasPrefix("no-minimap") == true || located.positionNote?.hasPrefix("collapsed") == true || located.positionNote?.contains("shape") == true {
+            unfitMinimapBox("the minimap did not fit")
             Task { await findPanelsIfDue(force: true) }
         }
         // The minimap runs past its box (a big map, zoomed in): read a larger area from the game
@@ -775,8 +794,8 @@ final class CompanionModel {
             guard let png = frame.minimapImage else { return }
             let reading = try await engine.read(png, frameHeight: frame.frameHeight)
             guard !Task.isCancelled else { return }
-            fitMinimapBox(reading.box, in: region)
             apply(reading)
+            fitMinimapBox(reading.box, in: region)
         } catch EngineHost.EngineError.busy {
             return
         } catch {
@@ -808,6 +827,8 @@ final class CompanionModel {
 
     private func apply(_ reading: EngineReading) {
         logMapReading(reading)
+        if reading.phase == "confirmed", let id = reading.id, fittedForMap != nil, id != fittedForMap { unfitMinimapBox("new map") }
+        if reading.phase != "confirmed", reading.phase != "candidate", Date.now.timeIntervalSince(noMatchSince) > 3 { unfitMinimapBox("map name not read") }
         if reading.phase == "confirmed", let id = reading.id {
             noMatchSince = .now
             let name = reading.name ?? id

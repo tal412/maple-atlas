@@ -188,7 +188,7 @@
   const point=e=>{const r=$('preview').getBoundingClientRect();return {x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))};};
   $('preview').onpointerdown=e=>{dragStart=point(e);$('preview').setPointerCapture(e.pointerId);};
   $('preview').onpointermove=e=>{if(!dragStart)return;const p=point(e),b={x:Math.min(p.x,dragStart.x),y:Math.min(p.y,dragStart.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};if(editQuest)qbox=b;else box=b;placeBox();};
-  $('preview').onpointerup=()=>{dragStart=null;if(editQuest){qByHand=true;autoQbox=null;if(qbox.w<.03||qbox.h<.03){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}}else{qmarked=true;try{localStorage.setItem(QBOX_KEY,JSON.stringify(qbox));}catch(_){}}placeBox();return;}mByHand=true;autoBox=null;if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
+  $('preview').onpointerup=()=>{dragStart=null;if(editQuest){qByHand=true;autoQbox=null;if(qbox.w<.03||qbox.h<.03){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}}else{qmarked=true;try{localStorage.setItem(QBOX_KEY,JSON.stringify(qbox));}catch(_){}}placeBox();return;}mByHand=true;autoBox=null;fitBox=null;if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
   $('reset-box').onclick=()=>{panelsAt=0;if(editQuest){qByHand=false;qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}placeBox();return;}mByHand=false;box={...DEFAULT_BOX};saveBox();};
   placeBox();
   let previewBusy=false;
@@ -215,7 +215,11 @@
   // are found, then every 30 s, and soon after a read lost its panel. A box drawn by hand is
   // used only while a panel is not found.
   let autoBox=null,autoQbox=null,panelsAt=0,panelsBusy=false,panelsLost=false,mByHand=false,qByHand=false;
-  const mb=()=>autoBox||box,qb=()=>autoQbox||qbox,qm=()=>!!autoQbox||qmarked;
+  // fitBox: the found box fitted to the minimap window's edges; dropped on a new map or a failed
+  // read (the window's size changes with the map), so the generous found box is read again.
+  let fitBox=null,fitMap=null;
+  const unfit=()=>{if(fitBox){fitBox=null;placeBox();}};
+  const mb=()=>fitBox||autoBox||box,qb=()=>autoQbox||qbox,qm=()=>!!autoQbox||qmarked;
   const pct=v=>Math.round(v*100)+'%',describe=b=>pct(b.x)+','+pct(b.y)+' '+pct(b.w)+'×'+pct(b.h);
   function paintPanels(){$('panels').textContent=(autoBox?'Minimap found':'Minimap not found yet (keep it open)')+' · '+(autoQbox?'Quest Helper found':'Quest Helper not found yet (keep it open)');}
   async function findPanels(){
@@ -234,7 +238,7 @@
       const found=MapleQuestHelper.findPanels(v.lines,{w:v.width,h:v.height}),moved=(a,b)=>!a||Math.abs(a.x-b.x)>.01||Math.abs(a.y-b.y)>.01||Math.abs(a.w-b.w)>.02;
       // A fitted minimap box is replaced only when the window's title bar moved.
       const titleMoved=(a,b)=>!a||Math.abs(a.x-b.x)>.015||Math.abs(a.y-b.y)>.02;
-      if(found.minimap&&!mByHand&&titleMoved(autoBox,found.minimap)){autoBox=found.minimap;atlasEngine.reset();noMatchSince=Date.now();cmd({cmd:'log',message:'Found the minimap at '+describe(autoBox)});}
+      if(found.minimap&&!mByHand&&titleMoved(autoBox,found.minimap)){autoBox=found.minimap;fitBox=null;atlasEngine.reset();noMatchSince=Date.now();cmd({cmd:'log',message:'Found the minimap at '+describe(autoBox)});}
       if(found.quest&&!qByHand&&moved(autoQbox,found.quest)){autoQbox=found.quest;cmd({cmd:'log',message:'Found the Quest Helper at '+describe(autoQbox)});}
       paintPanels();placeBox();
     }catch(_){}finally{panelsBusy=false;}
@@ -243,9 +247,10 @@
   // is fitted to them.
   function fitMinimap(b,area){
     if(!b||!autoBox||b.w<.05||b.h<.05)return;
+    const cur=fitBox||autoBox;
     const m=.012,f={x:Math.max(0,area.x+b.x*area.w-m),y:Math.max(0,area.y+b.y*area.h-m)};
     f.w=Math.min(1-f.x,b.w*area.w+2*m);f.h=Math.min(1-f.y,b.h*area.h+2*m);
-    if(Math.abs(f.x-autoBox.x)>.008||Math.abs(f.y-autoBox.y)>.008||Math.abs(f.w-autoBox.w)>.015||Math.abs(f.h-autoBox.h)>.015){autoBox=f;placeBox();cmd({cmd:'log',message:'Fitted the minimap box to the window: '+describe(f)});}
+    if(Math.abs(f.x-cur.x)>.008||Math.abs(f.y-cur.y)>.008||Math.abs(f.w-cur.w)>.015||Math.abs(f.h-cur.h)>.015){fitBox=f;fitMap=lastMap?.id||null;placeBox();cmd({cmd:'log',message:'Fitted the minimap box to the window: '+describe(f)});}
   }
 
   // Tracking.
@@ -255,9 +260,12 @@
   async function readMap(){
     readBusy=true;lastRead=Date.now();
     try{
-      const area=mb(),r=await atlasEngine.readFrame(...await minimapSource('map'));if(!tracking)return;fitMinimap(r.box,area);if(/^(no-minimap|collapsed)/.test(r.positionNote||''))panelsLost=true;
+      const area=mb(),r=await atlasEngine.readFrame(...await minimapSource('map'));if(!tracking)return;
+      if(r.phase==='confirmed'&&fitMap&&r.id!==fitMap)unfit();
+      if(r.phase!=='confirmed'&&r.phase!=='candidate'&&Date.now()-noMatchSince>3000)unfit();
+      if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||'')){panelsLost=true;unfit();}
       if(r.phase==='confirmed'){
-        noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
+        noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};fitMinimap(r.box,area);$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
         $('reading').textContent=(phase==='connected'?'Following on phone · ':'Map name · ')+r.name;
         cmd({cmd:'location',id:r.id,confidence:r.confidence||0,observedAt:Date.now()});
         if(r.position)sendPosition(r.id,r.position);
@@ -271,7 +279,7 @@
   }
   async function readDot(){
     dotBusy=true;
-    try{const area=mb(),r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);fitMinimap(r.box,area);if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
+    try{const area=mb(),r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);fitMinimap(r.box,area);if(/^(no-minimap|collapsed)|shape/.test(r.positionNote||''))unfit();if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
     catch(_){}finally{dotBusy=false;}
   }
   function sendPosition(id,p){lastPosition=p;$('position').textContent='x '+Math.round(p.x)+', y '+Math.round(p.y);cmd({cmd:'position',id,x:p.x,y:p.y,observedAt:Date.now()});}

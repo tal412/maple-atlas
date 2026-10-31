@@ -68,3 +68,16 @@ console.log('map-name: numerals pass');
 // A dungeon road on "Warning Street" (as read from a real header).
 assert.equal(name.match('Warning Street\nThe Roar to the Dungeon\n', [...maps, { id: '10001090', name: 'The Road to the Dungeon', street: 'Warning Street' }]).id, '10001090');
 console.log('map-name: Warning Street passes');
+// A deep blue sky beside the minimap (a game window over a blue sky) is not the name strip.
+{
+  const sky = image(300, 240, (x, y) => {
+    if (y >= 20 && y < 70 && x >= 10 && x < 150) {
+      const letter = x >= 40 && x < 140 && ((y >= 28 && y < 40) || (y >= 50 && y < 62)) && x % 9 < 4;
+      return letter ? [245, 245, 240] : [145, 175, 195];
+    }
+    return [40, 115, 228];   // sky
+  });
+  const strip = name.find(sky);
+  assert.ok(strip && strip.y >= 18 && strip.y <= 22 && strip.h >= 45 && strip.h <= 52 && strip.w <= 150, JSON.stringify(strip));
+  console.log('map-name: sky beside the minimap passes');
+}

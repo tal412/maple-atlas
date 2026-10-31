@@ -65,7 +65,30 @@
       })();
       pending.set(name,task);try{return await task;}finally{pending.delete(name);}
     }
-    return {load};
+    // Every monster drop of these items (the crafting materials) in one go, cached for a week:
+    // [{monster, item, rate}], for the map page's Ores tab.
+    let craftTask=null;
+    async function craftDrops(names){
+      const key='__crafting:'+names.length;
+      const saved=store.read(key);
+      if(saved?.schema===1&&Number.isFinite(saved.checked)&&now()-saved.checked<week)return saved.rows;
+      craftTask??=(async()=>{
+        const out=[],where='item_id IN ('+names.map(quote).join(',')+')';
+        for(let offset=0;offset<3000;offset+=500){
+          const params=new URLSearchParams({action:'cargoquery',tables:'monster_drops',fields:'monster_id,item_id,drop_rate',where,limit:'500',offset:String(offset),format:'json',origin:'*'});
+          const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+          let page;
+          try{const r=await request(api+'?'+params,{credentials:'omit',signal:controller.signal});if(!r.ok)throw Error('Wiki request failed');page=rows(await r.json(),500);}
+          finally{clearTimeout(timer);}
+          for(const r of page)if(r['monster id']&&r['item id'])out.push({monster:r['monster id'],item:r['item id'],rate:number(r['drop rate'])});
+          if(page.length<500)break;
+        }
+        store.write(key,{schema:1,name:key,checked:now(),rows:out});
+        return out;
+      })().finally(()=>{craftTask=null;});
+      try{return await craftTask;}catch(e){if(saved?.rows)return saved.rows;throw e;}
+    }
+    return {load,craftDrops};
   }
   const exported={create,parse,rows,empty,pageURL,imageURL,license:'https://creativecommons.org/licenses/by-nc-sa/4.0/'};
   scope.MapleItemSources=exported;if(typeof module!=='undefined')module.exports=exported;
