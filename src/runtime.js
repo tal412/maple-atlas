@@ -273,15 +273,15 @@
   // At a hunt destination: the map itself is the goal (no particular spot).
   function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}
   // Arrival ends the route by itself: a map destination 10 s after you walk in (the arrival
-  // text shows that long), an NPC destination as soon as you stand next to the NPC, or after a
-  // minute there.
+  // text shows that long); an NPC destination as soon as you stand next to the NPC, after a
+  // minute there, or after 20 s when your dot is not seen on that map (no minimap on it).
   let arrivedAt=0,arrivedTimer=null;
   function checkArrival(){
     clearTimeout(arrivedTimer);arrivedTimer=null;
     const last=state.route[state.route.length-1];
     if(!state.routeActive||!last||!liveFresh||liveLocation!==last){arrivedAt=0;return;}
     if(!arrivedAt)arrivedAt=Date.now();
-    const npc=npcOn(last),wait=npc?60000:10000;
+    const npc=npcOn(last),positioned=livePosition&&livePosition.id===last,wait=npc?(positioned?60000:20000):10000;
     const near=!!(npc&&livePosition&&livePosition.id===last&&Math.hypot(livePosition.x-npc.x,livePosition.y-npc.y)<=250);
     if(near||Date.now()-arrivedAt>=wait){const name=get(last)?.name||'';endRoute();pushNav(true);$('#mc-status').textContent='Live · '+name+' · You arrived, route ended';return;}
     arrivedTimer=setTimeout(checkArrival,Math.max(500,wait-(Date.now()-arrivedAt)));

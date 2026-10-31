@@ -97,3 +97,21 @@ console.log('map-name: Warning Street passes');
   assert.ok(strip && strip.y >= 20 && strip.y <= 24 && strip.h >= 52 && strip.w <= 262, JSON.stringify(strip));
   console.log('map-name: small minimap in a large area passes');
 }
+// A collapsed minimap (a map without a minimap picture): only its title bar, one line of
+// dark letters on a near-white bar, is on screen. It is found, flagged collapsed, and its
+// "Street : Map" text matches the map.
+{
+  const bar = image(720, 300, (x, y) => {
+    if (y >= 6 && y < 22 && x >= 2 && x < 420) {
+      const letter = x >= 12 && x < 300 && y >= 9 && y < 19 && x % 7 < 3;
+      return letter ? [88, 88, 90] : [205, 212, 216];
+    }
+    return y < 150 ? [70, 150, 235] : [60, 110, 40];   // sky and trees behind
+  });
+  const strip = name.find(bar);
+  assert.ok(strip && strip.collapsed && strip.y >= 5 && strip.y <= 7 && strip.h >= 14 && strip.h <= 18 && strip.w >= 400, JSON.stringify(strip));
+  const inked = name.ink(image(40, 20, (x) => (x < 20 ? [88, 88, 90] : [205, 212, 216])), { dark: true });
+  assert.equal(inked.data[0], 0); assert.equal(inked.data[30 * 4], 255);
+  assert.equal(name.match("Victoria Road : Warriors' Sanctuary", [...maps, { id: '10004003', name: "Warriors' Sanctuary", street: 'Victoria Road' }]).id, '10004003');
+  console.log('map-name: collapsed minimap title bar passes');
+}

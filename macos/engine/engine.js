@@ -84,8 +84,8 @@
     nameCanvas.width=Math.round(strip.w*zoom);nameCanvas.height=Math.round(strip.h*zoom);
     nameContext.imageSmoothingEnabled=true;nameContext.imageSmoothingQuality='high';
     nameContext.drawImage(canvas,strip.x,strip.y,strip.w,strip.h,0,0,nameCanvas.width,nameCanvas.height);
-    const raw=nameContext.getImageData(0,0,nameCanvas.width,nameCanvas.height),emblem=MapleMapName.emblemEnd(raw);
-    let pixels=MapleMapName.ink(raw);
+    const raw=nameContext.getImageData(0,0,nameCanvas.width,nameCanvas.height),emblem=strip.collapsed?0:MapleMapName.emblemEnd(raw);
+    let pixels=MapleMapName.ink(raw,{dark:!!strip.collapsed});
     const signature=MapleMapName.signature(pixels);
     const box={x:strip.x/canvas.width,y:strip.y/canvas.height,w:strip.w/canvas.width,h:strip.h/canvas.height};
     if(seen?.found&&!MapleMapName.changed(signature,seen.signature)&&performance.now()-seen.at<20000)return {...seen,strip:box,fresh:false};

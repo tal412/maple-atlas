@@ -51,13 +51,45 @@
       for(let y=run.y;y<run.y+run.h;y+=2)for(let x=x0;x<=x1;x+=2){all++;if(isLetter(...px(image,x,y)))letters++;}
       if(letters/all>=.004&&letters/all<=.35)return {x:x0,y:run.y,w:x1-x0+1,h:run.h};
     }
+    return findBar(image);
+  }
+  // A collapsed minimap (a map with no minimap picture) is only its title bar: one line of
+  // "Street : Map" in dark letters on a near-white bar about 16 game px tall. Returns
+  // {x,y,w,h,collapsed:true} or null.
+  const isBar=(r,g,b)=>Math.min(r,g,b)>=165&&b>=r-6&&Math.max(r,g,b)-Math.min(r,g,b)<=40;
+  const isDark=(r,g,b)=>Math.max(r,g,b)<=125&&Math.max(r,g,b)-Math.min(r,g,b)<=40;   // grey letters, not a dark background
+  function findBar(image){
+    const {width,height}=image,minRun=Math.max(120,Math.min(width*.2,240));
+    const rowOn=[];
+    for(let y=0;y<height;y++){let run=0,best=0,gap=0;for(let x=0;x<width;x+=2){const [r,g,b]=px(image,x,y);if(isBar(r,g,b)||isDark(r,g,b)&&run){run+=2+gap;gap=0;if(run>best)best=run;}else if(run&&gap<6)gap+=2;else{run=0;gap=0;}}rowOn.push(best>=minRun);}
+    for(let y=0,start=-1;y<=height;y++){
+      const on=y<height&&rowOn[y];
+      if(on&&start<0)start=y;
+      if(!on&&start>=0){
+        const h=y-start;
+        if(h>=11&&h<=40){
+          let x0=width,x1=-1;
+          for(let x=0;x<width;x++){let n=0;for(let yy=start;yy<y;yy++){const [r,g,b]=px(image,x,yy);if(isBar(r,g,b)||isDark(r,g,b))n++;}if(n>=h*.6){x0=Math.min(x0,x);x1=Math.max(x1,x);}}
+          if(x1-x0>=minRun){
+            let dark=0,all=0;for(let yy=start;yy<y;yy++)for(let x=x0;x<=x1;x+=2){all++;if(isDark(...px(image,x,yy)))dark++;}
+            if(dark/all>=.008&&dark/all<=.4)return {x:x0,y:start,w:x1-x0+1,h,collapsed:true};
+          }
+        }
+        start=-1;
+      }
+    }
     return null;
   }
   // Letters -> black, everything else -> white. In place. Letters are the pale pixels clearly
   // brighter than the strip itself (its median brightness + 28): white on a screen, bluish
   // white when the colours are shifted.
-  function ink(image){
+  // dark: letters darker than the bar (a collapsed minimap's title) instead of lighter.
+  function ink(image,{dark=false}={}){
     const {data}=image,ls=[];
+    if(dark){
+      for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2];const on=lum(r,g,b)<=130&&Math.max(r,g,b)-Math.min(r,g,b)<=60;data[i]=data[i+1]=data[i+2]=on?0:255;data[i+3]=255;}
+      return image;
+    }
     for(let i=0;i<data.length;i+=16)if(isStrip(data[i],data[i+1],data[i+2]))ls.push(lum(data[i],data[i+1],data[i+2]));
     ls.sort((a,b)=>a-b);const floor=Math.min(225,Math.max(150,(ls.length?ls[ls.length>>1]:180)+28));
     for(let i=0;i<data.length;i+=4){const r=data[i],g=data[i+1],b=data[i+2],on=lum(r,g,b)>=floor&&Math.max(r,g,b)-Math.min(r,g,b)<=75;data[i]=data[i+1]=data[i+2]=on?0:255;data[i+3]=255;}
@@ -91,7 +123,8 @@
 
   // Lines of recognized text, plus each pair of neighbours joined (a long name can wrap).
   function lines(text){
-    const out=String(text||'').split('\n').map(l=>l.replace(/[^\p{L}\p{N}<>'.,:\- ]+/gu,' ').replace(/\s+/g,' ').trim()).filter(l=>normalize(l).length>=3);
+    // A collapsed minimap shows "Street : Map" on one line: split at the colon.
+    const out=String(text||'').split('\n').flatMap(l=>/\S\s*:\s*\S/.test(l)?l.split(/\s*:\s*/):[l]).map(l=>l.replace(/[^\p{L}\p{N}<>'.,:\- ]+/gu,' ').replace(/\s+/g,' ').trim()).filter(l=>normalize(l).length>=3);
     const joined=[];for(let i=0;i+1<out.length;i++)joined.push(out[i]+' '+out[i+1]);
     return [...out,...joined];
   }
@@ -114,7 +147,7 @@
     if(rival&&top.name<.97&&top.score-rival.score<.06)return null;
     return {id:String(top.m.id),name:top.m.name,street:top.m.street||'',score:Math.round(top.name*100)/100,ids:same};
   }
-  const api={find,ink,emblemEnd,blankLeft,signature,changed,lines,match,similarity,normalize};
+  const api={find,findBar,ink,emblemEnd,blankLeft,signature,changed,lines,match,similarity,normalize};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   scope.MapleMapName=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
