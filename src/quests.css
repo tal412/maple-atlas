@@ -73,3 +73,10 @@
 #maple-atlas-concept .mc-ore .mc-sprite {flex:0 0 36px;width:36px;height:36px;border-radius:10px;background:var(--mc-soft);display:grid;place-items:center;overflow:hidden;}
 #maple-atlas-concept .mc-ore .mc-sprite img {max-width:30px;max-height:30px;}
 #maple-atlas-concept .mc-ore small {display:block;}
+#maple-atlas-concept .mc-ore-from {display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;}
+#maple-atlas-concept .mc-ore-mob {display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;border-radius:999px;background:var(--mc-soft);font-size:12px;color:var(--mc-ink,inherit);}
+#maple-atlas-concept .mc-ore-mob img {width:24px;height:24px;object-fit:contain;image-rendering:pixelated;}
+#maple-atlas-concept .mc-ore-mob b {font-weight:600;color:var(--mc-blue);}
+#maple-atlas-concept .mc-ore-pin {display:flex;align-items:center;gap:10px;margin:4px 0 8px;font-size:13px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-ore-pin .mc-qh-pin {margin-left:0;}
+#maple-atlas-concept .mc-update-bar {position:fixed;z-index:60;left:12px;right:12px;bottom:calc(var(--mc-nav-height,64px) + 12px);min-height:48px;padding:12px 16px;border:0;border-radius:16px;background:var(--mc-blue);color:#fff;font:inherit;font-weight:600;box-shadow:0 8px 24px #0006;cursor:pointer;}

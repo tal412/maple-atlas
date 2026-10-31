@@ -47,3 +47,17 @@ func TestPinsEvent(t *testing.T) {
 		t.Fatal("no pins must clear the row")
 	}
 }
+
+func TestPinsEventOres(t *testing.T) {
+	commit := "a44f101bffa8272164ca47484ab18c078dcab0a0"
+	raw := `[{"t":"Ores · The Hill East of Henesys","k":"ores","o":[{"n":"Iron Ore","h":null,"d":null,"i":"` + commit + `/data/current/images/items/04010001.png","m":"` + commit + `/data/images/monsters/d8caace4e0f119f7a3f2b1fb450f7ed4.png","p":2.898}]}]`
+	ev, ok := pinsEvent(json.RawMessage(raw))
+	if !ok {
+		t.Fatal("ore pins rejected")
+	}
+	q := ev["quests"].([]map[string]any)[0]
+	o := q["objectives"].([]map[string]any)[0]
+	if q["kind"] != "ores" || o["chance"] != 2.898 || o["monster"] == "" || o["icon"] == "" {
+		t.Fatalf("got %v", q)
+	}
+}

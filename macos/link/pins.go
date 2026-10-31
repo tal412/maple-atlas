@@ -18,11 +18,14 @@ func pinsEvent(raw json.RawMessage) (map[string]any, bool) {
 	var in []struct {
 		T string `json:"t"`
 		R bool   `json:"r"`
+		K string `json:"k"` // "ores": the map's ores, each with its monster and chance
 		O []struct {
-			N string `json:"n"`
-			H *int   `json:"h"`
-			D *int   `json:"d"`
-			I string `json:"i"`
+			N string   `json:"n"`
+			H *int     `json:"h"`
+			D *int     `json:"d"`
+			I string   `json:"i"`
+			M string   `json:"m"` // the monster that drops it (ores)
+			P *float64 `json:"p"` // its drop chance in percent (ores)
 		} `json:"o"`
 	}
 	if len(raw) == 0 || len(raw) > 8192 || json.Unmarshal(raw, &in) != nil || len(in) > 3 {
@@ -45,9 +48,24 @@ func pinsEvent(raw json.RawMessage) (map[string]any, bool) {
 			if spritePath.MatchString(o.I) {
 				icon = spriteBase + o.I
 			}
-			objectives = append(objectives, map[string]any{"name": clip(o.N, 40), "have": count(o.H), "need": count(o.D), "icon": icon})
+			ob := map[string]any{"name": clip(o.N, 40), "have": count(o.H), "need": count(o.D), "icon": icon}
+			if q.K == "ores" {
+				monster := ""
+				if spritePath.MatchString(o.M) {
+					monster = spriteBase + o.M
+				}
+				ob["monster"] = monster
+				if o.P != nil && *o.P >= 0 && *o.P <= 100 {
+					ob["chance"] = *o.P
+				}
+			}
+			objectives = append(objectives, ob)
 		}
-		quests = append(quests, map[string]any{"title": clip(q.T, 60), "ready": q.R, "objectives": objectives})
+		kind := ""
+		if q.K == "ores" {
+			kind = "ores"
+		}
+		quests = append(quests, map[string]any{"title": clip(q.T, 60), "ready": q.R, "kind": kind, "objectives": objectives})
 	}
 	return map[string]any{"event": "pins", "quests": quests}, true
 }

@@ -22,15 +22,18 @@ import (
 )
 
 type pinObjective struct {
-	Name string `json:"name"`
-	Have *int   `json:"have"`
-	Need *int   `json:"need"`
-	Icon string `json:"icon"`
+	Name    string   `json:"name"`
+	Have    *int     `json:"have"`
+	Need    *int     `json:"need"`
+	Icon    string   `json:"icon"`
+	Monster string   `json:"monster"` // ores: the monster that drops it most here
+	Chance  *float64 `json:"chance"`  // ores: its drop chance in percent
 }
 
 type pinQuest struct {
 	Title      string         `json:"title"`
 	Ready      bool           `json:"ready"`
+	Kind       string         `json:"kind"` // "ores" for the map's ores
 	Objectives []pinObjective `json:"objectives"`
 }
 
@@ -51,6 +54,7 @@ func overlayPins(v map[string]any) {
 	for _, q := range quests {
 		for _, ob := range q.Objectives {
 			icons.want(ob.Icon)
+			icons.want(ob.Monster)
 		}
 	}
 }
@@ -164,6 +168,8 @@ type pinItem struct {
 	countW   int32
 	needW    int32
 	haveFont uintptr
+	monster  string // ores: the monster's picture, drawn smaller after the ore
+	chance   string // ores: "2.9%"
 }
 
 var pGetTextExtentPoint32W = gdi32.NewProc("GetTextExtentPoint32W")
@@ -198,6 +204,25 @@ func layoutPins(hdc uintptr, quests []pinQuest, scale float64) ([]pinItem, int32
 			x += px(24)
 		}
 		for _, ob := range q.Objectives {
+			if q.Kind == "ores" {
+				chance := "?"
+				if ob.Chance != nil {
+					switch c := *ob.Chance; {
+					case c >= 10:
+						chance = strconv.Itoa(int(c+0.5)) + "%"
+					case c >= 1:
+						chance = strconv.FormatFloat(c, 'f', 1, 64) + "%"
+					default:
+						chance = strconv.FormatFloat(c, 'f', 2, 64) + "%"
+					}
+				}
+				it := pinItem{x: x, icon: ob.Icon, name: ob.Name, monster: ob.Monster, chance: chance}
+				it.countW = textWidth(hdc, light, chance)
+				it.w = px(pinIcon) + px(3) + px(22) + px(4) + it.countW
+				items = append(items, it)
+				x += it.w + px(12)
+				continue
+			}
 			have, need := "?", "?"
 			if ob.Have != nil {
 				have = strconv.Itoa(*ob.Have)
@@ -268,6 +293,17 @@ func (o *overlayState) paintPins(hwnd uintptr) {
 			pDrawTextW.Call(hdc, uintptr(unsafe.Pointer(utf16("⚑"))), ^uintptr(0), uintptr(unsafe.Pointer(&box)), dtSingleLine|dtVCenter|dtCenter)
 			pSelectObject.Call(hdc, old)
 			pDeleteObject.Call(f)
+		case it.chance != "":
+			size := px(pinIcon)
+			drawPinIcon(hdc, it.icon, it.name, it.x, cy-size/2, size, bold, px)
+			small := px(22)
+			mx := it.x + size + px(3)
+			drawPinIcon(hdc, it.monster, "?", mx, cy-small/2, small, light, px)
+			old, _, _ := pSelectObject.Call(hdc, light)
+			pSetTextColor.Call(hdc, rgb(255, 214, 79))
+			box := winRect{mx + small + px(4), 0, mx + small + px(4) + it.countW + px(2), h}
+			pDrawTextW.Call(hdc, uintptr(unsafe.Pointer(utf16(it.chance))), ^uintptr(0), uintptr(unsafe.Pointer(&box)), dtSingleLine|dtVCenter|dtNoPrefix)
+			pSelectObject.Call(hdc, old)
 		default:
 			size := px(pinIcon)
 			top := cy - size/2
@@ -317,6 +353,32 @@ func (o *overlayState) paintPins(hwnd uintptr) {
 }
 
 var pStretchDIBitsPins = gdi32.NewProc("StretchDIBits")
+
+// drawPinIcon draws a cached picture at (x, top), size×size, or the name's first letter in a
+// soft circle while there is none.
+func drawPinIcon(hdc uintptr, url, name string, x, top, size int32, font uintptr, px func(float64) int32) {
+	if pix := icons.get(url); pix != nil {
+		bi := bitmapInfoHeader{Width: pinIcon, Height: -pinIcon, Planes: 1, BitCount: 32}
+		bi.Size = uint32(unsafe.Sizeof(bi))
+		pStretchDIBitsPins.Call(hdc, uintptr(x), uintptr(top), uintptr(size), uintptr(size), 0, 0, pinIcon, pinIcon,
+			uintptr(unsafe.Pointer(&pix[0])), uintptr(unsafe.Pointer(&bi)), 0, 0x00CC0020)
+		return
+	}
+	soft, _, _ := pCreateSolidBrush.Call(rgb(60, 64, 72))
+	none, _, _ := pGetStockObject.Call(nullPen)
+	ob, _, _ := pSelectObject.Call(hdc, soft)
+	op, _, _ := pSelectObject.Call(hdc, none)
+	pEllipse.Call(hdc, uintptr(x+px(1)), uintptr(top+px(1)), uintptr(x+size-px(1)), uintptr(top+size-px(1)))
+	pSelectObject.Call(hdc, ob)
+	pSelectObject.Call(hdc, op)
+	pDeleteObject.Call(soft)
+	old, _, _ := pSelectObject.Call(hdc, font)
+	pSetTextColor.Call(hdc, rgb(255, 255, 255))
+	box := winRect{x, top, x + size, top + size}
+	letter := strings.ToUpper(string([]rune(name + "?")[:1]))
+	pDrawTextW.Call(hdc, uintptr(unsafe.Pointer(utf16(letter))), ^uintptr(0), uintptr(unsafe.Pointer(&box)), dtSingleLine|dtVCenter|dtCenter)
+	pSelectObject.Call(hdc, old)
+}
 
 // placePins shows the row at the top centre of the game window and returns its height (0
 // when hidden), so the route card goes under it.

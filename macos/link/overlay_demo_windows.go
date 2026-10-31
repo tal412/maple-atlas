@@ -65,7 +65,7 @@ func runOverlayDemo() int {
 		`{"n":"Omok Table","h":1,"d":1,"i":"` + commit + `/data/current/images/items/04031049.png"},` +
 		`{"n":"Omok Piece: Slime","h":1,"d":1,"i":"` + commit + `/data/current/images/items/04031050.png"},` +
 		`{"n":"Omok Piece: Pig","h":0,"d":1,"i":"` + commit + `/data/current/images/items/04031051.png"}]},` +
-		`{"t":"Halloween Candies","r":false,"o":[{"n":"Halloween Candies","h":14,"d":100,"i":""}]}]`)); ok {
+		`{"t":"Ores","k":"ores","o":[{"n":"Iron Ore","i":"` + commit + `/data/current/images/items/04010001.png","m":"` + commit + `/data/images/monsters/d8caace4e0f119f7a3f2b1fb450f7ed4.png","p":2.9}]}]`)); ok {
 		overlayPins(ev)
 	}
 	time.Sleep(6 * time.Second)

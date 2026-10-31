@@ -108,7 +108,7 @@
     status:()=>state.status,setStatus:changes=>{Object.assign(state.status,changes);save();}});
   // Pinned quests for the computer's overlay row; sent when they change and every 15 s.
   let pinsSent='',pinsSentAt=0;
-  function pushPins(force=false){const v=questPanel.pins(),key=JSON.stringify(v);if(!force&&key===pinsSent&&Date.now()-pinsSentAt<15000)return;if(companion?.pins?.(v)){pinsSent=key;pinsSentAt=Date.now();}}
+  function pushPins(force=false){const v=[...orePins(),...questPanel.pins()].slice(0,3),key=JSON.stringify(v);if(!force&&key===pinsSent&&Date.now()-pinsSentAt<15000)return;if(companion?.pins?.(v)){pinsSent=key;pinsSentAt=Date.now();}}
   setInterval(()=>pushPins(),5000);
   questPanel.onChange(()=>{setTimeout(()=>pushPins(),0);tracking=new Set(questPanel.tracked().map(q=>q.quest?.id).filter(Boolean));if(state.panel==='progress')detail();else mobileChrome();if(state.layer==='quests')markers();});
   function openProfile(){$('#mc-profile-dialog').showModal();}
@@ -217,24 +217,58 @@
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
   let oreDrops=null,oreState='idle';
+  const ORE_PIN_KEY='maple-atlas-pin-ores';
+  let oresPinned=false;try{oresPinned=localStorage.getItem(ORE_PIN_KEY)==='on';}catch(_){}
+  const CDN='https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@';
+  const orePic=item=>DATA.sprites.item?.[String(item.id)]||CDN+'a44f101bffa8272164ca47484ab18c078dcab0a0/data/current/images/items/'+String(item.id).padStart(8,'0')+'.png';
+  const monsterPic=mon=>mon?DATA.sprites.monster?.[String(mon.id)]||null:null;
+  const pct=v=>v==null?'?':(v>=10?Math.round(v):v>=1?v.toFixed(1):v.toFixed(2))+'%';
+  function loadOreDrops(){
+    if(oreDrops||oreState==='loading')return;
+    oreState='loading';
+    oreSources.craftDrops((DATA.crafting||[]).map(c=>c.name)).then(r=>{oreDrops=r;oreState='ready';}).catch(()=>{oreState='error';})
+      .finally(()=>{if(state.category==='crafting')detail();pushPins();});
+  }
+  // The ores and gems the monsters on map m drop: [{item, best, from: [{monster, rate, mon}]}],
+  // best chance first; null while the drop tables load.
+  function oresFor(m){
+    if(!oreDrops)return null;
+    const here=new Map((m?.monsters||[]).map(x=>[x.name,x])),kinds=new Map((DATA.crafting||[]).map(c=>[c.name,c])),byItem=new Map();
+    for(const d of oreDrops){if(!here.has(d.monster)||!kinds.has(d.item))continue;const e=byItem.get(d.item)||{item:kinds.get(d.item),from:[]};e.from.push({...d,mon:here.get(d.monster)});byItem.set(d.item,e);}
+    return [...byItem.values()].map(e=>({...e,from:e.from.sort((a,b)=>(b.rate??0)-(a.rate??0)),best:e.from.some(f=>f.rate!=null)?Math.max(...e.from.map(f=>f.rate??0)):null})).sort((a,b)=>(b.best??-1)-(a.best??-1));
+  }
+  // The pinned ores for the game overlay: the live map's (or the chosen map's) best six, each
+  // with the monster that drops it most and the chance (icon paths under the datamine CDN).
+  function orePins(){try{return orePinsNow();}catch(_){return [];}}   // also called before this part of the page has started
+  function orePinsNow(){
+    if(!oresPinned)return [];
+    const id=(liveFresh&&get(liveLocation)?liveLocation:null)||(get(state.selected)?state.selected:null);
+    const m=id&&get(id);if(!m)return [];
+    if(!oreDrops){loadOreDrops();return [];}
+    const list=(oresFor(m)||[]).slice(0,6);if(!list.length)return [];
+    const path=u=>u&&u.startsWith(CDN)?u.slice(CDN.length):'';
+    return [{t:'Ores · '+m.name,r:false,k:'ores',o:list.map(e=>({n:e.item.name.slice(0,40),h:null,d:null,i:path(orePic(e.item)),m:path(monsterPic(e.from[0]?.mon)),p:e.from[0]?.rate??null}))}];
+  }
   function renderOres(items,m){
-    const here=new Map((m.monsters||[]).map(x=>[x.name,x]));
-    if(!here.size){items.innerHTML='<div class="mc-empty">No monsters in '+esc(m.name)+', so nothing drops here.</div>';return;}
-    if(!oreDrops){
+    if(!(m.monsters||[]).length){items.innerHTML='<div class="mc-empty">No monsters in '+esc(m.name)+', so nothing drops here.</div>';return;}
+    const list=oresFor(m);
+    if(!list){
       items.innerHTML='<div class="mc-empty">'+(oreState==='error'?'Couldn’t reach the MapleClassic Wiki for drop tables. <button type="button" class="cursor-interaction" id="mc-ores-retry">Try again</button>':'Looking up what drops here…')+'</div>';
       if($('#mc-ores-retry'))$('#mc-ores-retry').onclick=()=>{oreState='idle';renderOres(items,m);};
-      if(oreState!=='loading'&&oreState!=='error'){oreState='loading';oreSources.craftDrops((DATA.crafting||[]).map(c=>c.name)).then(r=>{oreDrops=r;oreState='ready';}).catch(()=>{oreState='error';}).finally(()=>{if(state.category==='crafting')detail();});}
+      if(oreState!=='error')loadOreDrops();
       return;
     }
-    const kinds=new Map((DATA.crafting||[]).map(c=>[c.name,c]));
-    const byItem=new Map();
-    for(const d of oreDrops){if(!here.has(d.monster)||!kinds.has(d.item))continue;const e=byItem.get(d.item)||{item:kinds.get(d.item),from:[]};e.from.push(d);byItem.set(d.item,e);}
-    const list=[...byItem.values()].map(e=>({...e,best:e.from.some(f=>f.rate!=null)?Math.max(...e.from.map(f=>f.rate??0)):null})).sort((a,b)=>(b.best??-1)-(a.best??-1));
-    const pct=v=>v==null?'?':(v>=10?Math.round(v):v>=1?v.toFixed(1):v.toFixed(2))+'%';
-    items.innerHTML=list.length?list.map(e=>{const pic=DATA.sprites.item?.[String(e.item.id)]||MapleItemSources.imageURL(e.item.name);
-      return '<button type="button" class="mc-row mc-ore cursor-interaction" data-ore="'+esc(e.item.name)+'"><span class="mc-sprite"><img src="'+esc(pic)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span><div><strong>'+esc(e.item.name)+'</strong><small>'+esc(e.item.kind)+' · '+(e.best==null?'chance not recorded':'best '+pct(e.best))+'</small><small>'+e.from.sort((a,b)=>(b.rate??0)-(a.rate??0)).map(f=>esc(f.monster)+(f.rate==null?'':' '+pct(f.rate))).join(' · ')+'</small></div></button>';}).join('')+'<div class="mc-datahint">Drop chances per kill from the MapleClassic Wiki (community data, CC BY-NC-SA 4.0).</div>'
+    const pin='<div class="mc-ore-pin"><button type="button" class="mc-qh-pin" id="mc-ores-pin" aria-pressed="'+oresPinned+'" aria-label="'+(oresPinned?'Unpin the ores from the game overlay':'Pin the ores to the game overlay')+'">'+icon(oresPinned?'pin':'pin-off')+'</button><span>'+(oresPinned?'Shown on the game window for the map you are on':'Show these on the game window (follows the map you are on)')+'</span></div>';
+    items.innerHTML=list.length?pin+list.map(e=>
+      '<button type="button" class="mc-row mc-ore cursor-interaction" data-ore="'+esc(e.item.name)+'"><span class="mc-sprite"><img src="'+esc(orePic(e.item))+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span><div><strong>'+esc(e.item.name)+'</strong><small>'+esc(e.item.kind)+' · '+(e.best==null?'chance not recorded':'best '+pct(e.best))+'</small>'+
+      '<span class="mc-ore-from">'+e.from.map(f=>'<span class="mc-ore-mob">'+(monsterPic(f.mon)?'<img src="'+esc(monsterPic(f.mon))+'" alt="" loading="lazy">':'')+'<span>'+esc(f.monster)+'</span>'+(f.rate==null?'':'<b>'+pct(f.rate)+'</b>')+'</span>').join('')+'</span></div></button>').join('')+
+      '<div class="mc-datahint">Drop chances per kill from the MapleClassic Wiki (community data, CC BY-NC-SA 4.0).</div>'
       :'<div class="mc-empty">None of the monsters in '+esc(m.name)+' drops ores or gems, as far as the wiki knows.</div>';
-    items.querySelectorAll('[data-ore]').forEach(b=>b.onclick=()=>{void search.show('item',b.dataset.ore);});
+    // One handler on the list (the page appends to it afterwards, which drops handlers on rows).
+    items.onclick=e=>{
+      if(e.target.closest('#mc-ores-pin')){oresPinned=!oresPinned;try{localStorage.setItem(ORE_PIN_KEY,oresPinned?'on':'off');}catch(_){}pushPins(true);detail();return;}
+      const ore=e.target.closest('[data-ore]');if(ore)void search.show('item',ore.dataset.ore);
+    };
   }
   // At a hunt destination: the map itself is the goal (no particular spot).
   function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}

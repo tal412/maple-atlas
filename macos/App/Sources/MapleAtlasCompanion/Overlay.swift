@@ -192,6 +192,16 @@ private struct PinsRow: View {
                         .help(quest.title)
                 }
                 ForEach(Array(quest.objectives.enumerated()), id: \.offset) { _, o in
+                  if quest.kind == "ores" {
+                    // An ore: its picture, the monster that drops it most here, and the chance.
+                    HStack(spacing: 4) {
+                        PinIcon(url: URL(string: o.icon), name: o.name)
+                        if let m = o.monster, !m.isEmpty { PinIcon(url: URL(string: m), name: "?").frame(width: 24, height: 24) }
+                        Text(o.chance.map { $0 >= 10 ? "\(Int($0.rounded()))%" : $0 >= 1 ? String(format: "%.1f%%", $0) : String(format: "%.2f%%", $0) } ?? "?")
+                            .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                            .foregroundStyle(Color(red: 1, green: 0.84, blue: 0.31))
+                    }
+                  } else {
                     let done = (o.have ?? 0) >= (o.need ?? Int.max)
                     HStack(spacing: 5) {
                         PinIcon(url: URL(string: o.icon), name: o.name)
@@ -200,6 +210,7 @@ private struct PinsRow: View {
                         if done { Image(systemName: "checkmark.circle.fill").font(.system(size: 13)).foregroundStyle(Color(red: 0.45, green: 0.9, blue: 0.55)) }
                     }
                     .foregroundStyle(done ? Color.white.opacity(0.75) : Color.white)
+                  }
                 }
             }
         }

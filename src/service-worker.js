@@ -11,7 +11,8 @@ self.addEventListener('fetch',event=>{
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE),key=canonical(request),saved=await cache.match(key),fresh=request.mode==='navigate'||relative==='data/visual-index.json';
     if(saved&&!fresh)return saved;
-    try{const response=await fetch(request);if(response.ok){try{await cache.put(key,response.clone());}catch(_){}return response;}if(saved)return saved;return response;}catch(e){if(saved)return saved;throw e;}
+    // The page itself is always checked against the server, never taken from the browser's own cache.
+    try{const response=await (request.mode==='navigate'?fetch(request.url,{cache:'no-cache',credentials:'same-origin'}):fetch(request));if(response.ok){try{await cache.put(key,response.clone());}catch(_){}return response;}if(saved)return saved;return response;}catch(e){if(saved)return saved;throw e;}
   })());
 });
 self.addEventListener('message',event=>{

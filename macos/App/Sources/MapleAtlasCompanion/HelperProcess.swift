@@ -35,9 +35,14 @@ struct PinnedQuest: Decodable, Sendable, Equatable {
         let need: Int?
         /// Picture URL (the datamine CDN, checked by the helper), or "".
         let icon: String
+        /// For an ore: the monster that drops it most here (picture URL) and the chance in %.
+        let monster: String?
+        let chance: Double?
     }
     let title: String
     let ready: Bool
+    /// "ores" for the map's ores; "" for a quest.
+    let kind: String?
     let objectives: [Objective]
 }
 
