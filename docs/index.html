@@ -3906,12 +3906,16 @@ window.mapleStorageReady.then(() => {
     questMaps=state.layer==='quests'?questPanel.relevantMaps():new Map();
     const routeSpots=new Set(state.route.map(id=>get(id)?.spot));const selectedSpot=get(state.selected)?.spot;
     $('#mc-markers').innerHTML=DATA.spots.map(s=>{
-      const here=!state.routeActive&&spotOf(state.from)===s.id,inner=here&&get(state.from)?.spot!==s.id,m=get(s.primary),routeIndex=state.route.findIndex(id=>get(id)?.spot===s.id),isFrom=get(state.from)?.spot===s.id,isTo=get(state.to)?.spot===s.id;
+      const here=(!state.routeActive||liveFresh)&&spotOf(state.from)===s.id,inner=here&&get(state.from)?.spot!==s.id,m=get(s.primary),routeIndex=state.route.findIndex(id=>get(id)?.spot===s.id),isFrom=get(state.from)?.spot===s.id,isTo=get(state.to)?.spot===s.id;
       const relevant=state.layer==='quests'?new Set(s.members.flatMap(id=>[...(questMaps.get(String(id))||[])])).size:state.layer==='shops'?m.portals.map(e=>get(e.to)).filter(x=>x&&/shop|store|market/i.test(x.name)).length:0;
       const selected=s.id===selectedSpot&&(!mobile.matches||hasInspected||state.routeActive),isRoute=routeSpots.has(s.id),town=s.kind==='town';
       return '<button type="button" class="mc-place cursor-interaction" data-spot="'+s.id+'" data-selected="'+selected+'" data-route="'+isRoute+'" data-town="'+town+'" data-schematic="'+Boolean(s.schematic)+'" data-endpoint="'+(isRoute&&(isFrom||isTo))+'"'+(isRoute&&routeFresh?' data-pop style="--i:'+Math.max(0,routeIndex)+'"':'')+' data-here="'+here+'" aria-label="Inspect '+esc(s.label)+(here?' · You are here':'')+(s.schematic?' · Schematic position':'')+'" data-tooltip="'+esc(s.label)+(s.schematic?' · Schematic position':'')+'">'+(here?'<span class="mc-here" aria-hidden="true"><svg viewBox="0 0 24 30"><path d="M12 29 2.5 14.5A10.5 10.5 0 1 1 21.5 14.5z"/><circle cx="12" cy="10.5" r="4"/></svg></span>':'')+'<span class="mc-dot">'+(isRoute?(isFrom?'A':isTo?'B':routeIndex):'')+'</span><span class="mc-tag">'+(s.schematic?'◇ ':'')+(inner?esc(get(state.from).name)+' · in ':'')+esc(s.label)+'</span>'+(state.layer!=='all'&&relevant?'<span class="mc-badge">'+relevant+'</span>':'')+'</button>';
     }).join('');
-    $$('[data-spot]').forEach(b=>{b.onclick=()=>{const s=spots.get(b.dataset.spot);if(state.pick)setStart(get(s.primary));else if(b.dataset.here==='true'&&spotOf(state.from)===s.id)inspect(state.from);else inspect(s.primary);};b.ondblclick=()=>{const s=spots.get(b.dataset.spot);state.focus=s.id;state.zoom=Math.min(2.5,state.zoom*1.35);state.category='connections';state.expanded=true;detail();camera();};});camera();
+    $$('[data-spot]').forEach(b=>{b.onclick=()=>{const s=spots.get(b.dataset.spot);if(state.pick)setStart(get(s.primary));
+      // The dot holding the map you are on (live, or chosen as start) opens that map, also during
+      // a route: a hidden street or shop shows on its town's dot.
+      else if(liveFresh&&get(liveLocation)&&spotOf(liveLocation)===s.id)inspect(liveLocation);
+      else if(b.dataset.here==='true'&&spotOf(state.from)===s.id)inspect(state.from);else inspect(s.primary);};b.ondblclick=()=>{const s=spots.get(b.dataset.spot);state.focus=s.id;state.zoom=Math.min(2.5,state.zoom*1.35);state.category='connections';state.expanded=true;detail();camera();};});camera();
   }
   let width=1024,height=670,scale=1,ox=0,oy=0,gestures=null,zoomAnchor=null,wheelTimer=0,cameraFrame=0;
   const labelPlanner=MapleLabelLayout.create();
