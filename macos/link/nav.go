@@ -37,7 +37,7 @@ func navEvent(raw json.RawMessage) (map[string]any, bool) {
 	}
 	target := map[string]any{"kind": n.Target.Kind, "label": clip(n.Target.Label, 160)}
 	switch n.Target.Kind {
-	case "portal", "spot":
+	case "portal", "spot", "npc":
 		if n.Target.X == nil || n.Target.Y == nil || *n.Target.X < 0 || *n.Target.Y < 0 || *n.Target.X > 100000 || *n.Target.Y > 100000 {
 			return nil, false
 		}

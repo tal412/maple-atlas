@@ -7,10 +7,10 @@
   const KEEP_MS=120000;
   function create({quests,maps,sprite,spriteURL=()=>null,esc,icon,hops,navigate,openEntity,openCompanion,status,setStatus,channel='main'}){
     const sources=MapleItemSources.create({channel}),itemInfo=new Map();
-    const monsterMaps=new Map(),npcMaps=new Map();
+    const monsterMaps=new Map(),npcMaps=new Map(),npcIds=new Map();
     for(const m of maps){
       for(const x of m.monsters||[]){const k=MapleQuestHelper.normalize(x.name);if(!monsterMaps.has(k))monsterMaps.set(k,{id:x.id,name:x.name,maps:[]});monsterMaps.get(k).maps.push(m);}
-      for(const n of m.npcs||[]){const k=MapleQuestHelper.normalize(n.name);if(!npcMaps.has(k))npcMaps.set(k,[]);npcMaps.get(k).push(m);}
+      for(const n of m.npcs||[]){const k=MapleQuestHelper.normalize(n.name);if(!npcMaps.has(k))npcMaps.set(k,[]);npcMaps.get(k).push(m);if(!npcIds.has(k))npcIds.set(k,n.id);}
     }
     const itemIds=new Map();
     for(const q of quests)for(const o of [...q.objectives,...(q.items||[])])if(o.id&&(o.type==='item'||!o.type))itemIds.set(MapleQuestHelper.normalize(o.name),o.id);
@@ -72,6 +72,11 @@
     // Best way to get an item: the nearest monster that drops it, else the cheapest shop
     // with a recorded route, else the monster the quest's text names, else a quest.
     function itemHint(name,quest){
+      // An item the quest itself handed you (a letter to deliver): take it to the NPC it goes to.
+      if(quest?.given?.some(g=>MapleQuestHelper.normalize(g)===MapleQuestHelper.normalize(name))){
+        const to=quest.turnIn,at=to?npcAt(to):null;
+        return {text:'Given by '+(quest.npc||'the quest')+' when you took the quest'+(to?' · Take it to '+to+(at?' in '+at.name+(away(at)?' · '+away(at):''):''):''),target:at?{...at,npcName:to}:null};
+      }
       const info=loadItem(name),fromQuest=questHint(name,quest);
       if(info.state==='loading')return fromQuest||{text:'Looking up where to get it…'};
       if(info.state==='error')return fromQuest||{text:'Couldn’t reach the MapleClassic Wiki.'};
@@ -126,7 +131,7 @@
         if(isMob){const h=huntFor(p.name);hint=h?.at?{text:'Hunt at '+h.at.name+(away(h.at)?' · '+away(h.at):''),target:h.at}:{text:'No recorded map with this monster.'};}
         else hint=itemHint(p.name,quest);
       }
-      const actions=hint?(hint.target?'<button type="button" class="mc-nav" data-qh-nav="'+esc(hint.target.id)+'"'+(hint.target.monster?' data-qh-hunt="'+esc(hint.target.monster)+'" data-qh-hunt-name="'+esc(hint.target.monsterName)+'"':'')+' aria-label="Navigate to '+esc(hint.target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+
+      const actions=hint?(hint.target?'<button type="button" class="mc-nav" data-qh-nav="'+esc(hint.target.id)+'"'+(hint.target.monster?' data-qh-hunt="'+esc(hint.target.monster)+'" data-qh-hunt-name="'+esc(hint.target.monsterName)+'"':'')+(hint.target.npcName?' data-qh-npc="'+esc(hint.target.npcName)+'"':'')+' aria-label="Navigate to '+esc(hint.target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+
         (!isMob?'<button type="button" class="mc-qh-more" data-qh-entity="item" data-qh-name="'+esc(p.name)+'">'+icon('compass')+'<span>How to get</span></button>':'<button type="button" class="mc-qh-more" data-qh-entity="monster" data-qh-name="'+esc(p.name)+'">'+icon('info')+'<span>Monster</span></button>'):'';
       return '<li class="mc-qh-objective" data-done="'+Boolean(p.done)+'">'+art+'<div class="mc-qh-objective-copy"><div class="mc-qh-line"><strong>'+esc(p.name)+'</strong>'+(p.done?'<span class="mc-qh-check">'+icon('check')+'</span>':'')+count+'</div>'+
         '<span class="mc-qh-bar" aria-hidden="true"><span style="width:'+(p.done?100:pct(p.have,p.need))+'%"></span></span>'+
@@ -134,11 +139,14 @@
     }
     function card(q,qi){
       const quest=q.quest,done=q.progress.filter(p=>p.done).length,total=q.progress.length;
-      const ready=q.complete,npc=quest?.npc,where=npc?npcAt(npc):null;
+      // The NPC it is handed in to: named in the quest's text when it is not the giver
+      // ("deliver a letter to Dances with Balrog in Perion").
+      const ready=q.complete,giver=quest?.npc,npc=quest?.turnIn||giver,where=npc?npcAt(npc):null,elsewhere=Boolean(quest?.turnIn&&quest.turnIn!==giver);
       const chip=ready?'<span class="mc-qh-chip" data-tone="ready">'+icon('circle-check')+'Ready to turn in</span>':total?'<span class="mc-qh-chip">'+done+' of '+total+' done</span>':'<span class="mc-qh-chip">In progress</span>';
       const reward=quest?[quest.exp?quest.exp.toLocaleString()+' EXP':'',quest.mesos?quest.mesos.toLocaleString()+' mesos':''].filter(Boolean).join(' · '):'';
-      const turnIn=npc?'<div class="mc-qh-turnin" data-ready="'+ready+'">'+(quest.npcId?sprite('npc',{id:quest.npcId,name:npc}):'')+'<span><small>'+(ready?'Return to':'Quest from')+'</small><strong>'+esc(npc)+'</strong>'+(where?'<small>'+esc(where.name)+(away(where)?' · '+away(where):'')+'</small>':'')+'</span>'+
-        (where&&ready?'<button type="button" class="mc-nav" data-qh-nav="'+esc(where.id)+'" aria-label="Navigate to '+esc(npc)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>':'';
+      const npcId=elsewhere?npcIds.get(MapleQuestHelper.normalize(npc)):quest?.npcId;
+      const turnIn=npc?'<div class="mc-qh-turnin" data-ready="'+ready+'">'+(npcId?sprite('npc',{id:npcId,name:npc}):'')+'<span><small>'+(elsewhere?(ready?'Hand it in to':'Take it to'):(ready?'Return to':'Quest from'))+'</small><strong>'+esc(npc)+'</strong>'+(where?'<small>'+esc(where.name)+(away(where)?' · '+away(where):'')+'</small>':'')+'</span>'+
+        (where&&(ready||elsewhere)?'<button type="button" class="mc-nav" data-qh-nav="'+esc(where.id)+'" data-qh-npc="'+esc(npc)+'" aria-label="Navigate to '+esc(npc)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>':'';
       const isPinned=pinned.has(keyOf(q));
       return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+
         '<button type="button" class="mc-qh-pin" data-qh-pin="'+esc(keyOf(q))+'" aria-pressed="'+isPinned+'" aria-label="'+(isPinned?'Unpin from the game overlay':'Pin to the game overlay')+'" title="'+(isPinned?'Shown on the game window':'Show on the game window')+'">'+icon(isPinned?'pin':'pin-off')+'</button></header>'+
@@ -174,7 +182,7 @@
     setInterval(refreshAgo,5000);
     function bind(box){
       shownBox=box;refreshAgo();
-      box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav,b.dataset.qhHunt?{monster:b.dataset.qhHunt,name:b.dataset.qhHuntName}:null));
+      box.querySelectorAll('[data-qh-nav]').forEach(b=>b.onclick=()=>navigate(b.dataset.qhNav,b.dataset.qhHunt?{monster:b.dataset.qhHunt,name:b.dataset.qhHuntName}:null,b.dataset.qhNpc?{name:b.dataset.qhNpc}:null));
       box.querySelectorAll('[data-qh-entity]').forEach(b=>b.onclick=()=>openEntity(b.dataset.qhEntity,b.dataset.qhName));
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
       box.querySelectorAll('[data-qh-connect]').forEach(b=>b.onclick=openCompanion);

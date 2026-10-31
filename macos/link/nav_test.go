@@ -8,6 +8,10 @@ func TestNavEvent(t *testing.T) {
 	if !good || ev["map"] != "10001000" || ev["target"].(map[string]any)["x"] != 6587 {
 		t.Fatalf("valid nav refused: %v %v", good, ev)
 	}
+	npc := `{"active":true,"map":"10001000","step":2,"steps":2,"live":true,"target":{"kind":"npc","label":"Talk to Chief Stan","x":4166,"y":719}}`
+	if ev, good := navEvent([]byte(npc)); !good || ev["target"].(map[string]any)["kind"] != "npc" || ev["target"].(map[string]any)["y"] != 719 {
+		t.Fatalf("an NPC target was refused: %v %v", good, ev)
+	}
 	if ev, good := navEvent([]byte(`{"active":false}`)); !good || ev["active"] != false {
 		t.Fatal("route end refused")
 	}

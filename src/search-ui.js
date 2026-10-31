@@ -134,7 +134,7 @@
     function sourceRow({img,iconName,title,detail,extra='',target,key}){
       const main=(key?'<button type="button" class="mc-get-main" data-entity="'+esc(key)+'">':'<div class="mc-get-main">')+thumb(img,iconName)+
         '<span class="mc-get-copy"><strong>'+esc(title)+'</strong>'+(detail?'<small>'+detail+'</small>':'')+'</span>'+extra+(key?'</button>':'</div>');
-      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'"'+(target.monster?' data-hunt="'+esc(target.monster)+'" data-hunt-name="'+esc(target.monsterName)+'"':'')+' aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
+      return '<div class="mc-get-row">'+main+(target?'<button type="button" class="mc-nav" data-navigate="'+esc(target.id)+'"'+(target.monster?' data-hunt="'+esc(target.monster)+'" data-hunt-name="'+esc(target.monsterName)+'"':'')+(target.npcName?' data-npc="'+esc(target.npcName)+'"':'')+' aria-label="Navigate to '+esc(target.name)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>';
     }
     function group(iconName,label,rows){
       if(!rows.length)return '';
@@ -151,7 +151,7 @@
         const npc=entityByName('npc',x.npc),map=entityByName('map',x.map),town=entityByName('map',x.town);
         // The shop's own map if a recorded route reaches it, else the NPC's other maps, else its town.
         const at=m=>m?.covered?{id:m.id,name:m.name,d:routeLength(m.id)}:null,options=[at(map),nearest(npc?.maps),at(town)].filter(Boolean);
-        const target=options.find(o=>o.d!==null)||options[0]||null;
+        const found=options.find(o=>o.d!==null)||options[0]||null,target=found?{...found,npcName:x.npc}:null;
         const place=[x.map,x.town].filter((v,i,a)=>v&&a.indexOf(v)===i).map(esc).join(' · ');
         return sourceRow({img:spriteURL(npc)||MapleItemSources.imageURL(x.npc),iconName:'store',title:x.npc,key:npc?.key,detail:place+(away(target)?' · '+away(target):'')+(x.limit?' · Limit '+number(x.limit):''),
           extra:x.price!=null?'<span class="mc-price">'+number(x.price)+'<small>'+esc(/^mesos$/i.test(x.currency)?'mesos':x.currency)+'</small></span>':'',target});
@@ -227,7 +227,7 @@
         (e.type==='monster'?'<p class="mc-record-note">These are recorded spawn locations. Live spawns and monster drop tables are not available in this snapshot.</p>':'')+
         (e.type==='item'?apiInfo(e):'')+
         '<footer class="mc-search-provenance">Snapshot '+esc(catalog.snapshot)+' · Game data and sprites © Nexon'+external('https://github.com/ohmi69/osms_datamine_dashboard/tree/'+catalog.sourceCommit+'/data/current','OSMS source data')+'</footer>';
-      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate,b.dataset.hunt?{monster:b.dataset.hunt,name:b.dataset.huntName}:null);});
+      detail.querySelectorAll('[data-navigate]').forEach(b=>b.onclick=()=>{marketWatch.view(false);dialog.close();onNavigate(b.dataset.navigate,b.dataset.hunt?{monster:b.dataset.hunt,name:b.dataset.huntName}:null,b.dataset.npc?{name:b.dataset.npc}:null);});
       if($('#mc-sources-retry'))$('#mc-sources-retry').onclick=()=>{void loadSources(e,true);renderEntity(key,false);};
       detail.querySelectorAll('[data-quest]').forEach(select=>select.onchange=()=>{onStatus(select.dataset.quest,select.value);renderEntity(key);});
       if($('#mc-item-retry'))$('#mc-item-retry').onclick=()=>{void loadItem(key,true);renderEntity(key,false);};

@@ -116,10 +116,20 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
         m['bestSpots'] = best
     # Monsters each quest's own journal text names (data/quest-hints.json): the phone uses
     # them for quest items the wiki has no source for (Omok Table: Stump).
+    # Where each NPC stands on its map (data/npc-positions.json), for guiding you to it.
+    npc_spots = json.loads((project / 'data/npc-positions.json').read_text())['maps']
+    for m in data['maps']:
+        for n in m.get('npcs', []):
+            spot = npc_spots.get(str(m['id']), {}).get(str(n.get('id')))
+            if spot:
+                n['x'], n['y'] = spot
     hints = json.loads((project / 'data/quest-hints.json').read_text())['quests']
     for q in data['quests']:
-        if str(q['id']) in hints:
-            q['hunt'] = hints[str(q['id'])]
+        h = hints.get(str(q['id']))
+        if h:
+            for key, field in (('hunt', 'hunt'), ('to', 'turnIn'), ('given', 'given')):
+                if key in h:
+                    q[field] = h[key]
     if template.count("<!-- MAPLE_WORLD -->") != 1 or runtime.count("__INLINE_MAP_DATA__") != 1:
         raise ValueError("Expected exactly one world and one data insertion point.")
     palette = json.loads((project / 'data/night-palette.json').read_text())

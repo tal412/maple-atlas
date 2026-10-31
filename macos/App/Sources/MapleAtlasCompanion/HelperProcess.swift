@@ -12,7 +12,7 @@ struct PairingCode: Equatable, Sendable {
 /// Where the phone's route goes next on the map you are on (map-image pixels).
 struct NavInfo: Sendable, Equatable {
     struct Target: Decodable, Sendable, Equatable {
-        let kind: String   // "portal", "spot" (best hunting spot) or "arrived"
+        let kind: String   // "portal", "npc" (where the NPC stands), "spot" (older phones) or "arrived"
         let label: String
         let x: Double?
         let y: Double?

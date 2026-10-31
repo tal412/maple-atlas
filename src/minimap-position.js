@@ -180,12 +180,14 @@
   }
   // Plain-language hint from the player's position to a portal. One game screen is roughly
   // 1000 map units wide, which keeps distances meaningful without promising precision.
-  function guidance(player,portal){
+  // what: what is reached ("the portal", or an NPC's name).
+  function guidance(player,portal,{what='the portal'}={}){
     if(!player||!Number.isFinite(portal?.x))return null;
     const dx=portal.x-player.x,dy=Number.isFinite(portal.y)?portal.y-player.y:0,near=Math.abs(dx)<90&&Math.abs(dy)<120;
     const side=dx>0?'right':'left',distance=Math.abs(dx)<450?'a few steps':Math.abs(dx)<1100?'about one screen':'about '+Math.max(2,Math.round(Math.abs(dx)/1000))+' screens';
     const vertical=dy<-120?'up':dy>120?'down':'';
-    const text=near?'You are at the portal':Math.abs(dx)<90?(vertical==='up'?'The portal is above you, climb up':'The portal is below you, drop down'):'Head '+side+', '+distance+(vertical==='up'?', then climb up':vertical==='down'?', then drop down':'');
+    const It=what==='the portal'?'The portal':what;
+    const text=near?(what==='the portal'?'You are at the portal':'You are next to '+what):Math.abs(dx)<90?(vertical==='up'?It+' is above you, climb up':It+' is below you, drop down'):'Head '+side+', '+distance+(vertical==='up'?', then climb up':vertical==='down'?', then drop down':'');
     return {dx,dy,near,side:Math.abs(dx)<90?null:side,vertical:vertical||null,text};
   }
   // Visible portals (type 2) are the ones drawn as rings on the minimap.

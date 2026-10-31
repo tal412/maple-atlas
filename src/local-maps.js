@@ -21,7 +21,7 @@
     const dialog = $('#mc-local-dialog'), image = $('#mc-local-image');
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
     const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
-    let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null, hunt = null, spawnPoints = null;
+    let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null, hunt = null, npc = null, spawnPoints = null;
     // Hunting: the monster's spawn points on this map.
     const spawnLayer = document.createElement('div'); spawnLayer.className = 'mc-local-spawns'; spawnLayer.setAttribute('aria-hidden', 'true');
     const spot = document.createElement('div'); spot.className = 'mc-local-spot'; spot.hidden = true; spot.innerHTML = '<span></span>';
@@ -46,9 +46,10 @@
       stage.style.width = Math.max(1, image.naturalWidth * fit * zoom) + 'px';
       const exit = position(edge, image.naturalWidth, image.naturalHeight), best = bestSpot();
       const spotAt = best ? position(best, image.naturalWidth, image.naturalHeight) : null;
-      // The arrow leads to the portal, or on a hunt map without one to the best spot.
-      const point = exit || spotAt;
-      marker.hidden = !exit;
+      // The arrow leads to the portal, or on the last map of a trip to an NPC to where it stands.
+      const npcAt = !exit && npc ? position(npc, image.naturalWidth, image.naturalHeight) : null;
+      const point = exit || npcAt || spotAt;
+      marker.hidden = !(exit || npcAt);
       spot.hidden = !spotAt;
       if (spotAt) {
         Object.assign(spot.style, {left: spotAt.x * 100 + '%', top: spotAt.y * 100 + '%', width: 2 * best.r / image.naturalWidth * 100 + '%', height: 2 * best.r / image.naturalHeight * 100 + '%'});
@@ -104,17 +105,17 @@
     // The portal instruction, plus live guidance from your dot toward the selected portal.
     function describe() {
       const destination = edge ? get(edge.to)?.name : '';
-      const best = bestSpot(), goal = edge ? {x: Number(edge.x), y: Number(edge.y)} : best;
-      const live = goal && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, goal) : null;
+      const best = bestSpot(), goal = edge ? {x: Number(edge.x), y: Number(edge.y)} : npc || best;
+      const live = goal && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, goal, edge || !npc ? {} : {what: npc.name}) : null;
       const huntLine = hunt ? 'Hunt ' + hunt.name + ' on this map (its spawn points are dotted).' : '';
-      $('#mc-local-instruction').textContent = !edge && hunt ? huntLine + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
+      $('#mc-local-instruction').textContent = !edge && npc ? 'Talk to ' + npc.name + ': marked on the map.' + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : !edge && hunt ? huntLine + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
     }
     function choose(index) {
       edge = current.portals[index];
       select.value = edge ? String(index) : '';
       const destination = edge ? get(edge.to)?.name : '';
       describe();
-      marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
+      marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : npc ? npc.name : 'Portal');
       layout();
     }
     // Spawn points of the hunted monster, drawn small.
@@ -131,11 +132,14 @@
       });
     }
     // hunt: {monster, name} on the map where it is hunted, else null.
-    function open(id, next, huntHere = null) {
+    // npcHere: {name, x, y} on the last map of a trip to an NPC (marked, and the arrow leads to it).
+    function open(id, next, huntHere = null, npcHere = null) {
       const map = get(id);
       if (!map?.image) return;
       current = map; zoom = 1; ready = false; userZoomed = false; lastFollow = null;
       hunt = huntHere ? {monster: String(huntHere.monster), name: String(huntHere.name || 'monster')} : null; spawnLayer.replaceChildren(); spot.hidden = true;
+      npc = npcHere && Number.isFinite(npcHere.x) ? {name: String(npcHere.name), x: npcHere.x, y: npcHere.y} : null;
+      marker.setAttribute('aria-label', npc ? npc.name : 'Portal');
       stage.hidden = true; marker.hidden = true; you.hidden = true;
       $('#mc-local-title').textContent = map.name;
       $('#mc-local-state').textContent = 'Loading game map…';
