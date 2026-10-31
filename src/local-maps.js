@@ -22,11 +22,11 @@
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
     const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
     let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null, hunt = null, spawnPoints = null;
-    // Hunting: the monster's spawn points and its best spot (densest group) on this map.
+    // Hunting: the monster's spawn points on this map.
     const spawnLayer = document.createElement('div'); spawnLayer.className = 'mc-local-spawns'; spawnLayer.setAttribute('aria-hidden', 'true');
     const spot = document.createElement('div'); spot.className = 'mc-local-spot'; spot.hidden = true; spot.innerHTML = '<span></span>';
     const loadSpawns = () => spawnPoints ??= fetch('./data/spawn-points.json').then(r => r.ok ? r.json() : {maps: {}}).then(d => d.maps || {}).catch(() => { spawnPoints = null; return {}; });
-    const bestSpot = () => hunt && current?.bestSpots?.[hunt.monster] || null;
+    const bestSpot = () => null;   // hunts lead to the map only, not to a particular spot
     // Navigation arrow (Google Maps style): a moving dashed line from your dot to the next
     // portal and a heading chevron next to you. Built here so the template stays unchanged.
     const path = document.createElement('div'); path.className = 'mc-local-path'; path.hidden = true; path.setAttribute('aria-hidden', 'true');
@@ -106,7 +106,7 @@
       const destination = edge ? get(edge.to)?.name : '';
       const best = bestSpot(), goal = edge ? {x: Number(edge.x), y: Number(edge.y)} : best;
       const live = goal && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, goal) : null;
-      const huntLine = best ? 'Best spot for ' + hunt.name + ': ' + best.n + ' of its ' + best.total + ' spawn points, circled on the map.' : hunt ? 'Hunt ' + hunt.name + ' on this map.' : '';
+      const huntLine = hunt ? 'Hunt ' + hunt.name + ' on this map (its spawn points are dotted).' : '';
       $('#mc-local-instruction').textContent = !edge && hunt ? huntLine + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
     }
     function choose(index) {
@@ -117,7 +117,7 @@
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
-    // Spawn points of the hunted monster, drawn small; the best spot is circled.
+    // Spawn points of the hunted monster, drawn small.
     function drawSpawns() {
       spawnLayer.replaceChildren();
       if (!hunt || !current) return;

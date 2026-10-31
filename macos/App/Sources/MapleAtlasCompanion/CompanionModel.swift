@@ -66,6 +66,10 @@ final class CompanionModel {
         didSet { refreshOverlay() }
     }
     /// The phone's route on the map you are on, for the overlay on the game window.
+    /// Quests pinned on the phone, drawn in one row on the game window.
+    private(set) var pins: [PinnedQuest] = [] {
+        didSet { refreshOverlay() }
+    }
     private(set) var nav: NavInfo? {
         didSet { refreshOverlay() }
     }
@@ -81,7 +85,7 @@ final class CompanionModel {
 
     private func refreshOverlay() {
         let why = !showOverlay ? "off in Settings" : !isTracking ? "hidden · not tracking" : !isPhoneConnected ? "hidden · phone not connected" : nav == nil ? "hidden · no route on the phone" : nil
-        overlay.update(nav: isPhoneConnected ? nav : nil, position: lastPosition, onMap: lastConfirmed?.id,
+        overlay.update(nav: isPhoneConnected ? nav : nil, pins: isPhoneConnected ? pins : [], position: lastPosition, onMap: lastConfirmed?.id,
                        windowID: capture.windowID, enabled: showOverlay && isTracking, why: why)
     }
     /// What the game's Quest Helper panel showed at the last read.
@@ -195,6 +199,8 @@ final class CompanionModel {
     /// The player pressed Stop: tracking is not restarted by itself until a window is chosen
     /// or found again, or Start is pressed.
     @ObservationIgnored private var stoppedByPlayer = false
+    /// The window being read was found automatically (not chosen in the picker).
+    @ObservationIgnored private var autoPicked = false
 
     /// Every 2 s: finds the MapleStory window when none is being read, and starts tracking
     /// as soon as there is a window and the engine is ready.
@@ -208,7 +214,14 @@ final class CompanionModel {
                 let allowed = GameCapture.canListWindows
                 if allowed != canFindWindow { log(allowed ? "Screen Recording now allowed" : "Screen Recording no longer allowed") }
                 canFindWindow = allowed
+                if canFindWindow, autoPicked, capture.isReadingNonGame {
+                    log("The window being read is not the game; looking for the game again")
+                    stopTracking()
+                    capture.stop()
+                    gameWindowLabel = nil
+                }
                 if canFindWindow, !capture.isCapturing, await capture.findGameWindow() {
+                    autoPicked = true
                     stoppedByPlayer = false
                     log("Found the game window by itself")
                 }
@@ -339,6 +352,11 @@ final class CompanionModel {
                 log(info.map { "Route from phone: step \($0.step) of \($0.steps) on map \($0.map) · \($0.target.kind) · \($0.target.label)" } ?? "Route from phone: none")
             }
             if info != nav { nav = info }
+        case .pins(let quests):
+            if quests.map(\.title) != pins.map(\.title) {
+                log("Pinned on the phone: " + (quests.isEmpty ? "none" : quests.map(\.title).joined(separator: ", ")))
+            }
+            if quests != pins { pins = quests }
         }
     }
 
@@ -398,6 +416,7 @@ final class CompanionModel {
     /// Opens Apple's window picker. Choosing a window there needs no Screen Recording permission.
     func chooseGameWindow() {
         captureProblem = nil
+        autoPicked = false
         capture.presentPicker()
     }
 
@@ -536,9 +555,17 @@ final class CompanionModel {
         let capture = self.capture, region = minimapRect
         guard let frame = try? await Task.detached(operation: { try capture.frame(region: region, previewOnly: false) }).value,
               let png = frame.minimapImage,
-              let found = try? await engine.locate(png, frameHeight: frame.frameHeight, mapID: map.id),
+              let located = try? await engine.locate(png, frameHeight: frame.frameHeight, mapID: map.id),
               !Task.isCancelled, isTracking, lastConfirmed?.id == map.id
         else { return }
+        // The log says how the dot was placed, or why it was not, each time that changes.
+        let note = located.position != nil ? "found (\(located.method ?? "?"))" : (located.positionNote ?? "not found")
+        if note != positionNoteLogged.note || map.id != positionNoteLogged.map {
+            positionNoteLogged = (map.id, note)
+            log("Position on map \(map.id): \(note)")
+        }
+        saveMinimapSnapshotIfAsked(png: png, note: "map \(map.id): \(note)")
+        guard let found = located.position else { return }
         lastPosition = found
         if isPhoneConnected {
             helper?.send(.position(id: map.id, x: Int(found.x.rounded()), y: Int(found.y.rounded()), observedAt: .now))
@@ -695,6 +722,20 @@ final class CompanionModel {
 
     /// When a file named "debug-snapshot" is in the app's folder, the next Quest Helper image and
     /// its reading are saved there (quest-snapshot.png, .txt) and the flag is removed.
+    @ObservationIgnored private var positionNoteLogged: (map: String, note: String) = ("", "")
+
+    /// The debug-minimap flag file saves the next minimap crop and what was read from it.
+    private func saveMinimapSnapshotIfAsked(png: String, note: String) {
+        let dir = Self.stateDirectory(for: site), flag = dir.appendingPathComponent("debug-minimap")
+        guard FileManager.default.fileExists(atPath: flag.path) else { return }
+        try? FileManager.default.removeItem(at: flag)
+        if let comma = png.firstIndex(of: ","), let data = Data(base64Encoded: String(png[png.index(after: comma)...])) {
+            try? data.write(to: dir.appendingPathComponent("minimap-snapshot.png"))
+            try? Data(note.utf8).write(to: dir.appendingPathComponent("minimap-snapshot.txt"))
+            log("Saved a minimap snapshot (minimap-snapshot.png) · \(note)")
+        }
+    }
+
     private func saveQuestSnapshotIfAsked(image: CGImage, text: String?) {
         let dir = Self.stateDirectory(for: site), flag = dir.appendingPathComponent("debug-snapshot")
         guard FileManager.default.fileExists(atPath: flag.path) else { return }

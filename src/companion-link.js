@@ -204,7 +204,9 @@
     }
     // Navigation for the computer's on-game overlay; true when it went out.
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
-    return {join,stop,nav,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    // Pinned quests for the computer's overlay row.
+    function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
+    return {join,stop,nav,pins,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

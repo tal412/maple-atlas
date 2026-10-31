@@ -325,6 +325,14 @@
     const left=list.filter(m=>!(others||[]).some(o=>normalize(o)!==self&&named(o,m)));
     return left.length===1?left[0]:null;
   }
-  const exported={questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Where to hunt: of the maps holding the monsters ({id, name, n: their spawns there, d:
+  // portals away or null}), the reachable ones first; the most spawns, and of the maps with
+  // nearly as many (within 15%), the nearest. Returns one of the candidates or null.
+  function bestHuntMap(candidates){
+    const list=(candidates||[]).filter(c=>c&&c.n>0);if(!list.length)return null;
+    const reach=list.filter(c=>c.d!=null),pool=reach.length?reach:list,most=Math.max(...pool.map(c=>c.n));
+    return pool.filter(c=>c.n>=most*.85).sort((a,b)=>(a.d??Infinity)-(b.d??Infinity)||b.n-a.n)[0];
+  }
+  const exported={bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

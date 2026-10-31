@@ -5,7 +5,7 @@
  * MapleItemSources (item sources). */
 (function(scope){
   const KEEP_MS=120000;
-  function create({quests,maps,sprite,esc,icon,hops,navigate,openEntity,openCompanion,status,setStatus,channel='main'}){
+  function create({quests,maps,sprite,spriteURL=()=>null,esc,icon,hops,navigate,openEntity,openCompanion,status,setStatus,channel='main'}){
     const sources=MapleItemSources.create({channel}),itemInfo=new Map();
     const monsterMaps=new Map(),npcMaps=new Map();
     for(const m of maps){
@@ -16,6 +16,23 @@
     for(const q of quests)for(const o of [...q.objectives,...(q.items||[])])if(o.id&&(o.type==='item'||!o.type))itemIds.set(MapleQuestHelper.normalize(o.name),o.id);
     let reading=null,lastSeen=null,connection='disconnected',readyMisses={},onChange=()=>{},selected=null;
     const keyOf=q=>q.quest?.id||MapleQuestHelper.normalize(q.title);
+    // Quests pinned to the overlay on the game window (kept on this phone).
+    const PIN_KEY='maple-atlas-pinned-quests';
+    let pinned=new Set();try{pinned=new Set(JSON.parse(localStorage.getItem(PIN_KEY)||'[]'));}catch(_){}
+    const savePins=()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify([...pinned].slice(-12)));}catch(_){}};
+    // The overlay row: pinned quests, each objective's name, count and icon (the icon's path
+    // under the datamine CDN, which the computer turns back into a picture it fetches).
+    const CDN='https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@';
+    function iconOf(p){
+      const o=p.objective,isMob=o?.type==='mob'||(!o&&huntFor(p.name)&&!itemIds.has(MapleQuestHelper.normalize(p.name)));
+      const id=o?.id??(isMob?huntFor(p.name)?.mob.id:itemIds.get(MapleQuestHelper.normalize(p.name)));
+      const url=id?spriteURL(isMob?'monster':'item',id):null;
+      return url&&url.startsWith(CDN)?url.slice(CDN.length):'';
+    }
+    function pins(){
+      return tracked().filter(q=>pinned.has(keyOf(q))).slice(0,3).map(q=>({t:String(q.quest?.name||q.title).slice(0,60),r:Boolean(q.complete),
+        o:q.progress.slice(0,6).map(p=>({n:String(p.name).slice(0,40),h:p.have??null,d:p.need??null,i:iconOf(p)}))}));
+    }
 
     // The closest of these maps by recorded portals (null when none is reachable).
     function nearest(list){
@@ -24,13 +41,19 @@
       return best;
     }
     const away=t=>t?.d==null?'':t.d===0?'You are here':t.d+' portal'+(t.d===1?'':'s')+' away';
-    // Where to hunt: the reachable map with the most spawns of the monster (nearer on a tie).
-    function densest(mob){
-      let best=null;
-      for(const m of mob.maps){const n=(m.monsters||[]).find(x=>String(x.id)===String(mob.id))?.spawns||0,d=hops(m.id),reach=d!==null,bestReach=best&&best.d!==null;
-        if(!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity)))))best={id:String(m.id),name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
-      return best;
+    // Where to hunt one or more monsters (all that drop an item): per map their spawns added
+    // up; the most, and of maps nearly as good the nearest (MapleQuestHelper.bestHuntMap).
+    function huntMap(mobs){
+      const byMap=new Map();
+      for(const mob of mobs)for(const m of mob.maps){
+        const n=(m.monsters||[]).find(x=>String(x.id)===String(mob.id))?.spawns||0;if(!n)continue;
+        const e=byMap.get(String(m.id))||{id:String(m.id),name:m.name,d:hops(m.id),n:0,top:null};
+        e.n+=n;if(!e.top||n>e.top.n)e.top={n,mob};byMap.set(e.id,e);
+      }
+      const best=MapleQuestHelper.bestHuntMap([...byMap.values()]);
+      return best?{id:best.id,name:best.name,d:best.d,n:best.n,monster:String(best.top.mob.id),monsterName:best.top.mob.name}:null;
     }
+    const densest=mob=>huntMap([mob]);
     const huntFor=name=>{const mob=monsterMaps.get(MapleQuestHelper.normalize(name));return mob?{mob,at:densest(mob)}:null;};
     const npcAt=name=>nearest(npcMaps.get(MapleQuestHelper.normalize(name)));
 
@@ -53,8 +76,12 @@
       if(info.state==='loading')return fromQuest||{text:'Looking up where to get it…'};
       if(info.state==='error')return fromQuest||{text:'Couldn’t reach the MapleClassic Wiki.'};
       const s=info.sources,drops=s.drops.map(d=>({...d,hunt:huntFor(d.monster)})).filter(d=>d.hunt?.at);
-      drops.sort((a,b)=>(b.rate??0)-(a.rate??0)||(a.hunt.at.d??99)-(b.hunt.at.d??99));
-      if(drops.length){const d=drops[0];return {text:'Dropped by '+d.monster+(d.rate!=null?' ('+(d.rate>=10?Math.round(d.rate):d.rate.toFixed(1))+'%)':'')+' · Hunt at '+d.hunt.at.name+(away(d.hunt.at)?' · '+away(d.hunt.at):''),target:d.hunt.at,more:s.drops.length+s.shops.length>1};}
+      if(drops.length){
+        // Every monster that drops it counts: the map with the most of them, nearest of the best.
+        const at=huntMap(drops.map(d=>d.hunt.mob)),names=[...new Set(drops.map(d=>d.monster))];
+        const rate=drops.find(d=>d.monster===at.monsterName)?.rate;
+        return {text:'Dropped by '+names.slice(0,3).join(', ')+(names.length>3?' and more':'')+(names.length===1&&rate!=null?' ('+(rate>=10?Math.round(rate):rate.toFixed(1))+'%)':'')+' · Hunt at '+at.name+' ('+at.n+' spawns)'+(away(at)?' · '+away(at):''),target:at,more:s.drops.length+s.shops.length>1};
+      }
       const shops=s.shops.map(x=>({...x,at:nearest(maps.filter(m=>m.name===x.map||m.npcs?.some(n=>n.name===x.npc)))||nearest(maps.filter(m=>m.name===x.town))})).filter(x=>x.at);
       if(shops.length){const x=shops[0];return {text:'Buy from '+x.npc+(x.price!=null?' · '+x.price.toLocaleString()+' '+(/^mesos$/i.test(x.currency)?'mesos':x.currency):'')+' · '+x.at.name,target:x.at,more:s.shops.length>1||s.drops.length>0};}
       if(fromQuest)return fromQuest;
@@ -112,7 +139,9 @@
       const reward=quest?[quest.exp?quest.exp.toLocaleString()+' EXP':'',quest.mesos?quest.mesos.toLocaleString()+' mesos':''].filter(Boolean).join(' · '):'';
       const turnIn=npc?'<div class="mc-qh-turnin" data-ready="'+ready+'">'+(quest.npcId?sprite('npc',{id:quest.npcId,name:npc}):'')+'<span><small>'+(ready?'Return to':'Quest from')+'</small><strong>'+esc(npc)+'</strong>'+(where?'<small>'+esc(where.name)+(away(where)?' · '+away(where):'')+'</small>':'')+'</span>'+
         (where&&ready?'<button type="button" class="mc-nav" data-qh-nav="'+esc(where.id)+'" aria-label="Navigate to '+esc(npc)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>':'';
-      return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+'</header>'+
+      const isPinned=pinned.has(keyOf(q));
+      return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+
+        '<button type="button" class="mc-qh-pin" data-qh-pin="'+esc(keyOf(q))+'" aria-pressed="'+isPinned+'" aria-label="'+(isPinned?'Unpin from the game overlay':'Pin to the game overlay')+'" title="'+(isPinned?'Shown on the game window':'Show on the game window')+'">'+icon(isPinned?'pin':'pin-off')+'</button></header>'+
         (total?'<span class="mc-qh-bar mc-qh-total" aria-hidden="true"><span style="width:'+pct(done,total)+'%"></span></span><ul class="mc-qh-objectives">'+q.progress.map((p,pi)=>objectiveRow(p,qi,pi,q.quest)).join('')+'</ul>':'<p class="mc-qh-note">'+(npc?'Talk to '+esc(npc)+' to continue.':'No counts shown for this quest in game.')+'</p>')+
         turnIn+(quest?'<button type="button" class="mc-qh-link" data-qh-quest="'+esc(quest.name)+'">Quest details'+icon('chevron-right')+'</button>':'')+'</article>';
     }
@@ -132,7 +161,7 @@
         const index=Math.max(0,list.findIndex(q=>keyOf(q)===selected)),current=list[index];
         const tabs=list.length>1?'<div class="mc-qh-tabs" role="tablist" aria-label="Tracked quests">'+list.map((q,i)=>{
           const done=q.progress.filter(p=>p.done).length,total=q.progress.length;
-          return '<button type="button" role="tab" class="mc-qh-tab" data-qh-pick="'+esc(keyOf(q))+'" aria-selected="'+(i===index)+'" data-ready="'+q.complete+'"><span class="mc-qh-tab-name">'+esc(q.quest?.name||q.title)+'</span><small>'+(q.complete?icon('circle-check')+'Ready':total?done+'/'+total:'Talk')+'</small></button>';
+          return '<button type="button" role="tab" class="mc-qh-tab" data-qh-pick="'+esc(keyOf(q))+'" aria-selected="'+(i===index)+'" data-ready="'+q.complete+'"><span class="mc-qh-tab-name">'+(pinned.has(keyOf(q))?icon('pin'):'')+esc(q.quest?.name||q.title)+'</span><small>'+(q.complete?icon('circle-check')+'Ready':total?done+'/'+total:'Talk')+'</small></button>';
         }).join('')+'</div><p class="mc-qh-count-line">Quest '+(index+1)+' of '+list.length+' · Tap a quest to switch</p>':'';
         return head+tabs+'<div class="mc-qh-list" role="tabpanel">'+card(current,index)+'</div>';
       }
@@ -150,6 +179,7 @@
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
       box.querySelectorAll('[data-qh-connect]').forEach(b=>b.onclick=openCompanion);
       box.querySelectorAll('[data-qh-pick]').forEach(b=>b.onclick=()=>{selected=b.dataset.qhPick;onChange();});
+      box.querySelectorAll('[data-qh-pin]').forEach(b=>b.onclick=()=>{const k=b.dataset.qhPin;if(pinned.has(k))pinned.delete(k);else pinned.add(k);savePins();onChange();});
     }
     // Map ids that matter to the tracked quests (quest NPCs and monsters still to hunt).
     function relevantMaps(){
@@ -161,7 +191,7 @@
       return ids;
     }
     const summary=()=>{const list=tracked();if(!list.length)return null;const ready=list.filter(q=>q.complete).length;return list.length+' quest'+(list.length===1?'':'s')+' tracked'+(ready?' · '+ready+' ready to turn in':'');};
-    return {update,setConnection,html,bind,tracked,relevantMaps,summary,onChange:fn=>{onChange=fn;}};
+    return {update,setConnection,html,bind,tracked,relevantMaps,summary,pins,onChange:fn=>{onChange=fn;}};
   }
   const exported={create};
   scope.MapleQuestPanel=exported;if(typeof module!=='undefined')module.exports=exported;

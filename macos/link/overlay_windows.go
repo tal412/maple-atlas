@@ -146,6 +146,8 @@ type overlayState struct {
 	shown    bool
 	hwnd     uintptr
 	started  bool
+	pins     []pinQuest // quests pinned on the phone (overlay_pins_windows.go)
+	pinsHwnd uintptr
 }
 
 var overlay = &overlayState{on: true}
@@ -253,8 +255,15 @@ func (o *overlayState) run() {
 		return
 	}
 	pSetLayeredWindowAttributes.Call(hwnd, keyColor, 235, lwaColorKey|lwaAlpha)
+	pins, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTransparent|wsExTopmost|wsExToolWindow|wsExNoActivate,
+		uintptr(unsafe.Pointer(class)), uintptr(unsafe.Pointer(utf16("Maple Atlas pinned quests"))), wsPopup,
+		0, 0, 400, pinHeight, 0, 0, 0, 0)
+	if pins != 0 {
+		pSetLayeredWindowAttributes.Call(pins, keyColor, 235, lwaColorKey|lwaAlpha)
+	}
 	o.mu.Lock()
 	o.hwnd = hwnd
+	o.pinsHwnd = pins
 	o.mu.Unlock()
 	pSetTimer.Call(hwnd, 1, 250, 0)
 	var m winMsg
@@ -276,7 +285,14 @@ func (o *overlayState) proc(hwnd, msg, wparam, lparam uintptr) uintptr {
 	case wmEraseBkgnd:
 		return 1
 	case wmPaint:
-		o.paint(hwnd)
+		o.mu.Lock()
+		isPins := hwnd == o.pinsHwnd && hwnd != 0
+		o.mu.Unlock()
+		if isPins {
+			o.paintPins(hwnd)
+		} else {
+			o.paint(hwnd)
+		}
 		return 0
 	}
 	r, _, _ := pDefWindowProcW.Call(hwnd, msg, wparam, lparam)
@@ -330,13 +346,19 @@ func (o *overlayState) gameWindow() uintptr {
 func (o *overlayState) tick(hwnd uintptr) {
 	o.mu.Lock()
 	game := o.gameWindow()
-	want := o.on && o.tracking && o.navOn && game != 0
-	if want {
+	visible := o.on && o.tracking && game != 0
+	if visible {
 		front, _, _ := pGetForegroundWindow.Call()
 		iconic, _, _ := pIsIconic.Call(game)
-		want = iconic == 0 && (front == game || front == hwnd)
+		visible = iconic == 0 && (front == game || front == hwnd || front == o.pinsHwnd)
 	}
+	want := visible && o.navOn
 	o.mu.Unlock()
+	var gr winRect
+	if game != 0 {
+		pGetWindowRect.Call(game, uintptr(unsafe.Pointer(&gr)))
+	}
+	below := o.placePins(game, gr, visible)
 	if !want {
 		if o.shown {
 			pShowWindow.Call(hwnd, swHide)
@@ -354,7 +376,7 @@ func (o *overlayState) tick(hwnd uintptr) {
 	if w < int32(240*scale) {
 		w = int32(240 * scale)
 	}
-	x, y := r.Left+(r.Right-r.Left-w)/2, r.Top+int32(48*scale)
+	x, y := r.Left+(r.Right-r.Left-w)/2, r.Top+int32(48*scale)+below
 	pSetWindowPos.Call(hwnd, ^uintptr(0), uintptr(x), uintptr(y), uintptr(w), uintptr(h), swpNoActivate|swpShowWindow)
 	o.shown = true
 	pInvalidateRect.Call(hwnd, 0, 0)
@@ -422,13 +444,20 @@ func (o *overlayState) paint(hwnd uintptr) {
 			pts[i] = winPoint{cx + px(p[0]*c-p[1]*s), cy + px(p[0]*s+p[1]*c)}
 		}
 		pPolygon.Call(hdc, uintptr(unsafe.Pointer(&pts[0])), uintptr(len(pts)))
-	} else {
-		mark := "?"
-		if kind == "arrived" {
-			mark = "✓"
-		} else if kind == "spot" {
-			mark = "◎"
+	} else if kind != "arrived" {
+		// Your position is being worked out: a spinner of dots (the card repaints every 250 ms).
+		phase := int(time.Now().UnixMilli()/125) % 8
+		for i := 0; i < 8; i++ {
+			a := float64(i) * math.Pi / 4
+			r := px(4)
+			if i == phase {
+				r = px(6)
+			}
+			x, y := cx+px(16*math.Cos(a)), cy+px(16*math.Sin(a))
+			pEllipse.Call(hdc, uintptr(x-r), uintptr(y-r), uintptr(x+r), uintptr(y+r))
 		}
+	} else {
+		mark := "✓"
 		font := makeFont(px(30), 700)
 		oldF, _, _ := pSelectObject.Call(hdc, font)
 		pSetBkMode.Call(hdc, 1)

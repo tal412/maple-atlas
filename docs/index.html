@@ -360,6 +360,7 @@ body {background:light-dark(#d7e9e9,#142937);}
   #maple-atlas-concept #mc-all {display:none;}
   #maple-atlas-concept .mc-panel {position:absolute;z-index:4;left:0;right:0;top:auto;bottom:var(--mc-nav-height);width:auto;height:var(--mc-peek-height);max-height:none;display:flex;flex-direction:column;padding:0;border:0;border-radius:24px 24px 0 0;overflow:hidden;box-shadow:0 -2px 10px var(--mc-shadow);}
   #maple-atlas-concept.mc-sheet-open .mc-panel {height:var(--mc-sheet-height);}
+  #maple-atlas-concept.mc-sheet-open.mc-sheet-tall .mc-panel {height:calc(100dvh - var(--mc-nav-height) - 56px - env(safe-area-inset-top,0px));}
   #maple-atlas-concept .mc-sheet-handle {position:relative;display:flex;flex:0 0 var(--mc-peek-height);align-items:center;justify-content:space-between;width:100%;padding:22px 20px 12px;border:0;border-radius:24px 24px 0 0;background:transparent;text-align:left;touch-action:none;}
   #maple-atlas-concept .mc-grab {position:absolute;top:9px;left:50%;transform:translateX(-50%);width:32px;height:4px;border-radius:4px;background:var(--mc-edge);}
   #maple-atlas-concept .mc-peek-copy {min-width:0;}
@@ -716,6 +717,11 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-qh-tab[aria-selected="true"] {border-color:var(--mc-blue);background:color-mix(in srgb,var(--mc-blue) 14%,var(--mc-paper));box-shadow:inset 0 0 0 1px var(--mc-blue);}
 #maple-atlas-concept .mc-qh-tab:focus-visible {outline:2px solid var(--mc-blue);outline-offset:2px;}
 #maple-atlas-concept .mc-qh-count-line {margin:0 0 10px;font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-qh-card header {position:relative;}
+#maple-atlas-concept .mc-qh-pin {flex:none;display:inline-grid;place-items:center;width:36px;height:36px;margin-left:8px;border:1px solid var(--mc-line,#d8dde6);border-radius:12px;background:transparent;color:var(--mc-muted);cursor:pointer;}
+#maple-atlas-concept .mc-qh-pin[aria-pressed="true"] {background:var(--mc-blue);border-color:var(--mc-blue);color:#fff;}
+#maple-atlas-concept .mc-qh-pin svg {width:18px;height:18px;}
+#maple-atlas-concept .mc-qh-tab-name svg {width:12px;height:12px;margin-right:4px;vertical-align:-1px;}
 
 /* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
 #maple-atlas-concept #mc-intro {
@@ -1352,11 +1358,11 @@ window.mapleStorageReady.then(() => {
     const viewport = $('#mc-local-viewport'), stage = $('#mc-local-stage');
     const marker = $('#mc-local-exit'), select = $('#mc-local-select'), you = $('#mc-local-you');
     let current, edge, zoom = 1, ready = false, player = null, userZoomed = false, lastFollow = null, hunt = null, spawnPoints = null;
-    // Hunting: the monster's spawn points and its best spot (densest group) on this map.
+    // Hunting: the monster's spawn points on this map.
     const spawnLayer = document.createElement('div'); spawnLayer.className = 'mc-local-spawns'; spawnLayer.setAttribute('aria-hidden', 'true');
     const spot = document.createElement('div'); spot.className = 'mc-local-spot'; spot.hidden = true; spot.innerHTML = '<span></span>';
     const loadSpawns = () => spawnPoints ??= fetch('./data/spawn-points.json').then(r => r.ok ? r.json() : {maps: {}}).then(d => d.maps || {}).catch(() => { spawnPoints = null; return {}; });
-    const bestSpot = () => hunt && current?.bestSpots?.[hunt.monster] || null;
+    const bestSpot = () => null;   // hunts lead to the map only, not to a particular spot
     // Navigation arrow (Google Maps style): a moving dashed line from your dot to the next
     // portal and a heading chevron next to you. Built here so the template stays unchanged.
     const path = document.createElement('div'); path.className = 'mc-local-path'; path.hidden = true; path.setAttribute('aria-hidden', 'true');
@@ -1436,7 +1442,7 @@ window.mapleStorageReady.then(() => {
       const destination = edge ? get(edge.to)?.name : '';
       const best = bestSpot(), goal = edge ? {x: Number(edge.x), y: Number(edge.y)} : best;
       const live = goal && player?.id === String(current.id) && scope.MapleMinimapPosition ? scope.MapleMinimapPosition.guidance(player, goal) : null;
-      const huntLine = best ? 'Best spot for ' + hunt.name + ': ' + best.n + ' of its ' + best.total + ' spawn points, circled on the map.' : hunt ? 'Hunt ' + hunt.name + ' on this map.' : '';
+      const huntLine = hunt ? 'Hunt ' + hunt.name + ' on this map (its spawn points are dotted).' : '';
       $('#mc-local-instruction').textContent = !edge && hunt ? huntLine + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : edge ? instruction(edge, destination) + (live ? ' Live: ' + live.text + '.' : ' Your dot appears here while Maple Atlas Companion reads your map.') : current.portals.length ? 'Explore the original game map. Choose a destination to highlight its portal.' : 'This reference has no verified portal overlays. Pan or zoom to explore the original game map.';
     }
     function choose(index) {
@@ -1447,7 +1453,7 @@ window.mapleStorageReady.then(() => {
       marker.setAttribute('aria-label', destination ? 'Portal to ' + destination : 'Portal');
       layout();
     }
-    // Spawn points of the hunted monster, drawn small; the best spot is circled.
+    // Spawn points of the hunted monster, drawn small.
     function drawSpawns() {
       spawnLayer.replaceChildren();
       if (!hunt || !current) return;
@@ -2048,13 +2054,12 @@ window.mapleStorageReady.then(() => {
     }
     // Where to hunt a monster: the reachable map with the most of its spawns (the nearer one
     // on a tie), so farming a drop goes where the monster is densest.
+    // Where to hunt: most spawns, and of maps nearly as good the nearest (MapleQuestHelper.bestHuntMap).
     function densest(mob){
-      let best=null;
-      for(const id of mob?.maps||[]){const m=index.get('map:'+id);if(!m?.covered)continue;const n=spawns(mob.id,m.id),d=routeLength(m.id);
-        const reach=d!==null,bestReach=best&&best.d!==null;
-        const better=!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity))));
-        if(better)best={id:m.id,name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
-      return best;
+      const list=[];
+      for(const id of mob?.maps||[]){const m=index.get('map:'+id);if(!m?.covered)continue;list.push({id:m.id,name:m.name,d:routeLength(m.id),n:spawns(mob.id,m.id)});}
+      const best=MapleQuestHelper.bestHuntMap(list);
+      return best?{...best,monster:String(mob.id),monsterName:mob.name}:null;
     }
     const away=t=>t&&t.d!=null?(t.d?t.d+' portal'+(t.d===1?'':'s')+' away':'You are here'):'';
     const percent=n=>n==null?'':(n>=10?Math.round(n):n>=1?n.toFixed(1).replace(/\.0$/,''):n.toFixed(2).replace(/0$/,''))+'%';
@@ -2409,7 +2414,9 @@ window.mapleStorageReady.then(() => {
     }
     // Navigation for the computer's on-game overlay; true when it went out.
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
-    return {join,stop,nav,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    // Pinned quests for the computer's overlay row.
+    function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
+    return {join,stop,nav,pins,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);
@@ -2564,21 +2571,39 @@ window.mapleStorageReady.then(() => {
   }
   const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});
 
-  // Player position in map coordinates from one minimap crop. Needs the dot plus two rings,
-  // or one ring once a scale was learned for this minimap size. `memory` is returned updated.
-  function locate(image,marks,{frameHeight=image.height,memory=[]}={}){
+  // The dot on the map's own minimap picture: the game draws that picture whole inside the
+  // minimap window (any size), so where the dot sits in the window is where it sits on the
+  // picture. picture: {w, h, dx, dy, scale} (scripts/minimap-geometry.py):
+  // map = scale * (picture pixel + offset). null when the window does not show the whole
+  // picture (its shape differs), so the portal rings decide instead.
+  function onPicture(body,player,picture){
+    if(!picture||!body||!(picture.w>0&&picture.h>0))return null;
+    const shape=(body.w/body.h)/(picture.w/picture.h);
+    if(shape<.93||shape>1.07)return null;
+    const px=(player.x-body.x+.5)/body.w*picture.w,py=(player.y-body.y+.5)/body.h*picture.h,s=picture.scale||16;
+    return {x:Math.round(s*(px+picture.dx)),y:Math.round(s*(py+picture.dy))};
+  }
+
+  // Player position in map coordinates from one minimap crop: by the map's own minimap
+  // picture when it is known (picture), else the dot plus two portal rings, or one ring once a
+  // scale was learned for this minimap size. `memory` is returned updated.
+  function locate(image,marks,{frameHeight=image.height,memory=[],picture=null}={}){
     const band=findTitleBand(image,{frameHeight});
     if(!band)return {reason:'no-minimap',memory};
     const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);
     if(markers.collapsed)return {reason:'collapsed',memory};
     if(!markers.player)return {reason:'no-dot',memory};
+    const placed=onPicture(markers.body,markers.player,picture);
+    if(placed)return {...placed,method:'picture',memory};
+    // Shown in diagnostics: how the window's shape compared with the picture's.
+    const shape=picture&&markers.body?Math.round((markers.body.w/markers.body.h)/(picture.w/picture.h)*100)/100:null;
     if(!marks?.length)return {reason:'no-portal-data',memory};
     const known=recallScale(memory,layout);
     const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);
-    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',memory};
+    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',detail:shape?'window/picture shape '+shape:picture?'':'no picture for this map',memory};
     const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;
     if(world.x<Math.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};
-    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
+    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
   }
   // Plain-language hint from the player's position to a portal. One game screen is roughly
   // 1000 map units wide, which keeps distances meaningful without promising precision.
@@ -2593,7 +2618,7 @@ window.mapleStorageReady.then(() => {
   // Visible portals (type 2) are the ones drawn as rings on the minimap.
   const coordinate=v=>v!==null&&v!==''&&Number.isFinite(Number(v));
   const marksFor=map=>(map?.portals||[]).filter(p=>Number(p.type)===2&&coordinate(p.x)&&coordinate(p.y)).map(p=>({x:Number(p.x),y:Number(p.y)}));
-  const api={findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
+  const api={onPicture,findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
   scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
 
@@ -2924,7 +2949,15 @@ window.mapleStorageReady.then(() => {
     const left=list.filter(m=>!(others||[]).some(o=>normalize(o)!==self&&named(o,m)));
     return left.length===1?left[0]:null;
   }
-  const exported={questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Where to hunt: of the maps holding the monsters ({id, name, n: their spawns there, d:
+  // portals away or null}), the reachable ones first; the most spawns, and of the maps with
+  // nearly as many (within 15%), the nearest. Returns one of the candidates or null.
+  function bestHuntMap(candidates){
+    const list=(candidates||[]).filter(c=>c&&c.n>0);if(!list.length)return null;
+    const reach=list.filter(c=>c.d!=null),pool=reach.length?reach:list,most=Math.max(...pool.map(c=>c.n));
+    return pool.filter(c=>c.n>=most*.85).sort((a,b)=>(a.d??Infinity)-(b.d??Infinity)||b.n-a.n)[0];
+  }
+  const exported={bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);
 
@@ -2935,7 +2968,7 @@ window.mapleStorageReady.then(() => {
  * MapleItemSources (item sources). */
 (function(scope){
   const KEEP_MS=120000;
-  function create({quests,maps,sprite,esc,icon,hops,navigate,openEntity,openCompanion,status,setStatus,channel='main'}){
+  function create({quests,maps,sprite,spriteURL=()=>null,esc,icon,hops,navigate,openEntity,openCompanion,status,setStatus,channel='main'}){
     const sources=MapleItemSources.create({channel}),itemInfo=new Map();
     const monsterMaps=new Map(),npcMaps=new Map();
     for(const m of maps){
@@ -2946,6 +2979,23 @@ window.mapleStorageReady.then(() => {
     for(const q of quests)for(const o of [...q.objectives,...(q.items||[])])if(o.id&&(o.type==='item'||!o.type))itemIds.set(MapleQuestHelper.normalize(o.name),o.id);
     let reading=null,lastSeen=null,connection='disconnected',readyMisses={},onChange=()=>{},selected=null;
     const keyOf=q=>q.quest?.id||MapleQuestHelper.normalize(q.title);
+    // Quests pinned to the overlay on the game window (kept on this phone).
+    const PIN_KEY='maple-atlas-pinned-quests';
+    let pinned=new Set();try{pinned=new Set(JSON.parse(localStorage.getItem(PIN_KEY)||'[]'));}catch(_){}
+    const savePins=()=>{try{localStorage.setItem(PIN_KEY,JSON.stringify([...pinned].slice(-12)));}catch(_){}};
+    // The overlay row: pinned quests, each objective's name, count and icon (the icon's path
+    // under the datamine CDN, which the computer turns back into a picture it fetches).
+    const CDN='https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@';
+    function iconOf(p){
+      const o=p.objective,isMob=o?.type==='mob'||(!o&&huntFor(p.name)&&!itemIds.has(MapleQuestHelper.normalize(p.name)));
+      const id=o?.id??(isMob?huntFor(p.name)?.mob.id:itemIds.get(MapleQuestHelper.normalize(p.name)));
+      const url=id?spriteURL(isMob?'monster':'item',id):null;
+      return url&&url.startsWith(CDN)?url.slice(CDN.length):'';
+    }
+    function pins(){
+      return tracked().filter(q=>pinned.has(keyOf(q))).slice(0,3).map(q=>({t:String(q.quest?.name||q.title).slice(0,60),r:Boolean(q.complete),
+        o:q.progress.slice(0,6).map(p=>({n:String(p.name).slice(0,40),h:p.have??null,d:p.need??null,i:iconOf(p)}))}));
+    }
 
     // The closest of these maps by recorded portals (null when none is reachable).
     function nearest(list){
@@ -2954,13 +3004,19 @@ window.mapleStorageReady.then(() => {
       return best;
     }
     const away=t=>t?.d==null?'':t.d===0?'You are here':t.d+' portal'+(t.d===1?'':'s')+' away';
-    // Where to hunt: the reachable map with the most spawns of the monster (nearer on a tie).
-    function densest(mob){
-      let best=null;
-      for(const m of mob.maps){const n=(m.monsters||[]).find(x=>String(x.id)===String(mob.id))?.spawns||0,d=hops(m.id),reach=d!==null,bestReach=best&&best.d!==null;
-        if(!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity)))))best={id:String(m.id),name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
-      return best;
+    // Where to hunt one or more monsters (all that drop an item): per map their spawns added
+    // up; the most, and of maps nearly as good the nearest (MapleQuestHelper.bestHuntMap).
+    function huntMap(mobs){
+      const byMap=new Map();
+      for(const mob of mobs)for(const m of mob.maps){
+        const n=(m.monsters||[]).find(x=>String(x.id)===String(mob.id))?.spawns||0;if(!n)continue;
+        const e=byMap.get(String(m.id))||{id:String(m.id),name:m.name,d:hops(m.id),n:0,top:null};
+        e.n+=n;if(!e.top||n>e.top.n)e.top={n,mob};byMap.set(e.id,e);
+      }
+      const best=MapleQuestHelper.bestHuntMap([...byMap.values()]);
+      return best?{id:best.id,name:best.name,d:best.d,n:best.n,monster:String(best.top.mob.id),monsterName:best.top.mob.name}:null;
     }
+    const densest=mob=>huntMap([mob]);
     const huntFor=name=>{const mob=monsterMaps.get(MapleQuestHelper.normalize(name));return mob?{mob,at:densest(mob)}:null;};
     const npcAt=name=>nearest(npcMaps.get(MapleQuestHelper.normalize(name)));
 
@@ -2983,8 +3039,12 @@ window.mapleStorageReady.then(() => {
       if(info.state==='loading')return fromQuest||{text:'Looking up where to get it…'};
       if(info.state==='error')return fromQuest||{text:'Couldn’t reach the MapleClassic Wiki.'};
       const s=info.sources,drops=s.drops.map(d=>({...d,hunt:huntFor(d.monster)})).filter(d=>d.hunt?.at);
-      drops.sort((a,b)=>(b.rate??0)-(a.rate??0)||(a.hunt.at.d??99)-(b.hunt.at.d??99));
-      if(drops.length){const d=drops[0];return {text:'Dropped by '+d.monster+(d.rate!=null?' ('+(d.rate>=10?Math.round(d.rate):d.rate.toFixed(1))+'%)':'')+' · Hunt at '+d.hunt.at.name+(away(d.hunt.at)?' · '+away(d.hunt.at):''),target:d.hunt.at,more:s.drops.length+s.shops.length>1};}
+      if(drops.length){
+        // Every monster that drops it counts: the map with the most of them, nearest of the best.
+        const at=huntMap(drops.map(d=>d.hunt.mob)),names=[...new Set(drops.map(d=>d.monster))];
+        const rate=drops.find(d=>d.monster===at.monsterName)?.rate;
+        return {text:'Dropped by '+names.slice(0,3).join(', ')+(names.length>3?' and more':'')+(names.length===1&&rate!=null?' ('+(rate>=10?Math.round(rate):rate.toFixed(1))+'%)':'')+' · Hunt at '+at.name+' ('+at.n+' spawns)'+(away(at)?' · '+away(at):''),target:at,more:s.drops.length+s.shops.length>1};
+      }
       const shops=s.shops.map(x=>({...x,at:nearest(maps.filter(m=>m.name===x.map||m.npcs?.some(n=>n.name===x.npc)))||nearest(maps.filter(m=>m.name===x.town))})).filter(x=>x.at);
       if(shops.length){const x=shops[0];return {text:'Buy from '+x.npc+(x.price!=null?' · '+x.price.toLocaleString()+' '+(/^mesos$/i.test(x.currency)?'mesos':x.currency):'')+' · '+x.at.name,target:x.at,more:s.shops.length>1||s.drops.length>0};}
       if(fromQuest)return fromQuest;
@@ -3042,7 +3102,9 @@ window.mapleStorageReady.then(() => {
       const reward=quest?[quest.exp?quest.exp.toLocaleString()+' EXP':'',quest.mesos?quest.mesos.toLocaleString()+' mesos':''].filter(Boolean).join(' · '):'';
       const turnIn=npc?'<div class="mc-qh-turnin" data-ready="'+ready+'">'+(quest.npcId?sprite('npc',{id:quest.npcId,name:npc}):'')+'<span><small>'+(ready?'Return to':'Quest from')+'</small><strong>'+esc(npc)+'</strong>'+(where?'<small>'+esc(where.name)+(away(where)?' · '+away(where):'')+'</small>':'')+'</span>'+
         (where&&ready?'<button type="button" class="mc-nav" data-qh-nav="'+esc(where.id)+'" aria-label="Navigate to '+esc(npc)+'">'+icon('navigation')+'<span>Navigate</span></button>':'')+'</div>':'';
-      return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+'</header>'+
+      const isPinned=pinned.has(keyOf(q));
+      return '<article class="mc-qh-card" data-ready="'+ready+'"><header><div><strong>'+esc(quest?.name||q.title)+'</strong><small>'+(quest?'Lv. '+quest.level+'+'+(reward?' · '+esc(reward):''):'Not in the Victoria Island quest list')+'</small></div>'+chip+
+        '<button type="button" class="mc-qh-pin" data-qh-pin="'+esc(keyOf(q))+'" aria-pressed="'+isPinned+'" aria-label="'+(isPinned?'Unpin from the game overlay':'Pin to the game overlay')+'" title="'+(isPinned?'Shown on the game window':'Show on the game window')+'">'+icon(isPinned?'pin':'pin-off')+'</button></header>'+
         (total?'<span class="mc-qh-bar mc-qh-total" aria-hidden="true"><span style="width:'+pct(done,total)+'%"></span></span><ul class="mc-qh-objectives">'+q.progress.map((p,pi)=>objectiveRow(p,qi,pi,q.quest)).join('')+'</ul>':'<p class="mc-qh-note">'+(npc?'Talk to '+esc(npc)+' to continue.':'No counts shown for this quest in game.')+'</p>')+
         turnIn+(quest?'<button type="button" class="mc-qh-link" data-qh-quest="'+esc(quest.name)+'">Quest details'+icon('chevron-right')+'</button>':'')+'</article>';
     }
@@ -3062,7 +3124,7 @@ window.mapleStorageReady.then(() => {
         const index=Math.max(0,list.findIndex(q=>keyOf(q)===selected)),current=list[index];
         const tabs=list.length>1?'<div class="mc-qh-tabs" role="tablist" aria-label="Tracked quests">'+list.map((q,i)=>{
           const done=q.progress.filter(p=>p.done).length,total=q.progress.length;
-          return '<button type="button" role="tab" class="mc-qh-tab" data-qh-pick="'+esc(keyOf(q))+'" aria-selected="'+(i===index)+'" data-ready="'+q.complete+'"><span class="mc-qh-tab-name">'+esc(q.quest?.name||q.title)+'</span><small>'+(q.complete?icon('circle-check')+'Ready':total?done+'/'+total:'Talk')+'</small></button>';
+          return '<button type="button" role="tab" class="mc-qh-tab" data-qh-pick="'+esc(keyOf(q))+'" aria-selected="'+(i===index)+'" data-ready="'+q.complete+'"><span class="mc-qh-tab-name">'+(pinned.has(keyOf(q))?icon('pin'):'')+esc(q.quest?.name||q.title)+'</span><small>'+(q.complete?icon('circle-check')+'Ready':total?done+'/'+total:'Talk')+'</small></button>';
         }).join('')+'</div><p class="mc-qh-count-line">Quest '+(index+1)+' of '+list.length+' · Tap a quest to switch</p>':'';
         return head+tabs+'<div class="mc-qh-list" role="tabpanel">'+card(current,index)+'</div>';
       }
@@ -3080,6 +3142,7 @@ window.mapleStorageReady.then(() => {
       box.querySelectorAll('[data-qh-quest]').forEach(b=>b.onclick=()=>openEntity('quest',b.dataset.qhQuest));
       box.querySelectorAll('[data-qh-connect]').forEach(b=>b.onclick=openCompanion);
       box.querySelectorAll('[data-qh-pick]').forEach(b=>b.onclick=()=>{selected=b.dataset.qhPick;onChange();});
+      box.querySelectorAll('[data-qh-pin]').forEach(b=>b.onclick=()=>{const k=b.dataset.qhPin;if(pinned.has(k))pinned.delete(k);else pinned.add(k);savePins();onChange();});
     }
     // Map ids that matter to the tracked quests (quest NPCs and monsters still to hunt).
     function relevantMaps(){
@@ -3091,7 +3154,7 @@ window.mapleStorageReady.then(() => {
       return ids;
     }
     const summary=()=>{const list=tracked();if(!list.length)return null;const ready=list.filter(q=>q.complete).length;return list.length+' quest'+(list.length===1?'':'s')+' tracked'+(ready?' · '+ready+' ready to turn in':'');};
-    return {update,setConnection,html,bind,tracked,relevantMaps,summary,onChange:fn=>{onChange=fn;}};
+    return {update,setConnection,html,bind,tracked,relevantMaps,summary,pins,onChange:fn=>{onChange=fn;}};
   }
   const exported={create};
   scope.MapleQuestPanel=exported;if(typeof module!=='undefined')module.exports=exported;
@@ -3296,7 +3359,7 @@ window.mapleStorageReady.then(() => {
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen,nav:value=>link.nav(value)};
+    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value)};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);
@@ -3390,6 +3453,8 @@ window.mapleStorageReady.then(() => {
   }).join('')||'<div class="mc-empty">'+esc(empty)+'</div>';}
   function notice(message){clearTimeout(noticeTimer);$('#mc-map-notice').textContent=message;$('#mc-map-notice').hidden=false;noticeTimer=setTimeout(()=>{$('#mc-map-notice').hidden=true;},4500);}
   function mobileChrome(){
+    // The quest helper (Progress) opens almost to the top, so the quests are easy to read.
+    root.classList.toggle('mc-sheet-tall',state.panel==='progress');
     const selected=get(state.selected),open=root.classList.contains('mc-sheet-open');
     $$('[data-mobile-panel]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mobilePanel===state.panel)));
     $('#mc-sheet-handle').setAttribute('aria-expanded',String(open));
@@ -3417,7 +3482,7 @@ window.mapleStorageReady.then(() => {
   // Portal hops from your current map, or null when there is no recorded route.
   function hops(id){if(!get(id))return null;if(String(id)===state.from)return 0;const seen=new Set([state.from]);let frontier=[state.from];for(let d=1;frontier.length&&d<60;d++){const next=[];for(const at of frontier)for(const e of get(at)?.portals||[]){const to=String(e.to);if(seen.has(to)||!maps.has(to))continue;if(to===String(id))return d;seen.add(to);next.push(to);}frontier=next;}return null;}
   // Directions from your current map (or the live companion location) to a map.
-  // hunt: {monster, name} when the trip is to hunt a monster there (its best spot is shown).
+  // hunt: {monster, name} when the trip is to hunt a monster there (its spawn points are shown).
   function navigateTo(id,hunt=null){const m=get(id);if(!m)return;for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();state.hunt=hunt?{map:String(id),monster:String(hunt.monster),name:String(hunt.name||'')}:null;navDismissed=false;state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
     setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();}
   const search=MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
@@ -3430,10 +3495,14 @@ window.mapleStorageReady.then(() => {
     remainingQuests:id=>{const q=DATA.quests.find(q=>q.id===id);return q?questFlow.remaining(q,state.status).map(id=>DATA.quests.find(q=>q.id===id)?.name||id):[];}
   });
   $$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());
-  const questPanel=MapleQuestPanel.create({quests:DATA.quests,maps:DATA.maps,sprite,esc,icon,hops,navigate:navigateTo,channel:root.dataset.channel||'main',
+  const questPanel=MapleQuestPanel.create({quests:DATA.quests,maps:DATA.maps,sprite,spriteURL:(kind,id)=>DATA.sprites[kind]?.[String(id)]||null,esc,icon,hops,navigate:navigateTo,channel:root.dataset.channel||'main',
     openEntity:(type,name)=>{void search.show(type,name);},openCompanion:()=>$('#mc-mobile-companion').click(),
     status:()=>state.status,setStatus:changes=>{Object.assign(state.status,changes);save();}});
-  questPanel.onChange(()=>{tracking=new Set(questPanel.tracked().map(q=>q.quest?.id).filter(Boolean));if(state.panel==='progress')detail();else mobileChrome();if(state.layer==='quests')markers();});
+  // Pinned quests for the computer's overlay row; sent when they change and every 15 s.
+  let pinsSent='',pinsSentAt=0;
+  function pushPins(force=false){const v=questPanel.pins(),key=JSON.stringify(v);if(!force&&key===pinsSent&&Date.now()-pinsSentAt<15000)return;if(companion?.pins?.(v)){pinsSent=key;pinsSentAt=Date.now();}}
+  setInterval(()=>pushPins(),5000);
+  questPanel.onChange(()=>{setTimeout(()=>pushPins(),0);tracking=new Set(questPanel.tracked().map(q=>q.quest?.id).filter(Boolean));if(state.panel==='progress')detail();else mobileChrome();if(state.layer==='quests')markers();});
   function openProfile(){$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
   $('#mc-desktop-quests').onclick=()=>{state.panel='progress';setSheet(true);detail();camera();save();};
@@ -3473,9 +3542,9 @@ window.mapleStorageReady.then(() => {
   function navState(){
     if(!state.routeActive||!state.route.length)return {active:false};
     const isLive=liveFresh&&state.route.includes(liveLocation),i=isLive?state.route.indexOf(liveLocation):Math.max(0,Math.min(state.step,state.route.length-1));
-    const id=state.route[i],p=get(id),next=state.route[i+1],edge=p?.portals.find(e=>String(e.to)===next),h=huntOn(id),spot=h&&p?.bestSpots?.[h.monster];
+    const id=state.route[i],p=get(id),next=state.route[i+1],edge=p?.portals.find(e=>String(e.to)===next);
     const target=edge&&Number.isFinite(Number(edge.x))&&Number.isFinite(Number(edge.y))?{kind:'portal',label:MapleLocalMaps.instruction(edge,get(next)?.name),x:Math.round(Number(edge.x)),y:Math.round(Number(edge.y))}
-      :spot?{kind:'spot',label:'Best spot · '+spot.n+' '+h.name,x:spot.x,y:spot.y}:{kind:'arrived',label:huntText(id)||'You have arrived.'};
+      :{kind:'arrived',label:huntText(id)||'You have arrived.'};
     return {active:true,map:String(id),name:p?.name||'',dest:get(state.to)?.name||'',step:i+1,steps:state.route.length,live:isLive,target,hint:liveHint||''};
   }
   function pushNav(force=false){const v=navState(),key=JSON.stringify(v);if(!force&&key===navSent&&Date.now()-navSentAt<10000)return;if(companion?.nav?.(v)){navSent=key;navSentAt=Date.now();}}
@@ -3513,7 +3582,7 @@ window.mapleStorageReady.then(() => {
     if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Tracking paused · Last location retained';}
     if(phase==='searching'){liveFresh=false;showSearching();}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
-    if(phase==='connected')setTimeout(()=>pushNav(true),500);
+    if(phase==='connected'){setTimeout(()=>pushNav(true),500);setTimeout(()=>pushPins(true),700);}
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
     if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
@@ -3531,8 +3600,8 @@ window.mapleStorageReady.then(() => {
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   const changes=n=>n===1?'1 map change':n+' map changes';
-  // At a hunt destination: where its best spot is.
-  function huntText(id){const h=huntOn(id),spot=h&&get(id)?.bestSpots?.[h.monster];if(!h)return '';return spot?'You have arrived. The best spot for '+h.name+' is marked on the map: '+spot.n+' of its '+spot.total+' spawn points are there.':'You have arrived. Hunt '+h.name+' here.';}
+  // At a hunt destination: the map itself is the goal (no particular spot).
+  function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}
   function endRoute(){navDismissed=false;state.hunt=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
   const byHand=()=>{if(state.routeActive)navDismissed=true;};
   $('#mc-local-close').addEventListener('click',byHand);$('#mc-local-dialog').addEventListener('cancel',byHand);$('#mc-local-dialog').addEventListener('click',e=>{if(e.target===$('#mc-local-dialog'))byHand();});

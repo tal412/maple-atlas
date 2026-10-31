@@ -24,6 +24,10 @@ struct EngineReading: Decodable, Sendable {
     /// Result of `atlasEngine.locate`.
     struct Located: Decodable, Sendable {
         let position: Position?
+        /// Why no position was found, or nil.
+        let positionNote: String?
+        /// "picture" (placed on the map's minimap picture) or "rings" (fitted to portal rings).
+        let method: String?
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -141,7 +145,7 @@ final class EngineHost: NSObject {
     }
 
     /// Reads only the player's dot on an already-confirmed map (fast; no landmark matching).
-    func locate(_ dataURL: String, frameHeight: Int, mapID: String) async throws -> EngineReading.Position? {
+    func locate(_ dataURL: String, frameHeight: Int, mapID: String) async throws -> EngineReading.Located {
         guard !locating else { throw EngineError.busy }
         locating = true
         defer { locating = false }
@@ -151,7 +155,7 @@ final class EngineHost: NSObject {
         guard let json = result as? String,
               let reading = try? JSONDecoder().decode(EngineReading.Located.self, from: Data(json.utf8))
         else { throw EngineError.badResult }
-        return reading.position
+        return reading
     }
 
     /// What `atlasEngine.readQuests` saw in the Quest Helper panel. `quests` stays in the

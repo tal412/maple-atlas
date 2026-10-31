@@ -59,11 +59,25 @@ func runOverlayDemo() int {
 	overlayNav(map[string]any{"event": "nav", "active": true, "map": "10001000", "name": "Henesys", "dest": "L Forest I", "step": 1, "steps": 3, "live": true,
 		"hint": "Head right, about 2 screens", "target": map[string]any{"kind": "portal", "label": "Take the right-hand portal to The Hill East of Henesys.", "x": 6587, "y": 1050}})
 	overlayPosition("10001000", 5000, 1000)
-	time.Sleep(4 * time.Second)
+	// Two pinned quests, as the phone sends them (checked the same way).
+	commit := "a44f101bffa8272164ca47484ab18c078dcab0a0"
+	if ev, ok := pinsEvent(json.RawMessage(`[{"t":"Make a Slime & Pig Omok Set","r":false,"o":[` +
+		`{"n":"Omok Table","h":1,"d":1,"i":"` + commit + `/data/current/images/items/04031049.png"},` +
+		`{"n":"Omok Piece: Slime","h":1,"d":1,"i":"` + commit + `/data/current/images/items/04031050.png"},` +
+		`{"n":"Omok Piece: Pig","h":0,"d":1,"i":"` + commit + `/data/current/images/items/04031051.png"}]},` +
+		`{"t":"Halloween Candies","r":false,"o":[{"n":"Halloween Candies","h":14,"d":100,"i":""}]}]`)); ok {
+		overlayPins(ev)
+	}
+	time.Sleep(6 * time.Second)
 
 	overlay.mu.Lock()
-	hwnd := overlay.hwnd
+	hwnd, pinsHwnd := overlay.hwnd, overlay.pinsHwnd
 	overlay.mu.Unlock()
+	var pr winRect
+	pinsVisible, _, _ := pIsWindowVisible.Call(pinsHwnd)
+	if pinsHwnd != 0 {
+		pGetWindowRect.Call(pinsHwnd, uintptr(unsafe.Pointer(&pr)))
+	}
 	var gr, or winRect
 	pGetWindowRect.Call(game, uintptr(unsafe.Pointer(&gr)))
 	vis, _, _ := pIsWindowVisible.Call(hwnd)
@@ -73,10 +87,15 @@ func runOverlayDemo() int {
 	front, _, _ := pGetForegroundWindow.Call()
 	shot := screenshot(gr, "overlay-demo.bmp")
 	centred := or.Left > gr.Left && or.Right < gr.Right && abs32((or.Left+or.Right)/2-(gr.Left+gr.Right)/2) <= 2 && or.Top >= gr.Top && or.Top < gr.Top+200
+	pinsAbove := pinsVisible != 0 && pr.Bottom <= or.Top && abs32((pr.Left+pr.Right)/2-(gr.Left+gr.Right)/2) <= 2
+	icons.mu.Lock()
+	loaded := len(icons.pix)
+	icons.mu.Unlock()
 	report, _ := json.Marshal(map[string]any{"overlayWindow": hwnd != 0, "visible": vis != 0, "centred": centred, "gameInFront": front == game,
+		"pinsVisible": pinsVisible != 0, "pinsAboveCard": pinsAbove, "pins": []int32{pr.Left, pr.Top, pr.Right, pr.Bottom}, "iconsLoaded": loaded,
 		"game": []int32{gr.Left, gr.Top, gr.Right, gr.Bottom}, "card": []int32{or.Left, or.Top, or.Right, or.Bottom}, "screenshot": shot})
 	os.Stdout.Write(append(report, '\n'))
-	if hwnd != 0 && vis != 0 && centred {
+	if hwnd != 0 && vis != 0 && centred && pinsAbove {
 		return 0
 	}
 	return 1

@@ -123,6 +123,9 @@ func runDesktop(site, stateDir string, _ bool) {
 		if v["event"] == "nav" {
 			overlayNav(v)
 		}
+		if v["event"] == "pins" {
+			overlayPins(v)
+		}
 		h.emit(v)
 	}
 	ctrl := &controller{site: site, stateDir: stateDir, emit: emit}

@@ -328,7 +328,7 @@ func (s *session) newLink() (*link, string, error) {
 	l.dc.OnOpen(func() { s.onOpen(l) })
 	l.dc.OnClose(func() { s.lost(l, "channel", "The phone closed the connection.") })
 	l.dc.OnMessage(func(m webrtc.DataChannelMessage) {
-		if m.IsString && len(m.Data) <= 512 {
+		if m.IsString && len(m.Data) <= 10240 { // pinned quests with icons are the largest message
 			s.onMessage(l, m.Data)
 		}
 	})
@@ -526,6 +526,7 @@ type message struct {
 	Seq     int             `json:"seq"`
 	Proof   string          `json:"proof"`
 	Nav     json.RawMessage `json:"nav"`
+	Pins    json.RawMessage `json:"pins"`
 }
 
 func (s *session) onMessage(l *link, data []byte) {
@@ -573,6 +574,11 @@ func (s *session) onMessage(l *link, data []byte) {
 	case m.Kind == "nav" && l.verified && m.V == 1:
 		// Navigation from the phone for the on-game overlay; checked field by field.
 		if ev, ok := navEvent(m.Nav); ok {
+			go s.emit(ev)
+		}
+	case m.Kind == "pins" && l.verified && m.V == 1:
+		// Quests pinned on the phone, for the overlay row on the game window.
+		if ev, ok := pinsEvent(m.Pins); ok {
 			go s.emit(ev)
 		}
 	case m.Kind == "ping" && l.verified && m.Seq > 0:

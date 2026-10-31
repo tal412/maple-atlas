@@ -60,6 +60,8 @@
   }).join('')||'<div class="mc-empty">'+esc(empty)+'</div>';}
   function notice(message){clearTimeout(noticeTimer);$('#mc-map-notice').textContent=message;$('#mc-map-notice').hidden=false;noticeTimer=setTimeout(()=>{$('#mc-map-notice').hidden=true;},4500);}
   function mobileChrome(){
+    // The quest helper (Progress) opens almost to the top, so the quests are easy to read.
+    root.classList.toggle('mc-sheet-tall',state.panel==='progress');
     const selected=get(state.selected),open=root.classList.contains('mc-sheet-open');
     $$('[data-mobile-panel]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mobilePanel===state.panel)));
     $('#mc-sheet-handle').setAttribute('aria-expanded',String(open));
@@ -87,7 +89,7 @@
   // Portal hops from your current map, or null when there is no recorded route.
   function hops(id){if(!get(id))return null;if(String(id)===state.from)return 0;const seen=new Set([state.from]);let frontier=[state.from];for(let d=1;frontier.length&&d<60;d++){const next=[];for(const at of frontier)for(const e of get(at)?.portals||[]){const to=String(e.to);if(seen.has(to)||!maps.has(to))continue;if(to===String(id))return d;seen.add(to);next.push(to);}frontier=next;}return null;}
   // Directions from your current map (or the live companion location) to a map.
-  // hunt: {monster, name} when the trip is to hunt a monster there (its best spot is shown).
+  // hunt: {monster, name} when the trip is to hunt a monster there (its spawn points are shown).
   function navigateTo(id,hunt=null){const m=get(id);if(!m)return;for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();state.hunt=hunt?{map:String(id),monster:String(hunt.monster),name:String(hunt.name||'')}:null;navDismissed=false;state.to=String(id);$('#mc-to').value=m.name;$('#mc-from').value=get(state.from)?.name||'';state.panel='route';plan();setSheet(true);render();camera();
     setTimeout(autoNavigate,350);$('#mc-status').textContent=state.route.length?'Directions to '+m.name+(liveFresh&&state.from===liveLocation?' · From your detected location':' · From '+(get(state.from)?.name||'your start')):'No recorded route to '+m.name+' from '+(get(state.from)?.name||'here');save();}
   const search=MapleSearchUI.create({root,url:DATA.searchCatalog,marketUrl:DATA.marketCatalog,
@@ -100,10 +102,14 @@
     remainingQuests:id=>{const q=DATA.quests.find(q=>q.id===id);return q?questFlow.remaining(q,state.status).map(id=>DATA.quests.find(q=>q.id===id)?.name||id):[];}
   });
   $$('[data-close-dialog]').forEach(b=>b.onclick=()=>$('#'+b.dataset.closeDialog).close());
-  const questPanel=MapleQuestPanel.create({quests:DATA.quests,maps:DATA.maps,sprite,esc,icon,hops,navigate:navigateTo,channel:root.dataset.channel||'main',
+  const questPanel=MapleQuestPanel.create({quests:DATA.quests,maps:DATA.maps,sprite,spriteURL:(kind,id)=>DATA.sprites[kind]?.[String(id)]||null,esc,icon,hops,navigate:navigateTo,channel:root.dataset.channel||'main',
     openEntity:(type,name)=>{void search.show(type,name);},openCompanion:()=>$('#mc-mobile-companion').click(),
     status:()=>state.status,setStatus:changes=>{Object.assign(state.status,changes);save();}});
-  questPanel.onChange(()=>{tracking=new Set(questPanel.tracked().map(q=>q.quest?.id).filter(Boolean));if(state.panel==='progress')detail();else mobileChrome();if(state.layer==='quests')markers();});
+  // Pinned quests for the computer's overlay row; sent when they change and every 15 s.
+  let pinsSent='',pinsSentAt=0;
+  function pushPins(force=false){const v=questPanel.pins(),key=JSON.stringify(v);if(!force&&key===pinsSent&&Date.now()-pinsSentAt<15000)return;if(companion?.pins?.(v)){pinsSent=key;pinsSentAt=Date.now();}}
+  setInterval(()=>pushPins(),5000);
+  questPanel.onChange(()=>{setTimeout(()=>pushPins(),0);tracking=new Set(questPanel.tracked().map(q=>q.quest?.id).filter(Boolean));if(state.panel==='progress')detail();else mobileChrome();if(state.layer==='quests')markers();});
   function openProfile(){$('#mc-profile-dialog').showModal();}
   $('#mc-mobile-profile').onclick=openProfile;
   $('#mc-desktop-quests').onclick=()=>{state.panel='progress';setSheet(true);detail();camera();save();};
@@ -143,9 +149,9 @@
   function navState(){
     if(!state.routeActive||!state.route.length)return {active:false};
     const isLive=liveFresh&&state.route.includes(liveLocation),i=isLive?state.route.indexOf(liveLocation):Math.max(0,Math.min(state.step,state.route.length-1));
-    const id=state.route[i],p=get(id),next=state.route[i+1],edge=p?.portals.find(e=>String(e.to)===next),h=huntOn(id),spot=h&&p?.bestSpots?.[h.monster];
+    const id=state.route[i],p=get(id),next=state.route[i+1],edge=p?.portals.find(e=>String(e.to)===next);
     const target=edge&&Number.isFinite(Number(edge.x))&&Number.isFinite(Number(edge.y))?{kind:'portal',label:MapleLocalMaps.instruction(edge,get(next)?.name),x:Math.round(Number(edge.x)),y:Math.round(Number(edge.y))}
-      :spot?{kind:'spot',label:'Best spot · '+spot.n+' '+h.name,x:spot.x,y:spot.y}:{kind:'arrived',label:huntText(id)||'You have arrived.'};
+      :{kind:'arrived',label:huntText(id)||'You have arrived.'};
     return {active:true,map:String(id),name:p?.name||'',dest:get(state.to)?.name||'',step:i+1,steps:state.route.length,live:isLive,target,hint:liveHint||''};
   }
   function pushNav(force=false){const v=navState(),key=JSON.stringify(v);if(!force&&key===navSent&&Date.now()-navSentAt<10000)return;if(companion?.nav?.(v)){navSent=key;navSentAt=Date.now();}}
@@ -183,7 +189,7 @@
     if(phase==='stale'){liveFresh=false;$('#mc-companion-badge').textContent='Connected · Location paused';$('#mc-status').textContent='Tracking paused · Last location retained';}
     if(phase==='searching'){liveFresh=false;showSearching();}
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
-    if(phase==='connected')setTimeout(()=>pushNav(true),500);
+    if(phase==='connected'){setTimeout(()=>pushNav(true),500);setTimeout(()=>pushPins(true),700);}
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
     if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
@@ -201,8 +207,8 @@
   $('#mc-mobile-locate').onclick=()=>{if(liveFresh&&liveLocation&&!get(liveLocation)){localMaps.open(liveLocation);return;}const a=anchor(state.from);setSheet(false);if(a){state.focus=a.id;state.zoom=1;state.dx=0;state.dy=0;camera();notice('Starting at '+get(state.from).name+(liveFresh&&state.from===liveLocation?' · Screen detected':' · Set manually'));}else{inspect(state.from);notice('This map has no reviewed atlas position.');}};
   // Back to the default view: where you are, no route.
   const changes=n=>n===1?'1 map change':n+' map changes';
-  // At a hunt destination: where its best spot is.
-  function huntText(id){const h=huntOn(id),spot=h&&get(id)?.bestSpots?.[h.monster];if(!h)return '';return spot?'You have arrived. The best spot for '+h.name+' is marked on the map: '+spot.n+' of its '+spot.total+' spawn points are there.':'You have arrived. Hunt '+h.name+' here.';}
+  // At a hunt destination: the map itself is the goal (no particular spot).
+  function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}
   function endRoute(){navDismissed=false;state.hunt=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
   const byHand=()=>{if(state.routeActive)navDismissed=true;};
   $('#mc-local-close').addEventListener('click',byHand);$('#mc-local-dialog').addEventListener('cancel',byHand);$('#mc-local-dialog').addEventListener('click',e=>{if(e.target===$('#mc-local-dialog'))byHand();});

@@ -197,7 +197,7 @@
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen,nav:value=>link.nav(value)};
+    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value)};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);

@@ -122,3 +122,12 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.questMonster('Omok Table',undefined,omok),null);
   console.log('quest-helper: quest text monsters pass');
 }
+// Where to hunt: most spawns, the nearest of those nearly as good, reachable first.
+{
+  const c=(id,n,d)=>({id,name:id,n,d});
+  assert.equal(Q.bestHuntMap([c('far',20,6),c('near',18,1),c('weak',5,0)]).id,'near');   // 18 >= 85% of 20
+  assert.equal(Q.bestHuntMap([c('far',20,6),c('near',10,1)]).id,'far');
+  assert.equal(Q.bestHuntMap([c('lost',30,null),c('ok',4,3)]).id,'ok');
+  assert.equal(Q.bestHuntMap([c('none',0,1)]),null);
+  console.log('quest-helper: hunt map choice passes');
+}

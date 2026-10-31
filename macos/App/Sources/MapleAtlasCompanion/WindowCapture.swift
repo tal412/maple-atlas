@@ -73,16 +73,46 @@ final class GameCapture: NSObject {
               let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
         else { return false }
         let own = Bundle.main.bundleIdentifier
-        let candidates = content.windows.filter { window in
+        let ranked = content.windows.compactMap { window -> (SCWindow, Int)? in
             guard let app = window.owningApplication, app.bundleIdentifier != own, window.windowLayer == 0,
-                  window.frame.width >= 320, window.frame.height >= 240 else { return false }
-            return "\(app.applicationName) \(app.bundleIdentifier) \(window.title ?? "")".lowercased().contains("maplestory")
+                  window.frame.width >= 320, window.frame.height >= 240 else { return nil }
+            let rank = Self.gameRank(app: app.applicationName, bundle: app.bundleIdentifier, title: window.title ?? "")
+            return rank > 0 ? (window, rank) : nil
         }
-        guard !isCapturing, let window = candidates.max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })
+        let area = { (w: SCWindow) in w.frame.width * w.frame.height }
+        guard !isCapturing, let window = ranked.max(by: { $0.1 != $1.1 ? $0.1 < $1.1 : area($0.0) < area($1.0) })?.0
         else { return false }
         start(with: SCContentFilter(desktopIndependentWindow: window), windowID: window.windowID)
+        currentWindow = window
         return true
     }
+
+    /// Whether a window is the game itself: 0 = not the game, 2 = the game's own window (the
+    /// "MapleStory Classic World" app, window "MapleStory"), 1 = another MapleStory window of a
+    /// non-excluded app. Never the launcher, Steam, a browser (a MapleStory page or the Maple
+    /// Atlas site) or Maple Atlas itself.
+    nonisolated static func gameRank(app: String, bundle: String, title: String) -> Int {
+        let a = app.lowercased(), b = bundle.lowercased(), t = title.lowercased().trimmingCharacters(in: .whitespaces)
+        for bad in ["launcher", "atlas", "steam", "installer", "setup", "updater"] where a.contains(bad) || b.contains(bad) || t.contains(bad) {
+            return 0
+        }
+        let browsers = ["com.google.chrome", "com.apple.safari", "org.mozilla", "com.microsoft.edgemac", "company.thebrowser", "com.brave",
+                        "com.operasoftware", "com.vivaldi", "com.hnc.discord", "com.apple.finder"]
+        if browsers.contains(where: { b.hasPrefix($0) }) { return 0 }
+        let isGameApp = a.contains("maplestory") || b.contains("maplestory")
+        if isGameApp && t == "maplestory" { return 2 }
+        if isGameApp || t == "maplestory" { return 1 }
+        return 0
+    }
+
+    /// The window being read is not the game (a launcher picked before this check existed):
+    /// the caller stops it and looks again.
+    var isReadingNonGame: Bool {
+        guard isCapturing, #available(macOS 15.2, *), let window = currentWindow,
+              let app = window.owningApplication else { return false }
+        return Self.gameRank(app: app.applicationName, bundle: app.bundleIdentifier, title: window.title ?? "") == 0
+    }
+    private var currentWindow: SCWindow?
 
     func stop() {
         let current = stream

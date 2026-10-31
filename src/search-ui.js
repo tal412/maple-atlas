@@ -122,13 +122,12 @@
     }
     // Where to hunt a monster: the reachable map with the most of its spawns (the nearer one
     // on a tie), so farming a drop goes where the monster is densest.
+    // Where to hunt: most spawns, and of maps nearly as good the nearest (MapleQuestHelper.bestHuntMap).
     function densest(mob){
-      let best=null;
-      for(const id of mob?.maps||[]){const m=index.get('map:'+id);if(!m?.covered)continue;const n=spawns(mob.id,m.id),d=routeLength(m.id);
-        const reach=d!==null,bestReach=best&&best.d!==null;
-        const better=!best||(reach&&!bestReach)||(reach===bestReach&&(n>best.n||(n===best.n&&(d??Infinity)<(best.d??Infinity))));
-        if(better)best={id:m.id,name:m.name,d,n,monster:String(mob.id),monsterName:mob.name};}
-      return best;
+      const list=[];
+      for(const id of mob?.maps||[]){const m=index.get('map:'+id);if(!m?.covered)continue;list.push({id:m.id,name:m.name,d:routeLength(m.id),n:spawns(mob.id,m.id)});}
+      const best=MapleQuestHelper.bestHuntMap(list);
+      return best?{...best,monster:String(mob.id),monsterName:mob.name}:null;
     }
     const away=t=>t&&t.d!=null?(t.d?t.d+' portal'+(t.d===1?'':'s')+' away':'You are here'):'';
     const percent=n=>n==null?'':(n>=10?Math.round(n):n>=1?n.toFixed(1).replace(/\.0$/,''):n.toFixed(2).replace(/0$/,''))+'%';

@@ -7,6 +7,8 @@ on:
     paths:
       - 'macos/link/overlay_windows.go'
       - 'macos/link/overlay_demo_windows.go'
+      - 'macos/link/overlay_pins_windows.go'
+      - 'macos/link/pins.go'
       - 'macos/link/nav.go'
       - '.github/workflows/windows-overlay.yml'
 permissions:

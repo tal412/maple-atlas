@@ -29,6 +29,7 @@ func init() { captureDemo = runCaptureDemo }
 var demoPanel = []string{"Quest Helper (2/5)", "Make a Match Cards Set", "15 / 15 Monster Card", "", "Mrs. Ming Ming's First Worry", "10 / 10 Slime Bubble", "18 / 20 Pig's Ribbon"}
 
 func runCaptureDemo(picture string) int {
+	allowOwnWindows = true
 	var pic *image.RGBA
 	if picture != "" {
 		f, err := os.Open(picture)

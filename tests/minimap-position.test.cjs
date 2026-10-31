@@ -47,3 +47,16 @@ assert.equal(M.guidance({x:1000,y:900},{x:1040,y:950}).near,true);
 assert.equal(M.guidance(null,{x:1,y:1}),null);
 assert.deepEqual(M.marksFor({portals:[{type:2,x:'5',y:6},{type:1,x:1,y:1},{type:2,x:null,y:2}]}),[{x:5,y:6}]);
 console.log('PASS: minimap title, dot and portal rings, portal fit, scrolling, learned scale, rejection and guidance');
+// The dot placed on the map's own minimap picture: the window shows the whole picture, so
+// the dot's place in the window is its place on the picture (Perion: 204x192, offset 8,3).
+{
+  const P=require('path');const M=require(P.join(__dirname,'../src/minimap-position.js'));
+  const picture={w:204,h:192,dx:8,dy:3,scale:16};
+  const body={x:10,y:40,w:408,h:384};   // shown at twice the picture's size
+  const at=M.onPicture(body,{x:10+204,y:40+96},picture);
+  assert.deepEqual(at,{x:16*(102.25+8),y:16*(48.25+3)});
+  // A window that does not show the whole picture (other shape): left to the portal rings.
+  assert.equal(M.onPicture({x:0,y:0,w:400,h:100},{x:5,y:5},picture),null);
+  assert.equal(M.onPicture(body,{x:20,y:50},null),null);
+  console.log('minimap-position: placing on the minimap picture passes');
+}

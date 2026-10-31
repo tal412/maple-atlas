@@ -11,7 +11,7 @@
   const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true});
   const dotCanvas=document.createElement('canvas'),dotContext=dotCanvas.getContext('2d',{willReadFrequently:true});
   const nameCanvas=document.createElement('canvas'),nameContext=nameCanvas.getContext('2d',{willReadFrequently:true});
-  let maps=[],names=new Map(),busy=false,marks=null,neighbors={},scaleMemory=[],loading=null,lastMap=null;
+  let maps=[],names=new Map(),busy=false,marks=null,pictures=null,neighbors={},scaleMemory=[],loading=null,lastMap=null;
   // The last name reading: the strip's place in the box (0-1) and what it said.
   let seen=null;
   const SHOW_NAME='Show the map name: press + on the in-game minimap until its name appears (for example "Victoria Road · Henesys"), and keep the whole minimap with its name inside the box.';
@@ -20,6 +20,8 @@
       maps=await fetch('./data/map-names.json').then(r=>{if(!r.ok)throw Error('map list missing');return r.json();});
       names=new Map(maps.map(m=>[String(m.id),m.name]));
       marks=await fetch('./data/portal-marks.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
+      // Where each map's minimap picture sits on the map (scripts/minimap-geometry.py).
+      pictures=await fetch('./data/minimap-geometry.json').then(r=>r.ok?r.json():null).catch(()=>null);
       neighbors=await fetch('./data/map-neighbors.json').then(r=>r.ok?r.json():{}).catch(()=>({}));
       notify({type:'progress',message:'Map names ready · '+maps.length+' maps'});
       return {maps:maps.map(m=>({id:String(m.id),name:m.name}))};
@@ -38,9 +40,10 @@
   // Your dot's position in map coordinates (the portal data's frame), or why it is unknown.
   function position(id,pixels,frameHeight){
     const points=(marks?.[id]||[]).map(([x,y])=>({x,y}));
-    const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory});
+    const g=pictures?.maps?.[id],picture=g?{...g,scale:pictures.scale}:null;
+    const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory,picture});
     scaleMemory=found.memory;
-    return Number.isFinite(found.x)?{x:found.x,y:found.y}:{reason:found.reason};
+    return Number.isFinite(found.x)?{x:found.x,y:found.y,method:found.method}:{reason:found.reason+(found.detail?' ('+found.detail+')':'')};
   }
   // Of several maps with the very same name and street, the one you were on or one next to it.
   function pick(found){
@@ -98,7 +101,7 @@
     await ready();
     const scale=draw(dotCanvas,dotContext,source,crop);
     const where=position(String(id),dotContext.getImageData(0,0,dotCanvas.width,dotCanvas.height),Math.round((frameHeight||dotCanvas.height/scale)*scale));
-    return where.reason?{position:null,positionNote:where.reason}:{position:where,positionNote:null};
+    return where.reason?{position:null,positionNote:where.reason}:{position:{x:where.x,y:where.y},positionNote:null,method:where.method};
   }
   // ---- Quest Helper ----
   // Text recognition runs in its own worker (shared with the map name), loaded on first use.

@@ -27,6 +27,20 @@ struct NavInfo: Sendable, Equatable {
     let target: Target
 }
 
+/// A quest pinned on the phone, for the overlay row on the game window.
+struct PinnedQuest: Decodable, Sendable, Equatable {
+    struct Objective: Decodable, Sendable, Equatable {
+        let name: String
+        let have: Int?
+        let need: Int?
+        /// Picture URL (the datamine CDN, checked by the helper), or "".
+        let icon: String
+    }
+    let title: String
+    let ready: Bool
+    let objectives: [Objective]
+}
+
 enum HelperEvent: Sendable {
     case engine(URL)
     case code(PairingCode)
@@ -37,6 +51,8 @@ enum HelperEvent: Sendable {
     case error(String)
     /// Navigation from the phone for the on-game overlay; nil when no route is active.
     case nav(NavInfo?)
+    /// Quests pinned on the phone (empty: none).
+    case pins([PinnedQuest])
 
     private struct Raw: Decodable {
         let event: String
@@ -57,6 +73,7 @@ enum HelperEvent: Sendable {
         let live: Bool?
         let hint: String?
         let target: NavInfo.Target?
+        let quests: [PinnedQuest]?
     }
 
     /// Returns nil for unknown or malformed events, which the contract says to ignore.
@@ -86,6 +103,8 @@ enum HelperEvent: Sendable {
             guard let map = raw.map, let step = raw.step, let steps = raw.steps, let target = raw.target else { return nil }
             self = .nav(NavInfo(map: map, name: raw.name ?? "", dest: raw.dest ?? "", step: step, steps: steps,
                                 live: raw.live ?? false, hint: raw.hint ?? "", target: target))
+        case "pins":
+            self = .pins(raw.quests ?? [])
         default:
             return nil
         }

@@ -9,6 +9,7 @@ package main
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -45,26 +46,66 @@ func clientSize(h uintptr) (int, int) {
 	return int(rc.Right - rc.Left), int(rc.Bottom - rc.Top)
 }
 
-// findGameWindow returns the largest visible window titled like the game, or 0.
+// allowOwnWindows lets the --capture-demo self-check find its stand-in window, which belongs
+// to this program (never set otherwise).
+var allowOwnWindows bool
+
+var (
+	pGetWindowThreadProcessId  = user32.NewProc("GetWindowThreadProcessId")
+	pQueryFullProcessImageName = syscall.NewLazyDLL("kernel32.dll").NewProc("QueryFullProcessImageNameW")
+)
+
+// windowProgram: the path of the program that owns a window ("" when Windows won't say).
+func windowProgram(h uintptr) string {
+	var pid uint32
+	pGetWindowThreadProcessId.Call(h, uintptr(unsafe.Pointer(&pid)))
+	if pid == 0 {
+		return ""
+	}
+	const queryLimited = 0x1000
+	proc, err := syscall.OpenProcess(queryLimited, false, pid)
+	if err != nil {
+		return ""
+	}
+	defer syscall.CloseHandle(proc)
+	buf := make([]uint16, 1024)
+	n := uint32(len(buf))
+	if ok, _, _ := pQueryFullProcessImageName.Call(uintptr(proc), 0, uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&n))); ok == 0 {
+		return ""
+	}
+	return syscall.UTF16ToString(buf[:n])
+}
+
+// findGameWindow returns the game's own window, or 0: never the launcher, Steam, a browser
+// or Maple Atlas (gameWindowRank). Of several, the one titled exactly "MapleStory", then the
+// largest.
 func findGameWindow() (uintptr, string) {
 	var best uintptr
 	var bestTitle string
-	bestArea := 0
+	bestRank, bestArea := 0, 0
+	self, _ := os.Executable()
 	cb := syscall.NewCallback(func(h, _ uintptr) uintptr {
 		if v, _, _ := pIsWindowVisible.Call(h); v == 0 {
 			return 1
 		}
 		title := windowTitle(h)
-		lower := strings.ToLower(title)
-		if !strings.Contains(lower, "maplestory") || strings.Contains(lower, "maple atlas") {
+		if !strings.Contains(strings.ToLower(title), "maplestory") {
+			return 1
+		}
+		exe := windowProgram(h)
+		if allowOwnWindows && strings.EqualFold(exe, self) {
+			exe = ""
+		}
+		rank := gameWindowRank(title, exe)
+		if rank == 0 {
 			return 1
 		}
 		w, hh := clientSize(h)
 		if iconic, _, _ := pIsIconic.Call(h); iconic == 0 && (w < 320 || hh < 240) {
 			return 1
 		}
-		if w*hh >= bestArea {
-			best, bestTitle, bestArea = h, title, w*hh
+		if rank > bestRank || rank == bestRank && w*hh >= bestArea {
+			best, bestTitle, bestRank, bestArea = h, title, rank, w*hh
 		}
 		return 1
 	})

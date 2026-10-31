@@ -24,6 +24,8 @@ maps = json.load(open(sys.argv[1]))["maps"]
 json.dump([{"id": str(m["id"]), "name": m["name"].strip(), "street": (m.get("street") or "").strip()} for m in maps],
           open(sys.argv[2], "w"), separators=(",", ":"))
 PY
+# Where each map's minimap picture sits on the map, for placing the player dot.
+cp "$REPO/data/minimap-geometry.json" "$WEBUI/data/minimap-geometry.json"
 python3 - "$REPO/data/world.json" "$WEBUI/data/portal-marks.json" <<'PY'
 import json, sys
 world = json.load(open(sys.argv[1]))

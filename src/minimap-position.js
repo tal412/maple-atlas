@@ -138,21 +138,39 @@
   }
   const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});
 
-  // Player position in map coordinates from one minimap crop. Needs the dot plus two rings,
-  // or one ring once a scale was learned for this minimap size. `memory` is returned updated.
-  function locate(image,marks,{frameHeight=image.height,memory=[]}={}){
+  // The dot on the map's own minimap picture: the game draws that picture whole inside the
+  // minimap window (any size), so where the dot sits in the window is where it sits on the
+  // picture. picture: {w, h, dx, dy, scale} (scripts/minimap-geometry.py):
+  // map = scale * (picture pixel + offset). null when the window does not show the whole
+  // picture (its shape differs), so the portal rings decide instead.
+  function onPicture(body,player,picture){
+    if(!picture||!body||!(picture.w>0&&picture.h>0))return null;
+    const shape=(body.w/body.h)/(picture.w/picture.h);
+    if(shape<.93||shape>1.07)return null;
+    const px=(player.x-body.x+.5)/body.w*picture.w,py=(player.y-body.y+.5)/body.h*picture.h,s=picture.scale||16;
+    return {x:Math.round(s*(px+picture.dx)),y:Math.round(s*(py+picture.dy))};
+  }
+
+  // Player position in map coordinates from one minimap crop: by the map's own minimap
+  // picture when it is known (picture), else the dot plus two portal rings, or one ring once a
+  // scale was learned for this minimap size. `memory` is returned updated.
+  function locate(image,marks,{frameHeight=image.height,memory=[],picture=null}={}){
     const band=findTitleBand(image,{frameHeight});
     if(!band)return {reason:'no-minimap',memory};
     const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);
     if(markers.collapsed)return {reason:'collapsed',memory};
     if(!markers.player)return {reason:'no-dot',memory};
+    const placed=onPicture(markers.body,markers.player,picture);
+    if(placed)return {...placed,method:'picture',memory};
+    // Shown in diagnostics: how the window's shape compared with the picture's.
+    const shape=picture&&markers.body?Math.round((markers.body.w/markers.body.h)/(picture.w/picture.h)*100)/100:null;
     if(!marks?.length)return {reason:'no-portal-data',memory};
     const known=recallScale(memory,layout);
     const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);
-    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',memory};
+    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',detail:shape?'window/picture shape '+shape:picture?'':'no picture for this map',memory};
     const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;
     if(world.x<Math.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};
-    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
+    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
   }
   // Plain-language hint from the player's position to a portal. One game screen is roughly
   // 1000 map units wide, which keeps distances meaningful without promising precision.
@@ -167,6 +185,6 @@
   // Visible portals (type 2) are the ones drawn as rings on the minimap.
   const coordinate=v=>v!==null&&v!==''&&Number.isFinite(Number(v));
   const marksFor=map=>(map?.portals||[]).filter(p=>Number(p.type)===2&&coordinate(p.x)&&coordinate(p.y)).map(p=>({x:Number(p.x),y:Number(p.y)}));
-  const api={findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
+  const api={onPicture,findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
   scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);
