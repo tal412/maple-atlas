@@ -232,7 +232,9 @@
       }
       const v=await res.json().catch(()=>({}));if(!res.ok||!Array.isArray(v.lines))return;
       const found=MapleQuestHelper.findPanels(v.lines,{w:v.width,h:v.height}),moved=(a,b)=>!a||Math.abs(a.x-b.x)>.01||Math.abs(a.y-b.y)>.01||Math.abs(a.w-b.w)>.02;
-      if(found.minimap&&!mByHand&&moved(autoBox,found.minimap)){autoBox=found.minimap;atlasEngine.reset();noMatchSince=Date.now();cmd({cmd:'log',message:'Found the minimap at '+describe(autoBox)});}
+      // A fitted minimap box is replaced only when the window's title bar moved.
+      const titleMoved=(a,b)=>!a||Math.abs(a.x-b.x)>.015||Math.abs(a.y-b.y)>.02;
+      if(found.minimap&&!mByHand&&titleMoved(autoBox,found.minimap)){autoBox=found.minimap;atlasEngine.reset();noMatchSince=Date.now();cmd({cmd:'log',message:'Found the minimap at '+describe(autoBox)});}
       if(found.quest&&!qByHand&&moved(autoQbox,found.quest)){autoQbox=found.quest;cmd({cmd:'log',message:'Found the Quest Helper at '+describe(autoQbox)});}
       paintPanels();placeBox();
     }catch(_){}finally{panelsBusy=false;}

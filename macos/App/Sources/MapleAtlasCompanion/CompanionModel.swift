@@ -477,7 +477,10 @@ final class CompanionModel {
         let found = await engine.findPanels(lines: read.1, width: read.0.width, height: read.0.height)
         var changes: [String] = []
         let moved = { (a: CGRect?, b: CGRect) in a.map { abs($0.minX - b.minX) > 0.01 || abs($0.minY - b.minY) > 0.01 || abs($0.width - b.width) > 0.02 } ?? true }
-        if let m = found.minimap, !minimapByHand, moved(autoMinimapRect, m) {
+        // The minimap box is fitted to the window after it is found: a rescan replaces it only
+        // when the window's title bar has moved.
+        let titleMoved = { (a: CGRect?, b: CGRect) in a.map { abs($0.minX - b.minX) > 0.015 || abs($0.minY - b.minY) > 0.02 } ?? true }
+        if let m = found.minimap, !minimapByHand, titleMoved(autoMinimapRect, m) {
             autoMinimapRect = m
             wideRect = nil
             noMatchSince = .now
