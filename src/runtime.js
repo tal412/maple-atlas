@@ -42,7 +42,7 @@
   function mapPreview(m,next){return '<button type="button" class="mc-map-preview" data-localmap="'+m.id+'" data-next="'+(next||'')+'" data-lazy="'+(state.panel==='route')+'" aria-label="View local map of '+esc(m.name)+'">'+(m.minimap?'<span class="mc-preview-media"><img alt="" hidden decoding="async" referrerpolicy="no-referrer"><span class="mc-preview-message" role="status">Loading preview…</span></span>':'')+'<span class="mc-preview-caption">'+icon('scan')+'<span>View local map<small>'+(next?'See the portal to your next stop':'Explore the original game map')+'</small></span></span></button>';}
   function find(text){const v=text.toLowerCase().trim();if(!v)return null;const exact=DATA.maps.filter(m=>m.name.toLowerCase()===v);if(exact.length===1)return exact[0];const matches=DATA.maps.filter(m=>m.name.toLowerCase().includes(v));return matches.length===1?matches[0]:null;}
   function plan(){
-    routeFresh=true;state.routeActive=true;state.fitAll=false;state.focus=null;state.dx=0;state.dy=0;state.zoom=1;state.step=0;
+    routeFresh=true;state.routeActive=true;state.fitAll=false;state.focus=null;state.dx=0;state.dy=0;state.zoom=1;state.step=0;arrivedAt=0;
     const queue=[[state.from]],seen=new Set();state.route=[];
     while(queue.length){const path=queue.shift(),last=path.at(-1);if(last===state.to){state.route=path;break;}if(seen.has(last))continue;seen.add(last);for(const edge of get(last)?.portals||[]){const id=String(edge.to);if(maps.has(id)&&!seen.has(id))queue.push([...path,id]);}}
   }
@@ -178,7 +178,7 @@
     if(navigating){const i=state.route.indexOf(String(m.id));if(i>=0)localMaps.open(String(m.id),state.route[i+1]||'',huntOn(m.id),npcOn(m.id));else $('#mc-local-dialog').close();}
     else autoNavigate();
     const a=anchor(m.id);if(a){state.focus=a.id;state.fitAll=false;state.dx=0;state.dy=0;state.zoom=1;}
-    render();camera();
+    render();camera();checkArrival();
   },onPosition:value=>{
     if(value.id!==liveLocation)return;
     const m=get(value.id)||visualMaps.get(value.id);
@@ -186,7 +186,7 @@
     const hint=hintText();
     $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
     if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
-    pushNav();
+    pushNav();if(arrivedAt)checkArrival();
   },onQuests:value=>questPanel.update(value),onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
@@ -272,7 +272,21 @@
   }
   // At a hunt destination: the map itself is the goal (no particular spot).
   function huntText(id){const h=huntOn(id);if(!h)return '';const n=(get(id)?.monsters||[]).find(x=>String(x.id)===h.monster)?.spawns;return 'You have arrived. Hunt '+h.name+' here'+(n?' ('+n+' spawn points on this map)':'')+'.';}
-  function endRoute(){navDismissed=false;state.hunt=null;state.npc=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
+  // Arrival ends the route by itself: a map destination 10 s after you walk in (the arrival
+  // text shows that long), an NPC destination as soon as you stand next to the NPC, or after a
+  // minute there.
+  let arrivedAt=0,arrivedTimer=null;
+  function checkArrival(){
+    clearTimeout(arrivedTimer);arrivedTimer=null;
+    const last=state.route[state.route.length-1];
+    if(!state.routeActive||!last||!liveFresh||liveLocation!==last){arrivedAt=0;return;}
+    if(!arrivedAt)arrivedAt=Date.now();
+    const npc=npcOn(last),wait=npc?60000:10000;
+    const near=!!(npc&&livePosition&&livePosition.id===last&&Math.hypot(livePosition.x-npc.x,livePosition.y-npc.y)<=250);
+    if(near||Date.now()-arrivedAt>=wait){const name=get(last)?.name||'';endRoute();pushNav(true);$('#mc-status').textContent='Live · '+name+' · You arrived, route ended';return;}
+    arrivedTimer=setTimeout(checkArrival,Math.max(500,wait-(Date.now()-arrivedAt)));
+  }
+  function endRoute(){navDismissed=false;arrivedAt=0;clearTimeout(arrivedTimer);arrivedTimer=null;state.hunt=null;state.npc=null;state.route=[];state.routeActive=false;state.panel='place';state.step=0;const a=anchor(state.from);state.fitAll=!a;state.focus=a?.id||null;state.zoom=a?1:1.3;state.dx=0;state.dy=0;hasInspected=false;if($('#mc-route-dialog').open)$('#mc-route-dialog').close();setSheet(false);render();save();}
   const byHand=()=>{if(state.routeActive)navDismissed=true;};
   $('#mc-local-close').addEventListener('click',byHand);$('#mc-local-dialog').addEventListener('cancel',byHand);$('#mc-local-dialog').addEventListener('click',e=>{if(e.target===$('#mc-local-dialog'))byHand();});
   $('#mc-clear-route').onclick=endRoute;$('#mc-route-chip').onclick=endRoute;
