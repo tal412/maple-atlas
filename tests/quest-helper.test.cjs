@@ -137,7 +137,8 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   const q=Q.pack(Q.parse(t));
   assert.equal(q.length,2);
   assert.deepEqual(q[1].p.map(p=>p[0]),[1,null,0]);
-  assert.equal(Q.unpack(q)[1].progress.length,3);
+  // Its numbers are unknown, so a raw read leaves it out; the confirmed list keeps the last count.
+  assert.equal(Q.unpack(q)[1].progress.length,2);
   console.log('quest-helper: partial count line passes');
 }
 // Only confirmed reads are published: two reads in a row must agree.
@@ -163,4 +164,30 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   r=Q.stabilize(r.state,[]);assert.equal(r.quests.length,1);
   r=Q.stabilize(r.state,[]);assert.equal(r.quests.length,0,'gone twice: removed');
   console.log('quest-helper: confirmed reads only passes');
+}
+// "1/1" read as "11": both numbers unknown; the published 1/1 stays and the objective stays.
+{
+  const P=t=>Q.pack(Q.parse('Quest Helper (2/5)\nMake a Slime & Octopus Omok Set\n'+t));
+  let r=Q.stabilize(null,P('1/1 Omok Table\n1/1 Omok Piece: Slime'));r=Q.stabilize(r.state,P('1/1 Omok Table\n1/1 Omok Piece: Slime'));
+  for(let i=0;i<3;i++)r=Q.stabilize(r.state,P('1/1 Omok Table\n11 Omok Piece: Slime'));
+  assert.deepEqual(r.quests[0].p.map(p=>p[0]+'/'+p[1]),['1/1','1/1']);
+  console.log('quest-helper: slash lost between the numbers passes');
+}
+// Finding both panels from text over the whole game window (lines as Vision reads them:
+// the minimap title bar from a real Construction Site North of Kerning City window).
+{
+  const L=(text,x,y,w,h)=>({text,x,y,w,h});
+  const lines=[L('mInI mAP',20,28,116,18),L('WORLD',670,26,90,20),L('Victoria Road',142,84,220,32),L('Construction Site North of Kerning City',144,123,622,38),
+    L('Quest Helper (2/5)',1500,300,180,22),L('AUTO',1790,300,50,20),L('Make a Match Cards Set',1510,335,230,20),L('15 / 15 Monster Card',1510,362,200,20),
+    L('Mrs. Ming Ming\'s First Worry',1510,410,260,20),L('10 / 10 Slime Bubble',1510,437,190,20),L('Snail',900,900,60,20)];
+  const p=Q.findPanels(lines,{w:1920,h:1080});
+  assert.ok(p.minimap&&p.minimap.x===0&&p.minimap.y<.03&&Math.abs(p.minimap.x+p.minimap.w-(760+24)/1920)<.01&&Math.abs(p.minimap.y+p.minimap.h-(28+.75*1080)/1080)<1e-9,JSON.stringify(p.minimap));
+  assert.ok(p.quest&&Math.abs(p.quest.x-(1500-33)/1920)<.005&&p.quest.x+p.quest.w>1840/1920&&p.quest.y+p.quest.h<(457+7*22+2)/1080,JSON.stringify(p.quest));
+  assert.deepEqual(Q.findPanels([L('Henesys',10,10,100,20)],{w:800,h:600}),{minimap:null,quest:null});
+  // A real 1600x900 window: a small minimap (WORLD not read), and the Quest Helper at the far right.
+  const real=Q.findPanels([L('mIni MAP',9,9,49,10),L('Victoria Road',58,35,95,14),L('Sunset Sky',60,51,77,14),L('Quest Helper (3/5)',1342,7,112,14),
+    L('[Event] Halloween Candies',1347,28,172,16),L('Make a Slime & Octopus Omok St',1347,84,209,16),L('1/1 Omok Piede: Sime',1344,118,145,27),L('Asking Perion for Help',1349,179,147,16)],{w:1600,h:900});
+  assert.ok(real.minimap.w*1600>=200&&real.minimap.w*1600<=520,JSON.stringify(real.minimap));
+  assert.ok(real.quest.x*1600<1342&&Math.abs(real.quest.x+real.quest.w-1)<1e-9,JSON.stringify(real.quest));
+  console.log('quest-helper: finding the panels passes');
 }

@@ -79,7 +79,7 @@ func windowProgram(h uintptr) string {
 // findGameWindow returns the game's own window, or 0: never the launcher, Steam, a browser
 // or Maple Atlas (gameWindowRank). Of several, the one titled exactly "MapleStory", then the
 // largest.
-func findGameWindow() (uintptr, string) {
+func findGameWindow() (uintptr, string, int) {
 	var best uintptr
 	var bestTitle string
 	bestRank, bestArea := 0, 0
@@ -110,7 +110,7 @@ func findGameWindow() (uintptr, string) {
 		return 1
 	})
 	pEnumWindows.Call(cb, 0)
-	return best, bestTitle
+	return best, bestTitle, bestRank
 }
 
 // grabWindowCheck: the remembered window still exists and is shown.

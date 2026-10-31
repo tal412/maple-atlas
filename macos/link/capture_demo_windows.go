@@ -80,7 +80,7 @@ func runCaptureDemo(picture string) int {
 	pSetForegroundWindow.Call(demo)
 	time.Sleep(1500 * time.Millisecond)
 
-	found, title := findGameWindow()
+	found, title, _ := findGameWindow()
 	report := map[string]any{"found": found == demo, "title": title}
 	f, err := grabWindow(found)
 	if err != nil {
@@ -103,6 +103,24 @@ func runCaptureDemo(picture string) int {
 	again := time.Now()
 	recognizeText(box)
 	report["msWarm"] = time.Since(again).Milliseconds()
+	// The whole window, as the app reads it to find the panels: which titles are seen.
+	if all, err := recognizeText(f); err == nil {
+		anchors := map[string]bool{}
+		for _, l := range all {
+			t := strings.ToLower(strings.ReplaceAll(l.Text, " ", ""))
+			if strings.Contains(t, "minimap") {
+				anchors["minimap"] = true
+			}
+			if strings.Contains(t, "world") {
+				anchors["world"] = true
+			}
+			if strings.Contains(t, "questhe") {
+				anchors["questHelper"] = true
+			}
+		}
+		report["wholeWindowAnchors"] = anchors
+		report["wholeWindowLines"] = len(all)
+	}
 	report["lines"] = lines
 	var rect winRect
 	pGetWindowRect.Call(demo, uintptr(unsafe.Pointer(&rect)))
@@ -157,6 +175,25 @@ func paintDemo(hdc, hwnd uintptr, pic *image.RGBA) {
 			uintptr(unsafe.Pointer(&bgra[0])), uintptr(unsafe.Pointer(&bi)), 0, 0x00CC0020)
 		return
 	}
+	// A minimap window's title bar at the top left ("MINI MAP" ... "WORLD"), as in the game.
+	bar := winRect{Left: 8, Top: 8, Right: 300, Bottom: 26}
+	light, _, _ := pCreateSolidBrush.Call(rgb(240, 242, 245))
+	pFillRect.Call(hdc, uintptr(unsafe.Pointer(&bar)), light)
+	pDeleteObject.Call(light)
+	small := int32(-11)
+	tf, _, _ := pCreateFontW.Call(uintptr(uint32(small)), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 5, 0, uintptr(unsafe.Pointer(utf16("Tahoma"))))
+	ot, _, _ := pSelectObject.Call(hdc, tf)
+	pSetBkMode.Call(hdc, 1)
+	pSetTextColor.Call(hdc, rgb(40, 40, 50))
+	for _, t := range []struct {
+		s    string
+		l, r int32
+	}{{"MINI MAP", 14, 120}, {"WORLD", 240, 296}} {
+		box := winRect{Left: t.l, Top: 10, Right: t.r, Bottom: 26}
+		pDrawTextW.Call(hdc, uintptr(unsafe.Pointer(utf16(t.s))), ^uintptr(0), uintptr(unsafe.Pointer(&box)), 0x20|0x800)
+	}
+	pSelectObject.Call(hdc, ot)
+	pDeleteObject.Call(tf)
 	panel := winRect{Left: right - 360, Top: 20, Right: right - 10, Bottom: 230}
 	blue, _, _ := pCreateSolidBrush.Call(rgb(150, 190, 235))
 	pFillRect.Call(hdc, uintptr(unsafe.Pointer(&panel)), blue)

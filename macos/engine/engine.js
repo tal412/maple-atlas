@@ -43,7 +43,9 @@
     const g=pictures?.maps?.[id],picture=g?{...g,scale:pictures.scale}:null;
     const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory,picture});
     scaleMemory=found.memory;
-    return Number.isFinite(found.x)?{x:found.x,y:found.y,method:found.method}:{reason:found.reason+(found.detail?' ('+found.detail+')':'')};
+    // The minimap window's edges in this image (0…1), for fitting the reading area to it.
+    const box=found.window?{x:found.window.x/pixels.width,y:found.window.y/pixels.height,w:found.window.w/pixels.width,h:found.window.h/pixels.height}:null;
+    return Number.isFinite(found.x)?{x:found.x,y:found.y,method:found.method,box}:{reason:found.reason+(found.detail?' ('+found.detail+')':''),box};
   }
   // Of several maps with the very same name and street, the one you were on or one next to it.
   function pick(found){
@@ -90,7 +92,7 @@
       if(reading.found.score>=.85||agreed){
         lastMap=id;
         const where=position(id,context.getImageData(0,0,canvas.width,canvas.height),Math.round((frameHeight||canvas.height/scale)*scale));
-        return {...base,phase:'confirmed',position:where.reason?null:where,positionNote:where.reason||null,text:name+(reading.found.street?' · '+reading.found.street:'')+(where.reason?'':' · you are on the map'),elapsed:elapsed()};
+        return {...base,phase:'confirmed',position:where.reason?null:{x:where.x,y:where.y},positionNote:where.reason||null,box:where.box,text:name+(reading.found.street?' · '+reading.found.street:'')+(where.reason?'':' · you are on the map'),elapsed:elapsed()};
       }
       return {...base,phase:'candidate',text:'Reading the map name… '+name+'?'};
     }finally{busy=false;}
@@ -101,7 +103,7 @@
     await ready();
     const scale=draw(dotCanvas,dotContext,source,crop);
     const where=position(String(id),dotContext.getImageData(0,0,dotCanvas.width,dotCanvas.height),Math.round((frameHeight||dotCanvas.height/scale)*scale));
-    return where.reason?{position:null,positionNote:where.reason}:{position:{x:where.x,y:where.y},positionNote:null,method:where.method};
+    return where.reason?{position:null,positionNote:where.reason,box:where.box}:{position:{x:where.x,y:where.y},positionNote:null,method:where.method,box:where.box};
   }
   // ---- Quest Helper ----
   // Text recognition runs in its own worker (shared with the map name), loaded on first use.

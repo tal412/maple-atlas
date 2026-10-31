@@ -95,8 +95,10 @@
   // A count whose first number was lost ("/1 Omok Piece: Slime"): the need is known, the have
   // is not (null); the engine keeps the last read's value for it.
   function partialLine(line){
-    const m=line.match(/^[/|\\7]?\s*(\d{1,4})\s+([A-Za-z].{1,})$/);
-    return m?{have:null,need:Number(m[1]),name:m[2]}:null;
+    // After a slash-like mark the number is the need ("/1 Name"); a bare number may be the two
+    // halves run together ("11" for "1/1"), so then both are unknown.
+    const m=line.match(/^([/|\\7])?\s*(\d{1,4})\s+([A-Za-z].{1,})$/);
+    return m?{have:null,need:m[1]?Number(m[2]):null,name:m[3]}:null;
   }
   // The panel's own title, "Quest Helper (2/5)", even misread ("QuestHeper 25)").
   // "Quest Helper (2/5)", allowing a few misread letters ("Quest Het)er"): letters only.
@@ -113,7 +115,7 @@
       const m=progressLine(line)||partialLine(line);
       if(m){
         const current=quests.at(-1),name=m.name.replace(/[^\p{L}\p{N}' -]+/gu,'').trim().replace(/(?:\s+\S)+$/u,'').trim();   // stray marks from the box edge
-        if(current&&m.need>0&&name)current.progress.push({have:m.have,need:m.need,name,done:m.have>=m.need});
+        if(current&&(m.need>0||m.need===null)&&name)current.progress.push({have:m.have,need:m.need,name,done:m.have!==null&&m.need!==null&&m.have>=m.need});
         continue;
       }
       // A line that starts with a number or a slash is a count line read badly, never a title.
@@ -347,7 +349,7 @@
   // state: the previous result's state (or null); read: packed quests (pack form).
   // Returns {state, quests (published, pack form), changed}.
   function stabilize(state,read,{agree=2}={}){
-    const st=state||{published:[],pend:{}},pend={},keyQ=q=>normalize(q.t),keyO=o=>normalize(o[2])+'|'+o[1];
+    const st=state||{published:[],pend:{}},pend={},keyQ=q=>normalize(q.t),keyO=o=>normalize(o[2]);
     const seen=(key,value)=>{const p=st.pend[key];const n=p&&p.v===value?p.n+1:1;pend[key]={v:value,n};return n>=agree;};
     const now=new Map((read||[]).map(q=>[keyQ(q),q])),out=[];
     for(const q of st.published){
@@ -357,18 +359,56 @@
       for(const o of q.p){
         const ro=readO.get(keyO(o));
         if(!ro){if(!seen('gone:'+k+':'+keyO(o),1))objs.push(o);continue;}
-        if(ro[0]===null||ro[0]===o[0]){objs.push(o);continue;}
-        objs.push(seen('count:'+k+':'+keyO(o),ro[0])?[ro[0],o[1],o[2]]:o);
+        if(ro[0]===null||ro[1]===null||(ro[0]===o[0]&&ro[1]===o[1])){objs.push(o);continue;}
+        objs.push(seen('count:'+k+':'+keyO(o),ro[0]+'/'+ro[1])?[ro[0],ro[1],o[2]]:o);
       }
       const known=new Set(q.p.map(keyO));
-      for(const ro of r.p)if(!known.has(keyO(ro))&&ro[0]!==null&&seen('new:'+k+':'+keyO(ro),ro[0]))objs.push(ro);
+      for(const ro of r.p)if(!known.has(keyO(ro))&&ro[0]!==null&&ro[1]!==null&&seen('new:'+k+':'+keyO(ro),ro[0]+'/'+ro[1]))objs.push(ro);
       out.push({...q,p:objs});
     }
     const had=new Set(st.published.map(keyQ));
-    for(const [k,r] of now)if(!had.has(k)&&seen('newq:'+k,JSON.stringify(r.p.map(o=>[o[0],o[1]]))))out.push({...r,p:r.p.filter(o=>o[0]!==null)});
+    for(const [k,r] of now)if(!had.has(k)&&seen('newq:'+k,JSON.stringify(r.p.map(o=>[o[0],o[1]]))))out.push({...r,p:r.p.filter(o=>o[0]!==null&&o[1]!==null)});
     const changed=JSON.stringify(out)!==JSON.stringify(st.published);
     return {state:{published:out,pend},quests:out,changed};
   }
-  const exported={stabilize,bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Where the game's minimap window and Quest Helper are, from text read over the whole game
+  // window (Apple Vision, Windows OCR): lines [{text,x,y,w,h}] in pixels, frame {w,h}.
+  // The minimap's title bar reads "MINI MAP" (with a WORLD button at its right); the Quest
+  // Helper's reads "Quest Helper (n/5)". Returns {minimap, quest}: each {x,y,w,h} in 0…1 of
+  // the frame, or null when not seen. The minimap box runs to the frame's bottom (the window's
+  // height depends on the map; the reader finds its edges inside the box).
+  function findPanels(lines,frame){
+    const all=(lines||[]).filter(l=>l&&l.h>0&&String(l.text||'').trim());
+    const W=frame.w,H=frame.h,clamp=(x0,y0,x1,y1)=>{x0=Math.max(0,x0);y0=Math.max(0,y0);x1=Math.min(W,x1);y1=Math.min(H,y1);return x1-x0>8&&y1-y0>8?{x:x0/W,y:y0/H,w:(x1-x0)/W,h:(y1-y0)/H}:null;};
+    const over=(a,b)=>Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y)>Math.min(a.h,b.h)*.4;
+    const letters=t=>String(t).toLowerCase().replace(/[^a-z]/g,'');
+    let minimap=null,quest=null;
+    const title=all.find(l=>{const t=letters(l.text);return t==='minimap'||(t.length>=6&&t.length<=8&&editDistance(t,'minimap')<=1);});
+    if(title){
+      const lh=title.h,world=all.filter(l=>over(l,title)&&l.x>title.x&&/^w[o0]r[l1i]d$/i.test(String(l.text).trim())).sort((a,b)=>a.x-b.x)[0];
+      // Without the WORLD button read, the street and map name under the title bound it; the box
+      // is generous, and the minimap reader then reports the window's exact edges.
+      const names=all.filter(l=>l.y>title.y&&l.y<title.y+lh*8&&l.x>=title.x-lh&&l.x<title.x+lh*12);
+      const nameRight=Math.max(title.x+title.w,...names.map(l=>l.x+l.w));
+      const right=world?world.x+world.w+lh*1.2:Math.min(W,title.x+Math.max(W*.3,(nameRight-title.x)*1.8));
+      minimap=clamp(title.x-lh*1.6,title.y-lh*1.2,right,Math.min(H,title.y+H*.75));
+    }
+    const header=all.find(l=>isHeader(l.text));
+    if(header){
+      const lh=header.h,row=all.filter(l=>l!==header&&over(l,header)&&l.x>header.x&&l.x-(header.x+header.w)<lh*12);
+      const rowRight=Math.max(header.x+header.w,...row.map(l=>l.x+l.w));
+      // The panel's lines: under the title, inside its columns, without a big gap.
+      let bottom=header.y+header.h,right=Math.max(rowRight,header.x+header.w*2.4);
+      for(const l of all.filter(l=>l.y>header.y+header.h*.5).sort((a,b)=>a.y-b.y)){
+        if(l.x<header.x-lh*1.5||l.x>=right+lh)continue;
+        if(l.y-bottom>lh*3.5)break;
+        bottom=Math.max(bottom,l.y+l.h);right=Math.max(right,l.x+l.w);
+      }
+      // Room for a quest more than now (the panel grows as quests are tracked).
+      quest=clamp(header.x-lh*1.5,header.y-lh,right+lh*1.5,bottom+lh*7);
+    }
+    return {minimap,quest};
+  }
+  const exported={findPanels,stabilize,bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

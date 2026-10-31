@@ -27,6 +27,7 @@ type gameSource struct {
 	mu     sync.Mutex
 	hwnd   uintptr
 	title  string
+	rank   int // 2 = the game's own window ("MapleStory"); 1 = another MapleStory window
 	findAt time.Time
 	last   frame
 	lastAt time.Time
@@ -39,20 +40,28 @@ var errNoGame = errors.New("No MapleStory window is open.")
 
 // current returns the game window, looked for again at most once a second.
 func (g *gameSource) current() (uintptr, string) {
+	alive := false
 	if g.hwnd != 0 {
-		if _, err := grabWindowCheck(g.hwnd); err == nil {
-			return g.hwnd, g.title
-		}
+		_, err := grabWindowCheck(g.hwnd)
+		alive = err == nil
 	}
-	if time.Since(g.findAt) < time.Second {
+	// The game's own window is kept; anything else is looked at again every 2 s, so the
+	// game's window replaces it as soon as it appears.
+	if alive && (g.rank >= 2 || time.Since(g.findAt) < 2*time.Second) {
+		return g.hwnd, g.title
+	}
+	if !alive && time.Since(g.findAt) < time.Second {
 		return g.hwnd, g.title
 	}
 	g.findAt = time.Now()
-	h, title := findGameWindow()
+	h, title, rank := findGameWindow()
+	if alive && rank <= g.rank {
+		return g.hwnd, g.title
+	}
 	if h != g.hwnd && h != 0 {
 		gameLog("game window found: %q", title)
 	}
-	g.hwnd, g.title = h, title
+	g.hwnd, g.title, g.rank = h, title, rank
 	return h, title
 }
 

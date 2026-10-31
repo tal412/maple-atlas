@@ -177,7 +177,7 @@
   function saveBox(){try{localStorage.setItem(BOX_KEY,JSON.stringify(box));}catch(_){}atlasEngine.reset();noMatchSince=Date.now();placeBox();}
   function placeBox(){
     const put=(el,b)=>Object.assign(el.style,{left:b.x*100+'%',top:b.y*100+'%',width:b.w*100+'%',height:b.h*100+'%'});
-    put($('box'),box);put($('qbox'),qbox);$('box').classList.toggle('passive',editQuest);$('qbox').classList.toggle('passive',!editQuest);
+    put($('box'),mb());put($('qbox'),qb());$('box').classList.toggle('passive',editQuest);$('qbox').classList.toggle('passive',!editQuest);
   }
   // Quest Helper box: drawn by the player around the panel (else the top-right corner is searched).
   const QBOX_KEY='maple-atlas-companion-quest-box',DEFAULT_QBOX={x:.55,y:0,w:.45,h:.5};
@@ -188,8 +188,8 @@
   const point=e=>{const r=$('preview').getBoundingClientRect();return {x:Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),y:Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))};};
   $('preview').onpointerdown=e=>{dragStart=point(e);$('preview').setPointerCapture(e.pointerId);};
   $('preview').onpointermove=e=>{if(!dragStart)return;const p=point(e),b={x:Math.min(p.x,dragStart.x),y:Math.min(p.y,dragStart.y),w:Math.abs(p.x-dragStart.x),h:Math.abs(p.y-dragStart.y)};if(editQuest)qbox=b;else box=b;placeBox();};
-  $('preview').onpointerup=()=>{dragStart=null;if(editQuest){if(qbox.w<.03||qbox.h<.03){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}}else{qmarked=true;try{localStorage.setItem(QBOX_KEY,JSON.stringify(qbox));}catch(_){}}placeBox();return;}if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
-  $('reset-box').onclick=()=>{if(editQuest){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}placeBox();return;}box={...DEFAULT_BOX};saveBox();};
+  $('preview').onpointerup=()=>{dragStart=null;if(editQuest){qByHand=true;autoQbox=null;if(qbox.w<.03||qbox.h<.03){qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}}else{qmarked=true;try{localStorage.setItem(QBOX_KEY,JSON.stringify(qbox));}catch(_){}}placeBox();return;}mByHand=true;autoBox=null;if(box.w<.02||box.h<.02)box={...DEFAULT_BOX};saveBox();};
+  $('reset-box').onclick=()=>{panelsAt=0;if(editQuest){qByHand=false;qbox={...DEFAULT_QBOX};qmarked=false;try{localStorage.removeItem(QBOX_KEY);}catch(_){}placeBox();return;}mByHand=false;box={...DEFAULT_BOX};saveBox();};
   placeBox();
   let previewBusy=false;
   async function drawPreview(){
@@ -202,12 +202,48 @@
     if(!video?.videoWidth)return;const scale=Math.min(1,560/video.videoWidth);
     c.width=Math.round(video.videoWidth*scale);c.height=Math.round(video.videoHeight*scale);c.getContext('2d').drawImage(video,0,0,c.width,c.height);
   }
-  const crop=()=>({x:Math.round(box.x*video.videoWidth),y:Math.round(box.y*video.videoHeight),w:Math.max(16,Math.round(box.w*video.videoWidth)),h:Math.max(16,Math.round(box.h*video.videoHeight))});
+  const crop=()=>{const b=mb();return {x:Math.round(b.x*video.videoWidth),y:Math.round(b.y*video.videoHeight),w:Math.max(16,Math.round(b.w*video.videoWidth)),h:Math.max(16,Math.round(b.h*video.videoHeight))};};
   // The minimap box as the engine wants it: a helper crop (≤ 960 px, like the Mac) or the
   // picker video with a crop rectangle.
   async function minimapSource(slot){
-    if(helperGame){const g=await grab(box,960,slot);return [g.canvas,null,g.frameHeight];}
+    if(helperGame){const g=await grab(mb(),960,slot);return [g.canvas,null,g.frameHeight];}
     return [video,crop(),video.videoHeight];
+  }
+
+  // Finding the panels: the text over the whole game window gives the minimap's "MINI MAP"
+  // title bar and the Quest Helper's title (MapleQuestHelper.findPanels); every 4 s until both
+  // are found, then every 30 s, and soon after a read lost its panel. A box drawn by hand is
+  // used only while a panel is not found.
+  let autoBox=null,autoQbox=null,panelsAt=0,panelsBusy=false,panelsLost=false,mByHand=false,qByHand=false;
+  const mb=()=>autoBox||box,qb=()=>autoQbox||qbox,qm=()=>!!autoQbox||qmarked;
+  const pct=v=>Math.round(v*100)+'%',describe=b=>pct(b.x)+','+pct(b.y)+' '+pct(b.w)+'×'+pct(b.h);
+  function paintPanels(){$('panels').textContent=(autoBox?'Minimap found':'Minimap not found yet (keep it open)')+' · '+(autoQbox?'Quest Helper found':'Quest Helper not found yet (keep it open)');}
+  async function findPanels(){
+    const due=Date.now()-panelsAt>(panelsLost?3000:autoBox&&autoQbox?30000:4000);
+    if(panelsBusy||!due||!haveSource()||ocrBroken)return;
+    panelsBusy=true;panelsAt=Date.now();panelsLost=false;
+    try{
+      let res;
+      if(helperGame)res=await api('/api/ocr?x=0&y=0&w=1&h=1');
+      else{
+        const {w,h}=sourceSize(),k=Math.min(1,1600/Math.max(w,h)),c=grabCanvases.whole??=document.createElement('canvas');
+        c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(video,0,0,c.width,c.height);
+        res=await fetch('/api/ocr?w='+c.width+'&h='+c.height,{method:'POST',headers:{'X-Companion-Token':token,'Content-Type':'application/octet-stream'},body:x.getImageData(0,0,c.width,c.height).data});
+      }
+      const v=await res.json().catch(()=>({}));if(!res.ok||!Array.isArray(v.lines))return;
+      const found=MapleQuestHelper.findPanels(v.lines,{w:v.width,h:v.height}),moved=(a,b)=>!a||Math.abs(a.x-b.x)>.01||Math.abs(a.y-b.y)>.01||Math.abs(a.w-b.w)>.02;
+      if(found.minimap&&!mByHand&&moved(autoBox,found.minimap)){autoBox=found.minimap;atlasEngine.reset();noMatchSince=Date.now();cmd({cmd:'log',message:'Found the minimap at '+describe(autoBox)});}
+      if(found.quest&&!qByHand&&moved(autoQbox,found.quest)){autoQbox=found.quest;cmd({cmd:'log',message:'Found the Quest Helper at '+describe(autoQbox)});}
+      paintPanels();placeBox();
+    }catch(_){}finally{panelsBusy=false;}
+  }
+  // The reader reports the minimap window's real edges inside the area it read: the found box
+  // is fitted to them.
+  function fitMinimap(b,area){
+    if(!b||!autoBox||b.w<.05||b.h<.05)return;
+    const m=.012,f={x:Math.max(0,area.x+b.x*area.w-m),y:Math.max(0,area.y+b.y*area.h-m)};
+    f.w=Math.min(1-f.x,b.w*area.w+2*m);f.h=Math.min(1-f.y,b.h*area.h+2*m);
+    if(Math.abs(f.x-autoBox.x)>.008||Math.abs(f.y-autoBox.y)>.008||Math.abs(f.w-autoBox.w)>.015||Math.abs(f.h-autoBox.h)>.015){autoBox=f;placeBox();cmd({cmd:'log',message:'Fitted the minimap box to the window: '+describe(f)});}
   }
 
   // Tracking.
@@ -217,7 +253,7 @@
   async function readMap(){
     readBusy=true;lastRead=Date.now();
     try{
-      const r=await atlasEngine.readFrame(...await minimapSource('map'));if(!tracking)return;
+      const area=mb(),r=await atlasEngine.readFrame(...await minimapSource('map'));if(!tracking)return;fitMinimap(r.box,area);if(/^(no-minimap|collapsed)/.test(r.positionNote||''))panelsLost=true;
       if(r.phase==='confirmed'){
         noMatchSince=Date.now();lastMap={id:r.id,name:r.name,at:Date.now()};$('last-map').textContent=r.name+' · '+r.inliers+' landmarks';
         $('reading').textContent=(phase==='connected'?'Following on phone · ':'Map name · ')+r.name;
@@ -233,7 +269,7 @@
   }
   async function readDot(){
     dotBusy=true;
-    try{const r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
+    try{const area=mb(),r=await atlasEngine.locateFrame(...await minimapSource('dot'),lastMap.id);fitMinimap(r.box,area);if(tracking&&r.position)sendPosition(lastMap.id,r.position);}
     catch(_){}finally{dotBusy=false;}
   }
   function sendPosition(id,p){lastPosition=p;$('position').textContent='x '+Math.round(p.x)+', y '+Math.round(p.y);cmd({cmd:'position',id,x:p.x,y:p.y,observedAt:Date.now()});}
@@ -244,7 +280,8 @@
     try{
       const r=await questReading();
       if(!tracking)return;
-      $('quests').textContent=!r.visible?(qmarked?'Not found in its box':'Not found · draw its box (Quest Helper box)'):r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
+      if(!r.visible)panelsLost=true;
+      $('quests').textContent=!r.visible?'Not found · keep the Quest Helper open in the game':r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
       if(phase==='connected'&&(r.changed||Date.now()-questsSentAt>=15000)){cmd({cmd:'quests',visible:r.visible,quests:r.quests,observedAt:Date.now()});questsSentAt=Date.now();}
     }catch(_){}finally{questBusy=false;}
   }
@@ -253,6 +290,7 @@
   async function questReading(){
     if(!ocrBroken){
       let res;
+      const qbox=qb();
       if(helperGame)res=await api('/api/ocr?x='+qbox.x+'&y='+qbox.y+'&w='+qbox.w+'&h='+qbox.h);
       else{
         const {w,h}=sourceSize(),c=grabCanvases.quest??=document.createElement('canvas'),r={x:Math.round(qbox.x*w),y:Math.round(qbox.y*h),w:Math.max(16,Math.round(qbox.w*w)),h:Math.max(16,Math.round(qbox.h*h))};
@@ -260,13 +298,14 @@
         res=await fetch('/api/ocr?w='+r.w+'&h='+r.h,{method:'POST',headers:{'X-Companion-Token':token,'Content-Type':'application/octet-stream'},body:x.getImageData(0,0,r.w,r.h).data});
       }
       const v=await res.json().catch(()=>({}));
-      if(res.ok&&Array.isArray(v.lines))return atlasEngine.questsFromText(MapleQuestHelper.panelText(v.lines,{marked:qmarked}));
+      if(res.ok&&Array.isArray(v.lines))return atlasEngine.questsFromText(MapleQuestHelper.panelText(v.lines,{marked:qm()}));
       if(res.status===503){ocrBroken=v.error||'unavailable';$('quests').textContent='Windows text recognition: '+ocrBroken;}
       else throw Error(v.error||'The Quest Helper could not be read.');
     }
-    if(helperGame){const g=await grab(qbox,1600,'questT');return atlasEngine.readQuestsFrame(g.canvas,null,{marked:qmarked});}
+    const qbox=qb();
+    if(helperGame){const g=await grab(qbox,1600,'questT');return atlasEngine.readQuestsFrame(g.canvas,null,{marked:qm()});}
     const {w,h}=sourceSize();
-    return atlasEngine.readQuestsFrame(video,{x:Math.round(qbox.x*w),y:Math.round(qbox.y*h),w:Math.max(16,Math.round(qbox.w*w)),h:Math.max(16,Math.round(qbox.h*h))},{marked:qmarked});
+    return atlasEngine.readQuestsFrame(video,{x:Math.round(qbox.x*w),y:Math.round(qbox.y*h),w:Math.max(16,Math.round(qbox.w*w)),h:Math.max(16,Math.round(qbox.h*h))},{marked:qm()});
   }
   // Ticks come from a worker: its timers keep running while this window is behind the game.
   const ticker=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),200)'],{type:'text/javascript'})));
@@ -274,6 +313,7 @@
   ticker.onmessage=()=>{
     if(!haveSource())return;
     if(Date.now()-previewAt>(helperGame?1000:500)){previewAt=Date.now();void drawPreview();}
+    if(engineReady)void findPanels();
     // Tracking starts by itself once there is a window and the engine is ready.
     if(!tracking&&engineReady&&!stoppedByPlayer)startTracking();
     if(!tracking||!engineReady)return;

@@ -34,6 +34,8 @@ type command struct {
 	// window: the captured game window's title; overlay: show the on-game navigation card.
 	Title string `json:"title"`
 	On    bool   `json:"on"`
+	// log: a line from the Windows window for the companion log (diagnostics).
+	Message string `json:"message"`
 }
 
 // controller runs one pairing session at a time and applies app commands to it.
@@ -49,6 +51,11 @@ func (c *controller) handle(cmd command) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	switch cmd.Cmd {
+	case "log":
+		if c.emit != nil {
+			c.emit(map[string]any{"event": "log", "message": clip(cmd.Message, 300)})
+		}
+		return
 	case "start", "pair":
 		// start: wait for the saved phone, or show a code when none is paired.
 		// pair: forget the saved phone and show a code for a new one.

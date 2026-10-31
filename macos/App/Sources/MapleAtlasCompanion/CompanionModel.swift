@@ -146,6 +146,10 @@ final class CompanionModel {
             self.questMarked = quest != nil
             self.previewImage = nil
             self.log("Reading window: \(label)")
+            self.wideRect = nil
+            self.autoMinimapRect = nil
+            self.autoQuestRect = nil
+            self.panelsTriedAt = .distantPast
             self.stoppedByPlayer = false
             if self.isTracking { self.runTrackingLoop() }
         }
@@ -201,6 +205,7 @@ final class CompanionModel {
     @ObservationIgnored private var stoppedByPlayer = false
     /// The window being read was found automatically (not chosen in the picker).
     @ObservationIgnored private var autoPicked = false
+    @ObservationIgnored private var windowsLoggedAt = Date.distantPast
 
     /// Every 2 s: finds the MapleStory window when none is being read, and starts tracking
     /// as soon as there is a window and the engine is ready.
@@ -220,12 +225,20 @@ final class CompanionModel {
                     capture.stop()
                     gameWindowLabel = nil
                 }
+                if canFindWindow, autoPicked, let change = await capture.recheckPickedWindow() {
+                    log(change)
+                }
+                if canFindWindow, !capture.isCapturing, Date.now.timeIntervalSince(windowsLoggedAt) > 30 {
+                    windowsLoggedAt = .now
+                    log("Looking for the game · " + (await capture.describeMapleWindows()))
+                }
                 if canFindWindow, !capture.isCapturing, await capture.findGameWindow() {
                     autoPicked = true
                     stoppedByPlayer = false
                     log("Found the game window by itself")
                 }
                 if hasGameWindow, case .ready = engineStatus, !isTracking, !stoppedByPlayer { startTracking() }
+                await findPanelsIfDue()
                 try? await Task.sleep(for: .seconds(2))
             }
         }
@@ -422,6 +435,96 @@ final class CompanionModel {
 
     // MARK: Minimap region
 
+    /// A larger area read instead of the box when the minimap was found running past it
+    /// (cleared when the box changes or another window is read).
+    @ObservationIgnored private var wideRect: CGRect?
+    private var readRect: CGRect { wideRect ?? autoMinimapRect ?? minimapRect }
+
+    // MARK: Finding the panels
+
+    /// Where the game's minimap window and Quest Helper were found (normalized), from text read
+    /// over the whole game window; nil until found. Used ahead of the boxes drawn by hand.
+    private(set) var autoMinimapRect: CGRect?
+    private(set) var autoQuestRect: CGRect?
+    /// What the preview shows: the found boxes, else the ones drawn by hand.
+    var shownMinimapRect: CGRect { autoMinimapRect ?? minimapRect }
+    var shownQuestRect: CGRect { autoQuestRect ?? questRect }
+    @ObservationIgnored private var panelsFoundAt = Date.distantPast
+    /// A box drawn by hand this session wins over the found one.
+    @ObservationIgnored private var minimapByHand = false
+    @ObservationIgnored private var questByHand = false
+    @ObservationIgnored private var panelsTriedAt = Date.distantPast
+    @ObservationIgnored private var panelsBusy = false
+    private(set) var panelsStatus = "Looking for the minimap and the Quest Helper…"
+
+    /// Reads the whole window for the panels' titles: every 4 s until both are found, then
+    /// every 30 s, and at once when a read lost its panel.
+    private func findPanelsIfDue(force: Bool = false) async {
+        guard !panelsBusy, capture.isCapturing, case .ready = engineStatus else { return }
+        let missing = (autoMinimapRect == nil && !minimapByHand) || (autoQuestRect == nil && !questByHand)
+        let due = force ? Date.now.timeIntervalSince(panelsTriedAt) > 3
+            : Date.now.timeIntervalSince(panelsTriedAt) > (missing ? 4 : 30)
+        guard due else { return }
+        panelsBusy = true
+        panelsTriedAt = .now
+        defer { panelsBusy = false }
+        let capture = self.capture
+        guard let read = try? await Task.detached(operation: { () -> (CGImage, [QuestText.Line]) in
+            let image = try capture.wholeWindowCGImage()
+            return (image, QuestText.recognize(image))
+        }).value else { return }
+        saveFrameSnapshotIfAsked(image: read.0, lines: read.1)
+        let found = await engine.findPanels(lines: read.1, width: read.0.width, height: read.0.height)
+        var changes: [String] = []
+        let moved = { (a: CGRect?, b: CGRect) in a.map { abs($0.minX - b.minX) > 0.01 || abs($0.minY - b.minY) > 0.01 || abs($0.width - b.width) > 0.02 } ?? true }
+        if let m = found.minimap, !minimapByHand, moved(autoMinimapRect, m) {
+            autoMinimapRect = m
+            wideRect = nil
+            noMatchSince = .now
+            changes.append("minimap at \(Self.describe(m))")
+        }
+        if let q = found.quest, !questByHand, moved(autoQuestRect, q) {
+            autoQuestRect = q
+            changes.append("Quest Helper at \(Self.describe(q))")
+        }
+        if found.minimap != nil || found.quest != nil { panelsFoundAt = .now }
+        panelsStatus = [autoMinimapRect == nil ? "Minimap not found yet (keep it open)" : "Minimap found",
+                        autoQuestRect == nil ? "Quest Helper not found yet (keep it open)" : "Quest Helper found"].joined(separator: " · ")
+        if !changes.isEmpty { log("Found the " + changes.joined(separator: " and ")) }
+    }
+
+    /// Fits the found minimap box to the window's real edges, which the reader reported inside
+    /// the area it read (region).
+    private func fitMinimapBox(_ box: EngineReading.Box?, in region: CGRect) {
+        guard let box, autoMinimapRect != nil, wideRect == nil, box.w > 0.05, box.h > 0.05 else { return }
+        let m = 0.012
+        let fitted = CGRect(x: region.minX + box.x * region.width - m, y: region.minY + box.y * region.height - m,
+                            width: box.w * region.width + 2 * m, height: box.h * region.height + 2 * m)
+            .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard let current = autoMinimapRect, !fitted.isNull,
+              abs(fitted.minX - current.minX) > 0.008 || abs(fitted.minY - current.minY) > 0.008 || abs(fitted.width - current.width) > 0.015 || abs(fitted.height - current.height) > 0.015
+        else { return }
+        autoMinimapRect = fitted
+        log("Fitted the minimap box to the window: \(Self.describe(fitted))")
+    }
+
+    private static func describe(_ r: CGRect) -> String {
+        String(format: "%.0f%%,%.0f%% %.0f%%×%.0f%%", r.minX * 100, r.minY * 100, r.width * 100, r.height * 100)
+    }
+
+    /// The debug-frame flag file saves the next whole window and the text read on it.
+    private func saveFrameSnapshotIfAsked(image: CGImage, lines: [QuestText.Line]) {
+        let dir = Self.stateDirectory(for: site), flag = dir.appendingPathComponent("debug-frame")
+        guard FileManager.default.fileExists(atPath: flag.path) else { return }
+        try? FileManager.default.removeItem(at: flag)
+        guard let png = try? GameCapture.pngDataURL(from: image), let comma = png.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(png[png.index(after: comma)...])) else { return }
+        try? data.write(to: dir.appendingPathComponent("frame-snapshot.png"))
+        let text = lines.map { String(format: "%@\t%.0f\t%.0f\t%.0f\t%.0f\t%.2f", $0.text, $0.box.minX, $0.box.minY, $0.box.width, $0.box.height, $0.confidence) }.joined(separator: "\n")
+        try? Data(text.utf8).write(to: dir.appendingPathComponent("frame-snapshot.txt"))
+        log("Saved a whole-window snapshot (frame-snapshot.png, \(image.width)×\(image.height), \(lines.count) text lines)")
+    }
+
     /// MapleStory draws its minimap in the top-left corner.
     static let defaultMinimapRect = CGRect(x: 0, y: 0, width: 0.4, height: 0.4)
 
@@ -432,16 +535,22 @@ final class CompanionModel {
         guard !clamped.isNull, clamped.width >= 0.02, clamped.height >= 0.02, clamped != minimapRect else { return }
         minimapRect = clamped
         Self.storeMinimapRect(clamped, for: regionKey)
+        // Drawn by hand: it replaces the found box for this session.
+        minimapByHand = true
+        autoMinimapRect = nil
         regionChanged()
     }
 
     func resetMinimapRect() {
         setMinimapRect(Self.defaultMinimapRect)
+        minimapByHand = false
+        panelsTriedAt = .distantPast
     }
 
     var isDefaultMinimapRect: Bool { minimapRect == Self.defaultMinimapRect }
 
     private func regionChanged() {
+        wideRect = nil
         noMatchSince = .now
         if isTracking { Task { await engine.reset() } }
     }
@@ -476,12 +585,16 @@ final class CompanionModel {
         guard !clamped.isNull, clamped.width >= 0.03, clamped.height >= 0.03 else { return }
         questRect = clamped
         questMarked = true
+        questByHand = true
+        autoQuestRect = nil
         Self.storeRect(clamped, for: regionKey, in: Keys.questRects)
     }
 
     func resetQuestRect() {
         questRect = Self.defaultQuestRect
         questMarked = false
+        questByHand = false
+        panelsTriedAt = .distantPast
         Self.storeRect(nil, for: regionKey, in: Keys.questRects)
     }
 
@@ -552,19 +665,29 @@ final class CompanionModel {
     private func locateOnce() async {
         guard isTracking, case .ready = engineStatus, let map = lastConfirmed,
               Date.now.timeIntervalSince(map.at) < 10 else { return }
-        let capture = self.capture, region = minimapRect
+        let capture = self.capture, region = readRect
         guard let frame = try? await Task.detached(operation: { try capture.frame(region: region, previewOnly: false) }).value,
               let png = frame.minimapImage,
               let located = try? await engine.locate(png, frameHeight: frame.frameHeight, mapID: map.id),
               !Task.isCancelled, isTracking, lastConfirmed?.id == map.id
         else { return }
         // The log says how the dot was placed, or why it was not, each time that changes.
+        fitMinimapBox(located.box, in: region)
         let note = located.position != nil ? "found (\(located.method ?? "?"))" : (located.positionNote ?? "not found")
         if note != positionNoteLogged.note || map.id != positionNoteLogged.map {
             positionNoteLogged = (map.id, note)
             log("Position on map \(map.id): \(note)")
         }
         saveMinimapSnapshotIfAsked(png: png, note: "map \(map.id): \(note)")
+        if located.positionNote?.hasPrefix("no-minimap") == true || located.positionNote?.hasPrefix("collapsed") == true {
+            Task { await findPanelsIfDue(force: true) }
+        }
+        // The minimap runs past its box (a big map, zoomed in): read a larger area from the game
+        // window's top-left corner, where the game keeps the minimap, from now on.
+        if located.positionNote?.hasPrefix("collapsed") == true, wideRect == nil {
+            wideRect = CGRect(x: 0, y: 0, width: max(minimapRect.maxX, 0.7), height: max(minimapRect.maxY, 0.85))
+            log("The minimap is bigger than its box; reading a larger area of the window")
+        }
         guard let found = located.position else { return }
         lastPosition = found
         if isPhoneConnected {
@@ -589,7 +712,7 @@ final class CompanionModel {
     private func readQuestsOnce() async {
         guard isTracking, case .ready = engineStatus else { return }
         let capture = self.capture
-        let region = questRect, marked = questMarked
+        let region = autoQuestRect ?? questRect, marked = autoQuestRect != nil || questMarked
         // Apple's on-device text recognition reads the panel; the engine only parses it.
         guard let read = try? await Task.detached(operation: { () -> (CGImage, String?) in
             let image = try capture.questPanelCGImage(region: region)
@@ -599,7 +722,8 @@ final class CompanionModel {
             let reading = try await engine.questsFromText(read.1)
             saveQuestSnapshotIfAsked(image: read.0, text: reading.text)
             guard !Task.isCancelled, isTracking else { return }
-            let summary = !reading.visible ? (questMarked ? "Quest Helper not found in its box" : "Quest Helper not found · draw its box (Quest Helper tab)")
+            if !reading.visible { Task { await findPanelsIfDue(force: true) } }
+            let summary = !reading.visible ? "Quest Helper not found · keep it open in the game"
                 : reading.quests.isEmpty ? "Quest Helper open · no quests read"
                 : "\(reading.quests.count) quest\(reading.quests.count == 1 ? "" : "s") tracked"
             if summary != questSummary || (reading.changed && reading.text != nil) {
@@ -641,13 +765,14 @@ final class CompanionModel {
             return
         }
         do {
-            let capture = self.capture, region = minimapRect
+            let capture = self.capture, region = readRect
             let frame = try await Task.detached { try capture.frame(region: region, previewOnly: false) }.value
             guard !Task.isCancelled else { return }
             previewImage = frame.preview
             guard let png = frame.minimapImage else { return }
             let reading = try await engine.read(png, frameHeight: frame.frameHeight)
             guard !Task.isCancelled else { return }
+            fitMinimapBox(reading.box, in: region)
             apply(reading)
         } catch EngineHost.EngineError.busy {
             return

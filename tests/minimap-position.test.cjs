@@ -55,8 +55,11 @@ console.log('PASS: minimap title, dot and portal rings, portal fit, scrolling, l
   const body={x:10,y:40,w:408,h:384};   // shown at twice the picture's size
   const at=M.onPicture(body,{x:10+204,y:40+96},picture);
   assert.deepEqual(at,{x:16*(102.25+8),y:16*(48.25+3)});
-  // A window that does not show the whole picture (other shape): left to the portal rings.
-  assert.equal(M.onPicture({x:0,y:0,w:400,h:100},{x:5,y:5},picture),null);
+  // A window wider than the picture: the picture is centred with margins at the sides
+  // (Construction Site North of Kerning City, from a real game window).
+  const wide=M.onPicture({x:0,y:0,w:400,h:96},{x:100+51,y:48},picture);   // shown at 0.5: 102 wide from x=149
+  assert.equal(wide.y,Math.round(16*(48.5/0.5+3)));
+  assert.equal(M.onPicture({x:0,y:0,w:400,h:96},{x:5,y:5},picture),null,'a dot in the margin is not on the picture');
   assert.equal(M.onPicture(body,{x:20,y:50},null),null);
   console.log('minimap-position: placing on the minimap picture passes');
 }

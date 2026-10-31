@@ -15,6 +15,15 @@ struct EngineReading: Decodable, Sendable {
     let position: Position?
     /// Why no position was found ("no-dot", "few-portals", …).
     let positionNote: String?
+    /// The minimap window's edges inside the image read (0…1), when it was found.
+    let box: Box?
+
+    struct Box: Decodable, Sendable, Equatable {
+        let x: Double
+        let y: Double
+        let w: Double
+        let h: Double
+    }
 
     struct Position: Decodable, Sendable, Equatable {
         let x: Double
@@ -28,10 +37,11 @@ struct EngineReading: Decodable, Sendable {
         let positionNote: String?
         /// "picture" (placed on the map's minimap picture) or "rings" (fitted to portal rings).
         let method: String?
+        let box: Box?
     }
 
     private enum CodingKeys: String, CodingKey {
-        case phase, id, name, inliers, kind, confidence, text, elapsed, position, positionNote
+        case phase, id, name, inliers, kind, confidence, text, elapsed, position, positionNote, box
     }
 
     init(from decoder: Decoder) throws {
@@ -53,6 +63,7 @@ struct EngineReading: Decodable, Sendable {
         elapsed = try? c.decodeIfPresent(Double.self, forKey: .elapsed)
         position = try? c.decodeIfPresent(Position.self, forKey: .position)
         positionNote = try? c.decodeIfPresent(String.self, forKey: .positionNote)
+        box = try? c.decodeIfPresent(Box.self, forKey: .box)
     }
 }
 
@@ -183,6 +194,21 @@ final class EngineHost: NSObject {
     }
 
     /// The quests in panel text read on the Mac (QuestText); nil text: no panel seen.
+    /// Where the minimap window and the Quest Helper are (normalized, top-left origin), from
+    /// text read over the whole window (MapleQuestHelper.findPanels).
+    func findPanels(lines: [QuestText.Line], width: Int, height: Int) async -> (minimap: CGRect?, quest: CGRect?) {
+        let payload = lines.map { ["text": $0.text, "x": Double($0.box.minX), "y": Double($0.box.minY), "w": Double($0.box.width), "h": Double($0.box.height)] as [String: Any] }
+        let script = "return JSON.stringify(MapleQuestHelper.findPanels(lines,{w:width,h:height}));"
+        guard let result = try? await webView.callAsyncJavaScript(script, arguments: ["lines": payload, "width": width, "height": height], contentWorld: .page),
+              let json = result as? String,
+              let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any] else { return (nil, nil) }
+        func rect(_ key: String) -> CGRect? {
+            guard let r = value[key] as? [String: Double], let x = r["x"], let y = r["y"], let w = r["w"], let h = r["h"] else { return nil }
+            return CGRect(x: x, y: y, width: w, height: h)
+        }
+        return (rect("minimap"), rect("quest"))
+    }
+
     func questsFromText(_ text: String?) async throws -> QuestReading {
         let script = "return JSON.stringify(window.atlasEngine.questsFromText(text));"
         let result = try await webView.callAsyncJavaScript(script, arguments: ["text": text ?? NSNull()], contentWorld: .page)

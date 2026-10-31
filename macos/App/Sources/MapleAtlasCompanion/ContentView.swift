@@ -206,6 +206,7 @@ private struct GameWindowSection: View {
 
             if model.hasGameWindow {
                 VStack(alignment: .leading, spacing: 8) {
+                    Text(model.panelsStatus).font(.callout).foregroundStyle(.secondary)
                     Picker("Box", selection: $editingQuest) {
                         Text("Minimap").tag(false)
                         Text("Quest Helper").tag(true)
@@ -214,11 +215,11 @@ private struct GameWindowSection: View {
                     .labelsHidden()
                     if editingQuest {
                         MinimapRegionEditor(
-                            image: model.previewImage, region: model.questRect, label: "Quest Helper", color: .orange,
-                            other: model.minimapRect, otherLabel: "Minimap",
+                            image: model.previewImage, region: model.shownQuestRect, label: "Quest Helper", color: .orange,
+                            other: model.shownMinimapRect, otherLabel: "Minimap",
                             onChange: { model.setQuestRect($0) })
                         HStack {
-                            Text(model.questMarked ? "Drag a box around the game\u{2019}s Quest Helper panel" : "Drag a box around the game\u{2019}s Quest Helper panel (now: the top-right corner)")
+                            Text(model.autoQuestRect != nil ? "Found by itself. Drag a box only if it is wrong." : "Not found yet: keep the Quest Helper open in the game, or drag a box around it")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -227,11 +228,11 @@ private struct GameWindowSection: View {
                         }
                     } else {
                         MinimapRegionEditor(
-                            image: model.previewImage, region: model.minimapRect,
-                            other: model.questRect, otherLabel: "Quest Helper",
+                            image: model.previewImage, region: model.shownMinimapRect,
+                            other: model.shownQuestRect, otherLabel: "Quest Helper",
                             onChange: { model.setMinimapRect($0) })
                         HStack {
-                            Text("Drag a box around the in-game minimap and its map name")
+                            Text(model.autoMinimapRect != nil ? "Found by itself. Drag a box only if it is wrong." : "Not found yet: keep the minimap open in the game, or drag a box around it")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                             Spacer()

@@ -66,25 +66,79 @@ final class GameCapture: NSObject {
     /// game window is found without the picker.
     nonisolated static var canListWindows: Bool { CGPreflightScreenCaptureAccess() }
 
-    /// Finds the game's window by its app or title ("MapleStory Classic World") and starts
-    /// reading it. Returns false when none is open or windows cannot be listed.
-    func findGameWindow() async -> Bool {
-        guard Self.canListWindows, !isCapturing,
+    /// Windows that sent no picture after being picked (the game's blank helper windows),
+    /// kept out of the search for a while.
+    private var deadWindows: [CGWindowID: Date] = [:]
+    /// When the window being read was picked, and its rank (2 = the game's own window).
+    private(set) var pickedAt: Date?
+    private(set) var pickedRank = 0
+
+    /// The game's windows, best first: rank 2 (the game app's window titled "MapleStory"),
+    /// then rank 1; larger first. Never a window without a title, a launcher, Steam, a browser
+    /// or Maple Atlas.
+    private func gameWindows() async -> [(SCWindow, Int)] {
+        guard Self.canListWindows,
               let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
-        else { return false }
+        else { return [] }
         let own = Bundle.main.bundleIdentifier
-        let ranked = content.windows.compactMap { window -> (SCWindow, Int)? in
+        deadWindows = deadWindows.filter { Date.now.timeIntervalSince($0.value) < 120 }
+        let area = { (w: SCWindow) in w.frame.width * w.frame.height }
+        return content.windows.compactMap { window -> (SCWindow, Int)? in
             guard let app = window.owningApplication, app.bundleIdentifier != own, window.windowLayer == 0,
-                  window.frame.width >= 320, window.frame.height >= 240 else { return nil }
+                  window.frame.width >= 320, window.frame.height >= 240, deadWindows[window.windowID] == nil else { return nil }
             let rank = Self.gameRank(app: app.applicationName, bundle: app.bundleIdentifier, title: window.title ?? "")
             return rank > 0 ? (window, rank) : nil
+        }.sorted { $0.1 != $1.1 ? $0.1 > $1.1 : area($0.0) > area($1.0) }
+    }
+
+    /// Every window of a MapleStory app, as the system lists it (for the log when none is
+    /// taken): app, title, size, layer, on screen, and the rank given.
+    func describeMapleWindows() async -> String {
+        guard Self.canListWindows,
+              let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+        else { return "windows cannot be listed" }
+        let rows = content.windows.compactMap { w -> String? in
+            guard let app = w.owningApplication else { return nil }
+            let text = "\(app.applicationName) \(app.bundleIdentifier) \(w.title ?? "")".lowercased()
+            guard text.contains("maple") else { return nil }
+            let rank = Self.gameRank(app: app.applicationName, bundle: app.bundleIdentifier, title: w.title ?? "")
+            return "\(app.applicationName) [\(app.bundleIdentifier)] \"\(w.title ?? "")\" \(Int(w.frame.width))×\(Int(w.frame.height)) layer \(w.windowLayer) \(w.isOnScreen ? "on" : "off") screen → rank \(rank)"
         }
-        let area = { (w: SCWindow) in w.frame.width * w.frame.height }
-        guard !isCapturing, let window = ranked.max(by: { $0.1 != $1.1 ? $0.1 < $1.1 : area($0.0) < area($1.0) })?.0
-        else { return false }
+        return rows.isEmpty ? "no MapleStory windows listed" : rows.joined(separator: " | ")
+    }
+
+    /// Finds the game's window and starts reading it. Returns false when none is open or
+    /// windows cannot be listed.
+    func findGameWindow() async -> Bool {
+        guard !isCapturing, let (window, rank) = await gameWindows().first, !isCapturing else { return false }
         start(with: SCContentFilter(desktopIndependentWindow: window), windowID: window.windowID)
         currentWindow = window
+        pickedAt = .now
+        pickedRank = rank
         return true
+    }
+
+    /// While reading a window found automatically: switches to the game's own window when it
+    /// appears and this one is not it, and drops a window that sent no picture for 6 s after
+    /// being picked (looking again at once). Returns what happened, for the log, or nil.
+    func recheckPickedWindow() async -> String? {
+        guard isCapturing, let picked = currentWindow, let at = pickedAt else { return nil }
+        if sink.latest == nil, Date.now.timeIntervalSince(at) > 6 {
+            // The game's own window may just be idle (screen asleep): only lesser windows are
+            // kept out; the game's own is simply picked again.
+            if pickedRank < 2 { deadWindows[picked.windowID] = .now }
+            guard pickedRank < 2 || Date.now.timeIntervalSince(at) > 30 else { return nil }
+            stop()
+            let found = await findGameWindow()
+            return "The picked window sent no picture; " + (found ? "picked \(currentWindow?.title ?? "a window") of \(currentWindow?.owningApplication?.applicationName ?? "?")" : "looking for the game again")
+        }
+        guard pickedRank < 2, let (best, rank) = await gameWindows().first, rank == 2, best.windowID != picked.windowID else { return nil }
+        stop()
+        start(with: SCContentFilter(desktopIndependentWindow: best), windowID: best.windowID)
+        currentWindow = best
+        pickedAt = .now
+        pickedRank = rank
+        return "Switched to the game's own window"
     }
 
     /// Whether a window is the game itself: 0 = not the game, 2 = the game's own window (the
@@ -99,6 +153,8 @@ final class GameCapture: NSObject {
         let browsers = ["com.google.chrome", "com.apple.safari", "org.mozilla", "com.microsoft.edgemac", "company.thebrowser", "com.brave",
                         "com.operasoftware", "com.vivaldi", "com.hnc.discord", "com.apple.finder"]
         if browsers.contains(where: { b.hasPrefix($0) }) { return 0 }
+        // A window without a title is one of the game's blank helper windows, never the game.
+        guard !t.isEmpty else { return 0 }
         let isGameApp = a.contains("maplestory") || b.contains("maplestory")
         if isGameApp && t == "maplestory" { return 2 }
         if isGameApp || t == "maplestory" { return 1 }
@@ -134,6 +190,12 @@ final class GameCapture: NSObject {
     }
 
     /// The same part of the window as an image, for on-device text recognition.
+    /// The whole window (at most maxSide px), for finding the game's panels by their text.
+    nonisolated func wholeWindowCGImage(maxSide: CGFloat = 1600) throws -> CGImage {
+        guard let image = sink.latest else { throw CaptureError.noFrameYet }
+        return Self.downscaled(image, maxSide: maxSide)
+    }
+
     nonisolated func questPanelCGImage(region: CGRect) throws -> CGImage {
         guard let image = sink.latest else { throw CaptureError.noFrameYet }
         return Self.downscaled(Self.cropped(image, to: region) ?? image, maxSide: 1600)

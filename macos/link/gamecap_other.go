@@ -12,7 +12,7 @@ type ocrLine struct {
 	X, Y, W, H float64 `json:"-"`
 }
 
-func findGameWindow() (uintptr, string)         { return 0, "" }
+func findGameWindow() (uintptr, string, int)    { return 0, "", 0 }
 func grabWindow(uintptr) (frame, error)         { return frame{}, errNoGame }
 func grabWindowCheck(uintptr) (struct{}, error) { return struct{}{}, errNoGame }
 func recognizeText(frame) ([]ocrLine, error) {

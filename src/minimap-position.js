@@ -145,9 +145,12 @@
   // picture (its shape differs), so the portal rings decide instead.
   function onPicture(body,player,picture){
     if(!picture||!body||!(picture.w>0&&picture.h>0))return null;
-    const shape=(body.w/body.h)/(picture.w/picture.h);
-    if(shape<.93||shape>1.07)return null;
-    const px=(player.x-body.x+.5)/body.w*picture.w,py=(player.y-body.y+.5)/body.h*picture.h,s=picture.scale||16;
+    // The game fits the picture inside the window and centres it: a window wider than the
+    // picture gets light margins left and right, a taller one above and below.
+    const k=Math.min(body.w/picture.w,body.h/picture.h),shownW=picture.w*k,shownH=picture.h*k;
+    const left=body.x+(body.w-shownW)/2,top=body.y+(body.h-shownH)/2;
+    const px=(player.x-left+.5)/k,py=(player.y-top+.5)/k,s=picture.scale||16;
+    if(px<-2||py<-2||px>picture.w+2||py>picture.h+2)return null;   // the dot is off the picture: not this map's
     return {x:Math.round(s*(px+picture.dx)),y:Math.round(s*(py+picture.dy))};
   }
 
@@ -159,18 +162,21 @@
     if(!band)return {reason:'no-minimap',memory};
     const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);
     if(markers.collapsed)return {reason:'collapsed',memory};
-    if(!markers.player)return {reason:'no-dot',memory};
+    // The minimap window's own edges (title bar above the strip to the frame under the picture),
+    // so the apps can fit their reading area to it.
+    const b=markers.body,pad=band.h*.15,win={x:Math.max(0,band.x-pad),y:Math.max(0,band.y-band.h*.9),w:band.w+pad*2,h:b.y+b.h-band.y+band.h*1.4};
+    if(!markers.player)return {reason:'no-dot',window:win,memory};
     const placed=onPicture(markers.body,markers.player,picture);
-    if(placed)return {...placed,method:'picture',memory};
+    if(placed)return {...placed,method:'picture',window:win,memory};
     // Shown in diagnostics: how the window's shape compared with the picture's.
     const shape=picture&&markers.body?Math.round((markers.body.w/markers.body.h)/(picture.w/picture.h)*100)/100:null;
     if(!marks?.length)return {reason:'no-portal-data',memory};
     const known=recallScale(memory,layout);
     const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);
-    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',detail:shape?'window/picture shape '+shape:picture?'':'no picture for this map',memory};
+    if(!fit)return {reason:markers.portals.length<2?'few-portals':'no-fit',window:win,detail:shape?'window/picture shape '+shape:picture?'':'no picture for this map',memory};
     const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;
     if(world.x<Math.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};
-    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
+    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',window:win,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
   }
   // Plain-language hint from the player's position to a portal. One game screen is roughly
   // 1000 map units wide, which keeps distances meaningful without promising precision.
