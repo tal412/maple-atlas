@@ -660,7 +660,26 @@ final class CompanionModel {
         }
     }
 
+    @ObservationIgnored private var mapLogged = ""
+    @ObservationIgnored private var mapLoggedAt = Date.distantPast
+
+    /// The log says which map is read, or why none is, each time that changes (at most every 10 s
+    /// for the same kind of miss).
+    private func logMapReading(_ reading: EngineReading) {
+        let line: String
+        if reading.phase == "confirmed", let id = reading.id {
+            line = "Map: \(reading.name ?? id) (\(id))" + (reading.position != nil ? " · dot found" : reading.positionNote.map { " · dot: \($0)" } ?? "")
+        } else {
+            line = "Map not read (\(reading.phase))" + (reading.name.map { " · \($0)?" } ?? "") + (reading.text.map { " · \($0.prefix(80))" } ?? "")
+        }
+        guard line != mapLogged, reading.phase == "confirmed" || Date.now.timeIntervalSince(mapLoggedAt) > 10 else { return }
+        mapLogged = line
+        mapLoggedAt = .now
+        log(line)
+    }
+
     private func apply(_ reading: EngineReading) {
+        logMapReading(reading)
         if reading.phase == "confirmed", let id = reading.id {
             noMatchSince = .now
             let name = reading.name ?? id

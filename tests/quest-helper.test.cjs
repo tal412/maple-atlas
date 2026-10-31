@@ -131,3 +131,12 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.bestHuntMap([c('none',0,1)]),null);
   console.log('quest-helper: hunt map choice passes');
 }
+// A count read without its first number is an objective, never a new quest (Vision, live).
+{
+  const t='Quest Helper (215)\n[Event] Halloween Candies\n22 / 100 Halloween Candies\nMake a Slime & Octopus Omok Set\n1/1 Omok Table\n/1 Omok Piece: Slime\n0/1 Omok Piece: Octopus';
+  const q=Q.pack(Q.parse(t));
+  assert.equal(q.length,2);
+  assert.deepEqual(q[1].p.map(p=>p[0]),[1,null,0]);
+  assert.equal(Q.unpack(q)[1].progress.length,3);
+  console.log('quest-helper: partial count line passes');
+}

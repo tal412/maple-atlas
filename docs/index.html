@@ -2716,6 +2716,12 @@ window.mapleStorageReady.then(() => {
     }
     return null;
   }
+  // A count whose first number was lost ("/1 Omok Piece: Slime"): the need is known, the have
+  // is not (null); the engine keeps the last read's value for it.
+  function partialLine(line){
+    const m=line.match(/^[/|\\7]?\s*(\d{1,4})\s+([A-Za-z].{1,})$/);
+    return m?{have:null,need:Number(m[1]),name:m[2]}:null;
+  }
   // The panel's own title, "Quest Helper (2/5)", even misread ("QuestHeper 25)").
   // "Quest Helper (2/5)", allowing a few misread letters ("Quest Het)er"): letters only.
   const isHeader=line=>{const t=String(line||'').toLowerCase().replace(/[^a-z]/g,'').slice(0,11);if(/quest\s*helper/i.test(line))return true;if(t.length<8||!t.startsWith('q'))return false;
@@ -2728,12 +2734,14 @@ window.mapleStorageReady.then(() => {
       // Stray marks from the panel's edge come before a line ("¥ 10/10 Slime Bubble").
       const line=raw.trim().replace(/^(?:[^\p{L}\p{N}\s]+\s*|[^\d\s]\s+(?=\d))+/u,'');
       if(!line||isHeader(line))continue;
-      const m=progressLine(line);
+      const m=progressLine(line)||partialLine(line);
       if(m){
         const current=quests.at(-1),name=m.name.replace(/[^\p{L}\p{N}' -]+/gu,'').trim().replace(/(?:\s+\S)+$/u,'').trim();   // stray marks from the box edge
         if(current&&m.need>0&&name)current.progress.push({have:m.have,need:m.need,name,done:m.have>=m.need});
         continue;
       }
+      // A line that starts with a number or a slash is a count line read badly, never a title.
+      if(/^[\d/|\\]/.test(line))continue;
       if(/[A-Za-z]{3}/.test(line)&&/^[A-Z]/.test(line.replace(/^[^\p{L}]+/u,''))){
         const cleaned=line.replace(/^[^\p{L}]+/u,'').replace(/[^\p{L}\p{N}.…!?')]+$/u,'');
         const truncated=/(\.{2,}|…)$/.test(cleaned);
@@ -2786,7 +2794,7 @@ window.mapleStorageReady.then(() => {
   function unpack(list){
     if(!Array.isArray(list))return [];
     return list.slice(0,8).filter(q=>q&&typeof q.t==='string'&&q.t.trim().length>=4).map(q=>({title:clip(q.t,80).trim(),truncated:q.c===1,
-      progress:(Array.isArray(q.p)?q.p:[]).slice(0,8).filter(p=>Array.isArray(p)&&count(p[0])!==null&&count(p[1])>0&&typeof p[2]==='string'&&p[2].trim()).map(p=>({have:p[0],need:p[1],name:clip(p[2],60).trim(),done:p[0]>=p[1]}))}));
+      progress:(Array.isArray(q.p)?q.p:[]).slice(0,8).filter(p=>Array.isArray(p)&&(p[0]===null||count(p[0])!==null)&&count(p[1])>0&&typeof p[2]==='string'&&p[2].trim()).map(p=>({have:p[0],need:p[1],name:clip(p[2],60).trim(),done:p[0]!==null&&p[0]>=p[1]}))}));
   }
   // Tracked quests matched to Maple Atlas quests. quests: [{id,name,npc,objectives,...}],
   // status: {id: 'completed'|...}. Each result: {title, quest|null, progress, complete}.

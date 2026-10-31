@@ -240,10 +240,17 @@
   async function readQuestText(image){const {data}=await (await reader()).recognize(image,{},{text:true,blocks:true});return {first:String(data.text||'').trim(),text:await recheckCounts(data,image)||String(data.text||'').trim()};}
   // Panel text read by the platform's own text recognition (Apple Vision on the Mac):
   // only parsed here. null: no panel seen.
-  let textSeen=null;
+  let textSeen=null,lastQuests=[];
   function questsFromText(text){
     if(text==null){const changed=textSeen!==null;textSeen=null;return {visible:false,quests:[],changed};}
-    const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(String(text))),key=JSON.stringify(quests),changed=key!==textSeen;
+    const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(String(text)));
+    // A count read without its first number ("/1 Omok Piece"): the last read's value for it.
+    for(const q of quests)for(const p of q.p||[])if(p[0]==null){
+      const before=lastQuests.find(o=>o.t===q.t)?.p?.find(o=>o[2]===p[2]&&o[1]===p[1]);
+      if(before&&before[0]!=null)p[0]=before[0];
+    }
+    lastQuests=quests;
+    const key=JSON.stringify(quests),changed=key!==textSeen;
     textSeen=key;return {visible:true,quests,changed,text:String(text).slice(0,600)};
   }
   window.atlasEngine={questsFromText,readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
