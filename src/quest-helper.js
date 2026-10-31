@@ -341,6 +341,34 @@
     const reach=list.filter(c=>c.d!=null),pool=reach.length?reach:list,most=Math.max(...pool.map(c=>c.n));
     return pool.filter(c=>c.n>=most*.85).sort((a,b)=>(a.d??Infinity)-(b.d??Infinity)||b.n-a.n)[0];
   }
-  const exported={bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
+  // Only confirmed data goes out: a new quest, a quest gone, an objective added or gone, or a
+  // new count is published once two reads in a row agree on it; until then the last
+  // published value stays. A count read as unknown (null) never replaces a known one.
+  // state: the previous result's state (or null); read: packed quests (pack form).
+  // Returns {state, quests (published, pack form), changed}.
+  function stabilize(state,read,{agree=2}={}){
+    const st=state||{published:[],pend:{}},pend={},keyQ=q=>normalize(q.t),keyO=o=>normalize(o[2])+'|'+o[1];
+    const seen=(key,value)=>{const p=st.pend[key];const n=p&&p.v===value?p.n+1:1;pend[key]={v:value,n};return n>=agree;};
+    const now=new Map((read||[]).map(q=>[keyQ(q),q])),out=[];
+    for(const q of st.published){
+      const k=keyQ(q),r=now.get(k);
+      if(!r){if(!seen('gone:'+k,1))out.push(q);continue;}
+      const objs=[],readO=new Map(r.p.map(o=>[keyO(o),o]));
+      for(const o of q.p){
+        const ro=readO.get(keyO(o));
+        if(!ro){if(!seen('gone:'+k+':'+keyO(o),1))objs.push(o);continue;}
+        if(ro[0]===null||ro[0]===o[0]){objs.push(o);continue;}
+        objs.push(seen('count:'+k+':'+keyO(o),ro[0])?[ro[0],o[1],o[2]]:o);
+      }
+      const known=new Set(q.p.map(keyO));
+      for(const ro of r.p)if(!known.has(keyO(ro))&&ro[0]!==null&&seen('new:'+k+':'+keyO(ro),ro[0]))objs.push(ro);
+      out.push({...q,p:objs});
+    }
+    const had=new Set(st.published.map(keyQ));
+    for(const [k,r] of now)if(!had.has(k)&&seen('newq:'+k,JSON.stringify(r.p.map(o=>[o[0],o[1]]))))out.push({...r,p:r.p.filter(o=>o[0]!==null)});
+    const changed=JSON.stringify(out)!==JSON.stringify(st.published);
+    return {state:{published:out,pend},quests:out,changed};
+  }
+  const exported={stabilize,bestHuntMap,questMonster,panelText,inkAdaptive,splitCounts,countSpan,counts,countsFromBoxes,find,inkDark,signature,changed,parse,matchTitle,mergeWrapped,pack,unpack,resolve,normalize,editDistance,looksLike};
   scope.MapleQuestHelper=exported;if(typeof module!=='undefined')module.exports=exported;
 })(globalThis);

@@ -140,3 +140,27 @@ console.log('PASS: quest helper reading · wire validation · matching, objectiv
   assert.equal(Q.unpack(q)[1].progress.length,3);
   console.log('quest-helper: partial count line passes');
 }
+// Only confirmed reads are published: two reads in a row must agree.
+{
+  const P=t=>Q.pack(Q.parse('Quest Helper (2/5)\n'+t));
+  const omok=(a,b,c)=>'Make a Slime & Pig Omok Set\n'+a+' Omok Table\n'+b+' Omok Piece: Slime\n'+c+' Omok Piece: Pig';
+  let r=Q.stabilize(null,P(omok('1/1','0/1','0/1')));
+  assert.equal(r.quests.length,0,'a first read alone is not published');
+  r=Q.stabilize(r.state,P(omok('1/1','0/1','0/1')));
+  assert.equal(r.quests.length,1);assert.ok(r.changed);
+  // One misread count ("7/1"), then the true one again: never published.
+  r=Q.stabilize(r.state,P(omok('1/1','7/1','0/1')));
+  assert.equal(r.quests[0].p[1][0],0);assert.ok(!r.changed);
+  r=Q.stabilize(r.state,P(omok('1/1','0/1','0/1')));
+  assert.equal(r.quests[0].p[1][0],0);
+  // A real change, seen twice: published on the second read.
+  r=Q.stabilize(r.state,P(omok('1/1','1/1','0/1')));assert.equal(r.quests[0].p[1][0],0);
+  r=Q.stabilize(r.state,P(omok('1/1','1/1','0/1')));assert.equal(r.quests[0].p[1][0],1);assert.ok(r.changed);
+  // An unknown count ("/1 ...") keeps the known one.
+  r=Q.stabilize(r.state,P(omok('1/1','/1','0/1')));assert.equal(r.quests[0].p[1][0],1);
+  // A line read as an extra quest once does not appear; a quest gone once does not vanish.
+  r=Q.stabilize(r.state,P(omok('1/1','1/1','0/1')+'\nOmok Piece Slime'));assert.equal(r.quests.length,1);
+  r=Q.stabilize(r.state,[]);assert.equal(r.quests.length,1);
+  r=Q.stabilize(r.state,[]);assert.equal(r.quests.length,0,'gone twice: removed');
+  console.log('quest-helper: confirmed reads only passes');
+}

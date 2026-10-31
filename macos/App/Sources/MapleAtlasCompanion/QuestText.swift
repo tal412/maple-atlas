@@ -10,6 +10,23 @@ enum QuestText {
     struct Line {
         let text: String
         let box: CGRect   // pixels, top-left origin
+        /// Vision's confidence in this reading, 0…1.
+        var confidence: Float = 1
+    }
+
+    /// Below this, a count line is only used when one of Vision's other readings of it is a
+    /// clean count it is surer of; otherwise the line is left out of that read (the last
+    /// confirmed count stays).
+    static let minCountConfidence: Float = 0.6
+
+    /// "12 / 20 Name": a count line read cleanly.
+    private static func isCleanCount(_ text: String) -> Bool {
+        text.range(of: #"^\d{1,4}\s*/\s*\d{1,4}\s+\S"#, options: .regularExpression) != nil
+    }
+
+    /// Starts like a count (a digit or a slash-like mark): a line whose numbers matter.
+    private static func looksLikeCount(_ text: String) -> Bool {
+        text.range(of: #"^[\d/|\\]"#, options: .regularExpression) != nil
     }
 
     /// The panel's lines in reading order, from its "Quest Helper" title down, or nil when
@@ -59,10 +76,24 @@ enum QuestText {
         do { try VNImageRequestHandler(cgImage: image).perform([request]) } catch { return [] }
         let w = CGFloat(image.width), h = CGFloat(image.height)
         let lines = (request.results ?? []).compactMap { observation -> Line? in
-            guard let text = observation.topCandidates(1).first?.string.trimmingCharacters(in: .whitespaces),
-                  !text.isEmpty else { return nil }
+            let candidates = observation.topCandidates(5)
+            guard let top = candidates.first else { return nil }
+            var text = top.string.trimmingCharacters(in: .whitespaces)
+            var confidence = top.confidence
+            guard !text.isEmpty else { return nil }
+            // A count line Vision is unsure of: a clean count among its other readings, else
+            // nothing from this line in this read.
+            if looksLikeCount(text), confidence < minCountConfidence || !isCleanCount(text) {
+                if let better = candidates.first(where: { isCleanCount($0.string) && $0.confidence >= minCountConfidence * 0.6 }) {
+                    text = better.string.trimmingCharacters(in: .whitespaces)
+                    confidence = better.confidence
+                } else if confidence < minCountConfidence {
+                    return nil
+                }
+            }
             let b = observation.boundingBox   // normalized, bottom-left origin
-            return Line(text: text, box: CGRect(x: b.minX * w, y: (1 - b.maxY) * h, width: b.width * w, height: b.height * h))
+            return Line(text: text, box: CGRect(x: b.minX * w, y: (1 - b.maxY) * h, width: b.width * w, height: b.height * h),
+                        confidence: confidence)
         }
         return lines.sorted { a, b in
             overlapsVertically(a.box, b.box) ? a.box.minX < b.box.minX : a.box.midY < b.box.midY

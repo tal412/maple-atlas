@@ -225,7 +225,9 @@
         if(!best||value>best.value)best={text,parsed,value};
         if(cut===75&&value>=3*parsed.reduce((t,q)=>t+q.progress.length,0)&&parsed.length&&!/[^\x20-\x7e\n]/.test(text))break;   // clean already
       }
-      const text=best.text,quests=MapleQuestHelper.pack(best.parsed);
+      const text=best.text;
+      confirmed=MapleQuestHelper.stabilize(confirmed?.state,MapleQuestHelper.pack(best.parsed));
+      const quests=confirmed.quests;
       const changed=JSON.stringify(quests)!==JSON.stringify(questSeen?.quests);
       questSeen={signature,at:performance.now(),quests};
       return {visible:true,quests,changed,text:text.slice(0,600),elapsed:Math.round(performance.now()-started)};
@@ -240,18 +242,15 @@
   async function readQuestText(image){const {data}=await (await reader()).recognize(image,{},{text:true,blocks:true});return {first:String(data.text||'').trim(),text:await recheckCounts(data,image)||String(data.text||'').trim()};}
   // Panel text read by the platform's own text recognition (Apple Vision on the Mac):
   // only parsed here. null: no panel seen.
-  let textSeen=null,lastQuests=[];
+  // Only confirmed reads reach the phone (MapleQuestHelper.stabilize: two reads in a row
+  // must agree on any change; an unknown count keeps the last one).
+  let textVisible=null,confirmed=null;
   function questsFromText(text){
-    if(text==null){const changed=textSeen!==null;textSeen=null;return {visible:false,quests:[],changed};}
-    const quests=MapleQuestHelper.pack(MapleQuestHelper.parse(String(text)));
-    // A count read without its first number ("/1 Omok Piece"): the last read's value for it.
-    for(const q of quests)for(const p of q.p||[])if(p[0]==null){
-      const before=lastQuests.find(o=>o.t===q.t)?.p?.find(o=>o[2]===p[2]&&o[1]===p[1]);
-      if(before&&before[0]!=null)p[0]=before[0];
-    }
-    lastQuests=quests;
-    const key=JSON.stringify(quests),changed=key!==textSeen;
-    textSeen=key;return {visible:true,quests,changed,text:String(text).slice(0,600)};
+    if(text==null){const changed=textVisible!==false;textVisible=false;return {visible:false,quests:confirmed?.quests||[],changed};}
+    const read=MapleQuestHelper.pack(MapleQuestHelper.parse(String(text)));
+    confirmed=MapleQuestHelper.stabilize(confirmed?.state,read);
+    const changed=confirmed.changed||textVisible!==true;textVisible=true;
+    return {visible:true,quests:confirmed.quests,changed,text:String(text).slice(0,600)};
   }
   window.atlasEngine={questsFromText,readQuestText,ready,read,locate,readQuests,readFrame,locateFrame,readQuestsFrame,reset:()=>{seen=null;lastMap=null;scaleMemory=[];}};
 })();
