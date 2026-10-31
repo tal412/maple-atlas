@@ -38,10 +38,28 @@
     return scale;
   }
   // Your dot's position in map coordinates (the portal data's frame), or why it is unknown.
+  // Each map's own minimap image (data/minimaps/<id>.png), for a minimap that scrolls because
+  // its picture is bigger than its window: loaded on first use, kept for the session.
+  const previews=new Map();
+  function previewFor(id){
+    if(!pictures?.maps?.[id])return null;
+    const have=previews.get(id);
+    if(have!==undefined)return have instanceof Promise?null:have;
+    const loading=(async()=>{
+      try{
+        const r=await fetch('./data/minimaps/'+id+'.png');if(!r.ok)throw new Error('no image');
+        const bitmap=await createImageBitmap(await r.blob()),c=document.createElement('canvas');
+        c.width=bitmap.width;c.height=bitmap.height;const x=c.getContext('2d');x.drawImage(bitmap,0,0);bitmap.close();
+        const data=x.getImageData(0,0,c.width,c.height);previews.set(id,data);return data;
+      }catch(_){previews.set(id,null);return null;}
+    })();
+    previews.set(id,loading);
+    return null;
+  }
   function position(id,pixels,frameHeight){
     const points=(marks?.[id]||[]).map(([x,y])=>({x,y}));
     const g=pictures?.maps?.[id],picture=g?{...g,scale:pictures.scale}:null;
-    const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory,picture});
+    const found=MapleMinimapPosition.locate(pixels,points,{frameHeight,memory:scaleMemory,picture,preview:previewFor(id)});
     scaleMemory=found.memory;
     // The minimap window's edges in this image (0…1), for fitting the reading area to it.
     const box=found.window?{x:found.window.x/pixels.width,y:found.window.y/pixels.height,w:found.window.w/pixels.width,h:found.window.h/pixels.height}:null;
@@ -56,9 +74,12 @@
     return near||ids[0];
   }
   // Reads the map name from the strip; again only when the strip looks different, or every 20 s.
-  async function readName(image){
+  // lines: text already read over this image by the app ([{text, x, y}], centres in 0…1), used
+  // for the name when some of it lies in the strip; else the engine's own reader runs.
+  async function readName(image,lines){
     const strip=MapleMapName.find(image);
     if(!strip)return null;
+    const inStrip=(lines||[]).filter(l=>{const x=l.x*image.width,y=l.y*image.height;return x>=strip.x&&x<=strip.x+strip.w&&y>=strip.y&&y<=strip.y+strip.h&&String(l.text||'').trim();}).sort((a,b)=>a.y-b.y);
     const zoom=Math.max(1,Math.min(4,150/strip.h));
     nameCanvas.width=Math.round(strip.w*zoom);nameCanvas.height=Math.round(strip.h*zoom);
     nameContext.imageSmoothingEnabled=true;nameContext.imageSmoothingQuality='high';
@@ -68,20 +89,24 @@
     const signature=MapleMapName.signature(pixels);
     const box={x:strip.x/canvas.width,y:strip.y/canvas.height,w:strip.w/canvas.width,h:strip.h/canvas.height};
     if(seen?.found&&!MapleMapName.changed(signature,seen.signature)&&performance.now()-seen.at<20000)return {...seen,strip:box,fresh:false};
-    pixels=MapleMapName.blankLeft(pixels,emblem);   // the area emblem
-    nameContext.putImageData(pixels,0,0);
-    const worker=await reader(),{data}=await worker.recognize(nameCanvas),text=String(data.text||'').trim();
+    let text;
+    if(inStrip.length){text=inStrip.map(l=>l.text.trim()).join('\n');}
+    else{
+      pixels=MapleMapName.blankLeft(pixels,emblem);   // the area emblem
+      nameContext.putImageData(pixels,0,0);
+      const worker=await reader(),{data}=await worker.recognize(nameCanvas);text=String(data.text||'').trim();
+    }
     const found=MapleMapName.match(text,maps);
     return {strip:box,signature,at:performance.now(),text,found,fresh:true};
   }
   // One reading. frameHeight: the full game window height in source pixels.
-  async function readFrame(source,crop,frameHeight){
+  async function readFrame(source,crop,frameHeight,lines){
     if(busy)throw Error('A frame is already being read.');
     busy=true;const started=performance.now();
     try{
       await ready();
       const scale=draw(canvas,context,source,crop);
-      const reading=await readName(context.getImageData(0,0,canvas.width,canvas.height)),elapsed=()=>Math.round(performance.now()-started);
+      const reading=await readName(context.getImageData(0,0,canvas.width,canvas.height),lines),elapsed=()=>Math.round(performance.now()-started);
       if(!reading){seen=null;return {phase:'searching',text:SHOW_NAME,elapsed:elapsed()};}
       const previous=seen;seen=reading;
       if(!reading.found)return {phase:'searching',text:'Reading the map name… Keep the minimap and its name inside the box.',read:reading.text?.slice(0,80)||'',elapsed:elapsed()};
@@ -237,7 +262,7 @@
   }
   const bitmapOf=async dataURL=>createImageBitmap(await (await fetch(dataURL)).blob());
   // Data-URL entry points used by the Mac app (frameHeight in that image's pixels).
-  async function read(dataURL,frameHeight){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight);}finally{bitmap.close();}}
+  async function read(dataURL,frameHeight,lines){const bitmap=await bitmapOf(dataURL);try{return await readFrame(bitmap,null,frameHeight,lines);}finally{bitmap.close();}}
   async function locate(dataURL,frameHeight,id){const bitmap=await bitmapOf(dataURL);try{return await locateFrame(bitmap,null,frameHeight,id);}finally{bitmap.close();}}
   async function readQuests(dataURL,opts={}){const bitmap=await bitmapOf(dataURL);try{return await readQuestsFrame(bitmap,null,opts);}finally{bitmap.close();}}
   // The panel text of a prepared (inked) canvas, counts read twice. For tests and diagnostics.

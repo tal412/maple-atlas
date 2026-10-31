@@ -17,6 +17,8 @@ final class GameCapture: NSObject {
         let preview: CGImage
         /// The minimap crop as a PNG data URL (exact colors for the dot and portal rings).
         let minimapImage: String?
+        /// The same crop as an image, for reading its text on the Mac.
+        let minimapCGImage: CGImage?
         /// Full window height in the crop's pixels, which sizes the minimap title strip.
         let frameHeight: Int
     }
@@ -204,12 +206,12 @@ final class GameCapture: NSObject {
     nonisolated func frame(region: CGRect, previewOnly: Bool) throws -> Frame {
         guard let image = sink.latest else { throw CaptureError.noFrameYet }
         let preview = Self.downscaled(image, maxSide: Self.previewMaxSide)
-        guard !previewOnly else { return Frame(preview: preview, minimapImage: nil, frameHeight: image.height) }
+        guard !previewOnly else { return Frame(preview: preview, minimapImage: nil, minimapCGImage: nil, frameHeight: image.height) }
         let minimap = Self.cropped(image, to: region) ?? image
         let scaled = Self.downscaled(minimap, maxSide: Self.matchMaxSide)
         let factor = Double(scaled.width) / Double(max(1, minimap.width))
         return Frame(
-            preview: preview, minimapImage: try Self.pngDataURL(from: scaled),
+            preview: preview, minimapImage: try Self.pngDataURL(from: scaled), minimapCGImage: scaled,
             frameHeight: Int((Double(image.height) * factor).rounded()))
     }
 

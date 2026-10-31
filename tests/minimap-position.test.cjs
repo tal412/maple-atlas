@@ -71,3 +71,35 @@ console.log('PASS: minimap title, dot and portal rings, portal fit, scrolling, l
   assert.equal(raw.y+8*16, raw.y+128);
   console.log('minimap-position: marker lift passes');
 }
+// A minimap whose picture is bigger than its window: the game draws it at its own scale
+// (the title strip is 45 game px tall) and scrolls it. The window's slice is matched against
+// the map's own minimap image to find how far it scrolled, then the dot is placed on it.
+{
+  const P=require('path');const M=require(P.join(__dirname,'../src/minimap-position.js'));
+  const pw=300,ph=120,preview={width:pw,height:ph,data:new Uint8ClampedArray(pw*ph*4)};
+  let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
+  const blocks=[];for(let i=0;i<Math.ceil(pw/4)*Math.ceil(ph/4);i++)blocks.push(40+Math.floor(rnd()*180));   // 4 px blocks: a picture, not noise
+  for(let i=0;i<pw*ph;i++){const x=i%pw,y=(i-x)/pw,v=blocks[(y>>2)*Math.ceil(pw/4)+(x>>2)];preview.data.set([v,v*.8,v*.5,255],i*4);}
+  const k=1.25,unit=45*k,body={x:20,y:60,w:200,h:100},ox=90,oy=10,picture={w:pw,h:ph,dx:6,dy:3,scale:16};
+  const W=260,H=200,image={width:W,height:H,data:new Uint8ClampedArray(W*H*4)};
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    let c=[30,32,40];
+    if(x>=body.x&&x<body.x+body.w&&y>=body.y&&y<body.y+body.h){const px=Math.min(pw-1,Math.floor(ox+(x-body.x)/k)),py=Math.min(ph-1,Math.floor(oy+(y-body.y)/k)),j=(py*pw+px)*4;c=[preview.data[j],preview.data[j+1],preview.data[j+2]];}
+    image.data.set([...c,255],(y*W+x)*4);
+  }
+  // The dot marks picture pixel (150, 60), drawn 8 picture px above it.
+  const player={x:body.x+(150-ox)*k,y:body.y+(60-8-oy)*k};
+  const f=M.pictureFrame(body,picture,unit);
+  assert(f.x.clipped&&f.y.clipped,'both sides scroll: '+JSON.stringify(f));
+  const m=M.matchPreview(image,body,preview,f);
+  assert(m&&Math.abs(m.ox-ox)<=1&&Math.abs(m.oy-oy)<=1,'the slice is found on the image: '+JSON.stringify(m));
+  const at=M.placeOnPicture(body,player,[],[],picture,{unit,preview,image});
+  assert(at&&Math.abs(at.x-16*(150+6))<=24&&Math.abs(at.y-16*(60+3))<=24,'the dot is placed on the scrolled picture: '+JSON.stringify(at));
+  assert.equal(at.method,'image+lift');
+  // Without the image and without a ring, a dot in the middle says nothing.
+  assert.equal(M.placeOnPicture(body,{x:body.x+body.w/2,y:body.y+body.h/2},[],[],picture,{unit}).reason,'scrolled');
+  // A side that is not clipped: the window hugs the picture (k from the strip, 8% tolerance).
+  const hug=M.pictureFrame({x:0,y:0,w:Math.round(pw*k),h:Math.round(ph*k)},picture,unit);
+  assert(!hug.x.clipped&&!hug.y.clipped&&Math.abs(hug.k-k)<.02,JSON.stringify(hug));
+  console.log('minimap-position: scrolling minimap matched on the map image passes');
+}

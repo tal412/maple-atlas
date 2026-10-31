@@ -804,7 +804,11 @@ final class CompanionModel {
             guard !Task.isCancelled else { return }
             previewImage = frame.preview
             guard let png = frame.minimapImage else { return }
-            let reading = try await engine.read(png, frameHeight: frame.frameHeight)
+            // The name strip's text is read here (Vision reads it far better than the engine's
+            // own reader) and handed to the engine with the image.
+            let lines = frame.minimapCGImage.map { image in QuestText.recognize(image) } ?? []
+            let reading = try await engine.read(png, frameHeight: frame.frameHeight, lines: lines,
+                                                width: frame.minimapCGImage?.width ?? 0, height: frame.minimapCGImage?.height ?? 0)
             guard !Task.isCancelled else { return }
             apply(reading)
             if reading.phase == "confirmed", reading.position != nil { fitMinimapBox(reading.box, in: region) }
@@ -830,6 +834,7 @@ final class CompanionModel {
             line = "Map: \(reading.name ?? id) (\(id))" + (reading.position != nil ? " · dot found" : reading.positionNote.map { " · dot: \($0)" } ?? "")
         } else {
             line = "Map not read (\(reading.phase))" + (reading.name.map { " · \($0)?" } ?? "") + (reading.text.map { " · \($0.prefix(80))" } ?? "")
+                + (reading.read.map { " · read: \"\($0.replacingOccurrences(of: "\n", with: " / ").prefix(80))\"" } ?? "")
         }
         guard line != mapLogged, reading.phase == "confirmed" || Date.now.timeIntervalSince(mapLoggedAt) > 10 else { return }
         mapLogged = line

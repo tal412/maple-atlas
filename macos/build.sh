@@ -16,7 +16,7 @@ step() { printf '\033[1m==>\033[0m %s\n' "$*"; }
 step "Building Swift app"
 # Universal (Apple silicon and Intel) unless ARCHS says otherwise.
 ARCHS="${ARCHS:-arm64 x86_64}"
-VERSION="${VERSION:-0.3.23}"
+VERSION="${VERSION:-0.3.24}"
 SWIFT_ARCHS=(); for a in $ARCHS; do SWIFT_ARCHS+=(--arch "$a"); done
 (cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}")
 BIN_DIR="$(cd "$MACOS_DIR/App" && swift build -c release "${SWIFT_ARCHS[@]}" --show-bin-path)"
@@ -83,6 +83,8 @@ json.dump([{"id": str(m["id"]), "name": m["name"].strip(), "street": (m.get("str
 PY
 # Where each map's minimap picture sits on the map, for placing the player dot.
 cp "$REPO/data/minimap-geometry.json" "$ENGINE/data/minimap-geometry.json"
+# Each map's minimap picture, for a minimap that scrolls (its picture is bigger than its window).
+/usr/bin/python3 "$REPO/scripts/minimap-images.py" "$ENGINE/data/minimaps"
 # Visible portal positions per map, for placing the player dot (see src/minimap-position.js).
 /usr/bin/python3 - "$REPO/data/world.json" "$ENGINE/data/portal-marks.json" <<'PY'
 import json, sys

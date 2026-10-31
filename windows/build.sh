@@ -9,7 +9,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LINK="$REPO/macos/link"
 WEBUI="$LINK/webui"
 OUT="$REPO/windows/build"
-VERSION="${VERSION:-0.3.23}"
+VERSION="${VERSION:-0.3.24}"
 WINRES="$(command -v go-winres || echo "$HOME/go/bin/go-winres")"
 
 echo "==> Collecting the window and engine files"
@@ -26,6 +26,7 @@ json.dump([{"id": str(m["id"]), "name": m["name"].strip(), "street": (m.get("str
 PY
 # Where each map's minimap picture sits on the map, for placing the player dot.
 cp "$REPO/data/minimap-geometry.json" "$WEBUI/data/minimap-geometry.json"
+python3 "$REPO/scripts/minimap-images.py" "$WEBUI/data/minimaps"
 python3 - "$REPO/data/world.json" "$WEBUI/data/portal-marks.json" <<'PY'
 import json, sys
 world = json.load(open(sys.argv[1]))

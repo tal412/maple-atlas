@@ -10,6 +10,8 @@ struct EngineReading: Decodable, Sendable {
     let kind: String?
     let confidence: Int?
     let text: String?
+    /// What the text reader saw in the name strip when no map matched it.
+    let read: String?
     let elapsed: Double?
     /// The player's dot on the map (portal-data coordinates), when the minimap showed it.
     let position: Position?
@@ -41,7 +43,7 @@ struct EngineReading: Decodable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case phase, id, name, inliers, kind, confidence, text, elapsed, position, positionNote, box
+        case phase, id, name, inliers, kind, confidence, text, read, elapsed, position, positionNote, box
     }
 
     init(from decoder: Decoder) throws {
@@ -60,6 +62,7 @@ struct EngineReading: Decodable, Sendable {
         kind = try? c.decodeIfPresent(String.self, forKey: .kind)
         confidence = (try? c.decodeIfPresent(Double.self, forKey: .confidence)).map { Int($0.rounded()) }
         text = try? c.decodeIfPresent(String.self, forKey: .text)
+        read = try? c.decodeIfPresent(String.self, forKey: .read)
         elapsed = try? c.decodeIfPresent(Double.self, forKey: .elapsed)
         position = try? c.decodeIfPresent(Position.self, forKey: .position)
         positionNote = try? c.decodeIfPresent(String.self, forKey: .positionNote)
@@ -142,13 +145,18 @@ final class EngineHost: NSObject {
     }
 
     /// Runs one `atlasEngine.read`. Calls never overlap; a concurrent call throws `.busy`.
-    func read(_ dataURL: String, frameHeight: Int) async throws -> EngineReading {
+    /// lines: text read on the Mac over the same image (boxes in its pixels); the engine takes
+    /// the map name from the lines inside the name strip instead of its own reader.
+    func read(_ dataURL: String, frameHeight: Int, lines: [QuestText.Line] = [], width: Int = 0, height: Int = 0) async throws -> EngineReading {
         guard !reading else { throw EngineError.busy }
         reading = true
         defer { reading = false }
-        let script = "return JSON.stringify(await window.atlasEngine.read(frame, frameHeight));"
+        let payload = width > 0 && height > 0 ? lines.map {
+            ["text": $0.text, "x": Double($0.box.midX) / Double(width), "y": Double($0.box.midY) / Double(height)] as [String: Any]
+        } : []
+        let script = "return JSON.stringify(await window.atlasEngine.read(frame, frameHeight, lines));"
         let result = try await webView.callAsyncJavaScript(
-            script, arguments: ["frame": dataURL, "frameHeight": frameHeight], contentWorld: .page)
+            script, arguments: ["frame": dataURL, "frameHeight": frameHeight, "lines": payload], contentWorld: .page)
         guard let json = result as? String,
               let reading = try? JSONDecoder().decode(EngineReading.self, from: Data(json.utf8))
         else { throw EngineError.badResult }
