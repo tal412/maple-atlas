@@ -17,3 +17,6 @@ func lookSetup(string, string)                 {}
 
 // lookSession is used by the Windows Look overlay only.
 var lookSession = func() *session { return nil }
+
+// atlasWindowAt is used by the Windows pop-up shortcut (atlas_popup_windows.go) only.
+func atlasWindowAt(url, dir string) {}

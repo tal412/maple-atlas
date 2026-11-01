@@ -132,6 +132,10 @@ struct MainView: View {
                         .help("What the companion reads from the game window")
                 }
                 ToolbarItem(placement: .primaryAction) {
+                    Button { model.toggleAtlasPopup() } label: { Label("Over the game", systemImage: "macwindow.on.rectangle") }
+                        .help("Show Maple Atlas over the game window. Anywhere: ⌃⌥W shows and hides it.")
+                }
+                ToolbarItem(placement: .primaryAction) {
                     Button { model.atlas.reload() } label: { Label("Reload", systemImage: "arrow.clockwise") }
                         .help("Reload Maple Atlas")
                 }

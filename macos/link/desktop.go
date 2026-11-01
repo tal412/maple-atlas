@@ -294,6 +294,7 @@ func runDesktop(site, stateDir string, _ bool) {
 	ctrl.handle(command{Cmd: "start"})
 	url := server.URL()
 	logger.Printf("window at %s/ (state %s)", origin, stateDir)
+	atlasWindowAt(url, filepath.Join(stateDir, "window"))
 	if err := openWindow(url, filepath.Join(stateDir, "window")); err != nil {
 		fatal("Maple Atlas Companion could not open its window: " + err.Error() + "\n\nOpen this address in Microsoft Edge or Google Chrome:\n" + url)
 	}

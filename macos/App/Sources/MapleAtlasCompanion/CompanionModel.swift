@@ -61,6 +61,51 @@ final class CompanionModel {
     @ObservationIgnored private var controlsChosen = false
     @ObservationIgnored private var controlsAutoHidden = false
     func toggleControls() { showControls.toggle() }
+
+    /// ⌃⌥W: Maple Atlas pops up over the game window (on top, most of its size), and the same
+    /// shortcut, or going back to the game, puts it back where it was.
+    @ObservationIgnored private var popup: (frame: CGRect, level: NSWindow.Level, behavior: NSWindow.CollectionBehavior, controls: Bool, app: NSRunningApplication?)?
+    @ObservationIgnored private var popupObserver: NSObjectProtocol?
+    var isPopup: Bool { popup != nil }
+
+    func toggleAtlasPopup() {
+        guard let window = atlas.webView.window else { NSSound.beep(); return }
+        if popup != nil { endPopup(returnToGame: true); return }
+        let front = NSWorkspace.shared.frontmostApplication
+        popup = (window.frame, window.level, window.collectionBehavior, showControls, front?.processIdentifier == ProcessInfo.processInfo.processIdentifier ? nil : front)
+        let area = LookController.gameFrame(capture.windowID) ?? window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? window.frame
+        let size = CGSize(width: max(720, area.width * 0.86), height: max(520, area.height * 0.86))
+        let target = CGRect(x: area.midX - size.width / 2, y: area.midY - size.height / 2, width: size.width, height: size.height)
+        let chosen = controlsChosen
+        showControls = false
+        controlsChosen = chosen
+        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+        window.level = .floating
+        window.setFrame(target, display: true, animate: false)
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        // Clicking back into the game ends it.
+        popupObserver = NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.endPopup(returnToGame: false) }
+        }
+        log("Maple Atlas over the game (\(LookController.atlasKey) again to hide)")
+    }
+
+    private func endPopup(returnToGame: Bool) {
+        guard let p = popup else { return }
+        popup = nil
+        if let popupObserver { NotificationCenter.default.removeObserver(popupObserver) }
+        popupObserver = nil
+        if let window = atlas.webView.window {
+            window.level = p.level
+            window.collectionBehavior = p.behavior
+            window.setFrame(p.frame, display: true, animate: false)
+        }
+        let chosen = controlsChosen
+        showControls = p.controls
+        controlsChosen = chosen
+        if returnToGame { p.app?.activate() }
+    }
     /// Something is listening for the game: the phone or this Mac's own Maple Atlas window.
     var isLinked: Bool { isPhoneConnected || isAtlasOpen }
     /// One line for the window's toolbar.
@@ -516,6 +561,7 @@ final class CompanionModel {
         Task { [weak self] in guard let self else { return }; try? await self.lookHost.prepare(site: self.site.url) }
         look.windowID = { [weak self] in self?.capture.windowID }
         look.onLook = { [weak self] box in self?.lookAsked(box) }
+        look.onAtlas = { [weak self] in self?.toggleAtlasPopup() }
         look.start()
     }
 

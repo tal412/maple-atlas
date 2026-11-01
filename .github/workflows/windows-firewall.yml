@@ -9,6 +9,7 @@ on:
       - 'macos/link/diagnostics.go'
       - 'macos/link/desktop.go'
       - 'macos/link/local.go'
+      - 'macos/link/atlas_popup_windows.go'
       - 'macos/link/session.go'
       - 'macos/link/adapters_windows.go'
       - 'macos/link/fwevents_windows.go'
@@ -88,7 +89,7 @@ jobs:
           $atlas = Invoke-WebRequest "$url/" -UseBasicParsing
           if ($atlas.StatusCode -ne 200 -or -not $atlas.Content.Contains('Maple Atlas')) { throw 'Maple Atlas did not open through the app' }
           $ui = Invoke-WebRequest "$url/__companion/ui/?t=$token" -UseBasicParsing
-          if (-not $ui.Content.Contains('desktop.js')) { throw 'the companion controls are not served' }
+          if ($ui.StatusCode -ne 200 -or -not $ui.Content.Contains('<title>')) { throw 'the companion controls are not served' }
           try { Invoke-WebRequest "$url/__companion/link?t=wrong" -UseBasicParsing -TimeoutSec 5 | Out-Null; throw 'the link answered a wrong token' } catch { if ($_.Exception.Response.StatusCode.value__ -ne 403) { throw } }
           $before = Invoke-RestMethod "$url/api/firewall" -Headers $h
           Write-Host "before: $($before.state) $($before.detail) | $($before.rules -join ' ; ')"

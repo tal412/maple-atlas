@@ -105,6 +105,7 @@ func init() {
 func lookReady(owner uintptr) {
 	pRegisterHotKey.Call(owner, 1, modControl|modAlt|modNoRepeat, 'M')
 	pRegisterHotKey.Call(owner, 2, modControl|modAlt|modNoRepeat, 'A')
+	pRegisterHotKey.Call(owner, 3, modControl|modAlt|modNoRepeat, 'W')
 	class := utf16("MapleAtlasOverlay")
 	mark, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTopmost|wsExToolWindow, uintptr(unsafe.Pointer(class)),
 		uintptr(unsafe.Pointer(utf16("Maple Atlas Look"))), wsPopup, 0, 0, 100, 100, 0, 0, 0, 0)
@@ -149,6 +150,8 @@ func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
 			l.beginMark()
 		} else if wparam == 2 {
 			l.lookAll()
+		} else if wparam == 3 {
+			toggleAtlasPopup()
 		}
 		return 0, true
 	case hwnd == l.mark && hwnd != 0:

@@ -672,6 +672,8 @@ body {background:light-dark(#d7e9e9,#142937);}
 #mc-controls-drawer header button{font:inherit;width:40px;height:40px;border-radius:20px;border:0;background:transparent;color:inherit;cursor:pointer;font-size:22px;line-height:1}
 #mc-controls-drawer header button:hover{background:light-dark(#0001,#fff1)}
 #mc-controls-drawer iframe{border:0;width:100%;height:100%}
+#maple-atlas-concept #mc-desktop-shortcut{margin:0;padding:12px 14px;border-radius:14px;background:var(--mc-soft);color:var(--mc-muted);font-size:13px;line-height:1.5}
+#maple-atlas-concept #mc-desktop-shortcut kbd{font:600 13px/1 system-ui,sans-serif;padding:3px 7px;border-radius:6px;border:1px solid var(--mc-edge);background:var(--mc-paper);color:var(--mc-ink,inherit)}
 
 /* Quest helper (src/quest-panel.js) */
 #maple-atlas-concept button.mc-profile {border:0;cursor:pointer;color:var(--mc-ink);}
@@ -1083,6 +1085,7 @@ body {background:light-dark(#d7e9e9,#142937);}
         <span id="mc-desktop-icon" aria-hidden="true">…</span><div><strong id="mc-desktop-title">Connecting…</strong><p id="mc-desktop-message"></p></div>
       </section>
       <section id="mc-desktop-tracking"><h3 id="mc-desktop-tracking-title">Waiting for the game</h3><p id="mc-desktop-tracking-message">Open MapleStory. The companion finds its window and reads the map name on the minimap.</p></section>
+      <p id="mc-desktop-shortcut"><kbd>⌃⌥W</kbd> <span>(Ctrl+Alt+W on Windows)</span> pops this window up over the game while you play; press it again to go back to the game.</p>
       <button type="button" id="mc-desktop-controls" class="mc-primary"><i data-lucide="settings-2" aria-hidden="true"></i>Game window &amp; phone</button>
       <p class="mc-companion-note">This window is Maple Atlas inside the companion app: your map, dot, quests, Look and prices follow the game on this computer. Your phone can follow too: pair it under Game window &amp; phone.</p>
     </div>
