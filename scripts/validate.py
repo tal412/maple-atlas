@@ -96,12 +96,17 @@ for quest in world['quests']:
 page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
-assert len(re.findall(r'\bfetch\s*\(', page)) == 7 and "fetch('./data/spawn-points.json')" in page, 'Only catalog, market snapshot, MCW item, wiki item-source, same-origin spawn-point and the two Look loaders may fetch'
+# Catalog, market snapshot, MCW item, wiki item-source and same-origin spawn points (5), Look's
+# list catalog (1), and Look's engine (2: its cached file loader and its catalog), which is in the
+# page and again in the code of Look's background worker (2).
+assert len(re.findall(r'\bfetch\s*\(', page)) == 10 and "fetch('./data/spawn-points.json')" in page, 'Only the known loaders may fetch'
 # Look loads only this site's files: the catalog, and assets/look/ + vendor/ort/ through one
 # cached loader; nothing from other hosts (no maplestory.io, no CDN for its pictures).
 look_ui = (ROOT / 'src/look-ui.js').read_text()
-assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 2 and 'fetch(catalogUrl)' in look_ui and "fetch(url,{credentials:'same-origin'})" in look_ui
-assert 'maplestory.io' not in look_ui and 'fetch(' not in (ROOT / 'src/look-detector.js').read_text() and 'fetch(' not in (ROOT / 'src/look-namer.js').read_text()
+look_engine = (ROOT / 'src/look-engine.js').read_text()
+assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 1 and 'fetch(catalogUrl)' in look_ui
+assert len(re.findall(r'\bfetch\s*\(', look_engine)) == 2 and 'fetch(abs(catalogUrl))' in look_engine and "fetch(url,{credentials:'same-origin'})" in look_engine
+assert 'maplestory.io' not in look_ui + look_engine and all('fetch(' not in (ROOT / f'src/{n}.js').read_text() for n in ('look-detector', 'look-namer', 'look-worker'))
 assert "const ORT='./vendor/ort/'" in page and (ROOT / 'docs/vendor/ort/ort-wasm-simd-threaded.wasm').exists()
 assert "const api='https://mapleclassic.wiki/api.php'" in page, 'Item sources come only from the MapleClassic Wiki API'
 from market import validate as validate_market

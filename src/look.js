@@ -332,7 +332,8 @@
   // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
   // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData
   // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).
-  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200}){
+  // onProgress(done, total, found): after each box (Look shows them as they are named).
+  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200,onProgress=null}){
     // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
     const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
       if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
@@ -379,7 +380,9 @@
       }
       return best;
     }
+    let done=0;const total=detections.length;
     for(const det of detections){
+      if(onProgress){onProgress(done,total,found);}done++;
       if(!inside(det.box))continue;
       const b=det.box,tags=tagUnder(b);
       if(det.cls==='player'){

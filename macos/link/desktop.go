@@ -129,6 +129,9 @@ func runDesktop(site, stateDir string, _ bool) {
 		if v["event"] == "look-result" {
 			overlayLookCard(v)
 		}
+		if v["event"] == "look-progress" {
+			overlayLookProgress(v)
+		}
 		h.emit(v)
 	}
 	ctrl := &controller{site: site, stateDir: stateDir, emit: emit}

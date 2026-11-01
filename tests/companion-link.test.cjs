@@ -105,6 +105,8 @@ async function connect(h,code){
   deliver({kind:'look-part',v:1,session:offer.session,req:'c7',i:0,data:'AAAA'});
   assert.deepEqual(looks[1].mark,{x:.1,y:.2,w:.3,h:.4});
   assert(h.link.lookResult('c7',{title:'In the box',items:[]}));assert.equal(channel.messages.at(-1).kind,'look-result');
+  assert(h.link.lookProgress('c7','Naming 3 of 12…'));assert.deepEqual([channel.messages.at(-1).kind,channel.messages.at(-1).text],['look-progress','Naming 3 of 12…']);
+  assert(!h.link.lookProgress('p7','x'),'progress only for looks marked on the computer');
   deliver({kind:'look-error',v:1,session:offer.session,req:'p2',message:'No game window'});assert.equal(looks[2].error,'No game window');
   deliver({kind:'look-meta',v:1,session:offer.session,req:'p3',w:1600,h:900,parts:9999,bytes:5,lines:[]});
   deliver({kind:'look-part',v:1,session:offer.session,req:'p3',i:0,data:'AAAA'});assert.equal(looks.length,3,'a screenshot of too many parts is refused');

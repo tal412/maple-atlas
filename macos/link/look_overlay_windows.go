@@ -70,6 +70,7 @@ type lookUI struct {
 	count     int
 	waiting   bool
 	message   string
+	progress  string // the phone's line while it looks ("Naming 3 of 12…")
 	data      *lookCardData
 	box       winRect // where the card goes (screen)
 	hideAt    time.Time
@@ -262,7 +263,7 @@ func (l *lookUI) start(mark []float64, box winRect) {
 	}
 	l.count++
 	req := "c" + strconv.Itoa(l.count)
-	l.pending, l.waiting, l.data, l.message = req, true, nil, "Looking…"
+	l.pending, l.waiting, l.data, l.message, l.progress = req, true, nil, "Looking…", ""
 	if l.failTimer != nil {
 		l.failTimer.Stop()
 	}
@@ -289,9 +290,35 @@ func (l *lookUI) fail(req, msg string) {
 		l.mu.Unlock()
 		return
 	}
-	l.pending, l.waiting, l.data, l.message = "", false, nil, msg
+	l.pending, l.waiting, l.data, l.message, l.progress = "", false, nil, msg, ""
 	l.mu.Unlock()
 	l.showCard(8 * time.Second)
+}
+
+// overlayLookProgress takes the helper's "look-progress" event: the line under "Looking" while
+// the phone works. The phone is still working, so the no-answer timer starts again.
+func overlayLookProgress(v map[string]any) {
+	req, _ := v["req"].(string)
+	text, _ := v["text"].(string)
+	l := look
+	l.mu.Lock()
+	if req == "" || req != l.pending || !l.waiting {
+		l.mu.Unlock()
+		return
+	}
+	grow := l.progress == ""
+	l.progress = text
+	if l.failTimer != nil {
+		l.failTimer.Stop()
+	}
+	l.failTimer = time.AfterFunc(18*time.Second, func() { l.fail(req, "No answer from the phone. Keep Maple Atlas open on it.") })
+	card := l.card
+	l.mu.Unlock()
+	if grow {
+		l.showCard(20 * time.Second)
+	} else if card != 0 {
+		pInvalidateRect.Call(card, 0, 0)
+	}
 }
 
 // overlayLookCard takes the helper's "look-result" event (checked by lookCard).
@@ -311,7 +338,7 @@ func overlayLookCard(v map[string]any) {
 	if l.failTimer != nil {
 		l.failTimer.Stop()
 	}
-	l.pending, l.waiting, l.data = "", false, &card
+	l.pending, l.waiting, l.data, l.progress = "", false, &card, ""
 	l.message = card.Note
 	if len(card.Items) == 0 && card.Note == "" {
 		l.message = "Nothing from the database found here."
@@ -361,6 +388,9 @@ func (l *lookUI) paintMark(hwnd uintptr) {
 func (l *lookUI) cardSize(scale float64) (int32, int32) {
 	px := func(v float64) int32 { return int32(v * scale) }
 	h := px(44)
+	if l.waiting && l.progress != "" {
+		h += px(20)
+	}
 	if l.data != nil {
 		for _, it := range l.data.Items {
 			h += px(30)
@@ -411,7 +441,7 @@ func (l *lookUI) paintCard(hwnd uintptr) {
 	overlay.mu.Unlock()
 	px := func(v float64) int32 { return int32(v * scale) }
 	l.mu.Lock()
-	data, message, waiting := l.data, l.message, l.waiting
+	data, message, waiting, progress := l.data, l.message, l.waiting, l.progress
 	l.mu.Unlock()
 
 	key, _, _ := pCreateSolidBrush.Call(keyColor)
@@ -449,6 +479,9 @@ func (l *lookUI) paintCard(hwnd uintptr) {
 		title = "Looking " + dots
 	}
 	text(title, px(16), px(10), w-px(14), px(36), px(15), 600, rgb(255, 255, 255))
+	if waiting && progress != "" {
+		text(progress, px(16), px(36), w-px(14), px(58), px(13), 400, rgb(180, 186, 196))
+	}
 	if data == nil {
 		return
 	}

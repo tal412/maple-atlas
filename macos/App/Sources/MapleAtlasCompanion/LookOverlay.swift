@@ -125,6 +125,13 @@ final class LookController {
         showCard(for: 20)
     }
 
+    /// The phone's line while it looks, in place of "Looking…".
+    func progress(_ text: String) {
+        guard state.waiting else { return }
+        state.message = text
+        showCard(for: 20)
+    }
+
     func show(_ card: LookCard) {
         state.waiting = false
         state.card = card

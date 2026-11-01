@@ -9,6 +9,7 @@ package main
 //	computer → phone  {kind:"look-meta", v:1, req, w, h, parts, bytes, mark, lines}
 //	                  {kind:"look-part", v:1, req, i, data}             base64 JPEG pieces
 //	phone → computer  {kind:"look-result", v:1, req:"c…", card}         for a look marked here
+//	phone → computer  {kind:"look-progress", v:1, req:"c…", text}       how that look is going
 //
 // Requests from the phone start with "p", looks marked on the computer with "c".
 
@@ -128,6 +129,20 @@ func (s *session) sendLookError(req, msg string) {
 	if s.cur != nil && s.cur.verified {
 		s.sendLocked(s.cur, map[string]any{"kind": "look-error", "v": 1, "session": s.id, "req": req, "message": clip(msg, 160)})
 	}
+}
+
+// lookProgressText checks the phone's progress line for a look marked here: one short line of
+// plain text (no control characters), at most 60 characters.
+func lookProgressText(s string) (string, bool) {
+	if s == "" || len(s) > 240 {
+		return "", false
+	}
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f {
+			return "", false
+		}
+	}
+	return clip(s, 60), true
 }
 
 // lookCard checks the phone's result card for a look marked on the computer, field by field:

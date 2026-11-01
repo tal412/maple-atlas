@@ -55,3 +55,17 @@ func TestSendLookRefusesBadShots(t *testing.T) {
 		t.Fatal("sent without a connected phone")
 	}
 }
+
+func TestLookProgressText(t *testing.T) {
+	if got, ok := lookProgressText("Naming 3 of 12…"); !ok || got != "Naming 3 of 12…" {
+		t.Fatalf("plain line: %q %v", got, ok)
+	}
+	for _, bad := range []string{"", "two\nlines", "bell\x07", strings.Repeat("x", 300)} {
+		if _, ok := lookProgressText(bad); ok {
+			t.Fatalf("accepted %q", bad)
+		}
+	}
+	if got, _ := lookProgressText(strings.Repeat("a", 100)); len([]rune(got)) > 61 {
+		t.Fatalf("not clipped: %d", len([]rune(got)))
+	}
+}

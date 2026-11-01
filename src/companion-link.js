@@ -226,10 +226,12 @@
     // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
     function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
     function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
+    // How a look marked on the computer is going, for its card ("Naming 3 of 12…").
+    function lookProgress(req,text){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-progress',v:1,session,req,text:String(text).slice(0,60)});return true;}
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
     // Pinned quests for the computer's overlay row.
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
-    return {join,stop,nav,pins,look,lookResult,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    return {join,stop,nav,pins,look,lookResult,lookProgress,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

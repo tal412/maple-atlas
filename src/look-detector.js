@@ -1,7 +1,7 @@
 /* The Look detector: a small YOLO model, trained on synthetic game screens made from the
  * game's own sprites and map renders (the training scripts live outside this repository),
  * that finds monsters, NPCs, dropped items, players and pets on a screenshot. It runs in the
- * browser with ONNX Runtime Web (vendor/ort/ on this site), loaded only when Look is first used;
+ * browser (in Look's worker, src/look-worker.js) with ONNX Runtime Web (vendor/ort/ on this site);
  * the model and the runtime's WebAssembly come as bytes from Look's own cache (src/look-ui.js).
  *
  * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player'|'pet', score, box: {x, y, w, h}}] in the
@@ -10,15 +10,23 @@
 (function(scope){
   const CLASSES=['monster','npc','item','player','pet'];
   const ORT='./vendor/ort/';
-  // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm).
-  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5}={}){
+  // A canvas in the page or in a worker.
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  // The runtime's script: a <script> in the page, importScripts in a worker.
+  function loadScript(src){
+    if(scope.ort)return Promise.resolve();
+    if(typeof document==='undefined'){try{importScripts(src);return Promise.resolve();}catch(_){return Promise.reject(Error('The detector could not load.'));}}
+    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});
+  }
+  // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm); base: the
+  // site's address (in a worker, its own address is not the site's).
+  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5,base=scope.location?.href}={}){
     let session=null,loading=null;
-    function loadScript(src){return new Promise((res,rej)=>{if(scope.ort)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});}
     function ready(){
       loading??=(async()=>{
-        await loadScript(new URL(ORT+'ort.min.js',location.href).href);
+        await loadScript(new URL(ORT+'ort.min.js',base).href);
         const [bytes,wasm]=await Promise.all([model(),runtime()]);
-        scope.ort.env.wasm.wasmPaths=new URL(ORT,location.href).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;
+        scope.ort.env.wasm.wasmPaths=new URL(ORT,base).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;
         session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});
         return session;
       })().catch(e=>{loading=null;throw e;});
@@ -27,12 +35,13 @@
     // Letterbox into the model's input (keeping the aspect), as the model was trained.
     function input(image){
       const k=Math.min(inputW/image.width,inputH/image.height),w=Math.round(image.width*k),h=Math.round(image.height*k),dx=(inputW-w)>>1,dy=(inputH-h)>>1;
-      const src=document.createElement('canvas');src.width=image.width;src.height=image.height;src.getContext('2d').putImageData(image,0,0);
-      const c=document.createElement('canvas');c.width=inputW;c.height=inputH;const x=c.getContext('2d');x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);
+      const src=canvas(image.width,image.height);src.getContext('2d').putImageData(toImageData(image),0,0);
+      const c=canvas(inputW,inputH);const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);
       const d=x.getImageData(0,0,inputW,inputH).data,n=inputW*inputH,t=new Float32Array(3*n);
       for(let i=0;i<n;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}
       return {tensor:new scope.ort.Tensor('float32',t,[1,3,inputH,inputW]),k,dx,dy};
     }
+    const toImageData=img=>img instanceof ImageData?img:new ImageData(new Uint8ClampedArray(img.data),img.width,img.height);
     const iouOf=(a,b)=>{const x=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)),y=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return x*y/(a.w*a.h+b.w*b.h-x*y);};
     async function detect(image){
       await ready();

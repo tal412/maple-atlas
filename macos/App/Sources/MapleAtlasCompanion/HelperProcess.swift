@@ -62,6 +62,8 @@ enum HelperEvent: Sendable {
     case lookRequest(req: String)
     /// What the phone found in a look marked on this Mac.
     case lookResult(req: String, card: LookCard)
+    /// How that look is going on the phone ("Naming 3 of 12…").
+    case lookProgress(req: String, text: String)
     /// A screenshot was sent to the phone, or why not (empty error: sent).
     case lookSent(req: String, error: String)
 
@@ -87,6 +89,7 @@ enum HelperEvent: Sendable {
         let quests: [PinnedQuest]?
         let req: String?
         let card: LookCard?
+        let text: String?
         let error: String?
     }
 
@@ -125,6 +128,9 @@ enum HelperEvent: Sendable {
         case "look-result":
             guard let req = raw.req, let card = raw.card else { return nil }
             self = .lookResult(req: req, card: card)
+        case "look-progress":
+            guard let req = raw.req, let text = raw.text, !text.isEmpty else { return nil }
+            self = .lookProgress(req: req, text: String(text.prefix(60)))
         case "look-sent":
             guard let req = raw.req else { return nil }
             self = .lookSent(req: req, error: raw.error ?? "")

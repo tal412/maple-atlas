@@ -527,9 +527,10 @@ type message struct {
 	Proof   string          `json:"proof"`
 	Nav     json.RawMessage `json:"nav"`
 	Pins    json.RawMessage `json:"pins"`
-	// look, look-result (look.go)
+	// look, look-result, look-progress (look.go)
 	Req  string          `json:"req"`
 	Card json.RawMessage `json:"card"`
+	Text string          `json:"text"`
 }
 
 func (s *session) onMessage(l *link, data []byte) {
@@ -595,6 +596,11 @@ func (s *session) onMessage(l *link, data []byte) {
 		// What the phone found in a look marked on this computer, for the overlay card.
 		if card, ok := lookCard(m.Card); ok {
 			go s.emit(map[string]any{"event": "look-result", "req": m.Req, "card": card})
+		}
+	case m.Kind == "look-progress" && l.verified && m.V == 1 && lookReq.MatchString(m.Req) && strings.HasPrefix(m.Req, "c"):
+		// How the phone's look is going ("Naming 3 of 12…"), for the card while it waits.
+		if text, ok := lookProgressText(m.Text); ok {
+			go s.emit(map[string]any{"event": "look-progress", "req": m.Req, "text": text})
 		}
 	case m.Kind == "ping" && l.verified && m.Seq > 0:
 		s.sendLocked(l, map[string]any{"kind": "pong", "v": 2, "session": s.id, "seq": m.Seq})

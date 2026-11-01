@@ -10,6 +10,7 @@
  */
 (function(scope){
   const SIZE=96,GREY=114;
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
   function create({model,runtime,classes=[]}={}){
     let session=null,loading=null;
     function ready(){
@@ -25,7 +26,7 @@
     // The box padded by 8% (grey beyond the picture), letterboxed to SIZE x SIZE on grey.
     function input(image,box,source){
       const px=box.w*.08,py=box.h*.08,x0=Math.round(box.x-px),y0=Math.round(box.y-py),w=Math.max(1,Math.round(box.x+box.w+px)-x0),h=Math.max(1,Math.round(box.y+box.h+py)-y0);
-      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=document.createElement('canvas');c.width=SIZE;c.height=SIZE;
+      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=canvas(SIZE,SIZE);
       const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle=`rgb(${GREY},${GREY},${GREY})`;x.fillRect(0,0,SIZE,SIZE);
       const ox=(SIZE-dw)>>1,oy=(SIZE-dh)>>1;x.save();x.beginPath();x.rect(ox,oy,dw,dh);x.clip();x.imageSmoothingQuality='medium';
       x.drawImage(source,x0,y0,w,h,ox,oy,dw,dh);x.restore();
@@ -37,7 +38,7 @@
     // A canvas of the screenshot, made once per picture.
     let lastImage=null,lastCanvas=null;
     function sourceOf(image){
-      if(image!==lastImage){const c=document.createElement('canvas');c.width=image.width;c.height=image.height;c.getContext('2d').putImageData(image,0,0);lastImage=image;lastCanvas=c;}
+      if(image!==lastImage){const c=canvas(image.width,image.height);c.getContext('2d').putImageData(image instanceof ImageData?image:new ImageData(new Uint8ClampedArray(image.data),image.width,image.height),0,0);lastImage=image;lastCanvas=c;}
       return lastCanvas;
     }
     async function name(image,box){

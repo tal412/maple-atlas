@@ -378,6 +378,9 @@ final class CompanionModel {
         case .lookResult(let req, let card):
             log("Look: the phone found " + (card.items.isEmpty ? "nothing" : card.items.map(\.name).joined(separator: ", ")))
             if req == lookPending { lookPending = nil; look.show(card) }
+        case .lookProgress(let req, let text):
+            // The phone is still working: show how far, and wait for it a while longer.
+            if req == lookPending { look.progress(text); armLookTimeout(req) }
         case .lookSent(let req, let error):
             if !error.isEmpty {
                 log("Look: the screenshot was not sent · \(error)")
@@ -396,13 +399,19 @@ final class CompanionModel {
         let req = "c\(lookCount)"
         lookPending = req
         Task { await sendLook(req: req, mark: box ?? CGRect(x: 0, y: 0, width: 1, height: 1)) }
-        Task { [weak self] in
+        armLookTimeout(req)
+    }
+    /// No answer (and no progress) from the phone for 18 s: the look has failed.
+    private func armLookTimeout(_ req: String) {
+        lookTimeout?.cancel()
+        lookTimeout = Task { [weak self] in
             try? await Task.sleep(for: .seconds(18))
-            guard let self, self.lookPending == req else { return }
+            guard !Task.isCancelled, let self, self.lookPending == req else { return }
             self.lookPending = nil
             self.look.fail("No answer from the phone. Keep Maple Atlas open on it.")
         }
     }
+    @ObservationIgnored private var lookTimeout: Task<Void, Never>?
     @ObservationIgnored private var lookCount = 0
     @ObservationIgnored private var lookPending: String?
 

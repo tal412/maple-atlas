@@ -737,11 +737,11 @@ body {background:light-dark(#d7e9e9,#142937);}
 /* Look: a screenshot of the game with a box, and what was found in it (src/look-ui.js). */
 #maple-atlas-concept .mc-look-chip {display:inline-flex;align-items:center;gap:6px;}
 #maple-atlas-concept .mc-look-chip svg {width:16px;height:16px;}
-#maple-atlas-concept .mc-mobile-dialog.mc-look {width:min(720px,calc(100vw - 16px));height:calc(100dvh - 16px);max-height:none;display:none;flex-direction:column;gap:10px;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));overflow:hidden;}
+#maple-atlas-concept .mc-mobile-dialog.mc-look {width:min(720px,calc(100vw - 16px));height:calc(100dvh - 16px);max-height:none;display:none;flex-direction:column;gap:10px;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;}
 #maple-atlas-concept .mc-mobile-dialog.mc-look[open] {display:flex;}
 #maple-atlas-concept .mc-look header {margin:0;}
 #maple-atlas-concept .mc-look .mc-look-status {margin:0;min-height:1.4em;color:var(--mc-ink);font-weight:500;}
-#maple-atlas-concept .mc-look-stage {position:relative;flex:1 1 48%;min-height:220px;border-radius:18px;overflow:hidden;background:#111;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+#maple-atlas-concept .mc-look-stage {position:relative;flex:none;height:min(52dvh,560px);min-height:220px;border-radius:18px;overflow:hidden;background:#111;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
 #maple-atlas-concept .mc-look-stage:active {cursor:grabbing;}
 #maple-atlas-concept .mc-look-stage canvas {position:absolute;inset:0;width:100%;height:100%;}
 #maple-atlas-concept .mc-look-box {position:absolute;border:3px solid #4dabf7;border-radius:10px;box-shadow:0 0 0 9999px #0000004d;pointer-events:none;}
@@ -752,10 +752,14 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-look-actions button svg {width:18px;height:18px;}
 #maple-atlas-concept .mc-look-actions button:disabled {opacity:.55;}
 #maple-atlas-concept .mc-look .mc-look-hint {margin:0;font-size:12px;}
-#maple-atlas-concept .mc-look-results {flex:1 1 32%;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;}
-#maple-atlas-concept .mc-look-row {flex:none;display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);text-align:left;}
-#maple-atlas-concept .mc-look-row > svg {flex:none;width:18px;height:18px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-results {flex:none;display:flex;flex-direction:column;gap:6px;padding-bottom:8px;}
+#maple-atlas-concept .mc-look-row {flex:none;display:flex;align-items:stretch;width:100%;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+#maple-atlas-concept .mc-look-row.mc-look-selected {border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset;}
+#maple-atlas-concept .mc-look-pick {flex:1;min-width:0;min-height:0;display:flex;align-items:center;gap:12px;padding:8px 4px 8px 10px;border:0;border-radius:0;background:none;color:inherit;text-align:left;font:inherit;cursor:pointer;}
+#maple-atlas-concept .mc-look-open {flex:none;display:grid;place-items:center;width:44px;min-height:0;padding:0;border:0;border-left:1px solid var(--mc-edge);border-radius:0;background:none;color:var(--mc-muted);cursor:pointer;}
+#maple-atlas-concept .mc-look-open svg {width:18px;height:18px;}
 #maple-atlas-concept .mc-look-thumb {flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--mc-paper);box-shadow:inset 0 0 0 2px var(--c,transparent);overflow:hidden;}
+#maple-atlas-concept .mc-look-map .mc-look-thumb, #maple-atlas-concept .mc-look-plain .mc-look-thumb {box-shadow:none;}
 #maple-atlas-concept .mc-look-thumb img {max-width:40px;max-height:40px;image-rendering:pixelated;}
 #maple-atlas-concept .mc-look-text {display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
 #maple-atlas-concept .mc-look-text strong {font-size:15px;font-weight:600;}
@@ -774,6 +778,17 @@ body {background:light-dark(#d7e9e9,#142937);}
 @media (max-width:700px) {
   #maple-atlas-concept .mc-mobile-dialog.mc-look {width:100%;height:calc(100dvh - env(safe-area-inset-top,0px) - 6px);margin:auto 0 0;border-radius:24px 24px 0 0;}
 }
+/* Progress: a thin bar under the picture (counted, or sliding while the length is unknown). */
+#maple-atlas-concept .mc-look-progress {flex:none;height:4px;margin-top:-4px;border-radius:2px;background:var(--mc-edge);overflow:hidden;}
+#maple-atlas-concept .mc-look-progress[hidden] {display:none;}
+#maple-atlas-concept .mc-look-progress span {display:block;height:100%;width:0;background:#4dabf7;border-radius:2px;transition:width .2s;}
+#maple-atlas-concept .mc-look-progress.mc-look-indeterminate span {width:35%;animation:mc-look-slide 1.1s ease-in-out infinite;}
+@keyframes mc-look-slide {from {transform:translateX(-100%);} to {transform:translateX(290%);}}
+/* The two views: the one shown is pressed; while the screen is being read it spins. */
+#maple-atlas-concept .mc-look-actions button[aria-pressed="true"] {background:var(--mc-blue,#4dabf7);color:#0b1a2a;border-color:transparent;}
+#maple-atlas-concept .mc-look-actions button.mc-look-working svg {animation:mc-look-spin 1s linear infinite;}
+@keyframes mc-look-spin {to {transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce) {#maple-atlas-concept .mc-look-progress.mc-look-indeterminate span, #maple-atlas-concept .mc-look-actions button.mc-look-working svg {animation:none;}}
 
 /* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
 #maple-atlas-concept #mc-intro {
@@ -1048,7 +1063,7 @@ body {background:light-dark(#d7e9e9,#142937);}
     </div>
     <div id="mc-search-entity" hidden></div>
   </dialog>
-  <dialog id="mc-look-dialog" class="mc-mobile-dialog mc-look" aria-labelledby="mc-look-title"><header><h2 id="mc-look-title">Look</h2><button type="button" data-close-dialog="mc-look-dialog" aria-label="Close Look"><i data-lucide="x" aria-hidden="true"></i></button></header><p id="mc-look-status" class="mc-look-status" role="status">Taking a screenshot of the game…</p><div id="mc-look-stage" class="mc-look-stage"><canvas id="mc-look-canvas"></canvas><div id="mc-look-box" class="mc-look-box" aria-hidden="true"><span class="mc-look-handle"></span></div></div><div class="mc-look-actions"><button type="button" id="mc-look-identify" class="mc-primary"><i data-lucide="scan" aria-hidden="true"></i>Identify box</button><button type="button" id="mc-look-around"><i data-lucide="radar" aria-hidden="true"></i>Around me</button><button type="button" id="mc-look-retake" aria-label="New screenshot"><i data-lucide="refresh-cw" aria-hidden="true"></i></button></div><p class="mc-look-hint">Drag the picture to move the box over something, pinch to zoom, drag the corner to resize. On the computer: ⌃⌥M (Ctrl+Alt+M) marks a box on the game, ⌃⌥A (Ctrl+Alt+A) looks around you.</p><div id="mc-look-results" class="mc-look-results"></div></dialog>
+  <dialog id="mc-look-dialog" class="mc-mobile-dialog mc-look" aria-labelledby="mc-look-title"><header><h2 id="mc-look-title">Look</h2><button type="button" data-close-dialog="mc-look-dialog" aria-label="Close Look"><i data-lucide="x" aria-hidden="true"></i></button></header><p id="mc-look-status" class="mc-look-status" role="status">Taking a screenshot of the game…</p><div id="mc-look-stage" class="mc-look-stage"><canvas id="mc-look-canvas"></canvas><div id="mc-look-box" class="mc-look-box" aria-hidden="true"><span class="mc-look-handle"></span></div></div><div id="mc-look-progress" class="mc-look-progress" hidden><span></span></div><div class="mc-look-actions"><button type="button" id="mc-look-identify" aria-pressed="true"><i data-lucide="scan" aria-hidden="true"></i>Identify box</button><button type="button" id="mc-look-around" aria-pressed="false"><i data-lucide="radar" aria-hidden="true"></i>Around me</button><button type="button" id="mc-look-retake" aria-label="New screenshot"><i data-lucide="refresh-cw" aria-hidden="true"></i></button></div><p class="mc-look-hint">Drag the picture to move the box over something (the list follows), pinch to zoom, drag the corner to resize. Tap a row to see where it is. On the computer: ⌃⌥M (Ctrl+Alt+M) marks a box on the game, ⌃⌥A (Ctrl+Alt+A) looks around you.</p><div id="mc-look-results" class="mc-look-results"></div></dialog>
   <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
   <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title">
     <header><h2 id="mc-profile-title">Maple Atlas</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header>
@@ -2536,10 +2551,12 @@ window.mapleStorageReady.then(() => {
     // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
     function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
     function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
+    // How a look marked on the computer is going, for its card ("Naming 3 of 12…").
+    function lookProgress(req,text){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-progress',v:1,session,req,text:String(text).slice(0,60)});return true;}
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
     // Pinned quests for the computer's overlay row.
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
-    return {join,stop,nav,pins,look,lookResult,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    return {join,stop,nav,pins,look,lookResult,lookProgress,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);
@@ -3639,7 +3656,7 @@ window.mapleStorageReady.then(() => {
       $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;if(/Mac/i.test(navigator.platform||navigator.userAgent)){$('#mc-get-mac').classList.add('mc-primary');$('#mc-get-windows').classList.remove('mc-primary');root.querySelector('.mc-get-app-links').prepend($('#mc-get-mac'));}
       $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
       $('#mc-companion-desktop').onclick=open;
-      return {open,enterFullscreen,nav:()=>false,look:()=>false,lookResult:()=>false,get connected(){return false;}};
+      return {open,enterFullscreen,nav:()=>false,look:()=>false,lookResult:()=>false,lookProgress:()=>false,get connected(){return false;}};
     }
     // One tap: open the companion and, when a paired computer isn't connected, reconnect.
     const tap=()=>{open();if(remembered()&&!link.connected&&!busy.includes(currentState.phase))void resume({manual:true});};
@@ -3663,7 +3680,7 @@ window.mapleStorageReady.then(() => {
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:(req,card)=>link.lookResult(req,card),get connected(){return link.connected;}};
+    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:(req,card)=>link.lookResult(req,card),lookProgress:(req,text)=>link.lookProgress(req,text),get connected(){return link.connected;}};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);
@@ -4002,7 +4019,8 @@ window.mapleStorageReady.then(() => {
   // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
   // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData
   // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).
-  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200}){
+  // onProgress(done, total, found): after each box (Look shows them as they are named).
+  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200,onProgress=null}){
     // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
     const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
       if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
@@ -4049,7 +4067,9 @@ window.mapleStorageReady.then(() => {
       }
       return best;
     }
+    let done=0;const total=detections.length;
     for(const det of detections){
+      if(onProgress){onProgress(done,total,found);}done++;
       if(!inside(det.box))continue;
       const b=det.box,tags=tagUnder(b);
       if(det.cls==='player'){
@@ -4132,7 +4152,7 @@ window.mapleStorageReady.then(() => {
 /* The Look detector: a small YOLO model, trained on synthetic game screens made from the
  * game's own sprites and map renders (the training scripts live outside this repository),
  * that finds monsters, NPCs, dropped items, players and pets on a screenshot. It runs in the
- * browser with ONNX Runtime Web (vendor/ort/ on this site), loaded only when Look is first used;
+ * browser (in Look's worker, src/look-worker.js) with ONNX Runtime Web (vendor/ort/ on this site);
  * the model and the runtime's WebAssembly come as bytes from Look's own cache (src/look-ui.js).
  *
  * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player'|'pet', score, box: {x, y, w, h}}] in the
@@ -4141,15 +4161,23 @@ window.mapleStorageReady.then(() => {
 (function(scope){
   const CLASSES=['monster','npc','item','player','pet'];
   const ORT='./vendor/ort/';
-  // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm).
-  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5}={}){
+  // A canvas in the page or in a worker.
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  // The runtime's script: a <script> in the page, importScripts in a worker.
+  function loadScript(src){
+    if(scope.ort)return Promise.resolve();
+    if(typeof document==='undefined'){try{importScripts(src);return Promise.resolve();}catch(_){return Promise.reject(Error('The detector could not load.'));}}
+    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});
+  }
+  // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm); base: the
+  // site's address (in a worker, its own address is not the site's).
+  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5,base=scope.location?.href}={}){
     let session=null,loading=null;
-    function loadScript(src){return new Promise((res,rej)=>{if(scope.ort)return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});}
     function ready(){
       loading??=(async()=>{
-        await loadScript(new URL(ORT+'ort.min.js',location.href).href);
+        await loadScript(new URL(ORT+'ort.min.js',base).href);
         const [bytes,wasm]=await Promise.all([model(),runtime()]);
-        scope.ort.env.wasm.wasmPaths=new URL(ORT,location.href).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;
+        scope.ort.env.wasm.wasmPaths=new URL(ORT,base).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;
         session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});
         return session;
       })().catch(e=>{loading=null;throw e;});
@@ -4158,12 +4186,13 @@ window.mapleStorageReady.then(() => {
     // Letterbox into the model's input (keeping the aspect), as the model was trained.
     function input(image){
       const k=Math.min(inputW/image.width,inputH/image.height),w=Math.round(image.width*k),h=Math.round(image.height*k),dx=(inputW-w)>>1,dy=(inputH-h)>>1;
-      const src=document.createElement('canvas');src.width=image.width;src.height=image.height;src.getContext('2d').putImageData(image,0,0);
-      const c=document.createElement('canvas');c.width=inputW;c.height=inputH;const x=c.getContext('2d');x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);
+      const src=canvas(image.width,image.height);src.getContext('2d').putImageData(toImageData(image),0,0);
+      const c=canvas(inputW,inputH);const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);
       const d=x.getImageData(0,0,inputW,inputH).data,n=inputW*inputH,t=new Float32Array(3*n);
       for(let i=0;i<n;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}
       return {tensor:new scope.ort.Tensor('float32',t,[1,3,inputH,inputW]),k,dx,dy};
     }
+    const toImageData=img=>img instanceof ImageData?img:new ImageData(new Uint8ClampedArray(img.data),img.width,img.height);
     const iouOf=(a,b)=>{const x=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)),y=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return x*y/(a.w*a.h+b.w*b.h-x*y);};
     async function detect(image){
       await ready();
@@ -4198,6 +4227,7 @@ window.mapleStorageReady.then(() => {
  */
 (function(scope){
   const SIZE=96,GREY=114;
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
   function create({model,runtime,classes=[]}={}){
     let session=null,loading=null;
     function ready(){
@@ -4213,7 +4243,7 @@ window.mapleStorageReady.then(() => {
     // The box padded by 8% (grey beyond the picture), letterboxed to SIZE x SIZE on grey.
     function input(image,box,source){
       const px=box.w*.08,py=box.h*.08,x0=Math.round(box.x-px),y0=Math.round(box.y-py),w=Math.max(1,Math.round(box.x+box.w+px)-x0),h=Math.max(1,Math.round(box.y+box.h+py)-y0);
-      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=document.createElement('canvas');c.width=SIZE;c.height=SIZE;
+      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=canvas(SIZE,SIZE);
       const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle=`rgb(${GREY},${GREY},${GREY})`;x.fillRect(0,0,SIZE,SIZE);
       const ox=(SIZE-dw)>>1,oy=(SIZE-dh)>>1;x.save();x.beginPath();x.rect(ox,oy,dw,dh);x.clip();x.imageSmoothingQuality='medium';
       x.drawImage(source,x0,y0,w,h,ox,oy,dw,dh);x.restore();
@@ -4225,7 +4255,7 @@ window.mapleStorageReady.then(() => {
     // A canvas of the screenshot, made once per picture.
     let lastImage=null,lastCanvas=null;
     function sourceOf(image){
-      if(image!==lastImage){const c=document.createElement('canvas');c.width=image.width;c.height=image.height;c.getContext('2d').putImageData(image,0,0);lastImage=image;lastCanvas=c;}
+      if(image!==lastImage){const c=canvas(image.width,image.height);c.getContext('2d').putImageData(image instanceof ImageData?image:new ImageData(new Uint8ClampedArray(image.data),image.width,image.height),0,0);lastImage=image;lastCanvas=c;}
       return lastCanvas;
     }
     async function name(image,box){
@@ -4239,104 +4269,98 @@ window.mapleStorageReady.then(() => {
   scope.MapleLookNamer=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
 
-/* The phone's Look view: a screenshot of the game from the computer, zoomed on your character,
- * with a box you move by dragging the picture (pinch or the corner handle to resize).
- * "Identify box" finds what is in the box, "Around me" what is on the whole screen; each thing
- * found is marked on the picture and listed, and opens its page in the search.
+/* Look's recognition engine: loads Look's files (the phone's own cache first, see prefetch),
+ * runs the detector (src/look-detector.js) and the namer (src/look-namer.js) and names what
+ * they find (src/look.js). It runs in a background worker (src/look-worker.js), so the page
+ * stays responsive and can show progress; the page falls back to running it itself.
  *
- * It also answers looks marked on the computer (⌃⌥M / Ctrl+Alt+M on the game): the same
- * recognition on the marked box, sent back as a small card for the overlay.
- *
- * Recognition is src/look.js. Everything it compares against is a file on this site
- * (assets/look/, listed in DATA.look by scripts/build.py): the detector, every monster frame
- * and human NPC, every item's icon and thumbnail, the drops table. The first visit downloads
- * them all in the background (prefetch) into the phone's own cache, so a look never waits on
- * the network; a new release only downloads the files that changed (their names carry their
- * content's hash).
+ * create({look, catalogUrl, base}) -> {prefetch(onProgress), analyze(shot, region, onProgress)}
+ * shot: {image: ImageData, lines, map: {id, name, monsters: [{id, name}], npcs: [{id}]}, k?}
+ * onProgress({stage: 'download'|'detector'|'naming'|'items', done, total, found}).
+ * The result is plain data (it crosses from the worker): found, players, player, k, method,
+ * mapId, drops (this map's drop rows), summary (each thing once, numbered).
  */
 (function(scope){
   const CACHE='maple-atlas-look';
-  // One loader for Look's files: the phone's own cache, else the site (and then kept).
-  async function lookFile(path){
-    const url=new URL(path,location.href).href;let cache=null;
-    try{cache=await caches.open(CACHE);const hit=await cache.match(url);if(hit)return hit;}catch(_){}
-    const r=await fetch(url,{credentials:'same-origin'});if(!r.ok)throw Error('Could not load '+path+'.');
-    try{await cache?.put(url,r.clone());}catch(_){}
-    return r;
-  }
-  function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
-    const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results');
-    const mapOf=id=>maps.find(m=>m.id===String(id));
-    let shot=null,view={s:1,tx:0,ty:0},boxSize={w:.62,h:.5},found=[],shotPlayers=[],seq=0,waiting=null,busy=false;
-    const base=look?.base||'./assets/look/',file=name=>base+name;
-    const RUNTIME='./vendor/ort/ort-wasm-simd-threaded.wasm';
-
-    // ---- Downloading once, in the background ----
-    let fetched=null;
-    // Every Look file into the phone's cache (each once), then the ones no longer listed are dropped.
-    function prefetch(){
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  function create({look,catalogUrl,base=scope.location?.href}={}){
+    const abs=p=>new URL(p,base).href,file=name=>abs((look?.base||'./assets/look/')+name);
+    const RUNTIME=abs('./vendor/ort/ort-wasm-simd-threaded.wasm');
+    // One loader for Look's files: the phone's own cache, else the site (and then kept).
+    async function lookFile(url){
+      let cache=null;
+      try{cache=await caches.open(CACHE);const hit=await cache.match(url);if(hit)return hit;}catch(_){}
+      const r=await fetch(url,{credentials:'same-origin'});if(!r.ok)throw Error('Could not load '+url.split('/').pop()+'.');
+      try{await cache?.put(url,r.clone());}catch(_){}
+      return r;
+    }
+    // Every Look file into the phone's cache (each once), then the ones no longer listed dropped.
+    let fetched=null,state={done:0,total:0};
+    function prefetch(onProgress){
       if(!look?.files?.length)return Promise.resolve(false);
       fetched??=(async()=>{
-        try{await navigator.storage?.persist?.();}catch(_){}
-        const wanted=[...look.files.map(f=>new URL(file(f),location.href).href),new URL(RUNTIME,location.href).href];
-        let done=0;
-        for(const url of wanted){await lookFile(url).catch(()=>null);prefetchState={done:++done,total:wanted.length};}
-        try{const cache=await caches.open(CACHE),keep=new Set(wanted);for(const req of await cache.keys())if(!keep.has(req.url))await cache.delete(req);}catch(_){}
+        try{await scope.navigator?.storage?.persist?.();}catch(_){}
+        const wanted=[...look.files.map(file),RUNTIME];
+        state={done:0,total:wanted.length};
+        for(const url of wanted){await lookFile(url).catch(()=>null);state={done:state.done+1,total:wanted.length};onProgress?.(state);}
+        try{const c=await caches.open(CACHE),keep=new Set(wanted);for(const req of await c.keys())if(!keep.has(req.url))await c.delete(req);}catch(_){}
         return true;
       })().catch(()=>{fetched=null;return false;});
       return fetched;
     }
-    let prefetchState={done:0,total:0};
 
     // ---- Data: the catalog (names), the reference set, items, drops ----
     let catalog=null,names=null;
     async function loadCatalog(){
       if(catalog)return catalog;
-      const r=await fetch(catalogUrl);if(!r.ok)throw Error('The database did not load.');
-      const data=await r.json();catalog={entities:data.entities||[],commit:data.sourceCommit||sourceCommit};
-      catalog.by=new Map(catalog.entities.map(e=>[e.type+':'+e.id,e]));
-      names=MapleLook.nameIndex(catalog.entities.filter(e=>['npc','monster','item','quest'].includes(e.type)));
+      const r=await fetch(abs(catalogUrl));if(!r.ok)throw Error('The database did not load.');
+      const data=await r.json();catalog={by:new Map((data.entities||[]).map(e=>[e.type+':'+e.id,e]))};
+      names=MapleLook.nameIndex((data.entities||[]).filter(e=>['npc','monster','item','quest'].includes(e.type)));
       return catalog;
     }
-    const spritePath=e=>e?.image&&catalog?catalog.commit+'/data/'+e.image:'';
-    const spriteURL=e=>e?.image&&catalog?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+spritePath(e):null;
+    const nameOf=(type,id)=>catalog?.by.get(type+':'+id)?.name||String(id);
     const json=name=>lookFile(file(name)).then(r=>r.json());
-    async function canvasOf(name){
-      const b=await createImageBitmap(await lookFile(file(name)).then(r=>r.blob())),c=document.createElement('canvas');c.width=b.width;c.height=b.height;
-      const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(b,0,0);b.close?.();return x;
+    async function pixels(name){
+      const b=await createImageBitmap(await lookFile(file(name)).then(r=>r.blob())),c=canvas(b.width,b.height),x=c.getContext('2d',{willReadFrequently:true});
+      x.drawImage(b,0,0);b.close?.();return x.getImageData(0,0,c.width,c.height);
     }
     // A packed set of pictures (index + sheets) -> [{...entry, image}].
     async function sheet(name){
-      const index=await json(name),sheets=await Promise.all(index.sheets.map(canvasOf));
-      return index.sprites.map(s=>({...s,image:sheets[s.s].getImageData(s.x,s.y,s.w,s.h)}));
+      const index=await json(name),sheets=await Promise.all(index.sheets.map(pixels));
+      return index.sprites.map(s=>({...s,image:crop(sheets[s.s],s.x,s.y,s.w,s.h)}));
+    }
+    function crop(img,x0,y0,w,h){
+      const data=new Uint8ClampedArray(w*h*4);
+      for(let y=0;y<h;y++)data.set(img.data.subarray(((y0+y)*img.width+x0)*4,((y0+y)*img.width+x0+w)*4),y*w*4);
+      return {width:w,height:h,data};
     }
     const once=f=>{let p=null;return ()=>(p??=f().catch(e=>{p=null;throw e;}));};
-    const loadAtlas=once(async()=>(await sheet(look.atlas)).map(s=>({type:s.t,id:String(s.id),name:catalog?.by.get(s.t+':'+s.id)?.name||String(s.id),image:s.image})));
+    const loadAtlas=once(async()=>{await loadCatalog();return (await sheet(look.atlas)).map(s=>({type:s.t,id:String(s.id),name:s.t==='pet'?nameOf('item',s.id):nameOf(s.t,s.id),image:s.image}));});
     const loadIcons=once(async()=>new Map((await sheet(look.icons)).map(s=>[String(s.id),s.image])));
     const loadRaw=once(async()=>new Map((await sheet(look.raw)).map(s=>[String(s.id),s.image])));
-    const loadThumbs=once(async()=>{const meta=await json(look.thumbs),x=await canvasOf(meta.image);return {...meta,sheet:x.getImageData(0,0,x.canvas.width,x.canvas.height)};});
+    const loadThumbs=once(async()=>{const meta=await json(look.thumbs);return {...meta,sheet:await pixels(meta.image)};});
     // What each monster drops: {monster: [[item name, item id, rate %]]}.
     const loadDrops=once(()=>json(look.drops));
     // What can be on this map: its monsters (every frame), its NPCs, and its monsters' drops.
     const mapSets=new Map();
-    function spritesFor(mapId){
-      if(!mapSets.has(mapId))mapSets.set(mapId,(async()=>{
-        const m=mapOf(mapId);if(!m)return Object.assign([],{drops:[]});
+    function spritesFor(m){
+      if(!m)return Promise.resolve(Object.assign([],{drops:[]}));
+      if(!mapSets.has(m.id))mapSets.set(m.id,(async()=>{
         const [atlas,drops,raw,icons]=await Promise.all([loadAtlas(),loadDrops(),loadRaw(),loadIcons()]);
         const ids=new Set([...(m.monsters||[]).map(x=>'monster:'+x.id),...(m.npcs||[]).map(x=>'npc:'+x.id)]);
         const list=atlas.filter(s=>ids.has(s.type+':'+s.id));
         const rows=(m.monsters||[]).flatMap(x=>(drops[x.name]||[]).map(([item,id,rate])=>({monster:x.name,item,id,rate})));
-        for(const id of new Set(rows.map(r=>r.id).filter(Boolean))){const image=raw.get(String(id))||icons.get(String(id));if(image)list.push({type:'item',id:String(id),name:catalog.by.get('item:'+id)?.name||String(id),image});}
+        for(const id of new Set(rows.map(r=>r.id).filter(Boolean))){const image=raw.get(String(id))||icons.get(String(id));if(image)list.push({type:'item',id:String(id),name:nameOf('item',id),image});}
         list.drops=rows;
         return list;
-      })().catch(e=>{mapSets.delete(mapId);throw e;}));
-      return mapSets.get(mapId);
+      })().catch(e=>{mapSets.delete(m.id);throw e;}));
+      return mapSets.get(m.id);
     }
 
     // ---- Recognition ----
-    // The game's scale in the screenshot: the minimap title strip is 45 game px tall.
+    // The game's scale in the screenshot: the minimap title strip is 45 game px tall, measured
+    // in the top-left corner, where the game keeps the minimap (as the apps read it).
     function scaleOf(image){
-      // Measured in the top-left corner, where the game keeps the minimap (as the apps read it).
       try{
         const w=Math.round(image.width*.45),h=Math.round(image.height*.76),data=new Uint8ClampedArray(w*h*4);
         for(let y=0;y<h;y++)data.set(image.data.subarray(y*image.width*4,y*image.width*4+w*4),y*w*4);
@@ -4346,48 +4370,123 @@ window.mapleStorageReady.then(() => {
       }catch(_){}
       return image.width/MapleLook.GAME_WIDTH;
     }
-    // The trained detector finds things; the map's sprites, the reference set, the item icons and
-    // the name tags name them. When the detector cannot run (an old browser) the map's sprites are
-    // looked for directly.
-    const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({
-      model:()=>lookFile(file(look.detector)).then(r=>r.arrayBuffer()),runtime:()=>lookFile(RUNTIME).then(r=>r.arrayBuffer()),minScore:.25}):null;
-    // The namer (src/look-namer.js): which monster or pet a box holds when templates cannot tell.
-    const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({
-      model:()=>lookFile(file(look.namer)).then(r=>r.arrayBuffer()),runtime:()=>lookFile(RUNTIME).then(r=>r.arrayBuffer()),classes:look.namerClasses||[]}):null;
+    const bytes=url=>()=>lookFile(url).then(r=>r.arrayBuffer());
+    const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({model:bytes(file(look.detector)),runtime:bytes(RUNTIME),minScore:.25,base}):null;
+    const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({model:bytes(file(look.namer)),runtime:bytes(RUNTIME),classes:look.namerClasses||[]}):null;
     const namerEntry=({cls,p})=>{
-      if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:catalog?.by.get('monster:'+id)?.name||id,p};}
-      if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:catalog?.by.get('item:'+id)?.name||id,pet:true,p};}
+      if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:nameOf('monster',id),p};}
+      if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:nameOf('item',id),pet:true,p};}
       return {type:'other',p};
     };
+    // The detector finds things; the map's sprites, the namer, the reference set, the item icons
+    // and the name tags name them. Without the detector (an old browser) the map's sprites are
+    // looked for directly. Detections are kept on the shot (a second look reuses them).
     async function analyze(s,region,onProgress){
+      const say=(stage,done=0,total=0,found=[])=>onProgress?.({stage,done,total,found});
       await loadCatalog();
-      const mapId=s.map||liveMap();
-      if(prefetchState.total&&prefetchState.done<prefetchState.total)onProgress?.('download');
-      const sprites=mapId?await spritesFor(mapId):[];
+      s.k??=scaleOf(s.image);
+      if(state.total&&state.done<state.total)say('download',state.done,state.total);
+      const sprites=await spritesFor(s.map);
       let r=null;
       if(detector)try{
-        if(!s.detections){onProgress?.('detector');s.detections=await detector.detect(s.image);}
-        if(namer)try{for(const d of s.detections)if((d.cls==='monster'||d.cls==='pet')&&!d.names)d.names=(await namer.name(s.image,d.box)).map(namerEntry);}
+        if(!s.detections){say('detector');s.detections=await detector.detect(s.image);}
+        const named=s.detections.filter(d=>(d.cls==='monster'||d.cls==='pet')&&!d.names);
+        if(namer)try{let i=0;for(const d of named){say('naming',i++,named.length);d.names=(await namer.name(s.image,d.box)).map(namerEntry);}}
         catch(e){console.warn('Look namer:',e);}
         const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);
         const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);
+        let last=0;
         r=MapleLook.identify({image:s.image,detections:s.detections,lines:s.lines,region,k:s.k,names,sprites,allSprites,thumbs:th,groundItems:ground,
-          itemIcon:id=>icons.get(String(id))||null,itemName:id=>catalog.by.get('item:'+id)?.name||id});
+          itemIcon:id=>icons.get(String(id))||null,itemName:id=>nameOf('item',id),
+          // At most every 120 ms: what is named so far, so the page shows it as it goes.
+          onProgress:(done,total,found)=>{const t=Date.now();if(t-last>120){last=t;say('items',done,total,found.filter(f=>!f.ui).map(plain));}}});
         r.method='detector';
       }catch(e){console.warn('Look detector:',e);}
       r??={...MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites}),method:'sprites'};
-      const summary=MapleLook.summary(r.found);let n=0;for(const f of summary)if(!(f.via==='name'&&f.ui))f.n=++n;
-      // Each thing on the picture carries its row's number.
-      for(const f of r.found){const s=summary.find(x=>x.type===f.type&&x.id===f.id);f.n=s?.n;}
-      return {...r,mapId,drops:sprites.drops||[],summary};
+      const summary=MapleLook.summary(r.found).map(plain);let n=0;for(const f of summary)if(!(f.via==='name'&&f.ui))f.n=++n;
+      const found=r.found.map(plain);for(const f of found){const x=summary.find(y=>y.type===f.type&&y.id===f.id);f.n=x?.n;}
+      return {found,players:(r.players||[]).map(p=>({name:p.name,box:p.box,you:p.you})),player:r.player,k:r.k??s.k,method:r.method,mapId:s.map?.id||null,drops:sprites.drops||[],summary};
     }
+    // A found thing as plain data (no pictures), to cross to the page.
+    const plain=f=>({type:f.type,id:String(f.id),name:f.name,box:f.box&&{x:f.box.x,y:f.box.y,w:f.box.w,h:f.box.h},via:f.via,score:f.score,ui:!!f.ui,pet:!!f.pet,count:f.count});
+    return {prefetch,analyze,lookFile,loadCatalog,state:()=>state};
+  }
+  const api={create};
+  scope.MapleLookEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof self!=='undefined'?self:globalThis);
+
+/* The phone's Look view: a screenshot of the game from the computer, zoomed on your character,
+ * with a box you move by dragging the picture (pinch or the corner handle to resize).
+ *
+ * As soon as a screenshot arrives, the whole screen is recognized once in the background
+ * (src/look-worker.js runs src/look-engine.js off the page's thread), with its progress shown
+ * and what is named listed as it goes. "Identify box" lists what is in the box, and moving the
+ * box updates the list at once (it only filters); "Around me" lists the whole screen. Each thing
+ * is outlined on the picture in its row's colour (no text over the game); tapping a row or an
+ * outline highlights where it is, and the arrow opens its page in the search.
+ *
+ * It also answers looks marked on the computer (⌃⌥M / Ctrl+Alt+M on the game): the same
+ * recognition on the marked box, its progress shown on the computer's card, then a small card.
+ *
+ * Everything Look compares against is a file on this site (assets/look/, listed in DATA.look by
+ * scripts/build.py), downloaded once in the background into the phone's own cache (prefetch).
+ */
+(function(scope){
+  // The worker's code, put here by scripts/build.py (the page is one file).
+  const WORKER_SOURCE="/* Player position from the in-game minimap, and plain-language portal guidance.\n *\n * Adapted from Maple Route (https://github.com/maplerouteadmin-dev/maple-route,\n * src/minimap.js and src/screen.js at 5f92b69). Its colors were sampled from real\n * MapleStory Classic World screenshots. Changes: one browser/Node module, minimap-only,\n * and positions use the same coordinates as this project's portal data.\n *\n * MIT License\n * Copyright (c) 2026 Maple Route contributors\n * Permission is hereby granted, free of charge, to any person obtaining a copy of this\n * software and associated documentation files (the \"Software\"), to deal in the Software\n * without restriction, including without limitation the rights to use, copy, modify,\n * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to\n * permit persons to whom the Software is furnished to do so, subject to the following\n * conditions: The above copyright notice and this permission notice shall be included in\n * all copies or substantial portions of the Software.\n * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,\n * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A\n * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT\n * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF\n * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE\n * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n */\n(function(scope){\n  // Works on ImageData-like objects ({width, height, data: RGBA bytes}).\n  const isPanelBlue=(r,g,b)=>r>=120&&r\u003c=190&&g>=160&&g\u003c=215&&b>=180&&b\u003c=235&&b-r>=30&&g-r>=15;\n  const isPlayerYellow=(r,g,b)=>r>=225&&g>=185&&b\u003c=110&&r>g;\n  const isPortalTeal=(r,g,b)=>b-r>=45&&g-r>=30&&b>=g&&b>=95&&r\u003c140;\n  const isFrameLight=(r,g,b)=>r>220&&g>220&&b>220&&Math.max(r,g,b)-Math.min(r,g,b)\u003c18;\n\n  function allRuns(flags,maxGap=0){\n    const runs=[];let start=-1,last=-1;\n    for(let i=0;i\u003c=flags.length;i++){if(i\u003cflags.length&&flags[i]){if(start\u003c0||i-last-1>maxGap){if(start>=0)runs.push([start,last]);start=i;}last=i;}}\n    if(start>=0)runs.push([start,last]);return runs;\n  }\n  function longestRun(flags,maxGap=0){let best=null;for(const run of allRuns(flags,maxGap))if(!best||run[1]-run[0]>best[1]-best[0])best=run;return best;}\n\n  // The pale-blue strip holding the region emblem and the \"street / map\" title.\n  // frameHeight is the full game frame height in this image's pixels (the image is a crop).\n  function findTitleBand(image,{frameHeight=image.height}={}){\n    const {width,data}=image,height=frameHeight,regionW=width,regionH=image.height;\n    const rowHits=new Array(regionH).fill(0);\n    for(let y=0;y\u003cregionH;y++)for(let x=0;x\u003cregionW;x++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))rowHits[y]++;}\n    // A pale sky can share the blue; every blue stretch is tried top-down until one is title-shaped.\n    for(const [y0,y1] of allRuns(rowHits.map(count=>count>Math.max(30,regionW*.05)),3)){\n      const bandH=y1-y0+1;if(bandH\u003cheight*.025||bandH>height*.14)continue;\n      const columns=[];\n      for(let x=0;x\u003cregionW;x++){let hits=0;for(let y=y0;y\u003c=y1;y++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))hits++;}columns.push(hits>bandH*.3);}\n      const cols=longestRun(columns,4);\n      if(!cols||cols[1]-cols[0]\u003cbandH*1.8)continue;\n      if(cols[0]===0&&cols[1]>=regionW-1)continue; // a sky spans the region; the title strip ends at its window\n      const textX=cols[0],right=cols[1],x=Math.max(0,textX-Math.round(bandH*.97));\n      return {x,y:y0,w:right-x+1,h:bandH,textX};\n    }\n    return null;\n  }\n  function components(mask,w,h){\n    const seen=new Uint8Array(w*h),found=[];\n    for(let start=0;start\u003cmask.length;start++){\n      if(!mask[start]||seen[start])continue;\n      const stack=[start];seen[start]=1;let count=0,sx=0,sy=0,minX=w,maxX=0,minY=h,maxY=0;\n      while(stack.length){\n        const p=stack.pop(),x=p%w,y=(p-x)/w;count++;sx+=x;sy+=y;\n        if(x\u003cminX)minX=x;if(x>maxX)maxX=x;if(y\u003cminY)minY=y;if(y>maxY)maxY=y;\n        for(let dy=-1;dy\u003c=1;dy++)for(let dx=-1;dx\u003c=1;dx++){const nx=x+dx,ny=y+dy;if(nx\u003c0||ny\u003c0||nx>=w||ny>=h)continue;const q=ny*w+nx;if(mask[q]&&!seen[q]){seen[q]=1;stack.push(q);}}\n      }\n      found.push({count,x:sx/count,y:sy/count,w:maxX-minX+1,h:maxY-minY+1});\n    }\n    return found;\n  }\n  // The map picture inside its thin light frame, under the title strip; null when collapsed.\n  function minimapBody(image,band){\n    const {width,height,data}=image;\n    const light=(x,y)=>{const i=(y*width+x)*4;return isFrameLight(data[i],data[i+1],data[i+2]);};\n    const rowLight=(y,x0,x1)=>{let n=0;for(let x=x0;x\u003c=x1;x++)if(light(x,y))n++;return n/(x1-x0+1);};\n    const colLight=(x,y0,y1)=>{let n=0;for(let y=y0;y\u003c=y1;y++)if(light(x,y))n++;return n/(y1-y0+1);};\n    const sx0=band.x+Math.round(band.w*.05),sx1=Math.min(width-1,band.x+Math.round(band.w*.95));\n    let y=band.y+band.h,frameTop=-1;\n    for(const end=Math.min(height-1,y+Math.round(band.h*1.1));y\u003c=end;y++)if(rowLight(y,sx0,sx1)>.85){frameTop=y;break;}\n    if(frameTop\u003c0)return null;\n    while(y\u003cheight&&rowLight(y,sx0,sx1)>.85)y++;\n    const top=y;let bottom=-1;\n    for(y=top+Math.max(4,Math.round(band.h*.3));y\u003cheight;y++)if(rowLight(y,sx0,sx1)>.85){bottom=y-1;break;}\n    if(bottom\u003c0||bottom-top\u003cband.h*.4)return null;\n    const reach=Math.round(band.h*.4);let left=band.x,right=Math.min(width-1,band.x+band.w-1);\n    for(let x=Math.max(0,band.x-reach);x\u003c=band.x+reach;x++)if(colLight(x,top,bottom)>.8)left=x+1;\n    for(let x=Math.min(width-1,band.x+band.w-1+reach);x>=band.x+band.w-1-reach;x--)if(colLight(x,top,bottom)>.8)right=x-1;\n    return right-left\u003cband.h?null:{x:left,y:top,w:right-left+1,h:bottom-top+1};\n  }\n  // The player's yellow dot and the teal portal rings inside the minimap picture.\n  function findMarkers(image,band){\n    const body=minimapBody(image,band),unit=band.h;\n    if(!body)return {body:null,unit,player:null,portals:[],collapsed:true};\n    const yellow=new Uint8Array(body.w*body.h),teal=new Uint8Array(body.w*body.h);\n    for(let y=0;y\u003cbody.h;y++)for(let x=0;x\u003cbody.w;x++){\n      const i=((body.y+y)*image.width+body.x+x)*4,r=image.data[i],g=image.data[i+1],b=image.data[i+2];\n      if(isPlayerYellow(r,g,b))yellow[y*body.w+x]=1;if(isPortalTeal(r,g,b))teal[y*body.w+x]=1;\n    }\n    const dot=components(yellow,body.w,body.h)\n      .filter(c=>c.w>=unit*.07&&c.h>=unit*.07&&c.w\u003c=unit*.25&&c.h\u003c=unit*.25&&c.count/(c.w*c.h)>=.45&&Math.max(c.w,c.h)/Math.min(c.w,c.h)\u003c=1.6)\n      .sort((a,b)=>b.count-a.count)[0];\n    const portals=components(teal,body.w,body.h).filter(c=>c.count>=unit*unit*.0035&&c.w\u003c=unit*.35&&c.h\u003c=unit*.35).map(c=>({x:body.x+c.x,y:body.y+c.y}));\n    return {body,unit,player:dot?{x:body.x+dot.x,y:body.y+dot.y}:null,portals,collapsed:false};\n  }\n  // Picture size relative to the title strip; resizing the minimap changes its zoom.\n  const minimapLayout=(band,body)=>body?{w:body.w/band.h,h:body.h/band.h}:null;\n  function recallScale(memory,layout){\n    if(!layout||!Array.isArray(memory))return null;\n    const close=(a,b)=>Math.abs(a-b)\u003c=Math.max(a,b)*.06;\n    return memory.find(entry=>close(entry.w,layout.w)&&close(entry.h,layout.h))?.scale??null;\n  }\n  function rememberScale(memory,layout,scale){\n    if(!layout||!Number.isFinite(scale))return memory??[];\n    const list=Array.isArray(memory)?[...memory]:[],known=list.findIndex(entry=>recallScale([entry],layout)!==null);\n    if(known>=0)list[known]={...list[known],scale:list[known].scale*.8+scale*.2};else list.unshift({...layout,scale});\n    return list.slice(0,8);\n  }\n  // Scale/offset that maps portal coordinates onto the detected rings. The minimap scrolls with\n  // the player, so the offset changes every frame; the scale is constant for one minimap size.\n  function fitMinimap(rings,marks,unit,hint=null){\n    const world=marks.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));\n    if(!rings.length||!world.length)return null;\n    const tolerance=Math.max(4,unit*.12);\n    const score=(s,ox,oy)=>{let inliers=0,error=0;for(const ring of rings){let best=Infinity;for(const portal of world){const d=Math.abs(ring.x-(s*portal.x+ox))+Math.abs(ring.y-(s*portal.y+oy));if(d\u003cbest)best=d;}if(best\u003c=tolerance){inliers++;error+=best;}}return {scale:s,ox,oy,inliers,error};};\n    let best=null;const consider=fit=>{if(fit.inliers&&(!best||fit.inliers>best.inliers||(fit.inliers===best.inliers&&fit.error\u003cbest.error)))best=fit;};\n    const minS=unit*.0003,maxS=unit*.012;\n    for(let i=0;i\u003crings.length;i++)for(let j=0;j\u003crings.length;j++){\n      if(i===j||rings[j].x\u003c=rings[i].x)continue;\n      for(const a of world)for(const b of world){\n        if(b.x\u003c=a.x)continue;const s=(rings[j].x-rings[i].x)/(b.x-a.x);\n        if(s\u003cminS||s>maxS)continue;if(hint?.scale&&Math.abs(s/unit-hint.scale)>hint.scale*.12)continue;\n        consider(score(s,rings[i].x-s*a.x,rings[i].y-s*a.y));\n      }\n    }\n    if(hint?.scale&&(!best||best.inliers\u003c2)){const s=hint.scale*unit;for(const ring of rings)for(const portal of world)consider(score(s,ring.x-s*portal.x,ring.y-s*portal.y));}\n    if(!best||best.inliers\u003c2&&!hint?.scale)return null; // one ring alone cannot fix the scale\n    return {...best,scalePerUnit:best.scale/unit};\n  }\n  const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});\n\n  const MARKER_LIFT=8;\n  // The title strip is 45 game pixels tall; the minimap picture is drawn at the game's own\n  // pixel scale, so the strip's height in the image gives that scale (k image px per picture px).\n  const TITLE_GAME_PX=45;\n  // How the map's own minimap picture sits in the window body. The game never shrinks the\n  // picture: the window hugs it (body = picture * k) up to a largest size, beyond which the\n  // picture is clipped and scrolls with the player; a picture narrower than the window's\n  // smallest width is centred with margins. Per side: {at, clipped}, at = the picture's left or\n  // top edge in the image when the side is not clipped (null when it scrolls).\n  // unit: the title strip's height (sets k); without it the picture is assumed to fit whole.\n  function pictureFrame(body,picture,unit){\n    if(!picture||!body||!(picture.w>0&&picture.h>0))return null;\n    const rx=body.w/picture.w,ry=body.h/picture.h,k0=unit?unit/TITLE_GAME_PX:Math.min(rx,ry);\n    const hugs=r=>Math.abs(r/k0-1)\u003c=.08;\n    const k=hugs(rx)&&hugs(ry)?(rx+ry)/2:hugs(rx)?rx:hugs(ry)?ry:k0;\n    const side=(at,size,r,shown)=>r\u003ck*.92&&shown>size+2?{at:null,clipped:true}:{at:at+(size-shown)/2,clipped:false};\n    const shownW=picture.w*k,shownH=picture.h*k;\n    return {k,shownW,shownH,x:side(body.x,body.w,rx,shownW),y:side(body.y,body.h,ry,shownH)};\n  }\n  // The dot on the picture: {x, y} in map coordinates, or null when the dot is not on it.\n  // left/top: where the picture's edges are in the image.\n  const dotOnPicture=(player,picture,k,left,top)=>{\n    const px=(player.x-left+.5)/k,py=(player.y-top+.5)/k,s=picture.scale||16;\n    if(px\u003c-2||py\u003c-2||px>picture.w+2||py>picture.h+2)return null;\n    return {x:Math.round(s*(px+picture.dx)),y:Math.round(s*(py+picture.dy))};\n  };\n  // Kept for callers that only know the window body: the picture is taken to fit it whole.\n  function onPicture(body,player,picture,unit){\n    const f=pictureFrame(body,picture,unit);\n    if(!f||f.x.clipped||f.y.clipped)return null;\n    return dotOnPicture(player,picture,f.k,f.x.at,f.y.at);\n  }\n  // Where the window's slice of the picture lies on the map's own minimap image (preview:\n  // {width, height, data}, the picture at 1:1) when a side scrolls: the body is sampled at\n  // picture scale and slid over the image (normalized correlation). Returns {ox, oy, score}, the\n  // picture pixel under the body's top-left corner, or null when nothing matches.\n  function matchPreview(image,body,preview,f){\n    const k=f.k,w=Math.floor(body.w/k),h=Math.floor(body.h/k);\n    if(!preview||!image||w\u003c8||h\u003c8||!(preview.width>=8&&preview.height>=8))return null;\n    const g=new Float32Array(w*h);\n    for(let y=0;y\u003ch;y++)for(let x=0;x\u003cw;x++){const sx=Math.min(image.width-1,Math.round(body.x+(x+.5)*k)),sy=Math.min(image.height-1,Math.round(body.y+(y+.5)*k)),i=(sy*image.width+sx)*4;g[y*w+x]=image.data[i]*.299+image.data[i+1]*.587+image.data[i+2]*.114;}\n    const pw=preview.width,ph=preview.height,pg=new Float32Array(pw*ph);\n    for(let i=0;i\u003cpw*ph;i++){const j=i*4,a=preview.data[j+3]/255;pg[i]=(preview.data[j]*.299+preview.data[j+1]*.587+preview.data[j+2]*.114)*a;}\n    // Offsets tried: the whole span on a scrolling side, the known one on the other.\n    const span=(side,at,size,psize)=>side.clipped?[0,Math.max(0,psize-size)]:[Math.round((at-side.at)/k),Math.round((at-side.at)/k)];\n    const [x0,x1]=span(f.x,body.x,w,pw),[y0,y1]=span(f.y,body.y,h,ph);\n    const corr=(ox,oy)=>{\n      const ax=Math.max(0,-ox),ay=Math.max(0,-oy),bx=Math.min(w,pw-ox),by=Math.min(h,ph-oy);\n      if(bx-ax\u003c8||by-ay\u003c8)return -2;\n      let n=0,sa=0,sb=0;for(let y=ay;y\u003cby;y++)for(let x=ax;x\u003cbx;x++){sa+=g[y*w+x];sb+=pg[(y+oy)*pw+x+ox];n++;}\n      const ma=sa/n,mb=sb/n;let sab=0,saa=0,sbb=0;\n      for(let y=ay;y\u003cby;y++)for(let x=ax;x\u003cbx;x++){const a=g[y*w+x]-ma,b=pg[(y+oy)*pw+x+ox]-mb;sab+=a*b;saa+=a*a;sbb+=b*b;}\n      return saa&&sbb?sab/Math.sqrt(saa*sbb):-2;};\n    let best={score:-2,ox:x0,oy:y0};\n    const step=x1>x0&&y1>y0?3:1;   // both sides scroll: a coarse pass, then around its best\n    for(let oy=y0;oy\u003c=y1;oy+=step)for(let ox=x0;ox\u003c=x1;ox+=step){const c=corr(ox,oy);if(c>best.score)best={score:c,ox,oy};}\n    if(step>1){const b=best;for(let oy=Math.max(y0,b.oy-step);oy\u003c=Math.min(y1,b.oy+step);oy++)for(let ox=Math.max(x0,b.ox-step);ox\u003c=Math.min(x1,b.ox+step);ox++){const c=corr(ox,oy);if(c>best.score)best={score:c,ox,oy};}}\n    return best.score>=.3?best:null;\n  }\n  // Places the dot on the picture. When a side scrolls, the map's own minimap image (preview)\n  // says how far, else a portal ring over a known portal does; then the rings in view: the game draws every\n  // marker (dot and rings alike) about MARKER_LIFT picture pixels above its point, and when a\n  // side scrolls, a ring over a known portal says how far. Returns {x, y, method, rings} or\n  // null, with .reason when the window scrolls and no ring is in view.\n  function placeOnPicture(body,player,rings,marks,picture,{unit=null,preview=null,image=null}={}){\n    const f=pictureFrame(body,picture,unit);if(!f)return null;\n    const s=picture.scale||16,k=f.k,lift=MARKER_LIFT*k;\n    const pts=(marks||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({x:p.x/s-picture.dx,y:p.y/s-picture.dy}));\n    const tol=Math.max(4,k*7);\n    const rangeX=[body.x+body.w-f.shownW,body.x],rangeY=[body.y+body.h-f.shownH,body.y];\n    const within=(v,r)=>v>=r[0]-tol&&v\u003c=r[1]+tol;\n    // Score a placement by the rings that land on known portals (the lift taken off).\n    const score=(left,top)=>{let inliers=0,error=0;const res=[];\n      for(const ring of rings){let best=null;for(const p of pts){const dx=ring.x-(left+p.x*k),dy=ring.y-(top+p.y*k-lift),d=Math.abs(dx)+Math.abs(dy);if(!best||d\u003cbest.d)best={d,dx,dy};}\n        if(best&&best.d\u003c=tol*2){inliers++;error+=best.d;res.push(best);}}\n      return {left,top,inliers,error,res};};\n    let best=null;const consider=c=>{if(!best||c.inliers>best.inliers||(c.inliers===best.inliers&&c.error\u003cbest.error))best=c;};\n    let matched=false;\n    if(!f.x.clipped&&!f.y.clipped)consider(score(f.x.at,f.y.at));\n    else{\n      const m=matchPreview(image,body,preview,f);\n      if(m){consider(score(body.x-m.ox*k,body.y-m.oy*k));matched=true;}\n      else for(const ring of rings)for(const p of pts){\n        const left=f.x.clipped?ring.x-p.x*k:f.x.at,top=f.y.clipped?ring.y-(p.y*k-lift):f.y.at;\n        if(f.x.clipped&&!within(left,rangeX))continue;if(f.y.clipped&&!within(top,rangeY))continue;\n        const c=score(left,top);if(c.inliers)consider(c);\n      }\n      if(!best){\n        // No ring over a known portal: the game keeps the dot in the middle of a scrolling side\n        // until the picture's edge reaches the window, so a dot off the middle means that edge is\n        // in view; a dot in the middle says nothing.\n        const edge=(side,at,mid,range)=>{if(!side.clipped)return side.at;const off=at-mid;if(Math.abs(off)\u003c=tol)return null;return off\u003c0?range[1]:range[0];};\n        const left=edge(f.x,player.x,body.x+body.w/2,rangeX),top=edge(f.y,player.y,body.y+body.h/2,rangeY);\n        if(left===null||top===null)return {reason:'scrolled'};\n        best={left,top,inliers:0,error:0,res:[]};\n      }\n    }\n    const median=v=>{const a=[...v].sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:0;};\n    // The rings' residual against their portals corrects the lift measured for this minimap.\n    const cx=median(best.res.map(r=>r.dx)),cy=best.res.length?median(best.res.map(r=>r.dy)):0;\n    const at=dotOnPicture({x:player.x-cx,y:player.y-cy+lift},picture,k,best.left,best.top);\n    if(!at)return null;\n    return {x:at.x,y:at.y,method:(matched?'image':'picture')+(best.inliers?'+rings':'+lift'),rings:best.inliers};\n  }\n\n  // Player position in map coordinates from one minimap crop: by the map's own minimap\n  // picture when it is known (picture), else the dot plus two portal rings, or one ring once a\n  // scale was learned for this minimap size. `memory` is returned updated.\n  // preview: the map's own minimap image ({width, height, data}) for a scrolling minimap.\n  function locate(image,marks,{frameHeight=image.height,memory=[],picture=null,preview=null}={}){\n    const band=findTitleBand(image,{frameHeight});\n    if(!band)return {reason:'no-minimap',memory};\n    const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);\n    if(markers.collapsed)return {reason:'collapsed',memory};\n    // The minimap window's own edges (title bar above the strip to the frame under the picture),\n    // so the apps can fit their reading area to it.\n    const b=markers.body,pad=band.h*.15,win={x:Math.max(0,band.x-pad),y:Math.max(0,band.y-band.h*.9),w:band.w+pad*2,h:b.y+b.h-band.y+band.h*1.4};\n    if(!markers.player)return {reason:'no-dot',window:win,memory};\n    const placed=placeOnPicture(markers.body,markers.player,markers.portals,marks,picture,{unit:band.h,preview,image});\n    if(placed&&!placed.reason)return {...placed,window:win,memory};\n    if(!marks?.length)return {reason:'no-portal-data',memory};\n    const scrolled=placed?.reason==='scrolled';\n    const known=recallScale(memory,layout);\n    const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);\n    if(!fit)return {reason:scrolled?'scrolled':markers.portals.length\u003c2?'few-portals':'no-fit',window:win,detail:scrolled?'the minimap scrolls and no portal ring is in view':picture?'':'no picture for this map',memory};\n    const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;\n    if(world.x\u003cMath.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};\n    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',window:win,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};\n  }\n  // Plain-language hint from the player's position to a portal. One game screen is roughly\n  // 1000 map units wide, which keeps distances meaningful without promising precision.\n  // what: what is reached (\"the portal\", or an NPC's name).\n  function guidance(player,portal,{what='the portal'}={}){\n    if(!player||!Number.isFinite(portal?.x))return null;\n    const dx=portal.x-player.x,dy=Number.isFinite(portal.y)?portal.y-player.y:0,near=Math.abs(dx)\u003c90&&Math.abs(dy)\u003c120;\n    const side=dx>0?'right':'left',distance=Math.abs(dx)\u003c450?'a few steps':Math.abs(dx)\u003c1100?'about one screen':'about '+Math.max(2,Math.round(Math.abs(dx)/1000))+' screens';\n    const vertical=dy\u003c-120?'up':dy>120?'down':'';\n    const It=what==='the portal'?'The portal':what;\n    const text=near?(what==='the portal'?'You are at the portal':'You are next to '+what):Math.abs(dx)\u003c90?(vertical==='up'?It+' is above you, climb up':It+' is below you, drop down'):'Head '+side+', '+distance+(vertical==='up'?', then climb up':vertical==='down'?', then drop down':'');\n    return {dx,dy,near,side:Math.abs(dx)\u003c90?null:side,vertical:vertical||null,text};\n  }\n  // Visible portals (type 2) are the ones drawn as rings on the minimap.\n  const coordinate=v=>v!==null&&v!==''&&Number.isFinite(Number(v));\n  const marksFor=map=>(map?.portals||[]).filter(p=>Number(p.type)===2&&coordinate(p.x)&&coordinate(p.y)).map(p=>({x:Number(p.x),y:Number(p.y)}));\n  const api={onPicture,placeOnPicture,pictureFrame,matchPreview,findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};\n  scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;\n})(globalThis);\n\n/* What is on a game screenshot: the \"Look\" feature.\n *\n * The computer sends a screenshot of the game window and the text its system reader found\n * on it (Vision on the Mac, Windows.Media.Ocr on Windows); this module finds what in it is in\n * the database, inside a marked box or on the whole screen (\"Around me\"):\n *   - names: NPC name tags, item names in chat, shops and quests, the map name, read from the\n *     text lines and matched to the database's names;\n *   - sprites: monsters, NPCs and dropped items, by their own sprites from the datamine drawn\n *     at the game's scale (the game draws sprites 1:1 in game pixels; the minimap's title strip\n *     is 45 game px tall, which gives that scale in the screenshot). Only what can be on this\n *     map is looked for: its monsters, its NPCs and what those monsters drop.\n *\n * Works on ImageData-like objects ({width, height, data: RGBA}). Browser and Node.\n */\n(function(scope){\n  const GAME_WIDTH=1366;   // the game's own width in pixels, when the minimap strip is not seen\n  // NPCs that are things, not people (a cab, a board, a crafting station): never marked.\n  // Kept the same as OBJECT_NPC in the detector's training scripts.\n  const OBJECT_NPC=/\\b(cab|board|doorbell|mailbox|chest|safe|pile of|bluebell|door of dimension|ticket gate|exit|statue|mobile store|storage|maple tv|anvil|station|sewing machine|bud)\\b/i;\n  const isObjectNpc=name=>OBJECT_NPC.test(String(name||''));\n\n  // ---- Names ----\n  const norm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,\"'\").replace(/[^a-z0-9']+/g,' ').trim();\n  function editDistance(a,b,max=2){\n    if(Math.abs(a.length-b.length)>max)return max+1;\n    let prev=Array.from({length:b.length+1},(_,i)=>i);\n    for(let i=1;i\u003c=a.length;i++){\n      const cur=[i];let best=i;\n      for(let j=1;j\u003c=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));if(cur[j]\u003cbest)best=cur[j];}\n      if(best>max)return max+1;prev=cur;\n    }\n    return prev[b.length];\n  }\n  // entries: [{type, id, name, ...}]. Returns a matcher: line text -> [{entry, exact}].\n  function nameIndex(entries){\n    const byName=new Map(),byWord=new Map();\n    for(const e of entries){\n      const n=norm(e.name);if(n.length\u003c3)continue;\n      if(!byName.has(n))byName.set(n,[]);byName.get(n).push(e);\n      const first=n.split(' ')[0];if(!byWord.has(first))byWord.set(first,[]);byWord.get(first).push(n);\n    }\n    return function match(text){\n      const t=norm(text);if(t.length\u003c3)return [];\n      if(byName.has(t))return byName.get(t).map(entry=>({entry,exact:true}));\n      const words=t.split(' '),found=[];\n      // A name inside the line (\"Dances with Balrog's Letter x1 earned\", \"13/15 Blue Mushroom Cap\"):\n      // the longest name that starts at some word, compared whole-word.\n      for(let i=0;i\u003cwords.length;i++){\n        for(const n of byWord.get(words[i])||[]){\n          const len=n.split(' ').length;if(len===1&&n.length\u003c5)continue;\n          if(words.slice(i,i+len).join(' ')===n)found.push({n,at:i,len});\n        }\n      }\n      if(found.length){\n        found.sort((a,b)=>b.n.length-a.n.length);const taken=new Set(),out=[];\n        for(const f of found){let free=true;for(let i=f.at;i\u003cf.at+f.len;i++)if(taken.has(i))free=false;if(!free)continue;for(let i=f.at;i\u003cf.at+f.len;i++)taken.add(i);for(const entry of byName.get(f.n))out.push({entry,exact:true});}\n        return out;\n      }\n      // A reading slip in a whole line that is a name (\"Mr. Thundor\").\n      if(t.length>=6){\n        let best=null;\n        for(const n of byWord.get(words[0])||[])if(Math.abs(n.length-t.length)\u003c=2){const d=editDistance(t,n,t.length>=10?2:1);if(d\u003c=(t.length>=10?2:1)&&(!best||d\u003cbest.d))best={n,d};}\n        if(best)return byName.get(best.n).map(entry=>({entry,exact:false}));\n      }\n      return [];\n    };\n  }\n  // The player's own name: the one in the status bar at the bottom (\"LV. 18 Archer TalTBest\").\n  function playerName(lines,frame){\n    const bottom=lines.filter(l=>l.y>frame.h*.9&&/^[A-Za-z0-9]{3,13}$/.test(String(l.text).trim()));\n    const lv=lines.find(l=>l.y>frame.h*.9&&/^lv\\.?$/i.test(String(l.text).trim()));\n    const pick=lv?bottom.filter(l=>l.x>lv.x).sort((a,b)=>a.x-b.x).find(l=>!/^(archer|warrior|magician|thief|pirate|beginner|bowman|cleric|wizard|hunter|crossbowman|fighter|page|spearman|assassin|bandit|brawler|gunslinger)$/i.test(l.text.trim())):null;\n    return pick?String(pick.text).trim():null;\n  }\n  // Where the player stands on screen: their name tag (the status bar's name, shown again\n  // under the character), the one nearest the middle; else the middle (the camera follows you).\n  function findPlayer(lines,frame){\n    const name=playerName(lines,frame),mid={x:frame.w/2,y:frame.h*.6};\n    if(name){\n      const n=norm(name),tags=lines.filter(l=>l.y\u003cframe.h*.9&&l.x\u003cframe.w*.86&&(norm(l.text)===n||editDistance(norm(l.text),n,1)\u003c=1));\n      tags.sort((a,b)=>Math.hypot(a.x+a.w/2-mid.x,a.y-mid.y)-Math.hypot(b.x+b.w/2-mid.x,b.y-mid.y));\n      if(tags[0]){const t=tags[0];return {x:t.x+t.w/2,y:t.y-t.h*2.5,name,found:true};}\n    }\n    return {x:mid.x,y:mid.y,name,found:false};\n  }\n\n  // A name tag: light letters on a dark box, so much of the text's own box is dark.\n  function darkTag(img,l){\n    let dark=0,n=0;\n    const x0=Math.max(0,Math.round(l.x)),x1=Math.min(img.width,Math.round(l.x+l.w)),y0=Math.max(0,Math.round(l.y)),y1=Math.min(img.height,Math.round(l.y+l.h));\n    for(let y=y0;y\u003cy1;y+=2)for(let x=x0;x\u003cx1;x+=2){const j=(y*img.width+x)*4;if(img.data[j]*.299+img.data[j+1]*.587+img.data[j+2]*.114\u003c75)dark++;n++;}\n    return n>=20&&dark/n>=.3;\n  }\n\n  // ---- Sprites ----\n  const at=(img,x,y)=>(y*img.width+x)*4;\n  // A sprite drawn at scale k (bilinear, as the game window is scaled), with its opaque pixels.\n  function template(sprite,k,flip=false){\n    const w=Math.max(2,Math.round(sprite.width*k)),h=Math.max(2,Math.round(sprite.height*k)),px=[];\n    const src=sprite.data,sw=sprite.width,sh=sprite.height;\n    const sample=(fx,fy,c)=>{const x0=Math.max(0,Math.min(sw-1,Math.floor(fx))),y0=Math.max(0,Math.min(sh-1,Math.floor(fy))),x1=Math.min(sw-1,x0+1),y1=Math.min(sh-1,y0+1),ax=Math.max(0,Math.min(1,fx-x0)),ay=Math.max(0,Math.min(1,fy-y0));\n      const v=(x,y)=>src[(y*sw+x)*4+c];return (v(x0,y0)*(1-ax)+v(x1,y0)*ax)*(1-ay)+(v(x0,y1)*(1-ax)+v(x1,y1)*ax)*ay;};\n    for(let y=0;y\u003ch;y++)for(let x=0;x\u003cw;x++){\n      const fx=((flip?w-1-x:x)+.5)/k-.5,fy=(y+.5)/k-.5;\n      // Fully opaque here and around: edges blend with whatever is behind the sprite.\n      let solid=true;for(const [dx,dy] of [[0,0],[-.6,0],[.6,0],[0,-.6],[0,.6]])if(sample(fx+dx/k*k,fy+dy/k*k,3)\u003c250)solid=false;\n      if(solid)px.push({x,y,r:sample(fx,fy,0),g:sample(fx,fy,1),b:sample(fx,fy,2)});\n    }\n    return {w,h,px,flip};\n  }\n  // Masked match score at origin (ox, oy): normalized correlation of the colours, less the\n  // mean colour difference (a shape in the wrong colours is not the sprite).\n  function score(img,t,ox,oy,step=1){\n    let n=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;const d=img.data;\n    for(let i=0;i\u003ct.px.length;i+=step){\n      const p=t.px[i],j=at(img,ox+p.x,oy+p.y);\n      for(const [a,b] of [[d[j],p.r],[d[j+1],p.g],[d[j+2],p.b]]){n++;sa+=a;sb+=b;sab+=a*b;saa+=a*a;sbb+=b*b;diff+=Math.abs(a-b);}\n    }\n    const va=saa-sa*sa/n,vb=sbb-sb*sb/n;if(va\u003c=0||vb\u003c=0)return -1;\n    return (sab-sa*sb/n)/Math.sqrt(va*vb)-diff/n/255;\n  }\n  const close=(img,j,c,tol)=>Math.abs(img.data[j]-c.r)+Math.abs(img.data[j+1]-c.g)+Math.abs(img.data[j+2]-c.b)\u003c=tol;\n  // Where template t is in the region: candidates from its two rarest colours (both in place),\n  // then the full score. Returns [{x, y, w, h, score}] in image pixels.\n  // Every pixel of a region by its colour (16 levels a channel): a sprite's anchor colour is then\n  // looked up instead of scanning the whole screen for it.\n  function colorIndex(img,region){\n    const x0=Math.max(0,Math.floor(region.x)),y0=Math.max(0,Math.floor(region.y)),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));\n    const n=Math.max(0,(x1-x0)*(y1-y0)),bin=new Uint16Array(n),count=new Uint32Array(4097),d=img.data;let i=0;\n    for(let y=y0;y\u003cy1;y++)for(let x=x0;x\u003cx1;x++,i++){const j=(y*img.width+x)*4,q=((d[j]>>4)\u003c\u003c8)|((d[j+1]>>4)\u003c\u003c4)|(d[j+2]>>4);bin[i]=q;count[q+1]++;}\n    for(let q=1;q\u003c=4096;q++)count[q]+=count[q-1];\n    const fill=count.slice(0,4096),pos=new Int32Array(n);i=0;\n    for(let y=y0;y\u003cy1;y++)for(let x=x0;x\u003cx1;x++,i++)pos[fill[bin[i]]++]=y*img.width+x;\n    return {start:count,pos,x0,y0,x1,y1,hist:q=>count[q+1]-count[q]};\n  }\n  function findSprite(img,t,region,{threshold=.55,hist=null,tol=60,index=null}={}){\n    if(t.px.length\u003c12)return [];\n    const rx0=Math.max(0,Math.floor(region.x)),ry0=Math.max(0,Math.floor(region.y)),rx1=Math.min(img.width,Math.ceil(region.x+region.w)),ry1=Math.min(img.height,Math.ceil(region.y+region.h));\n    if(rx1-rx0\u003ct.w||ry1-ry0\u003ct.h)return [];\n    const q=p=>((p.r>>4)\u003c\u003c8)|((p.g>>4)\u003c\u003c4)|(p.b>>4);\n    // Anchors: well-separated pixels in flat areas of the sprite (not a blend at the border of two\n    // colours, which the screen may not have) whose colours are rarest on the screen.\n    if(!t.flat){\n      const at2=new Map(t.px.map(p=>[p.y*t.w+p.x,p])),near=(p,o)=>o&&Math.abs(p.r-o.r)+Math.abs(p.g-o.g)+Math.abs(p.b-o.b)\u003c=24;\n      t.flat=t.px.filter(p=>near(p,at2.get(p.y*t.w+p.x-1))&&near(p,at2.get(p.y*t.w+p.x+1))&&near(p,at2.get((p.y-1)*t.w+p.x))&&near(p,at2.get((p.y+1)*t.w+p.x)));\n      if(t.flat.length\u003c8)t.flat=t.px;\n    }\n    const ranked=t.flat.map(p=>({p,rare:index?index.hist(q(p)):hist?hist[q(p)]||0:0})).sort((a,b)=>a.rare-b.rare);\n    const hits=[],far=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y)>Math.max(t.w,t.h)*.35;\n    // Two anchor pairs: the rarest colour and one far from it; then the next rarest that is far\n    // from the first (a colour shifted by the screenshot's compression is caught by the other).\n    const b1=ranked.find(r=>far(r.p,ranked[0].p))?.p||ranked[1].p;\n    const c0=ranked.find(r=>r.p!==ranked[0].p&&r.p!==b1&&far(r.p,ranked[0].p))?.p||ranked[2]?.p||ranked[0].p;\n    const pairs=[[ranked[0].p,b1],[c0,ranked[0].p]],seen=new Set();\n    for(const [a1,a2] of pairs){\n    const test=(x,y)=>{\n      if(x\u003crx0+a1.x||x>=rx1-(t.w-a1.x)||y\u003cry0+a1.y||y>=ry1-(t.h-a1.y))return;\n      if(!close(img,at(img,x,y),a1,tol))return;\n      const ox=x-a1.x,oy=y-a1.y,key=oy*img.width+ox;\n      if(seen.has(key)||!close(img,at(img,ox+a2.x,oy+a2.y),a2,tol*1.4))return;\n      seen.add(key);\n      const s=score(img,t,ox,oy,3);if(s>=threshold-.15)hits.push({x:ox,y:oy,s});\n    };\n    if(index){\n      // The pixels whose colour is within a level of the anchor's, from the index.\n      const r=a1.r>>4,g=a1.g>>4,b=a1.b>>4;\n      for(let dr=-2;dr\u003c=2;dr++)for(let dg=-2;dg\u003c=2;dg++)for(let db=-2;db\u003c=2;db++){\n        const R=r+dr,G=g+dg,B=b+db;if(R\u003c0||G\u003c0||B\u003c0||R>15||G>15||B>15)continue;\n        const q=(R\u003c\u003c8)|(G\u003c\u003c4)|B;for(let i=index.start[q];i\u003cindex.start[q+1];i++){const p=index.pos[i],y=(p/img.width)|0;test(p-y*img.width,y);}\n      }\n    }else for(let y=ry0+a1.y;y\u003cry1-(t.h-a1.y);y++)for(let x=rx0+a1.x;x\u003crx1-(t.w-a1.x);x++)test(x,y);\n    }\n    // Best of each neighbourhood, scored in full.\n    hits.sort((a,b)=>b.s-a.s);const out=[];\n    for(const h of hits){\n      if(out.some(o=>Math.abs(o.x-h.x)\u003ct.w*.6&&Math.abs(o.y-h.y)\u003ct.h*.6))continue;\n      let best={x:h.x,y:h.y,s:score(img,t,h.x,h.y)};\n      for(let dy=-1;dy\u003c=1;dy++)for(let dx=-1;dx\u003c=1;dx++){const x=h.x+dx,y=h.y+dy;if(x\u003c0||y\u003c0||x+t.w>img.width||y+t.h>img.height)continue;const s=score(img,t,x,y);if(s>best.s)best={x,y,s};}\n      if(best.s>=threshold)out.push({x:best.x,y:best.y,w:t.w,h:t.h,score:Math.round(best.s*100)/100});\n      if(out.length>=12)break;\n    }\n    return out;\n  }\n  // Half size (2x2 averages) of a region of the image, for scanning large areas faster.\n  function half(img,region){\n    const x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));\n    const w=(x1-x0)>>1,h=(y1-y0)>>1,data=new Uint8ClampedArray(w*h*4),d=img.data;\n    for(let y=0;y\u003ch;y++)for(let x=0;x\u003cw;x++){\n      const a=at(img,x0+x*2,y0+y*2),b=a+4,c=a+img.width*4,e=c+4,o=(y*w+x)*4;\n      for(let ch=0;ch\u003c3;ch++)data[o+ch]=(d[a+ch]+d[b+ch]+d[c+ch]+d[e+ch]+2)>>2;data[o+3]=255;\n    }\n    return {image:{width:w,height:h,data},x0,y0};\n  }\n  function colorHistogram(img,region){\n    const hist=new Uint32Array(4096),x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));\n    for(let y=y0;y\u003cy1;y+=2)for(let x=x0;x\u003cx1;x+=2){const j=at(img,x,y);hist[((img.data[j]>>4)\u003c\u003c8)|((img.data[j+1]>>4)\u003c\u003c4)|(img.data[j+2]>>4)]++;}\n    return hist;\n  }\n\n  // ---- The whole look ----\n  // image: the screenshot. lines: [{text, x, y, w, h}] in its pixels. region: {x, y, w, h} in its\n  // pixels (the marked box), or null for the whole screen. k: image pixels per game pixel.\n  // names: a nameIndex() matcher. sprites: [{type, id, name, image: ImageData-like}] to look for.\n  // Returns {player, found: [{type, id, name, box, via: 'name'|'sprite', score}]}, most certain first.\n  function analyze({image,lines=[],region=null,k=null,names=null,sprites=[],now=()=>Date.now(),budget=6000}){\n    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();\n    k=k||frame.w/GAME_WIDTH;\n    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2\u003c=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2\u003c=area.y+area.h;\n    const found=[],players=[],candidates=[];\n    const player=findPlayer(lines,frame);\n    if(names)for(const l of lines){\n      if(!inside(l))continue;\n      const uiLine=l.y>frame.h*.9||l.x>frame.w*.83&&l.y\u003cframe.h*.62;\n      if(player.name&&norm(l.text)===norm(player.name)){if(!uiLine&&!players.some(p=>p.you))players.push({name:player.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:true});continue;}\n      // Text in the game's own windows (Quest Helper, chat and status bar) rather than over the world.\n      const ui=l.y>frame.h*.9||l.x>frame.w*.83&&l.y\u003cframe.h*.62;\n      const seen=new Set();let matched=false;\n      for(const {entry,exact} of names(l.text)){\n        // Monsters carry no name tag in the game: a tag over the world with a monster's name is\n        // a pet's or a player's.\n        if(entry.type==='monster'&&!ui&&norm(l.text)===norm(entry.name))continue;\n        if(entry.type==='npc'&&isObjectNpc(entry.name))continue;\n        // A one-word tag over the world that is an item's name is a pet's or a player's too.\n        if(entry.type==='item'&&!ui&&norm(l.text)===norm(entry.name)&&!/\\s/.test(norm(entry.name)))continue;\n        const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);\n        matched=true;found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui,score:exact?(ui?.9:1):.8});}\n      // Other players: a one-word name tag over the world on the tag's dark box, that is nothing\n      // in the database (not the minimap's name, an NPC's title or a button's label).\n      const word=String(l.text).trim();\n      if(!matched&&!ui&&l.y\u003cframe.h*.86&&/^[A-Za-z0-9]{3,13}$/.test(word)&&/[a-z]/.test(word)&&l.h\u003cframe.h*.04&&darkTag(image,l))candidates.push({name:word,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:false});\n    }\n    // An NPC's title sits right under its name (\"Mr. Thunder\" / \"Weaponcrafter\"): not a player.\n    for(const c of candidates){\n      // A slip of your own name (\"TalTBestU\") is you; each name once.\n      if(player.name&&editDistance(norm(c.name),norm(player.name),1)\u003c=1){c.you=true;c.name=player.name;}\n      if(players.some(p=>norm(p.name)===norm(c.name)))continue;\n      const title=found.some(f=>f.type==='npc'&&f.via==='name'&&Math.abs(c.box.y-(f.box.y+f.box.h))\u003cf.box.h*1.6&&Math.abs(c.box.x+c.box.w/2-(f.box.x+f.box.w/2))\u003cMath.max(f.box.w,c.box.w));\n      if(!title)players.push(c);\n    }\n    // A little margin: a sprite cut by the box still counts when most of it is inside.\n    const pad=40*k,search={x:area.x-pad,y:area.y-pad,w:area.w+pad*2,h:area.h+pad*2};\n    // Large areas are scanned at half size (monsters and NPCs only; dropped items are too small).\n    const big=search.w*search.h>300000&&k>=.9,small=big?half(image,search):null;\n    const index=colorIndex(image,search),smallIndex=small?colorIndex(small.image,{x:0,y:0,w:small.image.width,h:small.image.height}):null;\n    for(const s of sprites){\n      if(now()-started>budget)break;\n      if(s.type==='npc'&&isObjectNpc(s.name))continue;\n      // Small sprites (a snail) lose too much at half size: those are scanned in full.\n      const useHalf=big&&s.type!=='item'&&Math.min(s.image.width,s.image.height)*k>=48;\n      for(const flip of s.type==='item'?[false]:[false,true]){\n        const t=template(s.image,useHalf?k/2:k,flip);\n        // A dropped item's icon is small: only one with enough solid pixels is told apart from\n        // the scenery (a thin sword is not).\n        if(s.type==='item'&&t.px.length\u003c150)continue;\n        const hits=useHalf?findSprite(small.image,t,{x:0,y:0,w:small.image.width,h:small.image.height},{index:smallIndex,threshold:.58})\n          .map(h=>({...h,x:small.x0+h.x*2,y:small.y0+h.y*2,w:h.w*2,h:h.h*2})):findSprite(image,t,search,{index,threshold:s.type==='item'?.82:.5});\n        for(const hit of hits){\n          const box={x:hit.x,y:hit.y,w:hit.w,h:hit.h};if(!inside(box))continue;\n          found.push({type:s.type,id:s.id,name:s.name,box,via:'sprite',score:hit.score});\n        }\n      }\n    }\n    // An item seen on a monster or an NPC is part of it (a Blue Mushroom's cap), not a drop.\n    const bodies=found.filter(f=>f.via==='sprite'&&f.type!=='item').map(f=>f.box);\n    const overlaps=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y))>a.w*a.h*.3;\n    for(let i=found.length-1;i>=0;i--)if(found[i].type==='item'&&found[i].via==='sprite'&&bodies.some(b=>overlaps(found[i].box,b)))found.splice(i,1);\n    // One entry per thing seen: the same sprite flipped, or a name tag over its own NPC.\n    found.sort((a,b)=>b.score-a.score);const out=[];\n    for(const f of found){\n      const same=out.find(o=>o.type===f.type&&o.id===f.id&&Math.abs(o.box.x+o.box.w/2-(f.box.x+f.box.w/2))\u003cMath.max(o.box.w,f.box.w)*.8&&Math.abs(o.box.y-f.box.y)\u003cMath.max(o.box.h,f.box.h)*1.5);\n      if(same){same.count=(same.count||1);continue;}\n      out.push(f);\n    }\n    return {player,k,found:out,players,elapsed:now()-started};\n  }\n  // Items that could be anywhere (the inventory, a shop, a store): a box's icon against every\n  // item's 16x16 thumbnail (thumbs: {cell, per, ids, sheet: ImageData-like}), fitted the same\n  // way (aspect kept, centred). Returns the n closest [{id, score}] to check in full.\n  // A box a little off the icon (a count in its corner, a loose edge) is tried trimmed a few\n  // ways; each item keeps its best score.\n  // allow: item ids that may be considered (null: any).\n  function shortlistItems(image,b,thumbs,n=8,allow=null){\n    const t=Math.max(2,Math.round(Math.min(b.w,b.h)*.12)),best=new Map();\n    for(const v of [b,{x:b.x+t,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t/2,y:b.y+t/2,w:b.w-t,h:b.h-t},{x:b.x,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t,y:b.y+t,w:b.w-t,h:b.h-t}])\n      for(const c of shortlistOnce(image,v,thumbs,n*2,allow))if(!best.has(c.id)||best.get(c.id)\u003cc.score)best.set(c.id,c.score);\n    return [...best].map(([id,score])=>({id,score})).sort((a,c)=>c.score-a.score).slice(0,n);\n  }\n  function shortlistOnce(image,b,thumbs,n,allow){\n    const C=thumbs.cell,sheet=thumbs.sheet,box=new Float32Array(C*C*3),k=C/Math.max(b.w,b.h),w=b.w*k,h=b.h*k,ox=(C-w)/2,oy=(C-h)/2;\n    for(let y=0;y\u003cC;y++)for(let x=0;x\u003cC;x++){\n      // The screenshot pixels this thumbnail pixel covers, averaged.\n      const sx0=b.x+(x-ox)/k,sy0=b.y+(y-oy)/k,sx1=sx0+1/k,sy1=sy0+1/k;let r=0,g=0,bl=0,c=0;\n      for(let yy=Math.floor(sy0);yy\u003cMath.ceil(sy1);yy++)for(let xx=Math.floor(sx0);xx\u003cMath.ceil(sx1);xx++){if(xx\u003c0||yy\u003c0||xx>=image.width||yy>=image.height)continue;const j=(yy*image.width+xx)*4;r+=image.data[j];g+=image.data[j+1];bl+=image.data[j+2];c++;}\n      const o=(y*C+x)*3;if(c){box[o]=r/c;box[o+1]=g/c;box[o+2]=bl/c;}\n    }\n    // Each thumbnail's average colour (computed once): a box far from it in colour is skipped\n    // before the full comparison.\n    if(!thumbs.means){\n      thumbs.means=new Float32Array(thumbs.ids.length*3);\n      for(let i=0;i\u003cthumbs.ids.length;i++){const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let r=0,g=0,bl=0,c=0;\n        for(let y=0;y\u003cC;y++)for(let x=0;x\u003cC;x++){const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]\u003c160)continue;r+=sheet.data[j];g+=sheet.data[j+1];bl+=sheet.data[j+2];c++;}\n        if(c){thumbs.means[i*3]=r/c;thumbs.means[i*3+1]=g/c;thumbs.means[i*3+2]=bl/c;}else thumbs.means[i*3]=-999;}\n    }\n    let br=0,bg=0,bb=0;for(let i=0;i\u003cC*C;i++){br+=box[i*3];bg+=box[i*3+1];bb+=box[i*3+2];}br/=C*C;bg/=C*C;bb/=C*C;\n    const out=[];\n    for(let i=0;i\u003cthumbs.ids.length;i++){\n      if(allow&&!allow.has(thumbs.ids[i]))continue;\n      // The box's average includes some background around the icon, so the gate is loose.\n      if(Math.abs(thumbs.means[i*3]-br)+Math.abs(thumbs.means[i*3+1]-bg)+Math.abs(thumbs.means[i*3+2]-bb)>150)continue;\n      const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let n2=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;\n      for(let y=0;y\u003cC;y++)for(let x=0;x\u003cC;x++){\n        const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]\u003c160)continue;\n        const o=(y*C+x)*3;for(let ch=0;ch\u003c3;ch++){const a=box[o+ch],v=sheet.data[j+ch];sa+=a;sb+=v;sab+=a*v;saa+=a*a;sbb+=v*v;diff+=Math.abs(a-v);n2++;}\n      }\n      if(n2\u003c30)continue;\n      const va=saa-sa*sa/n2,vb=sbb-sb*sb/n2,score=(va>0&&vb>0?(sab-sa*sb/n2)/Math.sqrt(va*vb):0)-diff/n2/255;\n      if(out.length\u003cn||score>out[out.length-1].score){out.push({id:thumbs.ids[i],score});out.sort((a,c)=>c.score-a.score);if(out.length>n)out.pop();}\n    }\n    return out;\n  }\n  // Names what the detector found (src/look-detector.js): detections [{cls, score, box}].\n  // Each box must match a known sprite with high confidence, else it is dropped (a wooden frame\n  // is not a monster). First the map's own monsters, NPCs and drops (sprites: a few dozen, fast);\n  // only when none matches, and the detector is fairly sure, every known monster and NPC\n  // (allSprites, the reference atlas), within a time limit. Sprites are compared only when\n  // their size is close to the box's. NPCs and players are also named by the tag under them.\n  // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most. What templates\n  // cannot name (partly hidden, cut by the screen's edge, heaped, see-through) the namer\n  // (src/look-namer.js) names, when sure.\n  // Items need 0.8 by any path (a pet matched a wand's icon at 0.71).\n  const ACCEPT={monster:.6,npc:.6,item:.8,pet:.6};\n  // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then\n  // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData\n  // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).\n  // onProgress(done, total, found): after each box (Look shows them as they are named).\n  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200,onProgress=null}){\n    // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).\n    const onSlot=b=>{const px=[];for(let i=0;i\u003c24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x\u003c0||y\u003c0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}\n      if(px.length\u003c12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)\u003c16;};\n    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();\n    k=k||frame.w/GAME_WIDTH;\n    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2\u003c=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2\u003c=area.y+area.h;\n    const player=findPlayer(lines,frame),found=[],players=[],pendingItems=[];\n    // The text printed right of an icon, on its row (a shop's or a store's list).\n    const textBeside=b=>lines.filter(l=>l.x>=b.x+b.w-2&&l.x\u003c=b.x+b.w+60&&l.y+l.h>b.y-4&&l.y\u003cb.y+b.h*.8).sort((a,c)=>a.y-c.y);\n    // The name tag under a box: a text line just below it, centred on it.\n    const tagUnder=b=>lines.filter(l=>l.y>=b.y+b.h*.6&&l.y\u003c=b.y+b.h+Math.max(28,b.h*.6)&&Math.abs(l.x+l.w/2-(b.x+b.w/2))\u003cMath.max(b.w*.7,l.w*.6)).sort((a,c)=>a.y-c.y);\n    const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));\n    const local={monster:usable(sprites,'monster'),npc:usable(sprites,'npc'),item:usable(sprites,'item')};\n    const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]},cursors=usable(allSprites,'cursor'),pets=usable(allSprites,'pet');\n    // The namer's answer for a box (det.names: [{type: 'monster'|'item'|'other', id, name, p}],\n    // best first; pets are items): taken when sure (0.9). Otherwise this map decides between\n    // look-alikes (a Slime and a Super Slime split about evenly): one of the map's own monsters\n    // is taken when it has 0.3 or more and 85% of what the map's monsters, pets and 'other' have.\n    const localIds=new Set(local.monster.map(s=>String(s.id)));\n    const isLocal=n=>n.type==='monster'&&localIds.has(String(n.id));\n    const byNamer=det=>{\n      const list=det.names||[],top=list[0];if(!top)return null;\n      if(top.type!=='other'&&top.p>=.9)return top;\n      const allowed=list.filter(n=>n.type==='other'||n.pet||isLocal(n)),mine=allowed.find(isLocal),sum=allowed.reduce((a,n)=>a+n.p,0);\n      return mine&&mine.p>=.3&&mine.p>=sum*.85?mine:null;\n    };\n    const fromNamer=(n,b)=>({type:n.type,id:String(n.id),name:n.name,box:b,via:'namer',...(n.pet?{pet:true}:{}),score:Math.round(n.p*100)/100});\n    const templates=new Map();\n    const tmpl=(s,flip,kk)=>{let m=templates.get(s.image);if(!m){m={};templates.set(s.image,m);}return m[flip+':'+kk]??=template(s.image,kk,flip);};\n    // The scale measured from the minimap strip can be off by a few percent (the screenshot's\n    // compression blurs the strip's edges): each sprite is tried at it and 4% either side.\n    const scales=[k,k*.96,k*1.04];\n    // The best of these sprites inside the box, among those of about the box's size.\n    function bestSprite(list,b,deadline=Infinity){\n      const pad=Math.max(6,Math.max(b.w,b.h)*.15),r={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2};let best=null;\n      for(const s of list){\n        const w=s.image.width*k,h=s.image.height*k;if(w\u003cb.w*.6||w>b.w*1.4||h\u003cb.h*.6||h>b.h*1.4)continue;\n        if(now()>deadline)break;\n        for(const kk of scales)for(const flip of s.type==='item'||s.type==='cursor'?[false]:[false,true]){\n          const hit=findSprite(image,tmpl(s,flip,kk),r,{threshold:.35})[0];\n          if(hit&&(!best||hit.score>best.score))best={s,score:hit.score};\n        }\n        if(best&&best.score>=.85)break;   // a clear match: no need to try the rest\n      }\n      return best;\n    }\n    let done=0;const total=detections.length;\n    for(const det of detections){\n      if(onProgress){onProgress(done,total,found);}done++;\n      if(!inside(det.box))continue;\n      const b=det.box,tags=tagUnder(b);\n      if(det.cls==='player'){\n        const t=tags[0],name=t?String(t.text).trim():'';\n        players.push({name:name||'Player',box:b,you:!!(name&&player.name&&editDistance(norm(name),norm(player.name),1)\u003c=1),score:det.score});\n        continue;\n      }\n      // A pet (an item in the database): by its name tag when that is the kind's name (pets can\n      // be renamed), else by its sprite among every pet's.\n      if(det.cls==='pet'){\n        const named=names&&tags.map(t=>names(t.text).find(m=>m.entry.type==='item'&&m.entry.category==='Pet'&&m.exact)).find(Boolean);\n        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'tag',pet:true,score:det.score});continue;}\n        const best=bestSprite(pets,b,now()+600);\n        if(best&&best.score>=ACCEPT.pet)found.push({type:'item',id:best.s.id,name:itemName(best.s.id),box:b,via:'sprite',pet:true,score:Math.round(best.score*100)/100});\n        else{const n=byNamer(det);if(n)found.push(fromNamer(n,b));}\n        continue;\n      }\n      if(det.cls==='npc'&&names){\n        const named=tags.map(t=>names(t.text).find(m=>m.entry.type==='npc')).find(Boolean);\n        if(named){if(!isObjectNpc(named.entry.name))found.push({type:'npc',id:named.entry.id,name:named.entry.name,box:b,via:'tag',score:det.score});continue;}\n      }\n      // The status bar at the bottom holds the game's buttons (Cash Shop, Menu), never items.\n      if(det.cls==='item'&&b.y+b.h/2>frame.h*.915)continue;\n      // A drop has no name tag; something small with one under it is a pet.\n      if(det.cls==='item'&&tags.length&&!onSlot(b))continue;\n      // The mouse pointer (the game's own cursors, in the reference set) is not a thing to name.\n      if(det.cls!=='npc'&&cursors.length&&Math.max(b.w,b.h)\u003c=48*k){const c=bestSprite(cursors,b);if(c&&c.score>=.75)continue;}\n      if(det.cls==='item'&&names){\n        const named=textBeside(b).map(t=>names(t.text).find(m=>m.entry.type==='item')).find(Boolean);\n        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}\n      }\n      const accept=ACCEPT[det.cls]??.6;\n      let best=bestSprite(local[det.cls]||[],b);\n      if(det.cls==='item'&&(!best||best.score\u003caccept)&&thumbs){\n        // Any item: the shortlist, each checked in full at the game's scale.\n        // Without a name beside it, an item must match clearly: 0.8 or more, and ahead of the\n        // next candidate (a different item) by 0.05. A doubtful icon is left unnamed.\n        // In a window (the inventory, a shop: the icon sits on a flat slot) any item can show;\n        // on the ground only what drops (Use and Etc items, dropped: groundItems).\n        const list=shortlistItems(image,b,thumbs,8,onSlot(b)?null:groundItems),missing=[],hits=[];\n        for(const c of list){\n          const icon=itemIcon(c.id);if(icon===undefined){missing.push(c.id);continue;}if(!icon)continue;\n          const hit=bestSprite([{type:'item',id:c.id,name:itemName(c.id),image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4});\n          if(hit)hits.push(hit);\n        }\n        if(missing.length&&!hits.some(h=>h.score>=.8)){pendingItems.push({box:b,ids:missing});continue;}\n        hits.sort((a,c)=>c.score-a.score);\n        const top=hits[0],next=hits.find(h=>h.s.name!==top?.s.name);\n        if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;\n        else if(!best||best.score\u003caccept)continue;\n      }\n      if(det.cls==='monster'&&(!best||best.score\u003caccept)){const n=byNamer(det);if(n){found.push(fromNamer(n,b));continue;}}\n      if((!best||best.score\u003caccept)&&det.score>=.45&&global[det.cls]?.length&&now()-started\u003cbudget){\n        const wide=bestSprite(global[det.cls],b,started+budget);\n        if(wide&&wide.score>=accept+.05&&(!best||wide.score>best.score))best=wide;\n      }\n      if(best&&best.score>=accept)found.push({type:det.cls,id:best.s.id,name:best.s.name,box:b,via:'sprite',score:Math.round(best.score*100)/100});\n    }\n    // Text in the game's windows: quest items and quests in the Quest Helper, items in chat.\n    if(names)for(const l of lines){\n      if(!inside(l))continue;\n      const ui=l.y>frame.h*.86||l.x>frame.w*.83&&l.y\u003cframe.h*.62;if(!ui)continue;\n      const seen=new Set();\n      for(const {entry,exact} of names(l.text)){if(entry.type==='npc'||entry.type==='monster')continue;const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui:true,score:exact?.9:.7});}\n    }\n    return {player,k,found,players,pendingItems,elapsed:now()-started};\n  }\n  // Summary: each thing once, with how many were seen.\n  function summary(found){\n    const by=new Map();\n    for(const f of found){const key=f.type+':'+f.id;const e=by.get(key);if(e){e.count++;e.score=Math.max(e.score,f.score);if(!f.ui)e.ui=false;if(f.via==='sprite')e.via='sprite';}else by.set(key,{type:f.type,id:f.id,name:f.name,count:1,score:f.score,via:f.via,ui:!!f.ui,box:f.box});}\n    const order={monster:0,npc:1,item:2,map:3,quest:4};\n    return [...by.values()].sort((a,b)=>(order[a.type]??9)-(order[b.type]??9)||b.count-a.count||b.score-a.score);\n  }\n\n  const api={analyze,identify,shortlistItems,summary,isObjectNpc,nameIndex,findPlayer,playerName,template,findSprite,colorIndex,score,norm,editDistance,GAME_WIDTH};\n  scope.MapleLook=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;\n})(typeof window!=='undefined'?window:globalThis);\n\n/* The Look detector: a small YOLO model, trained on synthetic game screens made from the\n * game's own sprites and map renders (the training scripts live outside this repository),\n * that finds monsters, NPCs, dropped items, players and pets on a screenshot. It runs in the\n * browser (in Look's worker, src/look-worker.js) with ONNX Runtime Web (vendor/ort/ on this site);\n * the model and the runtime's WebAssembly come as bytes from Look's own cache (src/look-ui.js).\n *\n * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player'|'pet', score, box: {x, y, w, h}}] in the\n * image's pixels.\n */\n(function(scope){\n  const CLASSES=['monster','npc','item','player','pet'];\n  const ORT='./vendor/ort/';\n  // A canvas in the page or in a worker.\n  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});\n  // The runtime's script: a \u003cscript> in the page, importScripts in a worker.\n  function loadScript(src){\n    if(scope.ort)return Promise.resolve();\n    if(typeof document==='undefined'){try{importScripts(src);return Promise.resolve();}catch(_){return Promise.reject(Error('The detector could not load.'));}}\n    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});\n  }\n  // model, runtime: () => Promise\u003cArrayBuffer> (the detector, the runtime's .wasm); base: the\n  // site's address (in a worker, its own address is not the site's).\n  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5,base=scope.location?.href}={}){\n    let session=null,loading=null;\n    function ready(){\n      loading??=(async()=>{\n        await loadScript(new URL(ORT+'ort.min.js',base).href);\n        const [bytes,wasm]=await Promise.all([model(),runtime()]);\n        scope.ort.env.wasm.wasmPaths=new URL(ORT,base).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;\n        session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});\n        return session;\n      })().catch(e=>{loading=null;throw e;});\n      return loading;\n    }\n    // Letterbox into the model's input (keeping the aspect), as the model was trained.\n    function input(image){\n      const k=Math.min(inputW/image.width,inputH/image.height),w=Math.round(image.width*k),h=Math.round(image.height*k),dx=(inputW-w)>>1,dy=(inputH-h)>>1;\n      const src=canvas(image.width,image.height);src.getContext('2d').putImageData(toImageData(image),0,0);\n      const c=canvas(inputW,inputH);const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);\n      const d=x.getImageData(0,0,inputW,inputH).data,n=inputW*inputH,t=new Float32Array(3*n);\n      for(let i=0;i\u003cn;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}\n      return {tensor:new scope.ort.Tensor('float32',t,[1,3,inputH,inputW]),k,dx,dy};\n    }\n    const toImageData=img=>img instanceof ImageData?img:new ImageData(new Uint8ClampedArray(img.data),img.width,img.height);\n    const iouOf=(a,b)=>{const x=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)),y=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return x*y/(a.w*a.h+b.w*b.h-x*y);};\n    async function detect(image){\n      await ready();\n      const {tensor,k,dx,dy}=input(image),out=await session.run({[session.inputNames[0]]:tensor}),o=out[session.outputNames[0]];\n      // YOLO output: [1, 4 + classes, anchors] (centre x, y, width, height, then class scores).\n      const [,rows,count]=o.dims,v=o.data,found=[];\n      for(let i=0;i\u003ccount;i++){\n        let best=0,cls=0;for(let c=4;c\u003crows;c++){const s=v[c*count+i];if(s>best){best=s;cls=c-4;}}\n        if(best\u003cminScore)continue;\n        const cx=v[i],cy=v[count+i],w=v[2*count+i],h=v[3*count+i];\n        found.push({cls:CLASSES[cls]||'monster',score:best,box:{x:(cx-w/2-dx)/k,y:(cy-h/2-dy)/k,w:w/k,h:h/k}});\n      }\n      found.sort((a,b)=>b.score-a.score);const keep=[];\n      for(const f of found)if(!keep.some(o=>o.cls===f.cls&&iouOf(o.box,f.box)>iou))keep.push(f);\n      return keep.slice(0,80);\n    }\n    return {ready,detect};\n  }\n  const api={create,CLASSES};\n  scope.MapleLookDetector=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;\n})(typeof window!=='undefined'?window:globalThis);\n\n/* Look's namer: a small classifier that says which monster or pet a detector box holds, or\n * 'other' (a player, an NPC, the cursor, scenery). It was trained (outside this repository) on\n * crops cut the way this file cuts them: the box padded by 8%, grey (114) outside the picture,\n * letterboxed to SIZE x SIZE on grey. It names what template matching cannot: monsters partly\n * hidden behind ropes or grass, cut by the screen's edge, heaped together, or see-through.\n * It runs with the same ONNX Runtime as the detector (src/look-detector.js loads it).\n *\n * create({model, runtime, classes}) -> {ready, name(image, box) -> [{cls, p}] (best first, 3)}\n * classes: the model's class names ('m\u003cid>' a monster, 'p\u003cid>' a pet, 'other').\n */\n(function(scope){\n  const SIZE=96,GREY=114;\n  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});\n  function create({model,runtime,classes=[]}={}){\n    let session=null,loading=null;\n    function ready(){\n      loading??=(async()=>{\n        if(!scope.ort)throw Error('The namer needs the detector\\'s runtime.');\n        const [bytes,wasm]=await Promise.all([model(),runtime()]);\n        if(!scope.ort.env.wasm.wasmBinary)scope.ort.env.wasm.wasmBinary=wasm;\n        session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});\n        return session;\n      })().catch(e=>{loading=null;throw e;});\n      return loading;\n    }\n    // The box padded by 8% (grey beyond the picture), letterboxed to SIZE x SIZE on grey.\n    function input(image,box,source){\n      const px=box.w*.08,py=box.h*.08,x0=Math.round(box.x-px),y0=Math.round(box.y-py),w=Math.max(1,Math.round(box.x+box.w+px)-x0),h=Math.max(1,Math.round(box.y+box.h+py)-y0);\n      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=canvas(SIZE,SIZE);\n      const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle=`rgb(${GREY},${GREY},${GREY})`;x.fillRect(0,0,SIZE,SIZE);\n      const ox=(SIZE-dw)>>1,oy=(SIZE-dh)>>1;x.save();x.beginPath();x.rect(ox,oy,dw,dh);x.clip();x.imageSmoothingQuality='medium';\n      x.drawImage(source,x0,y0,w,h,ox,oy,dw,dh);x.restore();\n      // Parts of the box beyond the picture stay grey (drawImage leaves them unpainted).\n      const d=x.getImageData(0,0,SIZE,SIZE).data,n=SIZE*SIZE,t=new Float32Array(3*n);\n      for(let i=0;i\u003cn;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}\n      return new scope.ort.Tensor('float32',t,[1,3,SIZE,SIZE]);\n    }\n    // A canvas of the screenshot, made once per picture.\n    let lastImage=null,lastCanvas=null;\n    function sourceOf(image){\n      if(image!==lastImage){const c=canvas(image.width,image.height);c.getContext('2d').putImageData(image instanceof ImageData?image:new ImageData(new Uint8ClampedArray(image.data),image.width,image.height),0,0);lastImage=image;lastCanvas=c;}\n      return lastCanvas;\n    }\n    async function name(image,box){\n      await ready();\n      const out=await session.run({[session.inputNames[0]]:input(image,box,sourceOf(image))}),p=out[session.outputNames[0]].data;\n      return [...p].map((v,i)=>({cls:classes[i]||String(i),p:v})).sort((a,b)=>b.p-a.p).slice(0,3);\n    }\n    return {ready,name};\n  }\n  const api={create,SIZE};\n  scope.MapleLookNamer=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;\n})(typeof window!=='undefined'?window:globalThis);\n\n/* Look's recognition engine: loads Look's files (the phone's own cache first, see prefetch),\n * runs the detector (src/look-detector.js) and the namer (src/look-namer.js) and names what\n * they find (src/look.js). It runs in a background worker (src/look-worker.js), so the page\n * stays responsive and can show progress; the page falls back to running it itself.\n *\n * create({look, catalogUrl, base}) -> {prefetch(onProgress), analyze(shot, region, onProgress)}\n * shot: {image: ImageData, lines, map: {id, name, monsters: [{id, name}], npcs: [{id}]}, k?}\n * onProgress({stage: 'download'|'detector'|'naming'|'items', done, total, found}).\n * The result is plain data (it crosses from the worker): found, players, player, k, method,\n * mapId, drops (this map's drop rows), summary (each thing once, numbered).\n */\n(function(scope){\n  const CACHE='maple-atlas-look';\n  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});\n  function create({look,catalogUrl,base=scope.location?.href}={}){\n    const abs=p=>new URL(p,base).href,file=name=>abs((look?.base||'./assets/look/')+name);\n    const RUNTIME=abs('./vendor/ort/ort-wasm-simd-threaded.wasm');\n    // One loader for Look's files: the phone's own cache, else the site (and then kept).\n    async function lookFile(url){\n      let cache=null;\n      try{cache=await caches.open(CACHE);const hit=await cache.match(url);if(hit)return hit;}catch(_){}\n      const r=await fetch(url,{credentials:'same-origin'});if(!r.ok)throw Error('Could not load '+url.split('/').pop()+'.');\n      try{await cache?.put(url,r.clone());}catch(_){}\n      return r;\n    }\n    // Every Look file into the phone's cache (each once), then the ones no longer listed dropped.\n    let fetched=null,state={done:0,total:0};\n    function prefetch(onProgress){\n      if(!look?.files?.length)return Promise.resolve(false);\n      fetched??=(async()=>{\n        try{await scope.navigator?.storage?.persist?.();}catch(_){}\n        const wanted=[...look.files.map(file),RUNTIME];\n        state={done:0,total:wanted.length};\n        for(const url of wanted){await lookFile(url).catch(()=>null);state={done:state.done+1,total:wanted.length};onProgress?.(state);}\n        try{const c=await caches.open(CACHE),keep=new Set(wanted);for(const req of await c.keys())if(!keep.has(req.url))await c.delete(req);}catch(_){}\n        return true;\n      })().catch(()=>{fetched=null;return false;});\n      return fetched;\n    }\n\n    // ---- Data: the catalog (names), the reference set, items, drops ----\n    let catalog=null,names=null;\n    async function loadCatalog(){\n      if(catalog)return catalog;\n      const r=await fetch(abs(catalogUrl));if(!r.ok)throw Error('The database did not load.');\n      const data=await r.json();catalog={by:new Map((data.entities||[]).map(e=>[e.type+':'+e.id,e]))};\n      names=MapleLook.nameIndex((data.entities||[]).filter(e=>['npc','monster','item','quest'].includes(e.type)));\n      return catalog;\n    }\n    const nameOf=(type,id)=>catalog?.by.get(type+':'+id)?.name||String(id);\n    const json=name=>lookFile(file(name)).then(r=>r.json());\n    async function pixels(name){\n      const b=await createImageBitmap(await lookFile(file(name)).then(r=>r.blob())),c=canvas(b.width,b.height),x=c.getContext('2d',{willReadFrequently:true});\n      x.drawImage(b,0,0);b.close?.();return x.getImageData(0,0,c.width,c.height);\n    }\n    // A packed set of pictures (index + sheets) -> [{...entry, image}].\n    async function sheet(name){\n      const index=await json(name),sheets=await Promise.all(index.sheets.map(pixels));\n      return index.sprites.map(s=>({...s,image:crop(sheets[s.s],s.x,s.y,s.w,s.h)}));\n    }\n    function crop(img,x0,y0,w,h){\n      const data=new Uint8ClampedArray(w*h*4);\n      for(let y=0;y\u003ch;y++)data.set(img.data.subarray(((y0+y)*img.width+x0)*4,((y0+y)*img.width+x0+w)*4),y*w*4);\n      return {width:w,height:h,data};\n    }\n    const once=f=>{let p=null;return ()=>(p??=f().catch(e=>{p=null;throw e;}));};\n    const loadAtlas=once(async()=>{await loadCatalog();return (await sheet(look.atlas)).map(s=>({type:s.t,id:String(s.id),name:s.t==='pet'?nameOf('item',s.id):nameOf(s.t,s.id),image:s.image}));});\n    const loadIcons=once(async()=>new Map((await sheet(look.icons)).map(s=>[String(s.id),s.image])));\n    const loadRaw=once(async()=>new Map((await sheet(look.raw)).map(s=>[String(s.id),s.image])));\n    const loadThumbs=once(async()=>{const meta=await json(look.thumbs);return {...meta,sheet:await pixels(meta.image)};});\n    // What each monster drops: {monster: [[item name, item id, rate %]]}.\n    const loadDrops=once(()=>json(look.drops));\n    // What can be on this map: its monsters (every frame), its NPCs, and its monsters' drops.\n    const mapSets=new Map();\n    function spritesFor(m){\n      if(!m)return Promise.resolve(Object.assign([],{drops:[]}));\n      if(!mapSets.has(m.id))mapSets.set(m.id,(async()=>{\n        const [atlas,drops,raw,icons]=await Promise.all([loadAtlas(),loadDrops(),loadRaw(),loadIcons()]);\n        const ids=new Set([...(m.monsters||[]).map(x=>'monster:'+x.id),...(m.npcs||[]).map(x=>'npc:'+x.id)]);\n        const list=atlas.filter(s=>ids.has(s.type+':'+s.id));\n        const rows=(m.monsters||[]).flatMap(x=>(drops[x.name]||[]).map(([item,id,rate])=>({monster:x.name,item,id,rate})));\n        for(const id of new Set(rows.map(r=>r.id).filter(Boolean))){const image=raw.get(String(id))||icons.get(String(id));if(image)list.push({type:'item',id:String(id),name:nameOf('item',id),image});}\n        list.drops=rows;\n        return list;\n      })().catch(e=>{mapSets.delete(m.id);throw e;}));\n      return mapSets.get(m.id);\n    }\n\n    // ---- Recognition ----\n    // The game's scale in the screenshot: the minimap title strip is 45 game px tall, measured\n    // in the top-left corner, where the game keeps the minimap (as the apps read it).\n    function scaleOf(image){\n      try{\n        const w=Math.round(image.width*.45),h=Math.round(image.height*.76),data=new Uint8ClampedArray(w*h*4);\n        for(let y=0;y\u003ch;y++)data.set(image.data.subarray(y*image.width*4,y*image.width*4+w*4),y*w*4);\n        const band=MapleMinimapPosition.findTitleBand({width:w,height:h,data},{frameHeight:image.height});\n        const k=band?band.h/45:0,guess=image.width/MapleLook.GAME_WIDTH;\n        if(k>guess*.6&&k\u003cguess*1.6)return k;\n      }catch(_){}\n      return image.width/MapleLook.GAME_WIDTH;\n    }\n    const bytes=url=>()=>lookFile(url).then(r=>r.arrayBuffer());\n    const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({model:bytes(file(look.detector)),runtime:bytes(RUNTIME),minScore:.25,base}):null;\n    const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({model:bytes(file(look.namer)),runtime:bytes(RUNTIME),classes:look.namerClasses||[]}):null;\n    const namerEntry=({cls,p})=>{\n      if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:nameOf('monster',id),p};}\n      if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:nameOf('item',id),pet:true,p};}\n      return {type:'other',p};\n    };\n    // The detector finds things; the map's sprites, the namer, the reference set, the item icons\n    // and the name tags name them. Without the detector (an old browser) the map's sprites are\n    // looked for directly. Detections are kept on the shot (a second look reuses them).\n    async function analyze(s,region,onProgress){\n      const say=(stage,done=0,total=0,found=[])=>onProgress?.({stage,done,total,found});\n      await loadCatalog();\n      s.k??=scaleOf(s.image);\n      if(state.total&&state.done\u003cstate.total)say('download',state.done,state.total);\n      const sprites=await spritesFor(s.map);\n      let r=null;\n      if(detector)try{\n        if(!s.detections){say('detector');s.detections=await detector.detect(s.image);}\n        const named=s.detections.filter(d=>(d.cls==='monster'||d.cls==='pet')&&!d.names);\n        if(namer)try{let i=0;for(const d of named){say('naming',i++,named.length);d.names=(await namer.name(s.image,d.box)).map(namerEntry);}}\n        catch(e){console.warn('Look namer:',e);}\n        const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);\n        const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);\n        let last=0;\n        r=MapleLook.identify({image:s.image,detections:s.detections,lines:s.lines,region,k:s.k,names,sprites,allSprites,thumbs:th,groundItems:ground,\n          itemIcon:id=>icons.get(String(id))||null,itemName:id=>nameOf('item',id),\n          // At most every 120 ms: what is named so far, so the page shows it as it goes.\n          onProgress:(done,total,found)=>{const t=Date.now();if(t-last>120){last=t;say('items',done,total,found.filter(f=>!f.ui).map(plain));}}});\n        r.method='detector';\n      }catch(e){console.warn('Look detector:',e);}\n      r??={...MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites}),method:'sprites'};\n      const summary=MapleLook.summary(r.found).map(plain);let n=0;for(const f of summary)if(!(f.via==='name'&&f.ui))f.n=++n;\n      const found=r.found.map(plain);for(const f of found){const x=summary.find(y=>y.type===f.type&&y.id===f.id);f.n=x?.n;}\n      return {found,players:(r.players||[]).map(p=>({name:p.name,box:p.box,you:p.you})),player:r.player,k:r.k??s.k,method:r.method,mapId:s.map?.id||null,drops:sprites.drops||[],summary};\n    }\n    // A found thing as plain data (no pictures), to cross to the page.\n    const plain=f=>({type:f.type,id:String(f.id),name:f.name,box:f.box&&{x:f.box.x,y:f.box.y,w:f.box.w,h:f.box.h},via:f.via,score:f.score,ui:!!f.ui,pet:!!f.pet,count:f.count});\n    return {prefetch,analyze,lookFile,loadCatalog,state:()=>state};\n  }\n  const api={create};\n  scope.MapleLookEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;\n})(typeof self!=='undefined'?self:globalThis);\n\n/* Look's background worker: recognition (src/look-engine.js) off the page's thread, so the page\n * stays responsive and shows progress. The page sends:\n *   {type: 'init', look, catalogUrl, base}\n *   {type: 'shot', shot, width, height, buffer (RGBA, transferred), lines, map, k?}\n *   {type: 'analyze', id, shot, region}\n * and gets back {id, type: 'progress', stage, done, total, found} then {id, type: 'done', result}\n * or {id, type: 'error', message}. The last few shots are kept (a second look reuses the\n * detector's boxes).\n */\n(function(){\n  if(typeof importScripts!=='function'||typeof document!=='undefined')return;   // only inside the worker\n  let engine=null;const shots=new Map();\n  self.onmessage=async e=>{\n    const m=e.data||{};\n    if(m.type==='init'){engine=MapleLookEngine.create({look:m.look,catalogUrl:m.catalogUrl,base:m.base});return;}\n    if(m.type==='shot'){\n      shots.set(m.shot,{image:new ImageData(new Uint8ClampedArray(m.buffer),m.width,m.height),lines:m.lines||[],map:m.map||null,k:m.k});\n      while(shots.size>3)shots.delete(shots.keys().next().value);\n      return;\n    }\n    if(m.type==='analyze'){\n      const s=shots.get(m.shot);\n      if(!engine||!s){self.postMessage({id:m.id,type:'error',message:'The screenshot is no longer here.'});return;}\n      try{\n        const result=await engine.analyze(s,m.region||null,p=>self.postMessage({id:m.id,type:'progress',...p}));\n        self.postMessage({id:m.id,type:'done',result});\n      }catch(err){self.postMessage({id:m.id,type:'error',message:String(err?.message||err).slice(0,200)});}\n    }\n  };\n})();\n";
+  function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,progress=()=>{},liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
+    const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results'),bar=$('#mc-look-progress');
+    const mapOf=id=>maps.find(m=>m.id===String(id));
+    const engine=scope.MapleLookEngine?MapleLookEngine.create({look,catalogUrl}):null;
+
+    // ---- Recognition, in the worker (or in the page when workers are not available) ----
+    let worker=null,jobs=new Map(),jobSeq=0,shotSeq=0;
+    function startWorker(){
+      if(worker!==null||typeof Worker==='undefined'||!WORKER_SOURCE)return worker;
+      try{
+        const url=URL.createObjectURL(new Blob([WORKER_SOURCE],{type:'text/javascript'}));
+        worker=new Worker(url);
+        worker.onmessage=e=>{const m=e.data,j=jobs.get(m.id);if(!j)return;if(m.type==='progress')j.onProgress?.(m);else{jobs.delete(m.id);m.type==='done'?j.resolve(m.result):j.reject(Error(m.message));}};
+        worker.onerror=e=>{console.warn('Look worker:',e.message);for(const j of jobs.values())j.reject(Error('Look stopped: '+(e.message||'worker error')));jobs.clear();worker=false;};
+        worker.postMessage({type:'init',look,catalogUrl:new URL(catalogUrl,location.href).href,base:location.href});
+      }catch(e){console.warn('Look worker:',e);worker=false;}
+      return worker;
+    }
+    // What the worker needs of a map: its monsters and NPCs.
+    const mapInfo=id=>{const m=mapOf(id);return m?{id:m.id,name:m.name,monsters:(m.monsters||[]).map(x=>({id:String(x.id),name:x.name})),npcs:(m.npcs||[]).map(x=>({id:String(x.id)}))}:null;};
+    // Hand a screenshot to the worker (its pixels move there); returns its id.
+    function sendShot(s){
+      const id=++shotSeq,w=startWorker(),map=mapInfo(s.map||liveMap());
+      if(w){const buf=s.image.data.buffer;w.postMessage({type:'shot',shot:id,width:s.image.width,height:s.image.height,buffer:buf,lines:s.lines,map},[buf]);}
+      else s.local={image:s.image,lines:s.lines,map};
+      s.id=id;return id;
+    }
+    function analyze(s,region,onProgress){
+      const w=startWorker();
+      if(w)return new Promise((resolve,reject)=>{const id=++jobSeq;jobs.set(id,{resolve,reject,onProgress});w.postMessage({type:'analyze',id,shot:s.id,region});});
+      if(!engine)return Promise.reject(Error('Look is not available in this browser.'));
+      return engine.analyze(s.local,region,onProgress);
+    }
+    function prefetch(){return engine?engine.prefetch():Promise.resolve(false);}
+
+    // ---- The catalog, for the list ----
+    let catalog=null;
+    async function loadCatalog(){
+      if(catalog)return catalog;
+      const r=await fetch(catalogUrl);if(!r.ok)throw Error('The database did not load.');
+      const data=await r.json();catalog={entities:data.entities||[],commit:data.sourceCommit||sourceCommit};
+      catalog.by=new Map(catalog.entities.map(e=>[e.type+':'+e.id,e]));
+      return catalog;
+    }
+    const spritePath=e=>e?.image&&catalog?catalog.commit+'/data/'+e.image:'';
+    const spriteURL=e=>e?.image&&catalog?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+spritePath(e):null;
     // One line or two about a thing found, for the list and the overlay card.
     function describe(f,ctx){
       const e=catalog.by.get(f.type+':'+f.id)||{},here=mapOf(ctx.mapId);
       const pct=v=>v==null?'':v>=10?Math.round(v)+'%':v>=1?v.toFixed(1)+'%':v.toFixed(2)+'%';
       if(f.type==='monster'){
         const spawns=(here?.monsters||[]).find(x=>String(x.id)===f.id)?.spawns;
-        const top=ctx.drops.filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,3);
+        const top=(ctx.drops||[]).filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,3);
         return {detail:['Lv '+(e.level??'?'),e.hp!=null?e.hp.toLocaleString()+' HP':'',e.exp!=null?e.exp+' EXP':'',spawns?spawns+' spawns here':''].filter(Boolean).join(' · '),
           extra:top.length?'Drops '+top.map(d=>d.item+' '+pct(d.rate)).join(', '):''};
       }
@@ -4400,43 +4499,65 @@ window.mapleStorageReady.then(() => {
         return {detail:['Pet',price?price.toLocaleString()+' NX in the Cash Shop':''].filter(Boolean).join(' · '),extra:String(e.description||'').split(/(?<=[.!?])\s/)[0]||''};
       }
       if(f.type==='item'){
-        const by=ctx.drops.filter(d=>d.item===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,2);
+        const by=(ctx.drops||[]).filter(d=>d.item===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,2);
         return {detail:[e.category||'Item',e.sell?'sells for '+e.sell.toLocaleString()+' mesos':''].filter(Boolean).join(' · '),extra:by.length?'Dropped here by '+by.map(d=>d.monster+' '+pct(d.rate)).join(', '):''};
       }
       return {detail:{quest:'Quest',map:'Map'}[f.type]||'',extra:''};
     }
     function card(r,title){
-      const items=r.summary.slice(0,6).map(f=>{const d=describe(f,r);return {t:f.type,n:f.name,i:spritePath(catalog.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count};});
+      const items=r.summary.filter(f=>!(f.via==='name'&&f.ui)).slice(0,6).map(f=>{const d=describe(f,r);return {t:f.type,n:f.name,i:spritePath(catalog.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count};});
       const m=mapOf(r.mapId);
       return {title,note:items.length?(m?'On '+m.name:''):'Nothing from the database found here'+(m?' on '+m.name:'')+'.',items};
     }
+    // What a stage of the work is called, for the phone and the computer's card.
+    function stageText(p){
+      if(p.stage==='download')return 'Finishing the first download of Look ('+p.done+'/'+p.total+')…';
+      if(p.stage==='detector')return 'Finding monsters, NPCs and items…';
+      if(p.stage==='naming')return 'Naming '+(p.done+1)+' of '+p.total+'…';
+      if(p.stage==='items')return 'Checking '+(p.done+1)+' of '+p.total+'…';
+      return 'Looking…';
+    }
 
     // ---- The screenshot from the computer ----
+    let shot=null,view={s:1,tx:0,ty:0},boxSize={w:.62,h:.5},mode='box',all=null,partial=[],busy=false,selected=null,seq=0,waiting=null;
     async function decode(value){
       const bytes=Uint8Array.from(atob(value.jpeg),c=>c.charCodeAt(0));
       const bmp=await createImageBitmap(new Blob([bytes],{type:'image/jpeg'})),c=document.createElement('canvas');
       c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
-      const image=x.getImageData(0,0,c.width,c.height),k=scaleOf(image);
-      return {bitmap:bmp,image,k,lines:value.lines||[],map:value.map,player:MapleLook.findPlayer(value.lines||[],{w:image.width,h:image.height})};
+      const image=x.getImageData(0,0,c.width,c.height);
+      return {bitmap:bmp,image,w:image.width,h:image.height,lines:value.lines||[],map:value.map,player:MapleLook.findPlayer(value.lines||[],{w:image.width,h:image.height})};
     }
     async function received(value){
       if(value.req.startsWith('c')){void markedOnComputer(value);return;}
       if(!waiting||value.req!==waiting)return;
       waiting=null;
-      if(value.error){say(value.error);return;}
-      try{shot=await decode(value);}catch(_){say('The screenshot could not be read.');return;}
-      found=[];shotPlayers=[];results.innerHTML='';box.hidden=false;centre();draw();
-      void identify();
+      if(value.error){bar.hidden=true;say(value.error);return;}
+      let s;try{s=await decode(value);}catch(_){bar.hidden=true;say('The screenshot could not be read.');return;}
+      shot=s;all=null;partial=[];selected=null;mode='box';results.innerHTML='';box.hidden=false;frame();centre();draw();
+      sendShot(s);void recognize(s);
     }
-    // A look marked on the computer: recognize the box, answer with a card.
+    // The whole screen, once per screenshot, in the background; the list fills in as it goes.
+    async function recognize(s){
+      busy=true;setBusy();say('Looking…');void loadCatalog().catch(()=>{});
+      try{
+        const r=await analyze(s,null,p=>{if(shot!==s)return;showProgress(p);if(p.found?.length){partial=p.found;refresh();}});
+        if(shot!==s)return;
+        await loadCatalog().catch(()=>{});all=r;partial=[];
+      }catch(e){if(shot===s)say('Could not look: '+(e.message||e));}
+      finally{if(shot===s){busy=false;setBusy();showProgress(null);refresh(true);}}
+    }
+    // A look marked on the computer: recognize the box, its progress on the computer's card.
     async function markedOnComputer(value){
       if(value.error)return;
       try{
         const s=await decode(value),m=value.mark||{x:0,y:0,w:1,h:1},whole=m.w>.98&&m.h>.98;
-        const region=whole?null:{x:m.x*s.image.width,y:m.y*s.image.height,w:m.w*s.image.width,h:m.h*s.image.height};
-        const r=await analyze(s,region);
+        const region=whole?null:{x:m.x*s.w,y:m.y*s.h,w:m.w*s.w,h:m.h*s.h};
+        sendShot(s);let last=0;
+        progress(value.req,'Looking…');
+        const r=await analyze(s,region,p=>{const t=Date.now();if(t-last>250){last=t;progress(value.req,stageText(p));}});
+        await loadCatalog();
         const reply=card(r,whole?'Around you':'In the box');if(scope.MapleLookDebug)scope.MapleLookDebug.lastCard=reply;answer(value.req,reply);
-        if(dialog.open){shot=s;found=r.found;shotPlayers=r.players||[];box.hidden=!region;if(region){centre(region);draw();}else fitAll();list(r,(region?'In the box':'On the whole screen')+' (marked on the computer)');say((whole?'Around you':'In the box')+' (marked on the computer)');}
+        if(dialog.open){shot=s;all=r;partial=[];selected=null;mode=region?'box':'around';box.hidden=!region;frame();if(region)centre(region);else fitAll();setBusy();refresh(true);}
       }catch(e){answer(value.req,{title:'Look',note:'Could not look: '+String(e.message||e).slice(0,60),items:[]});}
     }
 
@@ -4446,83 +4567,158 @@ window.mapleStorageReady.then(() => {
     function placeBox(){const b=boxRect();Object.assign(box.style,{left:b.x+'px',top:b.y+'px',width:b.w+'px',height:b.h+'px'});}
     // Your character in the middle with about 560 game px of the world around it (or a region).
     function centre(region){
-      if(!shot)return;const r=size(),p=region?{x:region.x+region.w/2,y:region.y+region.h/2}:shot.player,span=region?Math.max(region.w/boxSize.w,region.h*r.width/r.height/boxSize.h):560*shot.k;
-      view.s=Math.max(r.width/shot.image.width,Math.min(8,r.width/span));view.tx=r.width/2-p.x*view.s;view.ty=r.height/2-p.y*view.s;clamp();placeBox();
+      if(!shot)return;const r=size(),k=shot.w/1366,p=region?{x:region.x+region.w/2,y:region.y+region.h/2}:shot.player,span=region?Math.max(region.w/boxSize.w,region.h*r.width/r.height/boxSize.h):560*k;
+      view.s=Math.max(r.width/shot.w,Math.min(8,r.width/span));view.tx=r.width/2-p.x*view.s;view.ty=r.height/2-p.y*view.s;clamp();placeBox();
     }
-    // The whole screenshot in view (after Around me, so every mark shows).
-    function fitAll(){const r=size();view.s=Math.min(r.width/shot.image.width,r.height/shot.image.height);view.tx=(r.width-shot.image.width*view.s)/2;view.ty=(r.height-shot.image.height*view.s)/2;draw();}
-    function clamp(){const r=stage.getBoundingClientRect(),w=shot.image.width*view.s,h=shot.image.height*view.s;view.tx=Math.min(r.width*.5,Math.max(r.width*.5-w,view.tx));view.ty=Math.min(r.height*.5,Math.max(r.height*.5-h,view.ty));}
-    const colors={monster:'#ff6b6b',npc:'#4dabf7',item:'#ffd43b',quest:'#a9e34b'};
+    // The whole screenshot in view (Around me, so every outline shows).
+    function fitAll(){const r=size();view.s=Math.min(r.width/shot.w,r.height/shot.h);view.tx=(r.width-shot.w*view.s)/2;view.ty=(r.height-shot.h*view.s)/2;draw();}
+    function clamp(){const r=stage.getBoundingClientRect(),w=shot.w*view.s,h=shot.h*view.s;view.tx=Math.min(r.width*.5,Math.max(r.width*.5-w,view.tx));view.ty=Math.min(r.height*.5,Math.max(r.height*.5-h,view.ty));}
+    // The box in screenshot pixels.
+    function regionOfBox(){const b=boxRect();return {x:(b.x-view.tx)/view.s,y:(b.y-view.ty)/view.s,w:b.w/view.s,h:b.h/view.s};}
+    // A colour per row of the list; the same colour outlines it on the picture.
+    const PALETTE=['#ff6b6b','#ffd43b','#69db7c','#4dabf7','#da77f2','#ff922b','#3bc9db','#f783ac','#a9e34b','#9775fa','#ffa94d','#63e6be'];
+    let rows=[];   // the list as shown: [{key, color, things: [found]}]
+    const keyOf=f=>f.type+':'+f.id;
     function draw(){
       if(!shot)return;const d=devicePixelRatio||1,x=canvas.getContext('2d');
       x.setTransform(1,0,0,1,0,0);x.fillStyle='#111';x.fillRect(0,0,canvas.width,canvas.height);
       x.setTransform(view.s*d,0,0,view.s*d,view.tx*d,view.ty*d);x.imageSmoothingEnabled=view.s<2;x.drawImage(shot.bitmap,0,0);
-      x.lineWidth=2.5/view.s;x.font=(13/view.s)+'px system-ui, sans-serif';
-      const tag=(b,label,color,fill='rgba(0,0,0,.72)')=>{const tw=x.measureText(label).width+8/view.s;x.fillStyle=fill;x.fillRect(b.x,b.y-18/view.s,tw,17/view.s);x.fillStyle=color;x.fillText(label,b.x+4/view.s,b.y-5/view.s);};
-      for(const f of found){if(f.via==='name'&&f.ui)continue;x.strokeStyle=colors[f.type]||'#fff';x.strokeRect(f.box.x,f.box.y,f.box.w,f.box.h);tag(f.box,(f.n?f.n+' · ':'')+f.name,'#fff');}
+      const pick=selected&&rows.find(r=>r.key===selected);
+      // With a row picked, the rest of the picture is darkened around its outlines.
+      if(pick){
+        x.save();x.fillStyle='rgba(0,0,0,.55)';x.beginPath();x.rect(0,0,shot.w,shot.h);
+        for(const f of pick.things){const p=6/view.s;x.rect(f.box.x+f.box.w+p,f.box.y-p,-(f.box.w+2*p),f.box.h+2*p);}
+        x.fill('evenodd');x.restore();
+      }
+      for(const r of rows)for(const f of r.things){
+        const on=pick===r;if(pick&&!on)continue;
+        x.strokeStyle=r.color;x.lineWidth=(on?4:2.5)/view.s;
+        if(on){x.shadowColor=r.color;x.shadowBlur=12;}
+        const p=(on?5:2)/view.s;x.beginPath();if(x.roundRect)x.roundRect(f.box.x-p,f.box.y-p,f.box.w+2*p,f.box.h+2*p,6/view.s);else x.rect(f.box.x-p,f.box.y-p,f.box.w+2*p,f.box.h+2*p);x.stroke();x.shadowBlur=0;
+      }
+      if(busy)scan(x);
     }
-    let pointers=new Map(),pinch=null,resizing=null;
-    stage.addEventListener('pointerdown',e=>{if(!shot)return;if(box.hidden){box.hidden=false;placeBox();}stage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    // While looking: a soft band sweeping down the picture.
+    let sweepFrame=0;
+    function scan(x){
+      const y=((performance.now()/1600)%1)*shot.h,g=x.createLinearGradient(0,y-60,0,y+8);
+      g.addColorStop(0,'rgba(77,171,247,0)');g.addColorStop(1,'rgba(77,171,247,.35)');
+      x.fillStyle=g;x.fillRect(0,y-60,shot.w,68);
+    }
+    function animate(){cancelAnimationFrame(sweepFrame);if(!busy||!dialog.open)return;draw();sweepFrame=requestAnimationFrame(animate);}
+    let pointers=new Map(),pinch=null,resizing=null,tap=null;
+    stage.addEventListener('pointerdown',e=>{if(!shot)return;stage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      tap=pointers.size===1?{x:e.clientX,y:e.clientY,t:performance.now()}:null;
       if(e.target.closest('.mc-look-handle'))resizing={x:e.clientX,y:e.clientY,w:boxSize.w,h:boxSize.h};
       if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:view.s,mx:(a.x+b.x)/2,my:(a.y+b.y)/2};}});
     stage.addEventListener('pointermove',e=>{
       const p=pointers.get(e.pointerId);if(!p||!shot)return;const r=stage.getBoundingClientRect();
-      if(resizing){boxSize.w=Math.max(.15,Math.min(.95,resizing.w+(e.clientX-resizing.x)*2/r.width));boxSize.h=Math.max(.12,Math.min(.9,resizing.h+(e.clientY-resizing.y)*2/r.height));placeBox();p.x=e.clientX;p.y=e.clientY;return;}
+      if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>8)tap=null;
+      if(tap)return;
+      // Moving the picture after Around me goes back to the box.
+      if(mode==='around'){mode='box';box.hidden=false;frame();placeBox();setBusy();}
+      if(resizing){boxSize.w=Math.max(.15,Math.min(.95,resizing.w+(e.clientX-resizing.x)*2/r.width));boxSize.h=Math.max(.12,Math.min(.9,resizing.h+(e.clientY-resizing.y)*2/r.height));placeBox();p.x=e.clientX;p.y=e.clientY;moved();return;}
       if(pointers.size===2&&pinch){p.x=e.clientX;p.y=e.clientY;const [a,b]=[...pointers.values()],dd=Math.hypot(a.x-b.x,a.y-b.y);zoomAt(pinch.s*dd/pinch.d,pinch.mx-r.left,pinch.my-r.top);return;}
-      view.tx+=e.clientX-p.x;view.ty+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;clamp();draw();});
-    const up=e=>{pointers.delete(e.pointerId);if(pointers.size<2)pinch=null;if(!pointers.size)resizing=null;};
-    stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+      view.tx+=e.clientX-p.x;view.ty+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;clamp();draw();moved();});
+    const up=e=>{
+      // A tap on an outline picks its row (a tap elsewhere clears it).
+      if(tap&&pointers.size===1&&!resizing&&performance.now()-tap.t<400){const r=stage.getBoundingClientRect(),ix=(e.clientX-r.left-view.tx)/view.s,iy=(e.clientY-r.top-view.ty)/view.s;
+        const hit=rows.find(row=>row.things.some(f=>ix>=f.box.x-6&&ix<=f.box.x+f.box.w+6&&iy>=f.box.y-6&&iy<=f.box.y+f.box.h+6));select(hit?.key||null,true);}
+      pointers.delete(e.pointerId);if(pointers.size<2)pinch=null;if(!pointers.size){resizing=null;tap=null;}};
+    stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',e=>{tap=null;up(e);});
     stage.addEventListener('wheel',e=>{if(!shot)return;e.preventDefault();const r=stage.getBoundingClientRect();zoomAt(view.s*Math.exp(-e.deltaY/400),e.clientX-r.left,e.clientY-r.top);},{passive:false});
-    function zoomAt(s,mx,my){const r=stage.getBoundingClientRect(),min=r.width/shot.image.width*.9;s=Math.max(min,Math.min(8,s));const ix=(mx-view.tx)/view.s,iy=(my-view.ty)/view.s;view.s=s;view.tx=mx-ix*s;view.ty=my-iy*s;clamp();draw();}
-    // The box in screenshot pixels.
-    function regionOfBox(){const b=boxRect();return {x:(b.x-view.tx)/view.s,y:(b.y-view.ty)/view.s,w:b.w/view.s,h:b.h/view.s};}
+    function zoomAt(s,mx,my){const r=stage.getBoundingClientRect(),min=r.width/shot.w*.9;s=Math.max(min,Math.min(8,s));const ix=(mx-view.tx)/view.s,iy=(my-view.ty)/view.s;view.s=s;view.tx=mx-ix*s;view.ty=my-iy*s;clamp();draw();moved();}
+    // The box moved: the list follows at once (once per frame).
+    let movedFrame=0;function moved(){if(mode!=='box'||movedFrame)return;movedFrame=requestAnimationFrame(()=>{movedFrame=0;refresh();});}
 
     // ---- Results ----
     function say(text){status.textContent=text;}
-    function list(r,heading=''){
-      const m=mapOf(r.mapId),rows=r.summary.filter(f=>!(f.via==='name'&&f.ui)),ui=r.summary.filter(f=>f.via==='name'&&f.ui);
-      const row=f=>{const e=catalog.by.get(f.type+':'+f.id),d=f.id==='?'?{detail:'Seen on the screen; not one of this map\'s '+(f.type==='item'?'drops':f.type==='npc'?'NPCs':'monsters'),extra:''}:describe(f,r),src=spriteURL(e);
-        return '<button type="button" class="mc-look-row'+(f.id==='?'?' mc-look-unknown':'')+'" '+(f.id==='?'?'disabled ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'">'+(f.ui?'':'<span class="mc-look-num" style="--c:'+(colors[f.type]||'#999')+'">'+f.n+'</span>')+'<span class="mc-look-thumb" style="--c:'+(colors[f.type]||'#999')+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span><span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span>'+icon('chevron-right')+'</button>';};
-      results.innerHTML=(heading?'<h3 class="mc-look-heading">'+esc(heading)+'</h3>':'')+(m?'<button type="button" class="mc-look-row mc-look-map" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span>'+icon('chevron-right')+'</button>':'')
-        +(rows.length?rows.map(row).join(''):'<p class="mc-look-empty">Nothing from the database found here. Move the box over a monster, an NPC or an item, or try Around me.</p>')
-
-        +(ui.length?'<details class="mc-look-ui"><summary>Also in the game\'s windows ('+ui.length+')</summary>'+ui.map(row).join('')+'</details>':'');
+    function setBusy(){
+      for(const b of [$('#mc-look-identify'),$('#mc-look-around')])b.classList.toggle('mc-look-working',busy&&(b.id==='mc-look-around'?mode==='around':mode==='box'));
+      $('#mc-look-identify').setAttribute('aria-pressed',String(mode==='box'));$('#mc-look-around').setAttribute('aria-pressed',String(mode==='around'));
+      stage.classList.toggle('mc-look-busy',busy);if(busy)animate();else draw();
+    }
+    function showProgress(p){
+      if(!p){bar.hidden=true;bar.classList.remove('mc-look-indeterminate');return;}
+      bar.hidden=false;const fill=bar.firstElementChild,part=p.total?Math.min(1,(p.done+1)/p.total):0;
+      // Finding is one step of unknown length; naming and checking are counted.
+      bar.classList.toggle('mc-look-indeterminate',!p.total);
+      fill.style.width=p.total?Math.round((p.stage==='naming'?part*.5:p.stage==='items'?.5+part*.5:part)*100)+'%':'';
+      if(busy&&!(p.found?.length))say(stageText(p));
+    }
+    // What the list shows: in the box (by each thing's middle) or the whole screen.
+    function current(){
+      const src=all?all.found:partial,region=mode==='box'&&!box.hidden?regionOfBox():null;
+      const inside=f=>!region||(f.box.x+f.box.w/2>=region.x&&f.box.x+f.box.w/2<=region.x+region.w&&f.box.y+f.box.h/2>=region.y&&f.box.y+f.box.h/2<=region.y+region.h);
+      return src.filter(inside);
+    }
+    let lastKey='';
+    function refresh(force){
+      if(!shot)return;
+      const found=current(),summary=MapleLook.summary(found),things=summary.filter(f=>!(f.via==='name'&&f.ui)),ui=summary.filter(f=>f.via==='name'&&f.ui);
+      rows=things.map((f,i)=>({key:keyOf(f),color:PALETTE[i%PALETTE.length],things:found.filter(x=>keyOf(x)===keyOf(f)&&!(x.via==='name'&&x.ui))}));
+      if(selected&&!rows.some(r=>r.key===selected))selected=null;
+      draw();
+      const where=mode==='box'?'In the box: ':'On the whole screen: ';
+      if(busy){if(things.length)say(where+things.length+' found so far…');}
+      else say(where+(things.length?things.length+' found':'nothing from the database')+'.');
+      // The list is rebuilt only when what it shows changed (moving the box stays smooth).
+      const key=mode+'|'+rows.map(r=>r.key+'×'+r.things.length).join(',')+'|'+ui.map(keyOf).join(',')+'|'+(catalog?1:0)+'|'+busy;
+      if(!force&&key===lastKey){mark();return;}lastKey=key;
+      list(things,ui,mode==='box'?'In the box':'On the whole screen');
+    }
+    function list(things,ui,heading){
+      const ctx={mapId:all?.mapId||shot?.map||liveMap(),drops:all?.drops||[]},m=mapOf(ctx.mapId);
+      const row=(f,i,inWindows)=>{
+        const e=catalog?.by.get(f.type+':'+f.id),d=catalog?describe(f,ctx):{detail:'',extra:''},src=spriteURL(e),color=inWindows?'#868e96':rows[i]?.color||'#868e96';
+        return '<div class="mc-look-row'+(inWindows?' mc-look-plain':'')+'" style="--c:'+color+'"'+(inWindows?'':' data-key="'+esc(keyOf(f))+'"')+'>'
+          +'<button type="button" class="mc-look-pick" '+(inWindows?'data-open="1" ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-label="'+esc(inWindows?'Open '+f.name:'Show '+f.name+' on the picture')+'">'
+          +(inWindows?'':'<span class="mc-look-num">'+(i+1)+'</span>')
+          +'<span class="mc-look-thumb">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span>'
+          +'<span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span></button>'
+          +'<button type="button" class="mc-look-open" data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-label="Open '+esc(f.name)+'">'+icon('chevron-right')+'</button></div>';
+      };
+      results.innerHTML=(heading?'<h3 class="mc-look-heading">'+esc(heading)+'</h3>':'')
+        +(m?'<div class="mc-look-row mc-look-map"><button type="button" class="mc-look-pick" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span></button><button type="button" class="mc-look-open" data-map="'+esc(m.id)+'" aria-label="Open '+esc(m.name)+'">'+icon('chevron-right')+'</button></div>':'')
+        +(things.length?things.map((f,i)=>row(f,i,false)).join(''):busy?'':'<p class="mc-look-empty">Nothing from the database found here. Move the box over a monster, an NPC or an item, or try Around me.</p>')
+        +(ui.length?'<details class="mc-look-ui"><summary>Also in the game\'s windows ('+ui.length+')</summary>'+ui.map(f=>row(f,0,true)).join('')+'</details>':'');
       icons();
-      results.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
+      results.querySelectorAll('.mc-look-open[data-type],[data-open][data-type]').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
       results.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{dialog.close();openEntity('map',mapOf(b.dataset.map)?.name);});
+      // Tapping a row shows where it is on the picture; tapping it again opens its page.
+      results.querySelectorAll('.mc-look-pick:not([data-open]):not([data-map])').forEach(b=>b.onclick=()=>{const k=b.closest('[data-key]').dataset.key;if(selected===k)openEntity(b.dataset.type,b.dataset.name);else select(k,false);});
+      mark();
     }
-    async function run(region,label){
-      if(!shot||busy)return;busy=true;$('#mc-look-identify').disabled=$('#mc-look-around').disabled=true;
-      say(label+'…');
-      try{
-        const r=await analyze(shot,region,step=>say(step==='detector'?'Finding monsters, NPCs and items…':'Finishing the first download of Look\'s pictures ('+prefetchState.done+'/'+prefetchState.total+')…'));
-        // Around me looks at the whole screen: the box is hidden until you move the picture again.
-        found=r.found;shotPlayers=r.players||[];box.hidden=!region;if(!region)fitAll();else draw();list(r,region?'In the box':'On the whole screen');
-        const n=r.summary.filter(f=>!(f.via==='name'&&f.ui)).length;
-        say((region?'In the box: ':'On the whole screen: ')+(n?n+' found':'nothing from the database')+'.');
-      }catch(e){say('Could not look: '+(e.message||e));}
-      finally{busy=false;$('#mc-look-identify').disabled=$('#mc-look-around').disabled=false;}
+    function mark(){results.querySelectorAll('[data-key]').forEach(r=>r.classList.toggle('mc-look-selected',r.dataset.key===selected));}
+    function select(key,fromPicture){
+      selected=key;mark();draw();
+      if(key&&fromPicture)results.querySelector('[data-key="'+CSS.escape(key)+'"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});
+      if(key&&!fromPicture)stage.scrollIntoView({block:'nearest',behavior:'smooth'});
     }
-    const identify=()=>{if(box.hidden){box.hidden=false;placeBox();}return run(regionOfBox(),'Looking in the box');};
-    const around=()=>run(null,'Looking around you');
+    // Around me: the picture as tall as the screenshot needs (no empty bands); the box view
+    // gets its taller frame back.
+    function frame(){stage.style.height=mode==='around'&&shot?Math.max(200,Math.round(stage.getBoundingClientRect().width*shot.h/shot.w))+'px':'';size();}
+    function identify(){if(!shot)return;mode='box';frame();if(box.hidden){box.hidden=false;}placeBox();selected=null;setBusy();refresh(true);}
+    function around(){if(!shot)return;mode='around';box.hidden=true;selected=null;frame();fitAll();setBusy();refresh(true);}
 
     function take(){
       if(!connected()){say('Connect Maple Atlas Companion on your computer first: Look uses its screenshot of the game.');return;}
       seq++;waiting='p'+seq.toString(36)+Date.now().toString(36).slice(-4);
       if(!request(waiting)){waiting=null;say('The computer is not connected.');return;}
-      say('Taking a screenshot of the game…');
-      const mine=waiting;setTimeout(()=>{if(waiting===mine){waiting=null;say('No screenshot came from the computer. Is the game open there?');}},20000);
+      say('Taking a screenshot of the game…');bar.hidden=false;bar.classList.add('mc-look-indeterminate');
+      const mine=waiting;setTimeout(()=>{if(waiting===mine){waiting=null;bar.hidden=true;say('No screenshot came from the computer. Is the game open there?');}},20000);
     }
     function open(){
       if(!dialog.open)dialog.showModal();
       requestAnimationFrame(()=>{size();placeBox();draw();});
-      void loadCatalog().catch(()=>{});
+      void loadCatalog().catch(()=>{});startWorker();
       take();
     }
     $('#mc-look-identify').onclick=identify;$('#mc-look-around').onclick=around;$('#mc-look-retake').onclick=take;
     addEventListener('resize',()=>{if(dialog.open&&shot){size();placeBox();clamp();draw();}});
     // ?lookdebug: show a given screenshot as if the computer had sent it (for checking the view).
-    if(/[?&]lookdebug\b/.test(location.search))scope.MapleLookDebug={show:value=>{if(!dialog.open)dialog.showModal();requestAnimationFrame(()=>{size();placeBox();draw();});waiting=value.req;void received(value);}};
+    if(/[?&]lookdebug\b/.test(location.search))scope.MapleLookDebug={show:value=>{if(!dialog.open)dialog.showModal();requestAnimationFrame(()=>{size();placeBox();draw();});waiting=value.req;void received(value);},
+      state:()=>({busy,mode,done:!!all,found:(all?.found||partial).length,rows:rows.map(r=>({key:r.key,n:r.things.length})),selected})};
     return {open,received,prefetch};
   }
   scope.MapleLookUI={create};
@@ -4790,7 +4986,7 @@ window.mapleStorageReady.then(() => {
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
   // Look: what is on a screenshot of the game (src/look-ui.js, src/look.js).
-  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,look:DATA.look,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),
+  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,look:DATA.look,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),progress:(req,text)=>companion.lookProgress?.(req,text),
     liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},
     connected:()=>companion.connected,esc,icon,icons});
   $('#mc-look').onclick=()=>lookUI.open();

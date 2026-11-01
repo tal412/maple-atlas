@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-detector', 'look-namer', 'look-ui', 'offline', 'runtime', 'intro'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-detector', 'look-namer', 'look-engine', 'look-ui', 'offline', 'runtime', 'intro'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
@@ -160,6 +160,11 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
         app = app.replace('href="./dev/">Open dev preview', 'href="../">Dev preview · Open main')
     encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
+    # Look's background worker (src/look-worker.js): its code as a string the page starts it from.
+    worker_source = '\n'.join(read(name + '.js') for name in ['minimap-position', 'look', 'look-detector', 'look-namer', 'look-engine', 'look-worker'])
+    if runtime.count('__LOOK_WORKER_SOURCE__') != 1:
+        raise SystemExit('look-ui.js must hold __LOOK_WORKER_SOURCE__ once')
+    runtime = runtime.replace('__LOOK_WORKER_SOURCE__', json.dumps(worker_source, ensure_ascii=False).replace('<', '\\u003c'))
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
     css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + read('companion.css') + '\n' + read('quests.css') + '\n' + read('look.css') + '\n' + read('intro.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
