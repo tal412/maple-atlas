@@ -1,56 +1,19 @@
 /* The phone's Look view: a screenshot of the game from the computer, zoomed on your character,
  * with a box you move by dragging the picture (pinch or the corner handle to resize).
  *
- * As soon as a screenshot arrives, the whole screen is recognized once in the background
- * (src/look-worker.js runs src/look-engine.js off the page's thread), with its progress shown
- * and what is named listed as it goes. "Identify box" lists what is in the box, and moving the
- * box updates the list at once (it only filters); "Around me" lists the whole screen. Each thing
- * is outlined on the picture in its row's colour (no text over the game); tapping a row or an
- * outline highlights where it is, and the arrow opens its page in the search.
- *
- * It also answers looks marked on the computer (⌃⌥M / Ctrl+Alt+M on the game): the same
- * recognition on the marked box, its progress shown on the computer's card, then a small card.
- *
- * Everything Look compares against is a file on this site (assets/look/, listed in DATA.look by
- * scripts/build.py), downloaded once in the background into the phone's own cache (prefetch).
+ * The computer does all the recognition (Maple Atlas Companion runs look-host.html, see
+ * src/look-host.js): it sends the screenshot first, then how far it is, then everything it
+ * found with its box. This view only shows it: "Identify box" lists what is in the box, and
+ * moving the box updates the list at once (it only filters); "Around me" lists the whole
+ * screen. Each thing is outlined on the picture in its row's colour (no text over the game);
+ * tapping a row highlights it on the picture and opens its details (with market prices) here.
  */
 (function(scope){
-  // The worker's code, put here by scripts/build.py (the page is one file).
-  const WORKER_SOURCE=__LOOK_WORKER_SOURCE__;
   function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,progress=()=>{},prices=null,liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
     const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results'),bar=$('#mc-look-progress');
     const mapOf=id=>maps.find(m=>m.id===String(id));
-    const engine=scope.MapleLookEngine?MapleLookEngine.create({look,catalogUrl}):null;
-
-    // ---- Recognition, in the worker (or in the page when workers are not available) ----
-    let worker=null,jobs=new Map(),jobSeq=0,shotSeq=0;
-    function startWorker(){
-      if(worker!==null||typeof Worker==='undefined'||!WORKER_SOURCE)return worker;
-      try{
-        const url=URL.createObjectURL(new Blob([WORKER_SOURCE],{type:'text/javascript'}));
-        worker=new Worker(url);
-        worker.onmessage=e=>{const m=e.data,j=jobs.get(m.id);if(!j)return;if(m.type==='progress')j.onProgress?.(m);else{jobs.delete(m.id);m.type==='done'?j.resolve(m.result):j.reject(Error(m.message));}};
-        worker.onerror=e=>{console.warn('Look worker:',e.message);for(const j of jobs.values())j.reject(Error('Look stopped: '+(e.message||'worker error')));jobs.clear();worker=false;};
-        worker.postMessage({type:'init',look,catalogUrl:new URL(catalogUrl,location.href).href,base:location.href});
-      }catch(e){console.warn('Look worker:',e);worker=false;}
-      return worker;
-    }
-    // What the worker needs of a map: its monsters and NPCs.
-    const mapInfo=id=>{const m=mapOf(id);return m?{id:m.id,name:m.name,monsters:(m.monsters||[]).map(x=>({id:String(x.id),name:x.name})),npcs:(m.npcs||[]).map(x=>({id:String(x.id)}))}:null;};
-    // Hand a screenshot to the worker (its pixels move there); returns its id.
-    function sendShot(s){
-      const id=++shotSeq,w=startWorker(),map=mapInfo(s.map||liveMap());
-      if(w){const buf=s.image.data.buffer;w.postMessage({type:'shot',shot:id,width:s.image.width,height:s.image.height,buffer:buf,lines:s.lines,map},[buf]);}
-      else s.local={image:s.image,lines:s.lines,map};
-      s.id=id;return id;
-    }
-    function analyze(s,region,onProgress){
-      const w=startWorker();
-      if(w)return new Promise((resolve,reject)=>{const id=++jobSeq;jobs.set(id,{resolve,reject,onProgress});w.postMessage({type:'analyze',id,shot:s.id,region});});
-      if(!engine)return Promise.reject(Error('Look is not available in this browser.'));
-      return engine.analyze(s.local,region,onProgress);
-    }
-    function prefetch(){return engine?engine.prefetch():Promise.resolve(false);}
+    // Look's files are no longer downloaded to the phone: the computer recognizes.
+    function prefetch(){return Promise.resolve(false);}
 
     // ---- The catalog, for the list ----
     let catalog=null;
@@ -63,37 +26,12 @@
     }
     const spritePath=e=>e?.image&&catalog?catalog.commit+'/data/'+e.image:'';
     const spriteURL=e=>e?.image&&catalog?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+spritePath(e):null;
-    // One line or two about a thing found, for the list and the overlay card.
-    function describe(f,ctx){
-      const e=catalog.by.get(f.type+':'+f.id)||{},here=mapOf(ctx.mapId);
-      const pct=v=>v==null?'':v>=10?Math.round(v)+'%':v>=1?v.toFixed(1)+'%':v.toFixed(2)+'%';
-      if(f.type==='monster'){
-        const spawns=(here?.monsters||[]).find(x=>String(x.id)===f.id)?.spawns;
-        const top=(ctx.drops||[]).filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,3);
-        return {detail:['Lv '+(e.level??'?'),e.hp!=null?e.hp.toLocaleString()+' HP':'',e.exp!=null?e.exp+' EXP':'',spawns?spawns+' spawns here':''].filter(Boolean).join(' · '),
-          extra:top.length?'Drops '+top.map(d=>d.item+' '+pct(d.rate)).join(', '):''};
-      }
-      if(f.type==='npc'){
-        const given=quests.filter(q=>q.npc===f.name).map(q=>q.name).slice(0,2);
-        return {detail:'NPC'+(here&&(here.npcs||[]).some(x=>String(x.id)===f.id)?' on '+here.name:''),extra:given.length?'Quests: '+given.join(', '):''};
-      }
-      if(f.type==='item'&&e.category==='Pet'){
-        const price=e.cashShop?.price;
-        return {detail:['Pet',price?price.toLocaleString()+' NX in the Cash Shop':''].filter(Boolean).join(' · '),extra:String(e.description||'').split(/(?<=[.!?])\s/)[0]||''};
-      }
-      if(f.type==='item'){
-        const by=(ctx.drops||[]).filter(d=>d.item===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,2);
-        return {detail:[e.category||'Item',e.sell?'sells for '+e.sell.toLocaleString()+' mesos':''].filter(Boolean).join(' · '),extra:by.length?'Dropped here by '+by.map(d=>d.monster+' '+pct(d.rate)).join(', '):''};
-      }
-      return {detail:{quest:'Quest',map:'Map'}[f.type]||'',extra:''};
-    }
-    function card(r,title){
-      const items=r.summary.filter(f=>!(f.via==='name'&&f.ui)).slice(0,6).map(f=>{const d=describe(f,r);return {t:f.type,n:f.name,i:spritePath(catalog.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count};});
-      const m=mapOf(r.mapId);
-      return {title,note:items.length?(m?'On '+m.name:''):'Nothing from the database found here'+(m?' on '+m.name:'')+'.',items};
-    }
+    // One line or two about a thing found, and the card for the computer (src/look-card.js).
+    const env=()=>({catalog,mapOf,quests,priceOf:e=>prices?.of(e)||null});
+    const describe=(f,ctx)=>MapleLookCard.describe(f,ctx,env());
     // What a stage of the work is called, for the phone and the computer's card.
     function stageText(p){
+      if(p.stage==='text')return p.text;
       if(p.stage==='download')return 'Finishing the first download of Look ('+p.done+'/'+p.total+')…';
       if(p.stage==='detector')return 'Finding monsters, NPCs and items…';
       if(p.stage==='naming')return 'Naming '+(p.done+1)+' of '+p.total+'…';
@@ -110,38 +48,26 @@
       const image=x.getImageData(0,0,c.width,c.height);
       return {bitmap:bmp,image,w:image.width,h:image.height,lines:value.lines||[],map:value.map,player:MapleLook.findPlayer(value.lines||[],{w:image.width,h:image.height})};
     }
+    // From the computer, for a look asked here: the screenshot, then progress lines, then what
+    // it found. An old companion that sends only the screenshot is told to update.
+    let asked=null,staleTimer=0;
     async function received(value){
-      if(value.req.startsWith('c')){void markedOnComputer(value);return;}
+      if(value.req.startsWith('c')){answer(value.req,{title:'Look',note:'Update Maple Atlas Companion: the computer now looks by itself.',items:[]});return;}
+      if(value.progress!=null){if(value.req===asked&&busy)showProgress({stage:'text',text:value.progress});return;}
+      if(value.found){
+        if(value.req!==asked||!shot)return;
+        clearTimeout(staleTimer);await loadCatalog().catch(()=>{});
+        all={...value.found,mapId:value.found.mapId||shot.map||liveMap()};partial=[];busy=false;setBusy();showProgress(null);refresh(true);
+        return;
+      }
       if(!waiting||value.req!==waiting)return;
       waiting=null;
       if(value.error){bar.hidden=true;say(value.error);return;}
       let s;try{s=await decode(value);}catch(_){bar.hidden=true;say('The screenshot could not be read.');return;}
-      shot=s;all=null;partial=[];selected=null;mode='box';results.innerHTML='';box.hidden=false;frame();centre();draw();
-      sendShot(s);void recognize(s);
-    }
-    // The whole screen, once per screenshot, in the background; the list fills in as it goes.
-    async function recognize(s){
-      busy=true;setBusy();say('Looking…');void loadCatalog().catch(()=>{});
-      try{
-        const r=await analyze(s,null,p=>{if(shot!==s)return;showProgress(p);if(p.found?.length){partial=p.found;refresh();}});
-        if(shot!==s)return;
-        await loadCatalog().catch(()=>{});all=r;partial=[];
-      }catch(e){if(shot===s)say('Could not look: '+(e.message||e));}
-      finally{if(shot===s){busy=false;setBusy();showProgress(null);refresh(true);}}
-    }
-    // A look marked on the computer: recognize the box, its progress on the computer's card.
-    async function markedOnComputer(value){
-      if(value.error)return;
-      try{
-        const s=await decode(value),m=value.mark||{x:0,y:0,w:1,h:1},whole=m.w>.98&&m.h>.98;
-        const region=whole?null:{x:m.x*s.w,y:m.y*s.h,w:m.w*s.w,h:m.h*s.h};
-        sendShot(s);let last=0;
-        progress(value.req,'Looking…');
-        const r=await analyze(s,region,p=>{const t=Date.now();if(t-last>250){last=t;progress(value.req,stageText(p));}});
-        await loadCatalog();
-        const reply=card(r,whole?'Around you':'In the box');if(scope.MapleLookDebug)scope.MapleLookDebug.lastCard=reply;answer(value.req,reply);
-        if(dialog.open){shot=s;all=r;partial=[];selected=null;mode=region?'box':'around';box.hidden=!region;frame();if(region)centre(region);else fitAll();setBusy();refresh(true);}
-      }catch(e){answer(value.req,{title:'Look',note:'Could not look: '+String(e.message||e).slice(0,60),items:[]});}
+      shot=s;asked=value.req;all=null;partial=[];selected=null;mode='box';results.innerHTML='';box.hidden=false;frame();centre();
+      busy=true;setBusy();showProgress({stage:'text',text:'Looking on the computer…'});void loadCatalog().catch(()=>{});
+      clearTimeout(staleTimer);
+      staleTimer=setTimeout(()=>{if(asked===value.req&&busy){busy=false;setBusy();showProgress(null);say('The computer sent no results. Update Maple Atlas Companion on it (0.3.29 or newer).');}},40000);
     }
 
     // ---- View: pan, pinch, the box ----
@@ -376,7 +302,7 @@
       prices?.view(true);
       if(!dialog.open)dialog.showModal();
       requestAnimationFrame(()=>{size();placeBox();draw();});
-      void loadCatalog().catch(()=>{});startWorker();
+      void loadCatalog().catch(()=>{});
       take();
     }
     $('#mc-look-identify').onclick=identify;$('#mc-look-around').onclick=around;$('#mc-look-retake').onclick=take;

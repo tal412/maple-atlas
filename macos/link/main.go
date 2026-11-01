@@ -40,6 +40,7 @@ type command struct {
 	// the text read on it ([[text, x, y, w, h]…] in its pixels), the box marked (0…1) and the map.
 	Req    string    `json:"req"`
 	Path   string    `json:"path"`
+	Text   string    `json:"text"` // look-progress
 	Width  int       `json:"width"`
 	Height int       `json:"height"`
 	Lines  [][]any   `json:"lines"`
@@ -126,6 +127,21 @@ func (c *controller) handle(cmd command) {
 			go c.current.lookFromFile(cmd)
 		} else {
 			os.Remove(cmd.Path)
+		}
+	case "look-progress":
+		if c.current != nil {
+			go c.current.sendLookProgress(cmd.Req, cmd.Text)
+		}
+	case "look-found":
+		// What the app found in the screenshot it sent (a JSON file it wrote), for the phone.
+		raw, err := os.ReadFile(cmd.Path)
+		os.Remove(cmd.Path)
+		if err == nil && c.current != nil {
+			go func(s *session) {
+				if err := s.sendLookFound(cmd.Req, raw); err != nil {
+					s.emit(map[string]any{"event": "log", "message": "Look: the result did not reach the phone (" + err.Error() + ")"})
+				}
+			}(c.current)
 		}
 	case "stop":
 		if c.current != nil {

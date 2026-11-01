@@ -373,14 +373,14 @@ final class CompanionModel {
             }
             if quests != pins { pins = quests }
         case .lookRequest(let req):
-            log("Look: the phone asked for a screenshot")
-            Task { await sendLook(req: req, mark: nil) }
+            log("Look: the phone asked to look")
+            Task { await lookForPhone(req: req) }
         case .lookResult(let req, let card):
             log("Look: the phone found " + (card.items.isEmpty ? "nothing" : card.items.map(\.name).joined(separator: ", ")))
             if req == lookPending { lookPending = nil; look.show(card) }
         case .lookProgress(let req, let text):
             // The phone is still working: show how far, and wait for it a while longer.
-            if req == lookPending { look.progress(text); armLookTimeout(req) }
+            if req == lookPending { look.progress(text) }
         case .lookSent(let req, let error):
             if !error.isEmpty {
                 log("Look: the screenshot was not sent · \(error)")
@@ -393,56 +393,96 @@ final class CompanionModel {
 
     @ObservationIgnored private let look = LookController()
 
+    /// Recognition happens here, on the Mac (LookHost); the phone only shows what was found.
+    @ObservationIgnored private let lookHost = LookHost()
+
+    /// ⌃⌥M / ⌃⌥A: look at the marked box (or the whole window) and show the card. No phone needed.
     private func lookAsked(_ box: CGRect?) {
-        guard isPhoneConnected else { look.fail("Open Maple Atlas on your phone to look: it finds what is on the screen."); return }
         lookCount += 1
         let req = "c\(lookCount)"
         lookPending = req
-        Task { await sendLook(req: req, mark: box ?? CGRect(x: 0, y: 0, width: 1, height: 1)) }
-        armLookTimeout(req)
+        Task { await lookHere(req: req, mark: box) }
     }
-    /// No answer (and no progress) from the phone for 18 s: the look has failed.
-    private func armLookTimeout(_ req: String) {
-        lookTimeout?.cancel()
-        lookTimeout = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(18))
-            guard !Task.isCancelled, let self, self.lookPending == req else { return }
-            self.lookPending = nil
-            self.look.fail("No answer from the phone. Keep Maple Atlas open on it.")
+
+    private func lookHere(req: String, mark: CGRect?) async {
+        guard let shot = await captureLook(req: req) else {
+            if req == lookPending { lookPending = nil; look.fail("No game window to look at.") }
+            return
+        }
+        lookHost.onProgress = { [weak self] text in
+            guard let self, self.lookPending == req else { return }
+            self.look.progress(text)
+        }
+        do {
+            let answer = try await lookHost.analyze(site: site.url, jpeg: shot.jpeg, lines: shot.lines, map: shot.map, mark: mark)
+            log("Look: found " + (answer.card.items.isEmpty ? "nothing" : answer.card.items.map(\.name).joined(separator: ", ")))
+            if req == lookPending { lookPending = nil; look.show(answer.card) }
+        } catch {
+            log("Look: \(error.localizedDescription)")
+            if req == lookPending { lookPending = nil; look.fail(error.localizedDescription) }
         }
     }
-    @ObservationIgnored private var lookTimeout: Task<Void, Never>?
+
+    /// The phone's Look: the screenshot goes to the phone at once (it shows it), then the Mac
+    /// recognizes the whole window, tells the phone how far it is, and sends what it found.
+    private func lookForPhone(req: String) async {
+        guard let shot = await captureLook(req: req) else { return }
+        helper?.send(.look(req: req, path: shot.path, width: shot.width, height: shot.height, lines: shot.lines, mark: nil, map: shot.map))
+        log("Look: sent a \(shot.width)×\(shot.height) screenshot with \(shot.lines.count) text lines")
+        var last = Date.distantPast
+        lookHost.onProgress = { [weak self] text in
+            guard Date().timeIntervalSince(last) > 0.25 else { return }
+            last = Date()
+            self?.helper?.send(.lookProgress(req: req, text: text))
+        }
+        do {
+            let answer = try await lookHost.analyze(site: site.url, jpeg: shot.jpeg, lines: shot.lines, map: shot.map, mark: nil)
+            let url = Self.stateDirectory(for: site).appendingPathComponent("look-\(req).json")
+            try answer.result.write(to: url)
+            helper?.send(.lookFound(req: req, path: url.path))
+            log("Look: found " + (answer.card.items.isEmpty ? "nothing" : answer.card.items.map(\.name).joined(separator: ", ")) + " · sent to the phone")
+        } catch {
+            log("Look: \(error.localizedDescription)")
+            helper?.send(.lookProgress(req: req, text: "Could not look: " + String(error.localizedDescription.prefix(40))))
+        }
+    }
+
+    private struct LookShot: Sendable {
+        let path: String
+        let jpeg: Data
+        let width: Int
+        let height: Int
+        let lines: [[any Sendable]]
+        let map: String?
+    }
+
+    /// A screenshot of the game window (JPEG, at most 1600 px wide) with the text read on it.
+    private func captureLook(req: String) async -> LookShot? {
+        let capture = self.capture, dir = Self.stateDirectory(for: site), map = lastConfirmed?.id
+        do {
+            return try await Task.detached { () -> LookShot in
+                let image = try capture.wholeWindowCGImage(maxSide: 1600)
+                let lines: [[any Sendable]] = QuestText.recognize(image).filter { $0.confidence >= 0.5 }.map { l in [l.text, Int(l.box.minX), Int(l.box.minY), Int(l.box.width), Int(l.box.height)] }
+                let url = dir.appendingPathComponent("look-\(req).jpg")
+                guard let dest = CGImageDestinationCreateWithURL(url as CFURL, "public.jpeg" as CFString, 1, nil) else { throw GameCapture.CaptureError.encodingFailed }
+                CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
+                guard CGImageDestinationFinalize(dest) else { throw GameCapture.CaptureError.encodingFailed }
+                return LookShot(path: url.path, jpeg: try Data(contentsOf: url), width: image.width, height: image.height, lines: lines, map: map)
+            }.value
+        } catch {
+            log("Look: no screenshot · \(error.localizedDescription)")
+            return nil
+        }
+    }
     @ObservationIgnored private var lookCount = 0
     @ObservationIgnored private var lookPending: String?
 
     /// Starts the Look hotkeys (⌃⌥M mark a box, ⌃⌥A the whole window).
     func startLook() {
+        Task { [weak self] in guard let self else { return }; try? await self.lookHost.prepare(site: self.site.url) }
         look.windowID = { [weak self] in self?.capture.windowID }
         look.onLook = { [weak self] box in self?.lookAsked(box) }
         look.start()
-    }
-
-    /// A screenshot of the game window for the phone, with the text read on it.
-    private func sendLook(req: String, mark: CGRect?) async {
-        let capture = self.capture, dir = Self.stateDirectory(for: site), map = lastConfirmed?.id
-        do {
-            struct Shot: Sendable { let path: String; let width: Int; let height: Int; let lines: [(String, Int, Int, Int, Int)] }
-            let shot = try await Task.detached { () -> Shot in
-                let image = try capture.wholeWindowCGImage(maxSide: 1600)
-                let lines = QuestText.recognize(image).filter { $0.confidence >= 0.5 }.map { l in (l.text, Int(l.box.minX), Int(l.box.minY), Int(l.box.width), Int(l.box.height)) }
-                let url = dir.appendingPathComponent("look-\(req).jpg")
-                guard let dest = CGImageDestinationCreateWithURL(url as CFURL, "public.jpeg" as CFString, 1, nil) else { throw GameCapture.CaptureError.encodingFailed }
-                CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
-                guard CGImageDestinationFinalize(dest) else { throw GameCapture.CaptureError.encodingFailed }
-                return Shot(path: url.path, width: image.width, height: image.height, lines: lines)
-            }.value
-            let lines: [[Any]] = shot.lines.map { [$0.0, $0.1, $0.2, $0.3, $0.4] }
-            helper?.send(.look(req: req, path: shot.path, width: shot.width, height: shot.height, lines: lines, mark: mark, map: map))
-            log("Look: sent a \(shot.width)×\(shot.height) screenshot with \(lines.count) text lines" + (mark.map { " · box " + Self.describe($0) } ?? ""))
-        } catch {
-            log("Look: no screenshot · \(error.localizedDescription)")
-            if req == lookPending { lookPending = nil; look.fail("No game window to look at.") }
-        }
     }
 
     // MARK: Phone actions

@@ -12,10 +12,48 @@ struct LookCard: Decodable, Equatable, Sendable {
         let detail: String
         let extra: String
         let count: Int
+        /// An item's player-market price ("≈ 39,999 mesos"), or "".
+        let price: String
+
+        init(type: String, name: String, icon: String, detail: String, extra: String, count: Int, price: String) {
+            (self.type, self.name, self.icon, self.detail, self.extra, self.count, self.price) = (type, name, icon, detail, extra, count, price)
+        }
+
+        private enum CodingKeys: String, CodingKey { case type, name, icon, detail, extra, count, price }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            type = try c.decode(String.self, forKey: .type)
+            name = try c.decode(String.self, forKey: .name)
+            icon = try c.decodeIfPresent(String.self, forKey: .icon) ?? ""
+            detail = try c.decodeIfPresent(String.self, forKey: .detail) ?? ""
+            extra = try c.decodeIfPresent(String.self, forKey: .extra) ?? ""
+            count = try c.decodeIfPresent(Int.self, forKey: .count) ?? 1
+            price = try c.decodeIfPresent(String.self, forKey: .price) ?? ""
+        }
     }
     let title: String
     let note: String
     let items: [Item]
+
+    init(title: String, note: String, items: [Item]) { (self.title, self.note, self.items) = (title, note, items) }
+
+    /// The card as look-host.html makes it ({title, note, items: [{t, n, i, d, e, c, p}]}; i is a
+    /// datamine path, shown from its CDN like the phone's list).
+    static func fromPage(_ data: Data) throws -> LookCard {
+        struct Page: Decodable {
+            struct I: Decodable { let t: String; let n: String; let i: String?; let d: String?; let e: String?; let c: Int?; let p: String? }
+            let title: String?; let note: String?; let items: [I]?
+        }
+        let page = try JSONDecoder().decode(Page.self, from: data)
+        let clip = { (s: String?, n: Int) in String((s ?? "").prefix(n)) }
+        let items = (page.items ?? []).prefix(6).map { i in
+            let path = i.i ?? ""
+            let icon = path.range(of: #"^[0-9a-f]{40}/data/[A-Za-z0-9_./-]+\.png$"#, options: .regularExpression) != nil
+                ? "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@" + path : ""
+            return Item(type: i.t, name: clip(i.n, 50), icon: icon, detail: clip(i.d, 90), extra: clip(i.e, 90), count: max(1, min(99, i.c ?? 1)), price: clip(i.p, 40))
+        }
+        return LookCard(title: clip(page.title, 60), note: clip(page.note, 90), items: Array(items))
+    }
 }
 
 /// The look card's state: waiting for the phone, its answer, or why there is none.
@@ -27,8 +65,8 @@ final class LookState {
 }
 
 /// Look on the Mac: ⌃⌥M marks a box on the game window (drag, or click for the area around the
-/// pointer), ⌃⌥A looks at the whole window ("Around me"). The screenshot goes to the phone,
-/// which finds what is in it and sends a card back, shown next to the box.
+/// pointer), ⌃⌥A looks at the whole window ("Around me"). The Mac finds what is in it
+/// (LookHost) and shows a card next to the box.
 ///
 /// The hotkeys use Carbon's RegisterEventHotKey, the one global shortcut API that needs no
 /// Accessibility or Input Monitoring permission.
@@ -282,6 +320,7 @@ private struct LookCardView: View {
                         LookIcon(url: URL(string: item.icon), name: item.name)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.name + (item.count > 1 ? " ×\(item.count)" : "")).font(.system(size: 14, weight: .bold)).lineLimit(1)
+                            if !item.price.isEmpty { Text(item.price).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color(red: 0.32, green: 0.81, blue: 0.4)) }
                             if !item.detail.isEmpty { Text(item.detail).font(.system(size: 12)).foregroundStyle(.white.opacity(0.85)).lineLimit(2) }
                             if !item.extra.isEmpty {
                                 Text(item.extra).font(.system(size: 12, weight: .medium)).foregroundStyle(Color(red: 1, green: 0.84, blue: 0.31)).lineLimit(2)

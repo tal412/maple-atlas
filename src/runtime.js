@@ -222,9 +222,7 @@
     liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},
     connected:()=>companion.connected,esc,icon,icons});
   $('#mc-look').onclick=()=>lookUI.open();
-  // Look's pictures and model, downloaded once in the background a little after the page opens
-  // (not on a data saver), so a look never waits on the network.
-  if(!navigator.connection?.saveData)setTimeout(()=>{(window.requestIdleCallback||(f=>f()))(()=>void lookUI.prefetch());},6000);
+  // Look's recognition runs on the computer (Maple Atlas Companion): nothing to download here.
   let oreDrops=null,oreState='idle';
   const ORE_PIN_KEY='maple-atlas-pin-ores';
   let oresPinned=false;try{oresPinned=localStorage.getItem(ORE_PIN_KEY)==='on';}catch(_){}

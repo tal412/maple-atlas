@@ -167,7 +167,7 @@
           }
           if(!verified||phase!=='connected')return;
           // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
-          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'){lookMessage(value);return;}
+          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'||value.kind==='look-found'||value.kind==='look-progress'){lookMessage(value);return;}
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
           // The player's dot on that map, in the portal data's coordinates.
           else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
@@ -211,6 +211,15 @@
       if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
       for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
       if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
+      // The computer recognizes its screenshot itself: how far it is, then what it found.
+      if(m.kind==='look-progress'){if(typeof m.text==='string'&&m.req[0]==='p')onLook({req:m.req,progress:m.text.slice(0,60)});return;}
+      if(m.kind==='look-found'){
+        if(m.req[0]!=='p'||!Number.isInteger(m.n)||m.n<1||m.n>120||!Number.isInteger(m.i)||m.i<0||m.i>=m.n||typeof m.data!=='string'||m.data.length>6000)return;
+        const key='found:'+m.req;let f=looks.get(key);if(!f||f.parts.length!==m.n){f={at:now(),parts:new Array(m.n),got:0};looks.set(key,f);}
+        if(f.parts[m.i]!==undefined)return;f.parts[m.i]=m.data;f.got++;
+        if(f.got===f.parts.length){looks.delete(key);try{const text=new TextDecoder().decode(Uint8Array.from(atob(f.parts.join('')),c=>c.charCodeAt(0)));const found=lookFound(JSON.parse(text));if(found)onLook({req:m.req,found});}catch(_){}}
+        return;
+      }
       if(m.kind==='look-meta'){
         if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
         const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
@@ -222,6 +231,18 @@
       if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
       l.parts[m.i]=m.data;l.got++;
       if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
+    }
+    // What the computer found, checked field by field: each thing a known type with a name, an id
+    // and a box (numbers); the map's drop rows; the players' boxes. Anything else is dropped.
+    function lookFound(r){
+      if(!r||typeof r!=='object')return null;
+      const num=v=>Number.isFinite(v)?v:0,str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+      const box=b=>b&&typeof b==='object'?{x:num(b.x),y:num(b.y),w:Math.max(0,num(b.w)),h:Math.max(0,num(b.h))}:null;
+      const types=new Set(['monster','npc','item','quest','map']);
+      const found=(Array.isArray(r.found)?r.found:[]).slice(0,400).filter(f=>f&&types.has(f.type)&&typeof f.name==='string'&&box(f.box)).map(f=>({type:f.type,id:str(String(f.id??''),24),name:str(f.name,80),box:box(f.box),via:str(f.via,12),score:num(f.score),ui:!!f.ui,pet:!!f.pet}));
+      const drops=(Array.isArray(r.drops)?r.drops:[]).slice(0,400).filter(d=>d&&typeof d.monster==='string'&&typeof d.item==='string').map(d=>({monster:str(d.monster,80),item:str(d.item,80),id:d.id==null?null:str(String(d.id),24),rate:Number.isFinite(d.rate)?d.rate:null}));
+      const players=(Array.isArray(r.players)?r.players:[]).slice(0,60).filter(p=>p&&box(p.box)).map(p=>({name:str(p.name,40),box:box(p.box),you:!!p.you}));
+      return {found,drops,players,mapId:typeof r.mapId==='string'&&ids.has(r.mapId)?r.mapId:null};
     }
     // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
     function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}

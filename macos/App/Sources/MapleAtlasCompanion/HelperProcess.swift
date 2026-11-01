@@ -156,6 +156,10 @@ enum HelperCommand {
     /// A screenshot for the phone: a JPEG file (the helper deletes it), its size, the text read on
     /// it ([text, x, y, w, h] in its pixels), the box marked (0…1) and the map.
     case look(req: String, path: String, width: Int, height: Int, lines: [[Any]], mark: CGRect?, map: String?)
+    /// How the Mac's look is going, for the phone's Look view.
+    case lookProgress(req: String, text: String)
+    /// What the Mac found (a JSON file), for the phone's Look view.
+    case lookFound(req: String, path: String)
 
     var payload: [String: Any] {
         switch self {
@@ -186,6 +190,10 @@ enum HelperCommand {
                 "mark": mark.map { [Double($0.minX), Double($0.minY), Double($0.width), Double($0.height)] } ?? NSNull(),
                 "id": map ?? "",
             ]
+        case .lookProgress(let req, let text):
+            ["cmd": "look-progress", "req": req, "text": text]
+        case .lookFound(let req, let path):
+            ["cmd": "look-found", "req": req, "path": path]
         }
     }
 }

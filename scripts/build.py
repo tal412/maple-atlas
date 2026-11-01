@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-detector', 'look-namer', 'look-engine', 'look-ui', 'offline', 'runtime', 'intro'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-card', 'look-ui', 'offline', 'runtime', 'intro'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
@@ -160,11 +160,6 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
         app = app.replace('href="./dev/">Open dev preview', 'href="../">Dev preview · Open main')
     encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     runtime = runtime.replace("__INLINE_MAP_DATA__", encoded)
-    # Look's background worker (src/look-worker.js): its code as a string the page starts it from.
-    worker_source = '\n'.join(read(name + '.js') for name in ['minimap-position', 'look', 'look-detector', 'look-namer', 'look-engine', 'look-worker'])
-    if runtime.count('__LOOK_WORKER_SOURCE__') != 1:
-        raise SystemExit('look-ui.js must hold __LOOK_WORKER_SOURCE__ once')
-    runtime = runtime.replace('__LOOK_WORKER_SOURCE__', json.dumps(worker_source, ensure_ascii=False).replace('<', '\\u003c'))
     if re.search(r"</script", runtime, re.I):
         raise ValueError("Runtime contains an unsafe inline script terminator.")
     css = read("app.css") + "\n" + read("fullscreen.css") + '\n' + read('mobile.css') + '\n' + read('search.css') + '\n' + read('companion.css') + '\n' + read('quests.css') + '\n' + read('look.css') + '\n' + read('intro.css') + '\n' + night_css + "\n.cursor-interaction{cursor:pointer}\n"
@@ -206,6 +201,21 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     (docs / 'data/market.json').write_bytes((project / 'data/market-snapshot.json').read_bytes())
     output = docs / "index.html"
     output.write_text(page, encoding="utf-8")
+    # Look for the computer (src/look-host.js): a small page the companion apps open in a hidden
+    # web view to recognize a marked box themselves (no phone needed).
+    if 'look' in data:
+        host_data = {
+            'look': data['look'], 'catalog': './data/' + search_name,
+            'maps': [{'id': m['id'], 'name': m['name'], 'street': m.get('street', ''),
+                      'monsters': [{'id': str(x['id']), 'name': x.get('name', ''), 'spawns': x.get('spawns')} for x in m.get('monsters') or []],
+                      'npcs': [{'id': str(x['id'])} for x in m.get('npcs') or []]} for m in data['maps']],
+            'quests': [{'npc': q.get('npc', ''), 'name': q['name']} for q in data['quests'] if q.get('npc')],
+        }
+        host_js = '\n'.join(read(name + '.js') for name in ['minimap-position', 'look', 'look-detector', 'look-namer', 'look-engine', 'look-card', 'look-host'])
+        host_js = host_js.replace('__LOOK_HOST_DATA__', json.dumps(host_data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c'))
+        if re.search(r'</script', host_js, re.I):
+            raise SystemExit('look-host: a script holds </script')
+        (docs / 'look-host.html').write_text('<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Maple Atlas Look</title></head>\n<body>\n<script>\n' + host_js + '\n</script>\n</body></html>\n', encoding='utf-8')
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     (docs / 'favicon.svg').write_text(read('favicon.svg'), encoding='utf-8')
     # Installable app: "Add to Home screen" opens the map full screen, without browser bars.

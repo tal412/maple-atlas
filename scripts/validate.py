@@ -97,17 +97,18 @@ page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
 # Catalog, market snapshot, MCW item, wiki item-source and same-origin spawn points (5), the
-# same-origin price history (1), Look's list catalog (1), and Look's engine (2: its cached file
-# loader and its catalog), which is in the page and again in the code of Look's worker (2).
-assert len(re.findall(r'\bfetch\s*\(', page)) == 11 and "fetch('./data/spawn-points.json')" in page and "fetch('./data/market-history.json'" in page, 'Only the known loaders may fetch'
-# Look loads only this site's files: the catalog, and assets/look/ + vendor/ort/ through one
-# cached loader; nothing from other hosts (no maplestory.io, no CDN for its pictures).
+# same-origin price history (1) and Look's list catalog (1). Look's recognition is not in the
+# page: the computer runs it (look-host.html), so the phone downloads no models.
+assert len(re.findall(r'\bfetch\s*\(', page)) == 7 and "fetch('./data/spawn-points.json')" in page and "fetch('./data/market-history.json'" in page, 'Only the known loaders may fetch'
 look_ui = (ROOT / 'src/look-ui.js').read_text()
+assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 1 and 'fetch(catalogUrl)' in look_ui and 'MapleLookEngine' not in page
+# Look for the computer loads only this site's files: the catalog, assets/look/ and vendor/ort/
+# through one cached loader, and the market copy; nothing from other hosts.
+host = (ROOT / 'docs/look-host.html').read_text()
 look_engine = (ROOT / 'src/look-engine.js').read_text()
-assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 1 and 'fetch(catalogUrl)' in look_ui
 assert len(re.findall(r'\bfetch\s*\(', look_engine)) == 2 and 'fetch(abs(catalogUrl))' in look_engine and "fetch(url,{credentials:'same-origin'})" in look_engine
-assert 'maplestory.io' not in look_ui + look_engine and all('fetch(' not in (ROOT / f'src/{n}.js').read_text() for n in ('look-detector', 'look-namer', 'look-worker'))
-assert "const ORT='./vendor/ort/'" in page and (ROOT / 'docs/vendor/ort/ort-wasm-simd-threaded.wasm').exists()
+assert 'maplestory.io' not in host and all('fetch(' not in (ROOT / f'src/{n}.js').read_text() for n in ('look-detector', 'look-namer', 'look-worker'))
+assert "const ORT='./vendor/ort/'" in host and (ROOT / 'docs/vendor/ort/ort-wasm-simd-threaded.wasm').exists()
 assert "const api='https://mapleclassic.wiki/api.php'" in page, 'Item sources come only from the MapleClassic Wiki API'
 from market import validate as validate_market
 market_blob = (ROOT / 'data/market-snapshot.json').read_bytes()

@@ -10,6 +10,8 @@ package main
 //	                  {kind:"look-part", v:1, req, i, data}             base64 JPEG pieces
 //	phone → computer  {kind:"look-result", v:1, req:"c…", card}         for a look marked here
 //	phone → computer  {kind:"look-progress", v:1, req:"c…", text}       how that look is going
+//	computer → phone  {kind:"look-progress", v:1, req:"p…", text}       how this computer's look goes
+//	computer → phone  {kind:"look-found", v:1, req:"p…", i, n, data}   what it found (base64 JSON, in parts)
 //
 // Requests from the phone start with "p", looks marked on the computer with "c".
 
@@ -117,6 +119,54 @@ func (s *session) sendLook(shot lookShot) error {
 		}
 	}
 	return nil
+}
+
+// lookFoundMax is the largest result sent for the phone's Look (what the computer found).
+const lookFoundMax = 512 << 10
+
+// sendLookFound sends what this computer found in its screenshot for the phone's Look (a JSON
+// object: each thing with its box), base64 in parts {kind:"look-found", req, i, n, data}.
+func (s *session) sendLookFound(req string, raw []byte) error {
+	if !lookReq.MatchString(req) || !strings.HasPrefix(req, "p") || len(raw) < 2 || len(raw) > lookFoundMax || raw[0] != '{' || !json.Valid(raw) {
+		return errors.New("bad result")
+	}
+	s.mu.Lock()
+	l := s.cur
+	ok := l != nil && l.verified && s.phase == "connected" && !l.dead && l.dc != nil
+	s.mu.Unlock()
+	if !ok {
+		return errors.New("the phone is not connected")
+	}
+	data := base64.StdEncoding.EncodeToString(raw)
+	parts := (len(data) + lookPart - 1) / lookPart
+	for i := 0; i < parts; i++ {
+		deadline := time.Now().Add(lookTimeout)
+		for l.dc.BufferedAmount() > lookBuffered {
+			if time.Now().After(deadline) || l.dc.ReadyState() != webrtc.DataChannelStateOpen {
+				return errors.New("the link stalled")
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+		end := min((i+1)*lookPart, len(data))
+		b, _ := json.Marshal(map[string]any{"kind": "look-found", "v": 1, "session": s.id, "req": req, "i": i, "n": parts, "data": data[i*lookPart : end]})
+		if err := l.dc.SendText(string(b)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// sendLookProgress tells the phone how this computer's look is going ("Naming 3 of 12…").
+func (s *session) sendLookProgress(req, text string) {
+	t, ok := lookProgressText(text)
+	if !ok || !lookReq.MatchString(req) || !strings.HasPrefix(req, "p") {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.cur != nil && s.cur.verified {
+		s.sendLocked(s.cur, map[string]any{"kind": "look-progress", "v": 1, "session": s.id, "req": req, "text": t})
+	}
 }
 
 // sendLookError tells the phone a screenshot could not be taken, so it stops waiting.

@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Maple Atlas Look</title></head>
+<body>
+<script>
+/* Player position from the in-game minimap, and plain-language portal guidance.
+ *
+ * Adapted from Maple Route (https://github.com/maplerouteadmin-dev/maple-route,
+ * src/minimap.js and src/screen.js at 5f92b69). Its colors were sampled from real
+ * MapleStory Classic World screenshots. Changes: one browser/Node module, minimap-only,
+ * and positions use the same coordinates as this project's portal data.
+ *
+ * MIT License
+ * Copyright (c) 2026 Maple Route contributors
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following
+ * conditions: The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+(function(scope){
+  // Works on ImageData-like objects ({width, height, data: RGBA bytes}).
+  const isPanelBlue=(r,g,b)=>r>=120&&r<=190&&g>=160&&g<=215&&b>=180&&b<=235&&b-r>=30&&g-r>=15;
+  const isPlayerYellow=(r,g,b)=>r>=225&&g>=185&&b<=110&&r>g;
+  const isPortalTeal=(r,g,b)=>b-r>=45&&g-r>=30&&b>=g&&b>=95&&r<140;
+  const isFrameLight=(r,g,b)=>r>220&&g>220&&b>220&&Math.max(r,g,b)-Math.min(r,g,b)<18;
+
+  function allRuns(flags,maxGap=0){
+    const runs=[];let start=-1,last=-1;
+    for(let i=0;i<=flags.length;i++){if(i<flags.length&&flags[i]){if(start<0||i-last-1>maxGap){if(start>=0)runs.push([start,last]);start=i;}last=i;}}
+    if(start>=0)runs.push([start,last]);return runs;
+  }
+  function longestRun(flags,maxGap=0){let best=null;for(const run of allRuns(flags,maxGap))if(!best||run[1]-run[0]>best[1]-best[0])best=run;return best;}
+
+  // The pale-blue strip holding the region emblem and the "street / map" title.
+  // frameHeight is the full game frame height in this image's pixels (the image is a crop).
+  function findTitleBand(image,{frameHeight=image.height}={}){
+    const {width,data}=image,height=frameHeight,regionW=width,regionH=image.height;
+    const rowHits=new Array(regionH).fill(0);
+    for(let y=0;y<regionH;y++)for(let x=0;x<regionW;x++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))rowHits[y]++;}
+    // A pale sky can share the blue; every blue stretch is tried top-down until one is title-shaped.
+    for(const [y0,y1] of allRuns(rowHits.map(count=>count>Math.max(30,regionW*.05)),3)){
+      const bandH=y1-y0+1;if(bandH<height*.025||bandH>height*.14)continue;
+      const columns=[];
+      for(let x=0;x<regionW;x++){let hits=0;for(let y=y0;y<=y1;y++){const i=(y*width+x)*4;if(isPanelBlue(data[i],data[i+1],data[i+2]))hits++;}columns.push(hits>bandH*.3);}
+      const cols=longestRun(columns,4);
+      if(!cols||cols[1]-cols[0]<bandH*1.8)continue;
+      if(cols[0]===0&&cols[1]>=regionW-1)continue; // a sky spans the region; the title strip ends at its window
+      const textX=cols[0],right=cols[1],x=Math.max(0,textX-Math.round(bandH*.97));
+      return {x,y:y0,w:right-x+1,h:bandH,textX};
+    }
+    return null;
+  }
+  function components(mask,w,h){
+    const seen=new Uint8Array(w*h),found=[];
+    for(let start=0;start<mask.length;start++){
+      if(!mask[start]||seen[start])continue;
+      const stack=[start];seen[start]=1;let count=0,sx=0,sy=0,minX=w,maxX=0,minY=h,maxY=0;
+      while(stack.length){
+        const p=stack.pop(),x=p%w,y=(p-x)/w;count++;sx+=x;sy+=y;
+        if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;const q=ny*w+nx;if(mask[q]&&!seen[q]){seen[q]=1;stack.push(q);}}
+      }
+      found.push({count,x:sx/count,y:sy/count,w:maxX-minX+1,h:maxY-minY+1});
+    }
+    return found;
+  }
+  // The map picture inside its thin light frame, under the title strip; null when collapsed.
+  function minimapBody(image,band){
+    const {width,height,data}=image;
+    const light=(x,y)=>{const i=(y*width+x)*4;return isFrameLight(data[i],data[i+1],data[i+2]);};
+    const rowLight=(y,x0,x1)=>{let n=0;for(let x=x0;x<=x1;x++)if(light(x,y))n++;return n/(x1-x0+1);};
+    const colLight=(x,y0,y1)=>{let n=0;for(let y=y0;y<=y1;y++)if(light(x,y))n++;return n/(y1-y0+1);};
+    const sx0=band.x+Math.round(band.w*.05),sx1=Math.min(width-1,band.x+Math.round(band.w*.95));
+    let y=band.y+band.h,frameTop=-1;
+    for(const end=Math.min(height-1,y+Math.round(band.h*1.1));y<=end;y++)if(rowLight(y,sx0,sx1)>.85){frameTop=y;break;}
+    if(frameTop<0)return null;
+    while(y<height&&rowLight(y,sx0,sx1)>.85)y++;
+    const top=y;let bottom=-1;
+    for(y=top+Math.max(4,Math.round(band.h*.3));y<height;y++)if(rowLight(y,sx0,sx1)>.85){bottom=y-1;break;}
+    if(bottom<0||bottom-top<band.h*.4)return null;
+    const reach=Math.round(band.h*.4);let left=band.x,right=Math.min(width-1,band.x+band.w-1);
+    for(let x=Math.max(0,band.x-reach);x<=band.x+reach;x++)if(colLight(x,top,bottom)>.8)left=x+1;
+    for(let x=Math.min(width-1,band.x+band.w-1+reach);x>=band.x+band.w-1-reach;x--)if(colLight(x,top,bottom)>.8)right=x-1;
+    return right-left<band.h?null:{x:left,y:top,w:right-left+1,h:bottom-top+1};
+  }
+  // The player's yellow dot and the teal portal rings inside the minimap picture.
+  function findMarkers(image,band){
+    const body=minimapBody(image,band),unit=band.h;
+    if(!body)return {body:null,unit,player:null,portals:[],collapsed:true};
+    const yellow=new Uint8Array(body.w*body.h),teal=new Uint8Array(body.w*body.h);
+    for(let y=0;y<body.h;y++)for(let x=0;x<body.w;x++){
+      const i=((body.y+y)*image.width+body.x+x)*4,r=image.data[i],g=image.data[i+1],b=image.data[i+2];
+      if(isPlayerYellow(r,g,b))yellow[y*body.w+x]=1;if(isPortalTeal(r,g,b))teal[y*body.w+x]=1;
+    }
+    const dot=components(yellow,body.w,body.h)
+      .filter(c=>c.w>=unit*.07&&c.h>=unit*.07&&c.w<=unit*.25&&c.h<=unit*.25&&c.count/(c.w*c.h)>=.45&&Math.max(c.w,c.h)/Math.min(c.w,c.h)<=1.6)
+      .sort((a,b)=>b.count-a.count)[0];
+    const portals=components(teal,body.w,body.h).filter(c=>c.count>=unit*unit*.0035&&c.w<=unit*.35&&c.h<=unit*.35).map(c=>({x:body.x+c.x,y:body.y+c.y}));
+    return {body,unit,player:dot?{x:body.x+dot.x,y:body.y+dot.y}:null,portals,collapsed:false};
+  }
+  // Picture size relative to the title strip; resizing the minimap changes its zoom.
+  const minimapLayout=(band,body)=>body?{w:body.w/band.h,h:body.h/band.h}:null;
+  function recallScale(memory,layout){
+    if(!layout||!Array.isArray(memory))return null;
+    const close=(a,b)=>Math.abs(a-b)<=Math.max(a,b)*.06;
+    return memory.find(entry=>close(entry.w,layout.w)&&close(entry.h,layout.h))?.scale??null;
+  }
+  function rememberScale(memory,layout,scale){
+    if(!layout||!Number.isFinite(scale))return memory??[];
+    const list=Array.isArray(memory)?[...memory]:[],known=list.findIndex(entry=>recallScale([entry],layout)!==null);
+    if(known>=0)list[known]={...list[known],scale:list[known].scale*.8+scale*.2};else list.unshift({...layout,scale});
+    return list.slice(0,8);
+  }
+  // Scale/offset that maps portal coordinates onto the detected rings. The minimap scrolls with
+  // the player, so the offset changes every frame; the scale is constant for one minimap size.
+  function fitMinimap(rings,marks,unit,hint=null){
+    const world=marks.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+    if(!rings.length||!world.length)return null;
+    const tolerance=Math.max(4,unit*.12);
+    const score=(s,ox,oy)=>{let inliers=0,error=0;for(const ring of rings){let best=Infinity;for(const portal of world){const d=Math.abs(ring.x-(s*portal.x+ox))+Math.abs(ring.y-(s*portal.y+oy));if(d<best)best=d;}if(best<=tolerance){inliers++;error+=best;}}return {scale:s,ox,oy,inliers,error};};
+    let best=null;const consider=fit=>{if(fit.inliers&&(!best||fit.inliers>best.inliers||(fit.inliers===best.inliers&&fit.error<best.error)))best=fit;};
+    const minS=unit*.0003,maxS=unit*.012;
+    for(let i=0;i<rings.length;i++)for(let j=0;j<rings.length;j++){
+      if(i===j||rings[j].x<=rings[i].x)continue;
+      for(const a of world)for(const b of world){
+        if(b.x<=a.x)continue;const s=(rings[j].x-rings[i].x)/(b.x-a.x);
+        if(s<minS||s>maxS)continue;if(hint?.scale&&Math.abs(s/unit-hint.scale)>hint.scale*.12)continue;
+        consider(score(s,rings[i].x-s*a.x,rings[i].y-s*a.y));
+      }
+    }
+    if(hint?.scale&&(!best||best.inliers<2)){const s=hint.scale*unit;for(const ring of rings)for(const portal of world)consider(score(s,ring.x-s*portal.x,ring.y-s*portal.y));}
+    if(!best||best.inliers<2&&!hint?.scale)return null; // one ring alone cannot fix the scale
+    return {...best,scalePerUnit:best.scale/unit};
+  }
+  const toWorld=(fit,point)=>({x:(point.x-fit.ox)/fit.scale,y:(point.y-fit.oy)/fit.scale});
+
+  const MARKER_LIFT=8;
+  // The title strip is 45 game pixels tall; the minimap picture is drawn at the game's own
+  // pixel scale, so the strip's height in the image gives that scale (k image px per picture px).
+  const TITLE_GAME_PX=45;
+  // How the map's own minimap picture sits in the window body. The game never shrinks the
+  // picture: the window hugs it (body = picture * k) up to a largest size, beyond which the
+  // picture is clipped and scrolls with the player; a picture narrower than the window's
+  // smallest width is centred with margins. Per side: {at, clipped}, at = the picture's left or
+  // top edge in the image when the side is not clipped (null when it scrolls).
+  // unit: the title strip's height (sets k); without it the picture is assumed to fit whole.
+  function pictureFrame(body,picture,unit){
+    if(!picture||!body||!(picture.w>0&&picture.h>0))return null;
+    const rx=body.w/picture.w,ry=body.h/picture.h,k0=unit?unit/TITLE_GAME_PX:Math.min(rx,ry);
+    const hugs=r=>Math.abs(r/k0-1)<=.08;
+    const k=hugs(rx)&&hugs(ry)?(rx+ry)/2:hugs(rx)?rx:hugs(ry)?ry:k0;
+    const side=(at,size,r,shown)=>r<k*.92&&shown>size+2?{at:null,clipped:true}:{at:at+(size-shown)/2,clipped:false};
+    const shownW=picture.w*k,shownH=picture.h*k;
+    return {k,shownW,shownH,x:side(body.x,body.w,rx,shownW),y:side(body.y,body.h,ry,shownH)};
+  }
+  // The dot on the picture: {x, y} in map coordinates, or null when the dot is not on it.
+  // left/top: where the picture's edges are in the image.
+  const dotOnPicture=(player,picture,k,left,top)=>{
+    const px=(player.x-left+.5)/k,py=(player.y-top+.5)/k,s=picture.scale||16;
+    if(px<-2||py<-2||px>picture.w+2||py>picture.h+2)return null;
+    return {x:Math.round(s*(px+picture.dx)),y:Math.round(s*(py+picture.dy))};
+  };
+  // Kept for callers that only know the window body: the picture is taken to fit it whole.
+  function onPicture(body,player,picture,unit){
+    const f=pictureFrame(body,picture,unit);
+    if(!f||f.x.clipped||f.y.clipped)return null;
+    return dotOnPicture(player,picture,f.k,f.x.at,f.y.at);
+  }
+  // Where the window's slice of the picture lies on the map's own minimap image (preview:
+  // {width, height, data}, the picture at 1:1) when a side scrolls: the body is sampled at
+  // picture scale and slid over the image (normalized correlation). Returns {ox, oy, score}, the
+  // picture pixel under the body's top-left corner, or null when nothing matches.
+  function matchPreview(image,body,preview,f){
+    const k=f.k,w=Math.floor(body.w/k),h=Math.floor(body.h/k);
+    if(!preview||!image||w<8||h<8||!(preview.width>=8&&preview.height>=8))return null;
+    const g=new Float32Array(w*h);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const sx=Math.min(image.width-1,Math.round(body.x+(x+.5)*k)),sy=Math.min(image.height-1,Math.round(body.y+(y+.5)*k)),i=(sy*image.width+sx)*4;g[y*w+x]=image.data[i]*.299+image.data[i+1]*.587+image.data[i+2]*.114;}
+    const pw=preview.width,ph=preview.height,pg=new Float32Array(pw*ph);
+    for(let i=0;i<pw*ph;i++){const j=i*4,a=preview.data[j+3]/255;pg[i]=(preview.data[j]*.299+preview.data[j+1]*.587+preview.data[j+2]*.114)*a;}
+    // Offsets tried: the whole span on a scrolling side, the known one on the other.
+    const span=(side,at,size,psize)=>side.clipped?[0,Math.max(0,psize-size)]:[Math.round((at-side.at)/k),Math.round((at-side.at)/k)];
+    const [x0,x1]=span(f.x,body.x,w,pw),[y0,y1]=span(f.y,body.y,h,ph);
+    const corr=(ox,oy)=>{
+      const ax=Math.max(0,-ox),ay=Math.max(0,-oy),bx=Math.min(w,pw-ox),by=Math.min(h,ph-oy);
+      if(bx-ax<8||by-ay<8)return -2;
+      let n=0,sa=0,sb=0;for(let y=ay;y<by;y++)for(let x=ax;x<bx;x++){sa+=g[y*w+x];sb+=pg[(y+oy)*pw+x+ox];n++;}
+      const ma=sa/n,mb=sb/n;let sab=0,saa=0,sbb=0;
+      for(let y=ay;y<by;y++)for(let x=ax;x<bx;x++){const a=g[y*w+x]-ma,b=pg[(y+oy)*pw+x+ox]-mb;sab+=a*b;saa+=a*a;sbb+=b*b;}
+      return saa&&sbb?sab/Math.sqrt(saa*sbb):-2;};
+    let best={score:-2,ox:x0,oy:y0};
+    const step=x1>x0&&y1>y0?3:1;   // both sides scroll: a coarse pass, then around its best
+    for(let oy=y0;oy<=y1;oy+=step)for(let ox=x0;ox<=x1;ox+=step){const c=corr(ox,oy);if(c>best.score)best={score:c,ox,oy};}
+    if(step>1){const b=best;for(let oy=Math.max(y0,b.oy-step);oy<=Math.min(y1,b.oy+step);oy++)for(let ox=Math.max(x0,b.ox-step);ox<=Math.min(x1,b.ox+step);ox++){const c=corr(ox,oy);if(c>best.score)best={score:c,ox,oy};}}
+    return best.score>=.3?best:null;
+  }
+  // Places the dot on the picture. When a side scrolls, the map's own minimap image (preview)
+  // says how far, else a portal ring over a known portal does; then the rings in view: the game draws every
+  // marker (dot and rings alike) about MARKER_LIFT picture pixels above its point, and when a
+  // side scrolls, a ring over a known portal says how far. Returns {x, y, method, rings} or
+  // null, with .reason when the window scrolls and no ring is in view.
+  function placeOnPicture(body,player,rings,marks,picture,{unit=null,preview=null,image=null}={}){
+    const f=pictureFrame(body,picture,unit);if(!f)return null;
+    const s=picture.scale||16,k=f.k,lift=MARKER_LIFT*k;
+    const pts=(marks||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)).map(p=>({x:p.x/s-picture.dx,y:p.y/s-picture.dy}));
+    const tol=Math.max(4,k*7);
+    const rangeX=[body.x+body.w-f.shownW,body.x],rangeY=[body.y+body.h-f.shownH,body.y];
+    const within=(v,r)=>v>=r[0]-tol&&v<=r[1]+tol;
+    // Score a placement by the rings that land on known portals (the lift taken off).
+    const score=(left,top)=>{let inliers=0,error=0;const res=[];
+      for(const ring of rings){let best=null;for(const p of pts){const dx=ring.x-(left+p.x*k),dy=ring.y-(top+p.y*k-lift),d=Math.abs(dx)+Math.abs(dy);if(!best||d<best.d)best={d,dx,dy};}
+        if(best&&best.d<=tol*2){inliers++;error+=best.d;res.push(best);}}
+      return {left,top,inliers,error,res};};
+    let best=null;const consider=c=>{if(!best||c.inliers>best.inliers||(c.inliers===best.inliers&&c.error<best.error))best=c;};
+    let matched=false;
+    if(!f.x.clipped&&!f.y.clipped)consider(score(f.x.at,f.y.at));
+    else{
+      const m=matchPreview(image,body,preview,f);
+      if(m){consider(score(body.x-m.ox*k,body.y-m.oy*k));matched=true;}
+      else for(const ring of rings)for(const p of pts){
+        const left=f.x.clipped?ring.x-p.x*k:f.x.at,top=f.y.clipped?ring.y-(p.y*k-lift):f.y.at;
+        if(f.x.clipped&&!within(left,rangeX))continue;if(f.y.clipped&&!within(top,rangeY))continue;
+        const c=score(left,top);if(c.inliers)consider(c);
+      }
+      if(!best){
+        // No ring over a known portal: the game keeps the dot in the middle of a scrolling side
+        // until the picture's edge reaches the window, so a dot off the middle means that edge is
+        // in view; a dot in the middle says nothing.
+        const edge=(side,at,mid,range)=>{if(!side.clipped)return side.at;const off=at-mid;if(Math.abs(off)<=tol)return null;return off<0?range[1]:range[0];};
+        const left=edge(f.x,player.x,body.x+body.w/2,rangeX),top=edge(f.y,player.y,body.y+body.h/2,rangeY);
+        if(left===null||top===null)return {reason:'scrolled'};
+        best={left,top,inliers:0,error:0,res:[]};
+      }
+    }
+    const median=v=>{const a=[...v].sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:0;};
+    // The rings' residual against their portals corrects the lift measured for this minimap.
+    const cx=median(best.res.map(r=>r.dx)),cy=best.res.length?median(best.res.map(r=>r.dy)):0;
+    const at=dotOnPicture({x:player.x-cx,y:player.y-cy+lift},picture,k,best.left,best.top);
+    if(!at)return null;
+    return {x:at.x,y:at.y,method:(matched?'image':'picture')+(best.inliers?'+rings':'+lift'),rings:best.inliers};
+  }
+
+  // Player position in map coordinates from one minimap crop: by the map's own minimap
+  // picture when it is known (picture), else the dot plus two portal rings, or one ring once a
+  // scale was learned for this minimap size. `memory` is returned updated.
+  // preview: the map's own minimap image ({width, height, data}) for a scrolling minimap.
+  function locate(image,marks,{frameHeight=image.height,memory=[],picture=null,preview=null}={}){
+    const band=findTitleBand(image,{frameHeight});
+    if(!band)return {reason:'no-minimap',memory};
+    const markers=findMarkers(image,band),layout=minimapLayout(band,markers.body);
+    if(markers.collapsed)return {reason:'collapsed',memory};
+    // The minimap window's own edges (title bar above the strip to the frame under the picture),
+    // so the apps can fit their reading area to it.
+    const b=markers.body,pad=band.h*.15,win={x:Math.max(0,band.x-pad),y:Math.max(0,band.y-band.h*.9),w:band.w+pad*2,h:b.y+b.h-band.y+band.h*1.4};
+    if(!markers.player)return {reason:'no-dot',window:win,memory};
+    const placed=placeOnPicture(markers.body,markers.player,markers.portals,marks,picture,{unit:band.h,preview,image});
+    if(placed&&!placed.reason)return {...placed,window:win,memory};
+    if(!marks?.length)return {reason:'no-portal-data',memory};
+    const scrolled=placed?.reason==='scrolled';
+    const known=recallScale(memory,layout);
+    const fit=(known&&fitMinimap(markers.portals,marks,band.h,{scale:known}))||fitMinimap(markers.portals,marks,band.h);
+    if(!fit)return {reason:scrolled?'scrolled':markers.portals.length<2?'few-portals':'no-fit',window:win,detail:scrolled?'the minimap scrolls and no portal ring is in view':picture?'':'no picture for this map',memory};
+    const world=toWorld(fit,markers.player),xs=marks.map(p=>p.x),margin=(Math.max(...xs)-Math.min(...xs))*.15+300;
+    if(world.x<Math.min(...xs)-margin||world.x>Math.max(...xs)+margin)return {reason:'implausible',memory};
+    return {x:Math.round(world.x),y:Math.round(world.y),rings:fit.inliers,method:'rings',window:win,memory:fit.inliers>=2?rememberScale(memory,layout,fit.scalePerUnit):memory};
+  }
+  // Plain-language hint from the player's position to a portal. One game screen is roughly
+  // 1000 map units wide, which keeps distances meaningful without promising precision.
+  // what: what is reached ("the portal", or an NPC's name).
+  function guidance(player,portal,{what='the portal'}={}){
+    if(!player||!Number.isFinite(portal?.x))return null;
+    const dx=portal.x-player.x,dy=Number.isFinite(portal.y)?portal.y-player.y:0,near=Math.abs(dx)<90&&Math.abs(dy)<120;
+    const side=dx>0?'right':'left',distance=Math.abs(dx)<450?'a few steps':Math.abs(dx)<1100?'about one screen':'about '+Math.max(2,Math.round(Math.abs(dx)/1000))+' screens';
+    const vertical=dy<-120?'up':dy>120?'down':'';
+    const It=what==='the portal'?'The portal':what;
+    const text=near?(what==='the portal'?'You are at the portal':'You are next to '+what):Math.abs(dx)<90?(vertical==='up'?It+' is above you, climb up':It+' is below you, drop down'):'Head '+side+', '+distance+(vertical==='up'?', then climb up':vertical==='down'?', then drop down':'');
+    return {dx,dy,near,side:Math.abs(dx)<90?null:side,vertical:vertical||null,text};
+  }
+  // Visible portals (type 2) are the ones drawn as rings on the minimap.
+  const coordinate=v=>v!==null&&v!==''&&Number.isFinite(Number(v));
+  const marksFor=map=>(map?.portals||[]).filter(p=>Number(p.type)===2&&coordinate(p.x)&&coordinate(p.y)).map(p=>({x:Number(p.x),y:Number(p.y)}));
+  const api={onPicture,placeOnPicture,pictureFrame,matchPreview,findTitleBand,findMarkers,minimapLayout,recallScale,rememberScale,fitMinimap,toWorld,locate,guidance,marksFor};
+  scope.MapleMinimapPosition=api;if(typeof module!=='undefined')module.exports=api;
+})(globalThis);
+
+/* What is on a game screenshot: the "Look" feature.
+ *
+ * The computer sends a screenshot of the game window and the text its system reader found
+ * on it (Vision on the Mac, Windows.Media.Ocr on Windows); this module finds what in it is in
+ * the database, inside a marked box or on the whole screen ("Around me"):
+ *   - names: NPC name tags, item names in chat, shops and quests, the map name, read from the
+ *     text lines and matched to the database's names;
+ *   - sprites: monsters, NPCs and dropped items, by their own sprites from the datamine drawn
+ *     at the game's scale (the game draws sprites 1:1 in game pixels; the minimap's title strip
+ *     is 45 game px tall, which gives that scale in the screenshot). Only what can be on this
+ *     map is looked for: its monsters, its NPCs and what those monsters drop.
+ *
+ * Works on ImageData-like objects ({width, height, data: RGBA}). Browser and Node.
+ */
+(function(scope){
+  const GAME_WIDTH=1366;   // the game's own width in pixels, when the minimap strip is not seen
+  // NPCs that are things, not people (a cab, a board, a crafting station): never marked.
+  // Kept the same as OBJECT_NPC in the detector's training scripts.
+  const OBJECT_NPC=/\b(cab|board|doorbell|mailbox|chest|safe|pile of|bluebell|door of dimension|ticket gate|exit|statue|mobile store|storage|maple tv|anvil|station|sewing machine|bud)\b/i;
+  const isObjectNpc=name=>OBJECT_NPC.test(String(name||''));
+
+  // ---- Names ----
+  const norm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'").replace(/[^a-z0-9']+/g,' ').trim();
+  function editDistance(a,b,max=2){
+    if(Math.abs(a.length-b.length)>max)return max+1;
+    let prev=Array.from({length:b.length+1},(_,i)=>i);
+    for(let i=1;i<=a.length;i++){
+      const cur=[i];let best=i;
+      for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));if(cur[j]<best)best=cur[j];}
+      if(best>max)return max+1;prev=cur;
+    }
+    return prev[b.length];
+  }
+  // entries: [{type, id, name, ...}]. Returns a matcher: line text -> [{entry, exact}].
+  function nameIndex(entries){
+    const byName=new Map(),byWord=new Map();
+    for(const e of entries){
+      const n=norm(e.name);if(n.length<3)continue;
+      if(!byName.has(n))byName.set(n,[]);byName.get(n).push(e);
+      const first=n.split(' ')[0];if(!byWord.has(first))byWord.set(first,[]);byWord.get(first).push(n);
+    }
+    return function match(text){
+      const t=norm(text);if(t.length<3)return [];
+      if(byName.has(t))return byName.get(t).map(entry=>({entry,exact:true}));
+      const words=t.split(' '),found=[];
+      // A name inside the line ("Dances with Balrog's Letter x1 earned", "13/15 Blue Mushroom Cap"):
+      // the longest name that starts at some word, compared whole-word.
+      for(let i=0;i<words.length;i++){
+        for(const n of byWord.get(words[i])||[]){
+          const len=n.split(' ').length;if(len===1&&n.length<5)continue;
+          if(words.slice(i,i+len).join(' ')===n)found.push({n,at:i,len});
+        }
+      }
+      if(found.length){
+        found.sort((a,b)=>b.n.length-a.n.length);const taken=new Set(),out=[];
+        for(const f of found){let free=true;for(let i=f.at;i<f.at+f.len;i++)if(taken.has(i))free=false;if(!free)continue;for(let i=f.at;i<f.at+f.len;i++)taken.add(i);for(const entry of byName.get(f.n))out.push({entry,exact:true});}
+        return out;
+      }
+      // A reading slip in a whole line that is a name ("Mr. Thundor").
+      if(t.length>=6){
+        let best=null;
+        for(const n of byWord.get(words[0])||[])if(Math.abs(n.length-t.length)<=2){const d=editDistance(t,n,t.length>=10?2:1);if(d<=(t.length>=10?2:1)&&(!best||d<best.d))best={n,d};}
+        if(best)return byName.get(best.n).map(entry=>({entry,exact:false}));
+      }
+      return [];
+    };
+  }
+  // The player's own name: the one in the status bar at the bottom ("LV. 18 Archer TalTBest").
+  function playerName(lines,frame){
+    const bottom=lines.filter(l=>l.y>frame.h*.9&&/^[A-Za-z0-9]{3,13}$/.test(String(l.text).trim()));
+    const lv=lines.find(l=>l.y>frame.h*.9&&/^lv\.?$/i.test(String(l.text).trim()));
+    const pick=lv?bottom.filter(l=>l.x>lv.x).sort((a,b)=>a.x-b.x).find(l=>!/^(archer|warrior|magician|thief|pirate|beginner|bowman|cleric|wizard|hunter|crossbowman|fighter|page|spearman|assassin|bandit|brawler|gunslinger)$/i.test(l.text.trim())):null;
+    return pick?String(pick.text).trim():null;
+  }
+  // Where the player stands on screen: their name tag (the status bar's name, shown again
+  // under the character), the one nearest the middle; else the middle (the camera follows you).
+  function findPlayer(lines,frame){
+    const name=playerName(lines,frame),mid={x:frame.w/2,y:frame.h*.6};
+    if(name){
+      const n=norm(name),tags=lines.filter(l=>l.y<frame.h*.9&&l.x<frame.w*.86&&(norm(l.text)===n||editDistance(norm(l.text),n,1)<=1));
+      tags.sort((a,b)=>Math.hypot(a.x+a.w/2-mid.x,a.y-mid.y)-Math.hypot(b.x+b.w/2-mid.x,b.y-mid.y));
+      if(tags[0]){const t=tags[0];return {x:t.x+t.w/2,y:t.y-t.h*2.5,name,found:true};}
+    }
+    return {x:mid.x,y:mid.y,name,found:false};
+  }
+
+  // A name tag: light letters on a dark box, so much of the text's own box is dark.
+  function darkTag(img,l){
+    let dark=0,n=0;
+    const x0=Math.max(0,Math.round(l.x)),x1=Math.min(img.width,Math.round(l.x+l.w)),y0=Math.max(0,Math.round(l.y)),y1=Math.min(img.height,Math.round(l.y+l.h));
+    for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){const j=(y*img.width+x)*4;if(img.data[j]*.299+img.data[j+1]*.587+img.data[j+2]*.114<75)dark++;n++;}
+    return n>=20&&dark/n>=.3;
+  }
+
+  // ---- Sprites ----
+  const at=(img,x,y)=>(y*img.width+x)*4;
+  // A sprite drawn at scale k (bilinear, as the game window is scaled), with its opaque pixels.
+  function template(sprite,k,flip=false){
+    const w=Math.max(2,Math.round(sprite.width*k)),h=Math.max(2,Math.round(sprite.height*k)),px=[];
+    const src=sprite.data,sw=sprite.width,sh=sprite.height;
+    const sample=(fx,fy,c)=>{const x0=Math.max(0,Math.min(sw-1,Math.floor(fx))),y0=Math.max(0,Math.min(sh-1,Math.floor(fy))),x1=Math.min(sw-1,x0+1),y1=Math.min(sh-1,y0+1),ax=Math.max(0,Math.min(1,fx-x0)),ay=Math.max(0,Math.min(1,fy-y0));
+      const v=(x,y)=>src[(y*sw+x)*4+c];return (v(x0,y0)*(1-ax)+v(x1,y0)*ax)*(1-ay)+(v(x0,y1)*(1-ax)+v(x1,y1)*ax)*ay;};
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const fx=((flip?w-1-x:x)+.5)/k-.5,fy=(y+.5)/k-.5;
+      // Fully opaque here and around: edges blend with whatever is behind the sprite.
+      let solid=true;for(const [dx,dy] of [[0,0],[-.6,0],[.6,0],[0,-.6],[0,.6]])if(sample(fx+dx/k*k,fy+dy/k*k,3)<250)solid=false;
+      if(solid)px.push({x,y,r:sample(fx,fy,0),g:sample(fx,fy,1),b:sample(fx,fy,2)});
+    }
+    return {w,h,px,flip};
+  }
+  // Masked match score at origin (ox, oy): normalized correlation of the colours, less the
+  // mean colour difference (a shape in the wrong colours is not the sprite).
+  function score(img,t,ox,oy,step=1){
+    let n=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;const d=img.data;
+    for(let i=0;i<t.px.length;i+=step){
+      const p=t.px[i],j=at(img,ox+p.x,oy+p.y);
+      for(const [a,b] of [[d[j],p.r],[d[j+1],p.g],[d[j+2],p.b]]){n++;sa+=a;sb+=b;sab+=a*b;saa+=a*a;sbb+=b*b;diff+=Math.abs(a-b);}
+    }
+    const va=saa-sa*sa/n,vb=sbb-sb*sb/n;if(va<=0||vb<=0)return -1;
+    return (sab-sa*sb/n)/Math.sqrt(va*vb)-diff/n/255;
+  }
+  const close=(img,j,c,tol)=>Math.abs(img.data[j]-c.r)+Math.abs(img.data[j+1]-c.g)+Math.abs(img.data[j+2]-c.b)<=tol;
+  // Where template t is in the region: candidates from its two rarest colours (both in place),
+  // then the full score. Returns [{x, y, w, h, score}] in image pixels.
+  // Every pixel of a region by its colour (16 levels a channel): a sprite's anchor colour is then
+  // looked up instead of scanning the whole screen for it.
+  function colorIndex(img,region){
+    const x0=Math.max(0,Math.floor(region.x)),y0=Math.max(0,Math.floor(region.y)),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    const n=Math.max(0,(x1-x0)*(y1-y0)),bin=new Uint16Array(n),count=new Uint32Array(4097),d=img.data;let i=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++,i++){const j=(y*img.width+x)*4,q=((d[j]>>4)<<8)|((d[j+1]>>4)<<4)|(d[j+2]>>4);bin[i]=q;count[q+1]++;}
+    for(let q=1;q<=4096;q++)count[q]+=count[q-1];
+    const fill=count.slice(0,4096),pos=new Int32Array(n);i=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++,i++)pos[fill[bin[i]]++]=y*img.width+x;
+    return {start:count,pos,x0,y0,x1,y1,hist:q=>count[q+1]-count[q]};
+  }
+  function findSprite(img,t,region,{threshold=.55,hist=null,tol=60,index=null}={}){
+    if(t.px.length<12)return [];
+    const rx0=Math.max(0,Math.floor(region.x)),ry0=Math.max(0,Math.floor(region.y)),rx1=Math.min(img.width,Math.ceil(region.x+region.w)),ry1=Math.min(img.height,Math.ceil(region.y+region.h));
+    if(rx1-rx0<t.w||ry1-ry0<t.h)return [];
+    const q=p=>((p.r>>4)<<8)|((p.g>>4)<<4)|(p.b>>4);
+    // Anchors: well-separated pixels in flat areas of the sprite (not a blend at the border of two
+    // colours, which the screen may not have) whose colours are rarest on the screen.
+    if(!t.flat){
+      const at2=new Map(t.px.map(p=>[p.y*t.w+p.x,p])),near=(p,o)=>o&&Math.abs(p.r-o.r)+Math.abs(p.g-o.g)+Math.abs(p.b-o.b)<=24;
+      t.flat=t.px.filter(p=>near(p,at2.get(p.y*t.w+p.x-1))&&near(p,at2.get(p.y*t.w+p.x+1))&&near(p,at2.get((p.y-1)*t.w+p.x))&&near(p,at2.get((p.y+1)*t.w+p.x)));
+      if(t.flat.length<8)t.flat=t.px;
+    }
+    const ranked=t.flat.map(p=>({p,rare:index?index.hist(q(p)):hist?hist[q(p)]||0:0})).sort((a,b)=>a.rare-b.rare);
+    const hits=[],far=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y)>Math.max(t.w,t.h)*.35;
+    // Two anchor pairs: the rarest colour and one far from it; then the next rarest that is far
+    // from the first (a colour shifted by the screenshot's compression is caught by the other).
+    const b1=ranked.find(r=>far(r.p,ranked[0].p))?.p||ranked[1].p;
+    const c0=ranked.find(r=>r.p!==ranked[0].p&&r.p!==b1&&far(r.p,ranked[0].p))?.p||ranked[2]?.p||ranked[0].p;
+    const pairs=[[ranked[0].p,b1],[c0,ranked[0].p]],seen=new Set();
+    for(const [a1,a2] of pairs){
+    const test=(x,y)=>{
+      if(x<rx0+a1.x||x>=rx1-(t.w-a1.x)||y<ry0+a1.y||y>=ry1-(t.h-a1.y))return;
+      if(!close(img,at(img,x,y),a1,tol))return;
+      const ox=x-a1.x,oy=y-a1.y,key=oy*img.width+ox;
+      if(seen.has(key)||!close(img,at(img,ox+a2.x,oy+a2.y),a2,tol*1.4))return;
+      seen.add(key);
+      const s=score(img,t,ox,oy,3);if(s>=threshold-.15)hits.push({x:ox,y:oy,s});
+    };
+    if(index){
+      // The pixels whose colour is within a level of the anchor's, from the index.
+      const r=a1.r>>4,g=a1.g>>4,b=a1.b>>4;
+      for(let dr=-2;dr<=2;dr++)for(let dg=-2;dg<=2;dg++)for(let db=-2;db<=2;db++){
+        const R=r+dr,G=g+dg,B=b+db;if(R<0||G<0||B<0||R>15||G>15||B>15)continue;
+        const q=(R<<8)|(G<<4)|B;for(let i=index.start[q];i<index.start[q+1];i++){const p=index.pos[i],y=(p/img.width)|0;test(p-y*img.width,y);}
+      }
+    }else for(let y=ry0+a1.y;y<ry1-(t.h-a1.y);y++)for(let x=rx0+a1.x;x<rx1-(t.w-a1.x);x++)test(x,y);
+    }
+    // Best of each neighbourhood, scored in full.
+    hits.sort((a,b)=>b.s-a.s);const out=[];
+    for(const h of hits){
+      if(out.some(o=>Math.abs(o.x-h.x)<t.w*.6&&Math.abs(o.y-h.y)<t.h*.6))continue;
+      let best={x:h.x,y:h.y,s:score(img,t,h.x,h.y)};
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const x=h.x+dx,y=h.y+dy;if(x<0||y<0||x+t.w>img.width||y+t.h>img.height)continue;const s=score(img,t,x,y);if(s>best.s)best={x,y,s};}
+      if(best.s>=threshold)out.push({x:best.x,y:best.y,w:t.w,h:t.h,score:Math.round(best.s*100)/100});
+      if(out.length>=12)break;
+    }
+    return out;
+  }
+  // Half size (2x2 averages) of a region of the image, for scanning large areas faster.
+  function half(img,region){
+    const x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    const w=(x1-x0)>>1,h=(y1-y0)>>1,data=new Uint8ClampedArray(w*h*4),d=img.data;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const a=at(img,x0+x*2,y0+y*2),b=a+4,c=a+img.width*4,e=c+4,o=(y*w+x)*4;
+      for(let ch=0;ch<3;ch++)data[o+ch]=(d[a+ch]+d[b+ch]+d[c+ch]+d[e+ch]+2)>>2;data[o+3]=255;
+    }
+    return {image:{width:w,height:h,data},x0,y0};
+  }
+  function colorHistogram(img,region){
+    const hist=new Uint32Array(4096),x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){const j=at(img,x,y);hist[((img.data[j]>>4)<<8)|((img.data[j+1]>>4)<<4)|(img.data[j+2]>>4)]++;}
+    return hist;
+  }
+
+  // ---- The whole look ----
+  // image: the screenshot. lines: [{text, x, y, w, h}] in its pixels. region: {x, y, w, h} in its
+  // pixels (the marked box), or null for the whole screen. k: image pixels per game pixel.
+  // names: a nameIndex() matcher. sprites: [{type, id, name, image: ImageData-like}] to look for.
+  // Returns {player, found: [{type, id, name, box, via: 'name'|'sprite', score}]}, most certain first.
+  function analyze({image,lines=[],region=null,k=null,names=null,sprites=[],now=()=>Date.now(),budget=6000}){
+    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
+    k=k||frame.w/GAME_WIDTH;
+    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
+    const found=[],players=[],candidates=[];
+    const player=findPlayer(lines,frame);
+    if(names)for(const l of lines){
+      if(!inside(l))continue;
+      const uiLine=l.y>frame.h*.9||l.x>frame.w*.83&&l.y<frame.h*.62;
+      if(player.name&&norm(l.text)===norm(player.name)){if(!uiLine&&!players.some(p=>p.you))players.push({name:player.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:true});continue;}
+      // Text in the game's own windows (Quest Helper, chat and status bar) rather than over the world.
+      const ui=l.y>frame.h*.9||l.x>frame.w*.83&&l.y<frame.h*.62;
+      const seen=new Set();let matched=false;
+      for(const {entry,exact} of names(l.text)){
+        // Monsters carry no name tag in the game: a tag over the world with a monster's name is
+        // a pet's or a player's.
+        if(entry.type==='monster'&&!ui&&norm(l.text)===norm(entry.name))continue;
+        if(entry.type==='npc'&&isObjectNpc(entry.name))continue;
+        // A one-word tag over the world that is an item's name is a pet's or a player's too.
+        if(entry.type==='item'&&!ui&&norm(l.text)===norm(entry.name)&&!/\s/.test(norm(entry.name)))continue;
+        const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);
+        matched=true;found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui,score:exact?(ui?.9:1):.8});}
+      // Other players: a one-word name tag over the world on the tag's dark box, that is nothing
+      // in the database (not the minimap's name, an NPC's title or a button's label).
+      const word=String(l.text).trim();
+      if(!matched&&!ui&&l.y<frame.h*.86&&/^[A-Za-z0-9]{3,13}$/.test(word)&&/[a-z]/.test(word)&&l.h<frame.h*.04&&darkTag(image,l))candidates.push({name:word,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:false});
+    }
+    // An NPC's title sits right under its name ("Mr. Thunder" / "Weaponcrafter"): not a player.
+    for(const c of candidates){
+      // A slip of your own name ("TalTBestU") is you; each name once.
+      if(player.name&&editDistance(norm(c.name),norm(player.name),1)<=1){c.you=true;c.name=player.name;}
+      if(players.some(p=>norm(p.name)===norm(c.name)))continue;
+      const title=found.some(f=>f.type==='npc'&&f.via==='name'&&Math.abs(c.box.y-(f.box.y+f.box.h))<f.box.h*1.6&&Math.abs(c.box.x+c.box.w/2-(f.box.x+f.box.w/2))<Math.max(f.box.w,c.box.w));
+      if(!title)players.push(c);
+    }
+    // A little margin: a sprite cut by the box still counts when most of it is inside.
+    const pad=40*k,search={x:area.x-pad,y:area.y-pad,w:area.w+pad*2,h:area.h+pad*2};
+    // Large areas are scanned at half size (monsters and NPCs only; dropped items are too small).
+    const big=search.w*search.h>300000&&k>=.9,small=big?half(image,search):null;
+    const index=colorIndex(image,search),smallIndex=small?colorIndex(small.image,{x:0,y:0,w:small.image.width,h:small.image.height}):null;
+    for(const s of sprites){
+      if(now()-started>budget)break;
+      if(s.type==='npc'&&isObjectNpc(s.name))continue;
+      // Small sprites (a snail) lose too much at half size: those are scanned in full.
+      const useHalf=big&&s.type!=='item'&&Math.min(s.image.width,s.image.height)*k>=48;
+      for(const flip of s.type==='item'?[false]:[false,true]){
+        const t=template(s.image,useHalf?k/2:k,flip);
+        // A dropped item's icon is small: only one with enough solid pixels is told apart from
+        // the scenery (a thin sword is not).
+        if(s.type==='item'&&t.px.length<150)continue;
+        const hits=useHalf?findSprite(small.image,t,{x:0,y:0,w:small.image.width,h:small.image.height},{index:smallIndex,threshold:.58})
+          .map(h=>({...h,x:small.x0+h.x*2,y:small.y0+h.y*2,w:h.w*2,h:h.h*2})):findSprite(image,t,search,{index,threshold:s.type==='item'?.82:.5});
+        for(const hit of hits){
+          const box={x:hit.x,y:hit.y,w:hit.w,h:hit.h};if(!inside(box))continue;
+          found.push({type:s.type,id:s.id,name:s.name,box,via:'sprite',score:hit.score});
+        }
+      }
+    }
+    // An item seen on a monster or an NPC is part of it (a Blue Mushroom's cap), not a drop.
+    const bodies=found.filter(f=>f.via==='sprite'&&f.type!=='item').map(f=>f.box);
+    const overlaps=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y))>a.w*a.h*.3;
+    for(let i=found.length-1;i>=0;i--)if(found[i].type==='item'&&found[i].via==='sprite'&&bodies.some(b=>overlaps(found[i].box,b)))found.splice(i,1);
+    // One entry per thing seen: the same sprite flipped, or a name tag over its own NPC.
+    found.sort((a,b)=>b.score-a.score);const out=[];
+    for(const f of found){
+      const same=out.find(o=>o.type===f.type&&o.id===f.id&&Math.abs(o.box.x+o.box.w/2-(f.box.x+f.box.w/2))<Math.max(o.box.w,f.box.w)*.8&&Math.abs(o.box.y-f.box.y)<Math.max(o.box.h,f.box.h)*1.5);
+      if(same){same.count=(same.count||1);continue;}
+      out.push(f);
+    }
+    return {player,k,found:out,players,elapsed:now()-started};
+  }
+  // Items that could be anywhere (the inventory, a shop, a store): a box's icon against every
+  // item's 16x16 thumbnail (thumbs: {cell, per, ids, sheet: ImageData-like}), fitted the same
+  // way (aspect kept, centred). Returns the n closest [{id, score}] to check in full.
+  // A box a little off the icon (a count in its corner, a loose edge) is tried trimmed a few
+  // ways; each item keeps its best score.
+  // allow: item ids that may be considered (null: any).
+  // In a window's slot the game draws over the icon's corners: the cash badge (a red "C") at the
+  // bottom right, the count at the bottom left, the timer of an item that expires (a small clock)
+  // at the top left. Those parts are left out of the comparison (fractions of the box / icon).
+  const SLOT_COVER=[{x0:.52,y0:.5,x1:1,y1:1},{x0:0,y0:.58,x1:.34,y1:1},{x0:0,y0:0,x1:.32,y1:.3}];
+  const covered=(cover,fx,fy)=>!!cover&&cover.some(c=>fx>=c.x0&&fx<=c.x1&&fy>=c.y0&&fy<=c.y1);
+  // A template without the covered parts of the icon.
+  function masked(t,cover){const px=t.px.filter(p=>!covered(cover,(p.x+.5)/t.w,(p.y+.5)/t.h));return {w:t.w,h:t.h,flip:t.flip,px};}
+  function shortlistItems(image,b,thumbs,n=8,allow=null,cover=null){
+    const t=Math.max(2,Math.round(Math.min(b.w,b.h)*.12)),best=new Map();
+    for(const v of [b,{x:b.x+t,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t/2,y:b.y+t/2,w:b.w-t,h:b.h-t},{x:b.x,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t,y:b.y+t,w:b.w-t,h:b.h-t}])
+      for(const c of shortlistOnce(image,v,thumbs,n*2,allow,cover&&{box:b,cover}))if(!best.has(c.id)||best.get(c.id)<c.score)best.set(c.id,c.score);
+    return [...best].map(([id,score])=>({id,score})).sort((a,c)=>c.score-a.score).slice(0,n);
+  }
+  function shortlistOnce(image,b,thumbs,n,allow,mask=null){
+    const C=thumbs.cell,sheet=thumbs.sheet,box=new Float32Array(C*C*3),k=C/Math.max(b.w,b.h),w=b.w*k,h=b.h*k,ox=(C-w)/2,oy=(C-h)/2;
+    for(let y=0;y<C;y++)for(let x=0;x<C;x++){
+      // The screenshot pixels this thumbnail pixel covers, averaged.
+      const sx0=b.x+(x-ox)/k,sy0=b.y+(y-oy)/k,sx1=sx0+1/k,sy1=sy0+1/k;let r=0,g=0,bl=0,c=0;
+      for(let yy=Math.floor(sy0);yy<Math.ceil(sy1);yy++)for(let xx=Math.floor(sx0);xx<Math.ceil(sx1);xx++){if(xx<0||yy<0||xx>=image.width||yy>=image.height)continue;const j=(yy*image.width+xx)*4;r+=image.data[j];g+=image.data[j+1];bl+=image.data[j+2];c++;}
+      const o=(y*C+x)*3;if(c){box[o]=r/c;box[o+1]=g/c;box[o+2]=bl/c;}
+    }
+    // Each thumbnail's average colour (computed once): a box far from it in colour is skipped
+    // before the full comparison.
+    if(!thumbs.means){
+      thumbs.means=new Float32Array(thumbs.ids.length*3);
+      for(let i=0;i<thumbs.ids.length;i++){const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let r=0,g=0,bl=0,c=0;
+        for(let y=0;y<C;y++)for(let x=0;x<C;x++){const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160)continue;r+=sheet.data[j];g+=sheet.data[j+1];bl+=sheet.data[j+2];c++;}
+        if(c){thumbs.means[i*3]=r/c;thumbs.means[i*3+1]=g/c;thumbs.means[i*3+2]=bl/c;}else thumbs.means[i*3]=-999;}
+    }
+    // Thumbnail pixels over a covered part of the slot (by where they land in the slot's box).
+    const skip=new Uint8Array(C*C);
+    if(mask)for(let y=0;y<C;y++)for(let x=0;x<C;x++){const sx=b.x+(x+.5-ox)/k,sy=b.y+(y+.5-oy)/k;skip[y*C+x]=covered(mask.cover,(sx-mask.box.x)/mask.box.w,(sy-mask.box.y)/mask.box.h)?1:0;}
+    let br=0,bg=0,bb=0,bn=0;for(let i=0;i<C*C;i++){if(skip[i])continue;br+=box[i*3];bg+=box[i*3+1];bb+=box[i*3+2];bn++;}bn=Math.max(1,bn);br/=bn;bg/=bn;bb/=bn;
+    const out=[];
+    for(let i=0;i<thumbs.ids.length;i++){
+      if(allow&&!allow.has(thumbs.ids[i]))continue;
+      // The box's average includes some background around the icon, so the gate is loose.
+      if(Math.abs(thumbs.means[i*3]-br)+Math.abs(thumbs.means[i*3+1]-bg)+Math.abs(thumbs.means[i*3+2]-bb)>150)continue;
+      const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let n2=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;
+      for(let y=0;y<C;y++)for(let x=0;x<C;x++){
+        const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160||skip[y*C+x])continue;
+        const o=(y*C+x)*3;for(let ch=0;ch<3;ch++){const a=box[o+ch],v=sheet.data[j+ch];sa+=a;sb+=v;sab+=a*v;saa+=a*a;sbb+=v*v;diff+=Math.abs(a-v);n2++;}
+      }
+      if(n2<24)continue;
+      const va=saa-sa*sa/n2,vb=sbb-sb*sb/n2,score=(va>0&&vb>0?(sab-sa*sb/n2)/Math.sqrt(va*vb):0)-diff/n2/255;
+      if(out.length<n||score>out[out.length-1].score){out.push({id:thumbs.ids[i],score});out.sort((a,c)=>c.score-a.score);if(out.length>n)out.pop();}
+    }
+    return out;
+  }
+  // Names what the detector found (src/look-detector.js): detections [{cls, score, box}].
+  // Each box must match a known sprite with high confidence, else it is dropped (a wooden frame
+  // is not a monster). First the map's own monsters, NPCs and drops (sprites: a few dozen, fast);
+  // only when none matches, and the detector is fairly sure, every known monster and NPC
+  // (allSprites, the reference atlas), within a time limit. Sprites are compared only when
+  // their size is close to the box's. NPCs and players are also named by the tag under them.
+  // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most. What templates
+  // cannot name (partly hidden, cut by the screen's edge, heaped, see-through) the namer
+  // (src/look-namer.js) names, when sure.
+  // Items need 0.8 by any path (a pet matched a wand's icon at 0.71).
+  const ACCEPT={monster:.6,npc:.6,item:.8,pet:.6};
+  // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
+  // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData
+  // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).
+  // onProgress(done, total, found): after each box (Look shows them as they are named).
+  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200,onProgress=null}){
+    // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
+    const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
+      if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
+    // Also in a window: an item box with two or more like-sized item boxes lined up with it, in its
+    // row or its column, up to four slots away (an inventory or a shop is a grid; the ring around
+    // a packed slot is not flat, and the last item of a page may sit alone in its row).
+    const itemBoxes=detections.filter(d=>d.cls==='item').map(d=>d.box);
+    const inGrid=b=>itemBoxes.filter(o=>o!==b&&Math.abs(o.w-b.w)<b.w*.35&&Math.abs(o.h-b.h)<b.h*.35&&(
+      Math.abs(o.y-b.y)<b.h*.3&&Math.abs(o.x-b.x)>b.w*.75&&Math.abs(o.x-b.x)<b.w*4.6||Math.abs(o.x-b.x)<b.w*.3&&Math.abs(o.y-b.y)>b.h*.75&&Math.abs(o.y-b.y)<b.h*4.6)).length>=2;
+    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
+    k=k||frame.w/GAME_WIDTH;
+    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
+    const player=findPlayer(lines,frame),found=[],players=[],pendingItems=[];
+    // The text printed right of an icon, on its row (a shop's or a store's list).
+    const textBeside=b=>lines.filter(l=>l.x>=b.x+b.w-2&&l.x<=b.x+b.w+60&&l.y+l.h>b.y-4&&l.y<b.y+b.h*.8).sort((a,c)=>a.y-c.y);
+    // The name tag under a box: a text line just below it, centred on it.
+    const tagUnder=b=>lines.filter(l=>l.y>=b.y+b.h*.6&&l.y<=b.y+b.h+Math.max(28,b.h*.6)&&Math.abs(l.x+l.w/2-(b.x+b.w/2))<Math.max(b.w*.7,l.w*.6)).sort((a,c)=>a.y-c.y);
+    const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));
+    const local={monster:usable(sprites,'monster'),npc:usable(sprites,'npc'),item:usable(sprites,'item')};
+    const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]},cursors=usable(allSprites,'cursor'),pets=usable(allSprites,'pet');
+    // The namer's answer for a box (det.names: [{type: 'monster'|'item'|'other', id, name, p}],
+    // best first; pets are items): taken when sure (0.9). Otherwise this map decides between
+    // look-alikes (a Slime and a Super Slime split about evenly): one of the map's own monsters
+    // is taken when it has 0.3 or more and 85% of what the map's monsters, pets and 'other' have.
+    const localIds=new Set(local.monster.map(s=>String(s.id)));
+    const isLocal=n=>n.type==='monster'&&localIds.has(String(n.id));
+    const byNamer=det=>{
+      const list=det.names||[],top=list[0];if(!top)return null;
+      if(top.type!=='other'&&top.p>=.9)return top;
+      const allowed=list.filter(n=>n.type==='other'||n.pet||isLocal(n)),mine=allowed.find(isLocal),sum=allowed.reduce((a,n)=>a+n.p,0);
+      return mine&&mine.p>=.3&&mine.p>=sum*.85?mine:null;
+    };
+    const fromNamer=(n,b)=>({type:n.type,id:String(n.id),name:n.name,box:b,via:'namer',...(n.pet?{pet:true}:{}),score:Math.round(n.p*100)/100});
+    const templates=new Map();
+    const tmpl=(s,flip,kk)=>{let m=templates.get(s.image);if(!m){m={};templates.set(s.image,m);}return m[flip+':'+kk]??=template(s.image,kk,flip);};
+    // The scale measured from the minimap strip can be off by a few percent (the screenshot's
+    // compression blurs the strip's edges): each sprite is tried at it and 4% either side.
+    const scales=[k,k*.96,k*1.04];
+    // The best of these sprites inside the box, among those of about the box's size.
+    function bestSprite(list,b,deadline=Infinity,cover=null){
+      const pad=Math.max(6,Math.max(b.w,b.h)*.15),r={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2};let best=null;
+      for(const s of list){
+        const w=s.image.width*k,h=s.image.height*k;if(w<b.w*.6||w>b.w*1.4||h<b.h*.6||h>b.h*1.4)continue;
+        if(now()>deadline)break;
+        for(const kk of scales)for(const flip of s.type==='item'||s.type==='cursor'?[false]:[false,true]){
+          const t=tmpl(s,flip,kk),hit=findSprite(image,cover?(t.masked??=masked(t,cover)):t,r,{threshold:.35})[0];
+          if(hit&&(!best||hit.score>best.score))best={s,score:hit.score};
+        }
+        if(best&&best.score>=.85)break;   // a clear match: no need to try the rest
+      }
+      return best;
+    }
+    let done=0;const total=detections.length;
+    for(const det of detections){
+      if(onProgress){onProgress(done,total,found);}done++;
+      if(!inside(det.box))continue;
+      const b=det.box,tags=tagUnder(b);
+      if(det.cls==='player'){
+        const t=tags[0],name=t?String(t.text).trim():'';
+        players.push({name:name||'Player',box:b,you:!!(name&&player.name&&editDistance(norm(name),norm(player.name),1)<=1),score:det.score});
+        continue;
+      }
+      // A pet (an item in the database): by its name tag when that is the kind's name (pets can
+      // be renamed), else by its sprite among every pet's.
+      if(det.cls==='pet'){
+        const named=names&&tags.map(t=>names(t.text).find(m=>m.entry.type==='item'&&m.entry.category==='Pet'&&m.exact)).find(Boolean);
+        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'tag',pet:true,score:det.score});continue;}
+        const best=bestSprite(pets,b,now()+600);
+        if(best&&best.score>=ACCEPT.pet)found.push({type:'item',id:best.s.id,name:itemName(best.s.id),box:b,via:'sprite',pet:true,score:Math.round(best.score*100)/100});
+        else{const n=byNamer(det);if(n)found.push(fromNamer(n,b));}
+        continue;
+      }
+      if(det.cls==='npc'&&names){
+        const named=tags.map(t=>names(t.text).find(m=>m.entry.type==='npc')).find(Boolean);
+        if(named){if(!isObjectNpc(named.entry.name))found.push({type:'npc',id:named.entry.id,name:named.entry.name,box:b,via:'tag',score:det.score});continue;}
+      }
+      // The status bar at the bottom holds the game's buttons (Cash Shop, Menu), never items.
+      if(det.cls==='item'&&b.y+b.h/2>frame.h*.915)continue;
+      // A drop has no name tag; something small with one under it is a pet.
+      if(det.cls==='item'&&tags.length&&!onSlot(b)&&!inGrid(b))continue;
+      // The mouse pointer (the game's own cursors, in the reference set) is not a thing to name.
+      if(det.cls!=='npc'&&cursors.length&&Math.max(b.w,b.h)<=48*k){const c=bestSprite(cursors,b);if(c&&c.score>=.75)continue;}
+      if(det.cls==='item'&&names){
+        const named=textBeside(b).map(t=>names(t.text).find(m=>m.entry.type==='item')).find(Boolean);
+        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}
+      }
+      const accept=ACCEPT[det.cls]??.6;
+      let best=bestSprite(local[det.cls]||[],b,Infinity,det.cls==='item'&&(onSlot(b)||inGrid(b))?SLOT_COVER:null);
+      if(det.cls==='item'&&(!best||best.score<accept)&&thumbs){
+        // Any item: the shortlist, each checked in full at the game's scale.
+        // Without a name beside it, an item must match clearly: 0.8 or more, and ahead of the
+        // next candidate (a different item) by 0.05. A doubtful icon is left unnamed.
+        // In a window (the inventory, a shop: the icon sits on a flat slot) any item can show;
+        // on the ground only what drops (Use and Etc items, dropped: groundItems).
+        const slot=onSlot(b)||inGrid(b),cover=slot?SLOT_COVER:null;
+        // Candidates: the item namer's answers (det.items, best first), then the thumbnail shortlist.
+        const said=(det.items||[]).filter(x=>slot||!groundItems||groundItems.has(String(x.id)));
+        const list=[...said.map(x=>({id:String(x.id)})),...shortlistItems(image,b,thumbs,8,slot?null:groundItems,cover)].filter((c,i,a)=>a.findIndex(x=>String(x.id)===String(c.id))===i),missing=[],hits=[];
+        for(const c of list){
+          const icon=itemIcon(c.id);if(icon===undefined){missing.push(c.id);continue;}if(!icon)continue;
+          const hit=bestSprite([{type:'item',id:c.id,name:itemName(c.id),image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4},Infinity,cover);
+          if(hit)hits.push(hit);
+        }
+        if(missing.length&&!hits.some(h=>h.score>=.8)){pendingItems.push({box:b,ids:missing});continue;}
+        hits.sort((a,c)=>c.score-a.score);
+        const top=hits[0],next=hits.find(h=>h.s.name!==top?.s.name);
+        // The item namer's first answer, when it is sure and the icon agrees at least loosely
+        // (or it is all but certain), wins; it reads a badge-covered or small icon better.
+        const n=said[0],nh=n&&hits.find(h=>String(h.s.id)===String(n.id));
+        if(n&&(n.p>=.97||n.p>=.8&&nh&&nh.score>=.55||slot&&n.p>=.85&&nh&&nh.score>=.45)){
+          found.push({type:'item',id:String(n.id),name:itemName(n.id),box:b,via:'namer',score:Math.round(n.p*100)/100});continue;
+        }
+        if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;
+        else if(!best||best.score<accept)continue;
+      }
+      if(det.cls==='monster'&&(!best||best.score<accept)){const n=byNamer(det);if(n){found.push(fromNamer(n,b));continue;}}
+      if((!best||best.score<accept)&&det.score>=.45&&global[det.cls]?.length&&now()-started<budget){
+        const wide=bestSprite(global[det.cls],b,started+budget);
+        if(wide&&wide.score>=accept+.05&&(!best||wide.score>best.score))best=wide;
+      }
+      if(best&&best.score>=accept)found.push({type:det.cls,id:best.s.id,name:best.s.name,box:b,via:'sprite',score:Math.round(best.score*100)/100});
+    }
+    // Text in the game's windows: quest items and quests in the Quest Helper, items in chat.
+    if(names)for(const l of lines){
+      if(!inside(l))continue;
+      const ui=l.y>frame.h*.86||l.x>frame.w*.83&&l.y<frame.h*.62;if(!ui)continue;
+      const seen=new Set();
+      for(const {entry,exact} of names(l.text)){if(entry.type==='npc'||entry.type==='monster')continue;const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui:true,score:exact?.9:.7});}
+    }
+    return {player,k,found,players,pendingItems,elapsed:now()-started};
+  }
+  // Summary: each thing once, with how many were seen.
+  function summary(found){
+    const by=new Map();
+    for(const f of found){const key=f.type+':'+f.id;const e=by.get(key);if(e){e.count++;e.score=Math.max(e.score,f.score);if(!f.ui)e.ui=false;if(f.via==='sprite')e.via='sprite';}else by.set(key,{type:f.type,id:f.id,name:f.name,count:1,score:f.score,via:f.via,ui:!!f.ui,box:f.box});}
+    const order={monster:0,npc:1,item:2,map:3,quest:4};
+    return [...by.values()].sort((a,b)=>(order[a.type]??9)-(order[b.type]??9)||b.count-a.count||b.score-a.score);
+  }
+
+  const api={analyze,identify,shortlistItems,summary,isObjectNpc,nameIndex,findPlayer,playerName,template,findSprite,colorIndex,score,norm,editDistance,GAME_WIDTH};
+  scope.MapleLook=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* The Look detector: a small YOLO model, trained on synthetic game screens made from the
+ * game's own sprites and map renders (the training scripts live outside this repository),
+ * that finds monsters, NPCs, dropped items, players and pets on a screenshot. It runs in the
+ * browser (in Look's worker, src/look-worker.js) with ONNX Runtime Web (vendor/ort/ on this site);
+ * the model and the runtime's WebAssembly come as bytes from Look's own cache (src/look-ui.js).
+ *
+ * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player'|'pet', score, box: {x, y, w, h}}] in the
+ * image's pixels.
+ */
+(function(scope){
+  const CLASSES=['monster','npc','item','player','pet'];
+  const ORT='./vendor/ort/';
+  // A canvas in the page or in a worker.
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  // The runtime's script: a <script> in the page, importScripts in a worker.
+  function loadScript(src){
+    if(scope.ort)return Promise.resolve();
+    if(typeof document==='undefined'){try{importScripts(src);return Promise.resolve();}catch(_){return Promise.reject(Error('The detector could not load.'));}}
+    return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(Error('The detector could not load.'));document.head.appendChild(s);});
+  }
+  // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm); base: the
+  // site's address (in a worker, its own address is not the site's).
+  function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5,base=scope.location?.href}={}){
+    let session=null,loading=null;
+    function ready(){
+      loading??=(async()=>{
+        await loadScript(new URL(ORT+'ort.min.js',base).href);
+        const [bytes,wasm]=await Promise.all([model(),runtime()]);
+        scope.ort.env.wasm.wasmPaths=new URL(ORT,base).href;scope.ort.env.wasm.numThreads=1;scope.ort.env.wasm.wasmBinary=wasm;
+        session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});
+        return session;
+      })().catch(e=>{loading=null;throw e;});
+      return loading;
+    }
+    // Letterbox into the model's input (keeping the aspect), as the model was trained.
+    function input(image){
+      const k=Math.min(inputW/image.width,inputH/image.height),w=Math.round(image.width*k),h=Math.round(image.height*k),dx=(inputW-w)>>1,dy=(inputH-h)>>1;
+      const src=canvas(image.width,image.height);src.getContext('2d').putImageData(toImageData(image),0,0);
+      const c=canvas(inputW,inputH);const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='rgb(114,114,114)';x.fillRect(0,0,inputW,inputH);x.drawImage(src,dx,dy,w,h);
+      const d=x.getImageData(0,0,inputW,inputH).data,n=inputW*inputH,t=new Float32Array(3*n);
+      for(let i=0;i<n;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}
+      return {tensor:new scope.ort.Tensor('float32',t,[1,3,inputH,inputW]),k,dx,dy};
+    }
+    const toImageData=img=>img instanceof ImageData?img:new ImageData(new Uint8ClampedArray(img.data),img.width,img.height);
+    const iouOf=(a,b)=>{const x=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)),y=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return x*y/(a.w*a.h+b.w*b.h-x*y);};
+    async function detect(image){
+      await ready();
+      const {tensor,k,dx,dy}=input(image),out=await session.run({[session.inputNames[0]]:tensor}),o=out[session.outputNames[0]];
+      // YOLO output: [1, 4 + classes, anchors] (centre x, y, width, height, then class scores).
+      const [,rows,count]=o.dims,v=o.data,found=[];
+      for(let i=0;i<count;i++){
+        let best=0,cls=0;for(let c=4;c<rows;c++){const s=v[c*count+i];if(s>best){best=s;cls=c-4;}}
+        if(best<minScore)continue;
+        const cx=v[i],cy=v[count+i],w=v[2*count+i],h=v[3*count+i];
+        found.push({cls:CLASSES[cls]||'monster',score:best,box:{x:(cx-w/2-dx)/k,y:(cy-h/2-dy)/k,w:w/k,h:h/k}});
+      }
+      found.sort((a,b)=>b.score-a.score);const keep=[];
+      for(const f of found)if(!keep.some(o=>o.cls===f.cls&&iouOf(o.box,f.box)>iou))keep.push(f);
+      return keep.slice(0,80);
+    }
+    return {ready,detect};
+  }
+  const api={create,CLASSES};
+  scope.MapleLookDetector=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Look's namer: a small classifier that says which monster or pet a detector box holds, or
+ * 'other' (a player, an NPC, the cursor, scenery). It was trained (outside this repository) on
+ * crops cut the way this file cuts them: the box padded by 8%, grey (114) outside the picture,
+ * letterboxed to SIZE x SIZE on grey. It names what template matching cannot: monsters partly
+ * hidden behind ropes or grass, cut by the screen's edge, heaped together, or see-through.
+ * It runs with the same ONNX Runtime as the detector (src/look-detector.js loads it).
+ *
+ * create({model, runtime, classes, size, top}) -> {ready, name(image, box) -> [{cls, p}] (best first, top)}
+ * The same code runs Look's item namer (every item's icon; size 64).
+ * classes: the model's class names ('m<id>' a monster, 'p<id>' a pet, 'other').
+ */
+(function(scope){
+  const GREY=114;
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  function create({model,runtime,classes=[],size:SIZE=96,top=3}={}){
+    let session=null,loading=null;
+    function ready(){
+      loading??=(async()=>{
+        if(!scope.ort)throw Error('The namer needs the detector\'s runtime.');
+        const [bytes,wasm]=await Promise.all([model(),runtime()]);
+        if(!scope.ort.env.wasm.wasmBinary)scope.ort.env.wasm.wasmBinary=wasm;
+        session=await scope.ort.InferenceSession.create(new Uint8Array(bytes),{executionProviders:['wasm'],graphOptimizationLevel:'all'});
+        return session;
+      })().catch(e=>{loading=null;throw e;});
+      return loading;
+    }
+    // The box padded by 8% (grey beyond the picture), letterboxed to SIZE x SIZE on grey.
+    function input(image,box,source){
+      const px=box.w*.08,py=box.h*.08,x0=Math.round(box.x-px),y0=Math.round(box.y-py),w=Math.max(1,Math.round(box.x+box.w+px)-x0),h=Math.max(1,Math.round(box.y+box.h+py)-y0);
+      const k=SIZE/Math.max(w,h),dw=Math.max(1,Math.round(w*k)),dh=Math.max(1,Math.round(h*k)),c=canvas(SIZE,SIZE);
+      const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle=`rgb(${GREY},${GREY},${GREY})`;x.fillRect(0,0,SIZE,SIZE);
+      const ox=(SIZE-dw)>>1,oy=(SIZE-dh)>>1;x.save();x.beginPath();x.rect(ox,oy,dw,dh);x.clip();x.imageSmoothingQuality='medium';
+      x.drawImage(source,x0,y0,w,h,ox,oy,dw,dh);x.restore();
+      // Parts of the box beyond the picture stay grey (drawImage leaves them unpainted).
+      const d=x.getImageData(0,0,SIZE,SIZE).data,n=SIZE*SIZE,t=new Float32Array(3*n);
+      for(let i=0;i<n;i++){t[i]=d[i*4]/255;t[n+i]=d[i*4+1]/255;t[2*n+i]=d[i*4+2]/255;}
+      return new scope.ort.Tensor('float32',t,[1,3,SIZE,SIZE]);
+    }
+    // A canvas of the screenshot, made once per picture.
+    let lastImage=null,lastCanvas=null;
+    function sourceOf(image){
+      if(image!==lastImage){const c=canvas(image.width,image.height);c.getContext('2d').putImageData(image instanceof ImageData?image:new ImageData(new Uint8ClampedArray(image.data),image.width,image.height),0,0);lastImage=image;lastCanvas=c;}
+      return lastCanvas;
+    }
+    async function name(image,box){
+      await ready();
+      const out=await session.run({[session.inputNames[0]]:input(image,box,sourceOf(image))}),p=out[session.outputNames[0]].data;
+      const best=[];for(let i=0;i<p.length;i++){const v=p[i];if(best.length<top||v>best[best.length-1].p){best.push({cls:classes[i]||String(i),p:v});best.sort((a,b)=>b.p-a.p);if(best.length>top)best.pop();}}
+      return best;
+    }
+    return {ready,name};
+  }
+  const api={create};
+  scope.MapleLookNamer=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* Look's recognition engine: loads Look's files (the phone's own cache first, see prefetch),
+ * runs the detector (src/look-detector.js) and the namer (src/look-namer.js) and names what
+ * they find (src/look.js). It runs in a background worker (src/look-worker.js), so the page
+ * stays responsive and can show progress; the page falls back to running it itself.
+ *
+ * create({look, catalogUrl, base}) -> {prefetch(onProgress), analyze(shot, region, onProgress)}
+ * shot: {image: ImageData, lines, map: {id, name, monsters: [{id, name}], npcs: [{id}]}, k?}
+ * onProgress({stage: 'download'|'detector'|'naming'|'items', done, total, found}).
+ * The result is plain data (it crosses from the worker): found, players, player, k, method,
+ * mapId, drops (this map's drop rows), summary (each thing once, numbered).
+ */
+(function(scope){
+  const CACHE='maple-atlas-look';
+  const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
+  function create({look,catalogUrl,base=scope.location?.href}={}){
+    const abs=p=>new URL(p,base).href,file=name=>abs((look?.base||'./assets/look/')+name);
+    const RUNTIME=abs('./vendor/ort/ort-wasm-simd-threaded.wasm');
+    // One loader for Look's files: the phone's own cache, else the site (and then kept).
+    async function lookFile(url){
+      let cache=null;
+      try{cache=await caches.open(CACHE);const hit=await cache.match(url);if(hit)return hit;}catch(_){}
+      const r=await fetch(url,{credentials:'same-origin'});if(!r.ok)throw Error('Could not load '+url.split('/').pop()+'.');
+      try{await cache?.put(url,r.clone());}catch(_){}
+      return r;
+    }
+    // Every Look file into the phone's cache (each once), then the ones no longer listed dropped.
+    let fetched=null,state={done:0,total:0};
+    function prefetch(onProgress){
+      if(!look?.files?.length)return Promise.resolve(false);
+      fetched??=(async()=>{
+        try{await scope.navigator?.storage?.persist?.();}catch(_){}
+        const wanted=[...look.files.map(file),RUNTIME];
+        state={done:0,total:wanted.length};
+        for(const url of wanted){await lookFile(url).catch(()=>null);state={done:state.done+1,total:wanted.length};onProgress?.(state);}
+        try{const c=await caches.open(CACHE),keep=new Set(wanted);for(const req of await c.keys())if(!keep.has(req.url))await c.delete(req);}catch(_){}
+        return true;
+      })().catch(()=>{fetched=null;return false;});
+      return fetched;
+    }
+
+    // ---- Data: the catalog (names), the reference set, items, drops ----
+    let catalog=null,names=null;
+    async function loadCatalog(){
+      if(catalog)return catalog;
+      const r=await fetch(abs(catalogUrl));if(!r.ok)throw Error('The database did not load.');
+      const data=await r.json();catalog={by:new Map((data.entities||[]).map(e=>[e.type+':'+e.id,e]))};
+      names=MapleLook.nameIndex((data.entities||[]).filter(e=>['npc','monster','item','quest'].includes(e.type)));
+      return catalog;
+    }
+    const nameOf=(type,id)=>catalog?.by.get(type+':'+id)?.name||String(id);
+    const json=name=>lookFile(file(name)).then(r=>r.json());
+    async function pixels(name){
+      const b=await createImageBitmap(await lookFile(file(name)).then(r=>r.blob())),c=canvas(b.width,b.height),x=c.getContext('2d',{willReadFrequently:true});
+      x.drawImage(b,0,0);b.close?.();return x.getImageData(0,0,c.width,c.height);
+    }
+    // A packed set of pictures (index + sheets) -> [{...entry, image}].
+    async function sheet(name){
+      const index=await json(name),sheets=await Promise.all(index.sheets.map(pixels));
+      return index.sprites.map(s=>({...s,image:crop(sheets[s.s],s.x,s.y,s.w,s.h)}));
+    }
+    function crop(img,x0,y0,w,h){
+      const data=new Uint8ClampedArray(w*h*4);
+      for(let y=0;y<h;y++)data.set(img.data.subarray(((y0+y)*img.width+x0)*4,((y0+y)*img.width+x0+w)*4),y*w*4);
+      return {width:w,height:h,data};
+    }
+    const once=f=>{let p=null;return ()=>(p??=f().catch(e=>{p=null;throw e;}));};
+    const loadAtlas=once(async()=>{await loadCatalog();return (await sheet(look.atlas)).map(s=>({type:s.t,id:String(s.id),name:s.t==='pet'?nameOf('item',s.id):nameOf(s.t,s.id),image:s.image}));});
+    const loadIcons=once(async()=>new Map((await sheet(look.icons)).map(s=>[String(s.id),s.image])));
+    const loadRaw=once(async()=>new Map((await sheet(look.raw)).map(s=>[String(s.id),s.image])));
+    const loadThumbs=once(async()=>{const meta=await json(look.thumbs);return {...meta,sheet:await pixels(meta.image)};});
+    // What each monster drops: {monster: [[item name, item id, rate %]]}.
+    const loadDrops=once(()=>json(look.drops));
+    // What can be on this map: its monsters (every frame), its NPCs, and its monsters' drops.
+    const mapSets=new Map();
+    function spritesFor(m){
+      if(!m)return Promise.resolve(Object.assign([],{drops:[]}));
+      if(!mapSets.has(m.id))mapSets.set(m.id,(async()=>{
+        const [atlas,drops,raw,icons]=await Promise.all([loadAtlas(),loadDrops(),loadRaw(),loadIcons()]);
+        const ids=new Set([...(m.monsters||[]).map(x=>'monster:'+x.id),...(m.npcs||[]).map(x=>'npc:'+x.id)]);
+        const list=atlas.filter(s=>ids.has(s.type+':'+s.id));
+        const rows=(m.monsters||[]).flatMap(x=>(drops[x.name]||[]).map(([item,id,rate])=>({monster:x.name,item,id,rate})));
+        for(const id of new Set(rows.map(r=>r.id).filter(Boolean))){const image=raw.get(String(id))||icons.get(String(id));if(image)list.push({type:'item',id:String(id),name:nameOf('item',id),image});}
+        list.drops=rows;
+        return list;
+      })().catch(e=>{mapSets.delete(m.id);throw e;}));
+      return mapSets.get(m.id);
+    }
+
+    // ---- Recognition ----
+    // The game's scale in the screenshot: the minimap title strip is 45 game px tall, measured
+    // in the top-left corner, where the game keeps the minimap (as the apps read it).
+    function scaleOf(image){
+      try{
+        const w=Math.round(image.width*.45),h=Math.round(image.height*.76),data=new Uint8ClampedArray(w*h*4);
+        for(let y=0;y<h;y++)data.set(image.data.subarray(y*image.width*4,y*image.width*4+w*4),y*w*4);
+        const band=MapleMinimapPosition.findTitleBand({width:w,height:h,data},{frameHeight:image.height});
+        const k=band?band.h/45:0,guess=image.width/MapleLook.GAME_WIDTH;
+        if(k>guess*.6&&k<guess*1.6)return k;
+      }catch(_){}
+      return image.width/MapleLook.GAME_WIDTH;
+    }
+    const bytes=url=>()=>lookFile(url).then(r=>r.arrayBuffer());
+    const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({model:bytes(file(look.detector)),runtime:bytes(RUNTIME),minScore:.25,base}):null;
+    const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({model:bytes(file(look.namer)),runtime:bytes(RUNTIME),classes:look.namerClasses||[]}):null;
+    // The item namer (every item's icon): its top answers become candidates, each checked
+    // against the item's full icon (src/look.js).
+    const itemClasses=once(()=>json(look.itemClasses));
+    const itemNamerClasses=[];   // filled from look.itemClasses before the first use
+    const itemNamer=scope.MapleLookNamer&&look?.itemNamer&&look?.itemClasses?MapleLookNamer.create({model:bytes(file(look.itemNamer)),runtime:bytes(RUNTIME),size:64,top:5,classes:itemNamerClasses}):null;
+    const namerEntry=({cls,p})=>{
+      if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:nameOf('monster',id),p};}
+      if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:nameOf('item',id),pet:true,p};}
+      return {type:'other',p};
+    };
+    // The detector finds things; the map's sprites, the namer, the reference set, the item icons
+    // and the name tags name them. Without the detector (an old browser) the map's sprites are
+    // looked for directly. Detections are kept on the shot (a second look reuses them).
+    async function analyze(s,region,onProgress){
+      const say=(stage,done=0,total=0,found=[])=>onProgress?.({stage,done,total,found});
+      await loadCatalog();
+      s.k??=scaleOf(s.image);
+      if(state.total&&state.done<state.total)say('download',state.done,state.total);
+      const sprites=await spritesFor(s.map);
+      let r=null;
+      if(detector)try{
+        if(!s.detections){say('detector');s.detections=await detector.detect(s.image);}
+        const named=s.detections.filter(d=>(d.cls==='monster'||d.cls==='pet')&&!d.names);
+        if(namer)try{let i=0;for(const d of named){say('naming',i++,named.length);d.names=(await namer.name(s.image,d.box)).map(namerEntry);}}
+        catch(e){console.warn('Look namer:',e);}
+        const things=s.detections.filter(d=>d.cls==='item'&&!d.items);
+        if(itemNamer&&things.length)try{if(!itemNamerClasses.length)itemNamerClasses.push(...await itemClasses());let i=0;for(const d of things){say('naming',i++,things.length);d.items=(await itemNamer.name(s.image,d.box)).map(x=>({id:x.cls.slice(1),p:x.p}));}}
+        catch(e){console.warn('Look item namer:',e);}
+        const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);
+        const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);
+        let last=0;
+        r=MapleLook.identify({image:s.image,detections:s.detections,lines:s.lines,region,k:s.k,names,sprites,allSprites,thumbs:th,groundItems:ground,
+          itemIcon:id=>icons.get(String(id))||null,itemName:id=>nameOf('item',id),
+          // At most every 120 ms: what is named so far, so the page shows it as it goes.
+          onProgress:(done,total,found)=>{const t=Date.now();if(t-last>120){last=t;say('items',done,total,found.filter(f=>!f.ui).map(plain));}}});
+        r.method='detector';
+      }catch(e){console.warn('Look detector:',e);}
+      r??={...MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites}),method:'sprites'};
+      const summary=MapleLook.summary(r.found).map(plain);let n=0;for(const f of summary)if(!(f.via==='name'&&f.ui))f.n=++n;
+      const found=r.found.map(plain);for(const f of found){const x=summary.find(y=>y.type===f.type&&y.id===f.id);f.n=x?.n;}
+      return {found,players:(r.players||[]).map(p=>({name:p.name,box:p.box,you:p.you})),player:r.player,k:r.k??s.k,method:r.method,mapId:s.map?.id||null,drops:sprites.drops||[],summary};
+    }
+    // A found thing as plain data (no pictures), to cross to the page.
+    const plain=f=>({type:f.type,id:String(f.id),name:f.name,box:f.box&&{x:f.box.x,y:f.box.y,w:f.box.w,h:f.box.h},via:f.via,score:f.score,ui:!!f.ui,pet:!!f.pet,count:f.count});
+    return {prefetch,analyze,lookFile,loadCatalog,state:()=>state};
+  }
+  const api={create};
+  scope.MapleLookEngine=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof self!=='undefined'?self:globalThis);
+
+/* What Look says about a thing it found, the same on the phone's list (src/look-ui.js) and the
+ * computer's overlay card (src/look-host.js): one or two lines of detail and, for items, the
+ * player-market price.
+ *
+ * describe(f, ctx, env) -> {detail, extra}
+ * card(result, title, env) -> {title, note, items: [{t, n, i, d, e, c, p}]} (at most 6 things)
+ * env: {catalog: {by: Map}, mapOf(id), quests: [{npc, name}], priceOf(entity) -> record|null}
+ */
+(function(scope){
+  const pct=v=>v==null?'':v>=10?Math.round(v)+'%':v>=1?v.toFixed(1)+'%':v.toFixed(2)+'%';
+  const fmt=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+  function describe(f,ctx,{catalog,mapOf=()=>null,quests=[]}){
+    const e=catalog?.by.get(f.type+':'+f.id)||{},here=mapOf(ctx.mapId);
+    if(f.type==='monster'){
+      const spawns=(here?.monsters||[]).find(x=>String(x.id)===f.id)?.spawns;
+      const top=(ctx.drops||[]).filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,3);
+      return {detail:['Lv '+(e.level??'?'),e.hp!=null?e.hp.toLocaleString()+' HP':'',e.exp!=null?e.exp+' EXP':'',spawns?spawns+' spawns here':''].filter(Boolean).join(' · '),
+        extra:top.length?'Drops '+top.map(d=>d.item+' '+pct(d.rate)).join(', '):''};
+    }
+    if(f.type==='npc'){
+      const given=quests.filter(q=>q.npc===f.name).map(q=>q.name).slice(0,2);
+      return {detail:'NPC'+(here&&(here.npcs||[]).some(x=>String(x.id)===f.id)?' on '+here.name:''),extra:given.length?'Quests: '+given.join(', '):''};
+    }
+    if(f.type==='item'&&e.category==='Pet'){
+      const price=e.cashShop?.price;
+      return {detail:['Pet',price?price.toLocaleString()+' NX in the Cash Shop':''].filter(Boolean).join(' · '),extra:String(e.description||'').split(/(?<=[.!?])\s/)[0]||''};
+    }
+    if(f.type==='item'){
+      const by=(ctx.drops||[]).filter(d=>d.item===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,2);
+      return {detail:[e.category||'Item',e.sell?'sells for '+e.sell.toLocaleString()+' mesos':''].filter(Boolean).join(' · '),extra:by.length?'Dropped here by '+by.map(d=>d.monster+' '+pct(d.rate)).join(', '):''};
+    }
+    return {detail:{quest:'Quest',map:'Map'}[f.type]||'',extra:''};
+  }
+  // An item's market price as one short line ("≈ 39,999 mesos"), or ''.
+  function priceLine(f,{catalog,priceOf=()=>null}){
+    if(f.type!=='item')return '';
+    const e=catalog?.by.get('item:'+f.id),p=e?priceOf(e):null;
+    return p&&p.median!=null?'≈ '+fmt(p.median)+(p.unit==='set'?' mesos / set':' mesos'):'';
+  }
+  function card(r,title,env){
+    const spritePath=e=>e?.image&&env.catalog?.commit?env.catalog.commit+'/data/'+e.image:'';
+    const items=r.summary.filter(f=>!(f.via==='name'&&f.ui)).slice(0,6).map(f=>{const d=describe(f,r,env);return {t:f.type,n:f.name,i:spritePath(env.catalog?.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count,p:priceLine(f,env)};});
+    const m=env.mapOf?.(r.mapId);
+    return {title,note:items.length?(m?'On '+m.name:''):'Nothing from the database found here'+(m?' on '+m.name:'')+'.',items};
+  }
+  const api={describe,card,priceLine,fmt};
+  scope.MapleLookCard=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof self!=='undefined'?self:globalThis);
+
+/* Look for the computer: the page look-host.html (built by scripts/build.py) that Maple Atlas
+ * Companion opens in a hidden web view, so a box marked on the game (⌃⌥M / Ctrl+Alt+M) is
+ * recognized on the computer itself and its card shown at once, with no phone needed. It is
+ * Look's own recognition (src/look-engine.js: the same detector, namers and files, kept in the
+ * web view's cache) and the phone's own words (src/look-card.js), with market prices.
+ *
+ * window.MapleLookHost:
+ *   ready() -> Promise<true>                      the catalog and the prices loaded
+ *   analyze({jpeg, lines, map, mark}) -> Promise<{card, result}>
+ *     jpeg: base64 JPEG of the game window; lines: [[text, x, y, w, h]] read on it;
+ *     map: the map id the app knows (or null); mark: {x, y, w, h} 0…1 of the window, or null
+ *     for the whole window. card: {title, note, items: [{t, n, i, d, e, c, p}]} for the overlay;
+ *     result: what was found (each thing with its box), for the phone's Look view.
+ * Progress is posted to the app as it goes: webkit.messageHandlers.look ({progress: text}),
+ * or the DevTools binding lookProgress (Windows, lookhost_windows.go).
+ */
+(function(scope){
+  const DATA={"look":{"base":"./assets/look/","detector":"detector-08e20a4998c2.onnx","atlas":"atlas-f199008730bd.json","icons":"icons-c8b73d0dcf19.json","raw":"raw-6f0857938b0a.json","thumbs":"thumbs-2591c21751c7.json","drops":"drops-628d22922260.json","files":["atlas-f199008730bd.json","atlas0-79cb7e15dd39.png","atlas1-53d098b0a262.png","atlas2-d2e2f921e316.png","detector-08e20a4998c2.onnx","drops-628d22922260.json","icons-c8b73d0dcf19.json","icons0-607e61ef38eb.png","icons1-9bc55610ca46.png","items-5665595c526d.onnx","items-classes-25e541783f52.json","namer-955142a4e70d.onnx","raw-6f0857938b0a.json","raw0-ef86d823e717.png","thumbs-11836eb81e3f.png","thumbs-2591c21751c7.json"],"bytes":40959821,"namer":"namer-955142a4e70d.onnx","namerClasses":["m1","m10","m1032","m11","m12","m13","m14","m15","m16","m17","m18","m19","m2","m20","m21","m22","m23","m24","m25","m26","m27","m28","m29","m3","m30","m31","m32","m33","m34","m35","m36","m37","m38","m39","m4","m40","m41","m42","m43","m44","m45","m46","m47","m48","m49","m5","m50","m51","m52","m53","m54","m55","m56","m57","m58","m59","m6","m60","m61","m62","m63","m64","m65","m66","m67","m68","m69","m7","m700000","m700001","m700002","m700003","m700004","m700005","m700006","m700007","m700008","m8","m800000","m800001","m800002","m800003","m800010","m800011","m800012","m800013","m800014","m800015","m800016","m800017","m800019","m800020","m800021","m800022","m800023","m800024","m800025","m810000","m810001","m810002","m810003","m810004","m810005","m9","m90","m900000","m91","m910000","m92","m93","m94","m9990000","m9990001","m9990002","m9990003","m9990004","m9990005","other","p5000000","p5000001","p5000002","p5000003","p5000004","p5000005","p5000006","p5000007","p5000008","p5000009","p5000010","p5000011","p5000012","p5000013","p5000014","p5000015","p5000017","p5000018","p5000020","p5000021","p5000022","p5000023","p5000024","p5000025","p5000026","p5000028","p5000029","p5000030","p5000031","p5000032","p5000033","p5000054"],"itemNamer":"items-5665595c526d.onnx","itemClasses":"items-classes-25e541783f52.json"},"catalog":"./data/search-f707bdb0dbbd1dc3.json","maps":[{"id":"10000000","name":"Lith Harbor","street":"Victoria Road","monsters":[],"npcs":[{"id":"100"},{"id":"101"},{"id":"102"},{"id":"103"},{"id":"104"},{"id":"105"},{"id":"106"},{"id":"107"},{"id":"111"},{"id":"112"},{"id":"900010"}]},{"id":"10000001","name":"Lith Harbor Armor Shop","street":"Victoria Road","monsters":[],"npcs":[{"id":"108"}]},{"id":"10000002","name":"Lith Harbor Department Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"109"}]},{"id":"10000003","name":"Lith Harbor Weapon Shop","street":"Victoria Road","monsters":[],"npcs":[{"id":"110"}]},{"id":"10000010","name":"Right Around Lith Harbor","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":20},{"id":"5","name":"Red Snail","spawns":12},{"id":"7","name":"Slime","spawns":11}],"npcs":[]},{"id":"10000011","name":"Thicket Around the Beach I","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":20},{"id":"3","name":"Blue Snail","spawns":12},{"id":"5","name":"Red Snail","spawns":13},{"id":"6","name":"Stump","spawns":11},{"id":"7","name":"Slime","spawns":11}],"npcs":[]},{"id":"10000012","name":"Thicket Around the Beach II","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":9},{"id":"7","name":"Slime","spawns":12},{"id":"8","name":"Pig","spawns":18},{"id":"9","name":"Orange Mushroom","spawns":9}],"npcs":[]},{"id":"10000013","name":"Thicket Around the Beach III","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":13},{"id":"3","name":"Blue Snail","spawns":1},{"id":"5","name":"Red Snail","spawns":2},{"id":"6","name":"Stump","spawns":10},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"700004","name":"Mano","spawns":1}],"npcs":[]},{"id":"10000020","name":"3-Way Road-Split","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":5},{"id":"3","name":"Blue Snail","spawns":14},{"id":"5","name":"Red Snail","spawns":11},{"id":"7","name":"Slime","spawns":17},{"id":"8","name":"Pig","spawns":6},{"id":"9","name":"Orange Mushroom","spawns":9},{"id":"10","name":"Ribbon Pig","spawns":6}],"npcs":[]},{"id":"10000021","name":"The Pig Beach","street":"Hidden Street","monsters":[{"id":"3","name":"Blue Snail","spawns":2},{"id":"5","name":"Red Snail","spawns":4},{"id":"8","name":"Pig","spawns":8},{"id":"10","name":"Ribbon Pig","spawns":8},{"id":"24","name":"Iron Hog","spawns":1}],"npcs":[]},{"id":"10000022","name":"Beach Hunting Ground","street":"Hidden Street","monsters":[{"id":"2","name":"Snail","spawns":2},{"id":"3","name":"Blue Snail","spawns":11},{"id":"4","name":"Shroom","spawns":2},{"id":"5","name":"Red Snail","spawns":4},{"id":"7","name":"Slime","spawns":6},{"id":"8","name":"Pig","spawns":1},{"id":"9","name":"Orange Mushroom","spawns":3},{"id":"10","name":"Ribbon Pig","spawns":5}],"npcs":[]},{"id":"10001000","name":"Henesys","street":"Victoria Road","monsters":[],"npcs":[{"id":"200"},{"id":"201"},{"id":"202"},{"id":"203"},{"id":"204"},{"id":"205"},{"id":"206"},{"id":"235"},{"id":"231"},{"id":"9010000"},{"id":"236"},{"id":"900026"}]},{"id":"10001001","name":"Henesys Townstreet","street":"Victoria Road","monsters":[],"npcs":[{"id":"207"}]},{"id":"10004041","name":"Land of Wild Boar","street":"Hidden Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":7},{"id":"22","name":"Wild Boar","spawns":22},{"id":"33","name":"Jr. Boogie 1","spawns":3},{"id":"34","name":"Jr. Boogie 2","spawns":3}],"npcs":[]},{"id":"10001002","name":"An Empty House","street":"Hidden Street","monsters":[{"id":"9","name":"Orange Mushroom","spawns":6}],"npcs":[]},{"id":"10001003","name":"Pig Park","street":"Hidden Street","monsters":[{"id":"24","name":"Iron Hog","spawns":20}],"npcs":[]},{"id":"10001004","name":"Pig Park II","street":"Hidden Street","monsters":[{"id":"24","name":"Iron Hog","spawns":22}],"npcs":[]},{"id":"10001005","name":"Someone Else's House","street":"Hidden Street","monsters":[{"id":"24","name":"Iron Hog","spawns":13},{"id":"26","name":"Fairy 2","spawns":2},{"id":"700000","name":"Mushmom","spawns":1}],"npcs":[]},{"id":"10001006","name":"The Resting Spot, Pig Park","street":"Hidden Street","monsters":[],"npcs":[]},{"id":"10001007","name":"Henesys Town Hall","street":"Victoria Road","monsters":[],"npcs":[{"id":"229"},{"id":"230"},{"id":"232"},{"id":"233"},{"id":"234"}]},{"id":"10001008","name":"Victoria Road","street":"Yellow Mushroom House","monsters":[],"npcs":[]},{"id":"10001010","name":"Henesys Hunting Ground I","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":4},{"id":"4","name":"Shroom","spawns":10},{"id":"5","name":"Red Snail","spawns":6},{"id":"6","name":"Stump","spawns":4},{"id":"7","name":"Slime","spawns":5},{"id":"9","name":"Orange Mushroom","spawns":5},{"id":"13","name":"Green Mushroom","spawns":5}],"npcs":[]},{"id":"10001011","name":"Henesys Hunting Ground II","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":3},{"id":"4","name":"Shroom","spawns":6},{"id":"5","name":"Red Snail","spawns":6},{"id":"6","name":"Stump","spawns":12},{"id":"7","name":"Slime","spawns":8},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"13","name":"Green Mushroom","spawns":4}],"npcs":[]},{"id":"10001012","name":"Henesys Hunting Ground III","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":2},{"id":"5","name":"Red Snail","spawns":6},{"id":"6","name":"Stump","spawns":10},{"id":"7","name":"Slime","spawns":17},{"id":"9","name":"Orange Mushroom","spawns":11},{"id":"13","name":"Green Mushroom","spawns":13}],"npcs":[]},{"id":"10001020","name":"A Hill West of Henesys","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":1},{"id":"5","name":"Red Snail","spawns":5},{"id":"6","name":"Stump","spawns":16},{"id":"7","name":"Slime","spawns":6},{"id":"8","name":"Pig","spawns":16},{"id":"10","name":"Ribbon Pig","spawns":10}],"npcs":[]},{"id":"10001021","name":"Mushroom Garden","street":"Hidden Street","monsters":[{"id":"4","name":"Shroom","spawns":10},{"id":"5","name":"Red Snail","spawns":9},{"id":"9","name":"Orange Mushroom","spawns":15}],"npcs":[]},{"id":"10001030","name":"Forest West of Henesys","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":13},{"id":"3","name":"Blue Snail","spawns":20},{"id":"5","name":"Red Snail","spawns":11},{"id":"6","name":"Stump","spawns":5},{"id":"7","name":"Slime","spawns":9},{"id":"8","name":"Pig","spawns":3},{"id":"9","name":"Orange Mushroom","spawns":3},{"id":"10","name":"Ribbon Pig","spawns":1}],"npcs":[]},{"id":"10001040","name":"Henesys Market","street":"Victoria Road","monsters":[],"npcs":[{"id":"208"},{"id":"209"},{"id":"800013"},{"id":"800014"}]},{"id":"10001041","name":"Henesys Weapon Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"210"},{"id":"211"}]},{"id":"10001042","name":"Henesys Department Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"212"}]},{"id":"10001043","name":"Henesys Plastic Surgery","street":"Victoria Road","monsters":[],"npcs":[{"id":"213"},{"id":"214"}]},{"id":"10001044","name":"Henesys Hair Salon","street":"Victoria Road","monsters":[],"npcs":[{"id":"215"},{"id":"216"}]},{"id":"10001045","name":"Henesys Skin-Care","street":"Victoria Road","monsters":[],"npcs":[{"id":"217"}]},{"id":"10001050","name":"Henesys Park","street":"Victoria Road","monsters":[],"npcs":[{"id":"218"},{"id":"219"},{"id":"220"},{"id":"228"}]},{"id":"10001051","name":"Bowman Instructional School","street":"Victoria Road","monsters":[],"npcs":[{"id":"221"}]},{"id":"10001052","name":"Pet-Walking Road","street":"Victoria Road","monsters":[],"npcs":[{"id":"222"},{"id":"209"},{"id":"223"}]},{"id":"10001060","name":"The Hill East of Henesys","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":5},{"id":"4","name":"Shroom","spawns":22},{"id":"5","name":"Red Snail","spawns":7},{"id":"7","name":"Slime","spawns":7},{"id":"8","name":"Pig","spawns":3},{"id":"9","name":"Orange Mushroom","spawns":2},{"id":"10","name":"Ribbon Pig","spawns":3}],"npcs":[{"id":"224"}]},{"id":"10001070","name":"The Rain-Forest East of Henesys","street":"Victoria Road","monsters":[{"id":"8","name":"Pig","spawns":5},{"id":"10","name":"Ribbon Pig","spawns":4}],"npcs":[]},{"id":"10001080","name":"The Forest East of Henesys","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":7},{"id":"3","name":"Blue Snail","spawns":3},{"id":"4","name":"Shroom","spawns":2},{"id":"5","name":"Red Snail","spawns":6},{"id":"7","name":"Slime","spawns":7},{"id":"8","name":"Pig","spawns":15},{"id":"9","name":"Orange Mushroom","spawns":6},{"id":"10","name":"Ribbon Pig","spawns":11},{"id":"16","name":"Blue Mushroom","spawns":2}],"npcs":[]},{"id":"10001081","name":"The Blue Mushroom Forest","street":"Hidden Street","monsters":[{"id":"3","name":"Blue Snail","spawns":7},{"id":"5","name":"Red Snail","spawns":1},{"id":"7","name":"Slime","spawns":8},{"id":"16","name":"Blue Mushroom","spawns":16}],"npcs":[]},{"id":"10001082","name":"Utah's Pig Farm","street":"Hidden Street","monsters":[{"id":"92","name":"Super Ribbon Pig","spawns":28}],"npcs":[{"id":"225"}]},{"id":"10001090","name":"The Road to the Dungeon","street":"Warning Street","monsters":[{"id":"3","name":"Blue Snail","spawns":4},{"id":"4","name":"Shroom","spawns":10},{"id":"5","name":"Red Snail","spawns":2},{"id":"7","name":"Slime","spawns":6},{"id":"8","name":"Pig","spawns":2},{"id":"9","name":"Orange Mushroom","spawns":2},{"id":"10","name":"Ribbon Pig","spawns":7},{"id":"16","name":"Blue Mushroom","spawns":11},{"id":"24","name":"Iron Hog","spawns":2}],"npcs":[{"id":"227"}]},{"id":"10001100","name":"Henesys Dungeon Entrance","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":14},{"id":"13","name":"Green Mushroom","spawns":9},{"id":"16","name":"Blue Mushroom","spawns":5},{"id":"24","name":"Iron Hog","spawns":3},{"id":"35","name":"Lupin","spawns":4},{"id":"48","name":"Stone Golem","spawns":3}],"npcs":[{"id":"226"}]},{"id":"10001101","name":"The Breathing Rock","street":"Hidden Street","monsters":[{"id":"16","name":"Blue Mushroom","spawns":12},{"id":"28","name":"Fairy 4","spawns":2},{"id":"35","name":"Lupin","spawns":6},{"id":"48","name":"Stone Golem","spawns":4}],"npcs":[]},{"id":"10001102","name":"The Entrance of Golem's Temple","street":"Victoria Road","monsters":[{"id":"16","name":"Blue Mushroom","spawns":12},{"id":"28","name":"Fairy 4","spawns":3},{"id":"48","name":"Stone Golem","spawns":9}],"npcs":[]},{"id":"10001103","name":"Golem's Temple I","street":"Victoria Road","monsters":[{"id":"16","name":"Blue Mushroom","spawns":7},{"id":"28","name":"Fairy 4","spawns":1},{"id":"35","name":"Lupin","spawns":3},{"id":"48","name":"Stone Golem","spawns":9}],"npcs":[]},{"id":"10001104","name":"Golem's Temple II","street":"Victoria Road","monsters":[{"id":"16","name":"Blue Mushroom","spawns":4},{"id":"28","name":"Fairy 4","spawns":1},{"id":"35","name":"Lupin","spawns":3},{"id":"48","name":"Stone Golem","spawns":7}],"npcs":[]},{"id":"10001105","name":"Golem's Temple III","street":"Victoria Road","monsters":[{"id":"16","name":"Blue Mushroom","spawns":5},{"id":"28","name":"Fairy 4","spawns":1},{"id":"35","name":"Lupin","spawns":7},{"id":"48","name":"Stone Golem","spawns":10}],"npcs":[]},{"id":"10001106","name":"Golem's Temple IV","street":"Victoria Road","monsters":[{"id":"16","name":"Blue Mushroom","spawns":7},{"id":"28","name":"Fairy 4","spawns":1},{"id":"48","name":"Stone Golem","spawns":8}],"npcs":[]},{"id":"10002000","name":"Ellinia","street":"Victoria Road","monsters":[],"npcs":[{"id":"301"},{"id":"303"},{"id":"304"},{"id":"305"},{"id":"306"},{"id":"307"},{"id":"302"},{"id":"308"},{"id":"309"},{"id":"800015"},{"id":"800013"},{"id":"800012"}]},{"id":"10002001","name":"Ellinia Weapon Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"310"},{"id":"311"}]},{"id":"10002002","name":"Ellinia Department Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"312"}]},{"id":"10002003","name":"Magic Library","street":"Victoria Road","monsters":[],"npcs":[{"id":"313"}]},{"id":"10002004","name":"Marr's Forest","street":"Hidden Street","monsters":[],"npcs":[{"id":"317"}]},{"id":"10002005","name":"The Circulation Desk","street":"Hidden Street","monsters":[],"npcs":[{"id":"326"},{"id":"327"},{"id":"328"}]},{"id":"10002010","name":"The Field South of Ellinia","street":"Victoria Road","monsters":[{"id":"6","name":"Stump","spawns":27},{"id":"7","name":"Slime","spawns":18},{"id":"11","name":"Dark Stump","spawns":13},{"id":"13","name":"Green Mushroom","spawns":8}],"npcs":[{"id":"300"}]},{"id":"10002020","name":"The Forest of Wisdom","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":3},{"id":"7","name":"Slime","spawns":25},{"id":"13","name":"Green Mushroom","spawns":30}],"npcs":[]},{"id":"10002021","name":"Monkey Forest I","street":"Hidden Street","monsters":[{"id":"13","name":"Green Mushroom","spawns":9},{"id":"35","name":"Lupin","spawns":14}],"npcs":[]},{"id":"10002022","name":"Tree Dungeon, Monkey Forest I","street":"Victoria Road","monsters":[{"id":"31","name":"Curse Eye","spawns":5},{"id":"38","name":"Zombie Lupin","spawns":26}],"npcs":[]},{"id":"10002023","name":"Monkey Forest II","street":"Victoria Road","monsters":[{"id":"35","name":"Lupin","spawns":10},{"id":"38","name":"Zombie Lupin","spawns":25}],"npcs":[]},{"id":"10002024","name":"Tree Dungeon, Monkey Forest II","street":"Hidden Street","monsters":[{"id":"31","name":"Curse Eye","spawns":4},{"id":"38","name":"Zombie Lupin","spawns":26}],"npcs":[]},{"id":"10002025","name":"The Forest of Evil I","street":"Hidden Street","monsters":[{"id":"38","name":"Zombie Lupin","spawns":11},{"id":"47","name":"Malady","spawns":15}],"npcs":[]},{"id":"10002026","name":"The Forest of Evil II","street":"Hidden Street","monsters":[{"id":"38","name":"Zombie Lupin","spawns":16},{"id":"47","name":"Malady","spawns":23}],"npcs":[]},{"id":"10002027","name":"Downstairs at the Forest","street":"Hidden Street","monsters":[{"id":"7","name":"Slime","spawns":7},{"id":"13","name":"Green Mushroom","spawns":12},{"id":"19","name":"Horny Mushroom","spawns":17},{"id":"35","name":"Lupin","spawns":3}],"npcs":[]},{"id":"10002030","name":"The Forest South of Ellinia","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":15},{"id":"6","name":"Stump","spawns":19},{"id":"7","name":"Slime","spawns":24},{"id":"13","name":"Green Mushroom","spawns":3},{"id":"15","name":"Axe Stump","spawns":2}],"npcs":[]},{"id":"10002031","name":"Dungeon, Southern Forest I","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":21}],"npcs":[]},{"id":"10002032","name":"Dungeon, Southern Forest II","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":11},{"id":"13","name":"Green Mushroom","spawns":16}],"npcs":[]},{"id":"10002033","name":"Dungeon, Southern Forest III","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":10},{"id":"13","name":"Green Mushroom","spawns":16}],"npcs":[]},{"id":"10002034","name":"Dungeon, Southern Forest IV","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":2},{"id":"13","name":"Green Mushroom","spawns":9},{"id":"16","name":"Blue Mushroom","spawns":1},{"id":"19","name":"Horny Mushroom","spawns":13}],"npcs":[]},{"id":"10002040","name":"The Forest of Patience \u003cStep 1>","street":"Hidden Street","monsters":[],"npcs":[{"id":"314"}]},{"id":"10002041","name":"The Forest of Patience \u003cStep 2>","street":"Hidden Street","monsters":[],"npcs":[{"id":"315"},{"id":"314"}]},{"id":"10002042","name":"The Forest of Patience \u003cStep 3>","street":"Hidden Street","monsters":[],"npcs":[{"id":"314"}]},{"id":"10002043","name":"The Forest of Patience \u003cStep 4>","street":"Hidden Street","monsters":[{"id":"90","name":"Super Jr. Necki","spawns":18}],"npcs":[{"id":"314"}]},{"id":"10002044","name":"The Forest of Patience \u003cStep 5>","street":"Hidden Street","monsters":[],"npcs":[{"id":"314"},{"id":"316"}]},{"id":"10002050","name":"The Field Up North of Ellinia","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":10},{"id":"6","name":"Stump","spawns":12},{"id":"7","name":"Slime","spawns":16}],"npcs":[{"id":"321"}]},{"id":"10002060","name":"The Tree That Grew I","street":"Victoria Road","monsters":[{"id":"6","name":"Stump","spawns":8},{"id":"7","name":"Slime","spawns":22},{"id":"11","name":"Dark Stump","spawns":10}],"npcs":[]},{"id":"10002061","name":"The Tree That Grew II","street":"Victoria Road","monsters":[{"id":"6","name":"Stump","spawns":28},{"id":"7","name":"Slime","spawns":30},{"id":"11","name":"Dark Stump","spawns":12}],"npcs":[]},{"id":"10002062","name":"The Tree That Grew III","street":"Victoria Road","monsters":[{"id":"6","name":"Stump","spawns":27},{"id":"11","name":"Dark Stump","spawns":13},{"id":"13","name":"Green Mushroom","spawns":8}],"npcs":[{"id":"318"}]},{"id":"10002070","name":"The Forest North of Ellinia","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":9},{"id":"6","name":"Stump","spawns":21},{"id":"7","name":"Slime","spawns":26},{"id":"15","name":"Axe Stump","spawns":13}],"npcs":[{"id":"319"}]},{"id":"10002071","name":"The Tree Tunnel At the Forest Up North","street":"Victoria Road","monsters":[],"npcs":[{"id":"320"}]},{"id":"10002072","name":"Tree Dungeon, Forest Up North I","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":15},{"id":"19","name":"Horny Mushroom","spawns":14}],"npcs":[]},{"id":"10002073","name":"Tree Dungeon, Forest Up North II","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":2},{"id":"13","name":"Green Mushroom","spawns":14},{"id":"19","name":"Horny Mushroom","spawns":15}],"npcs":[]},{"id":"10002074","name":"Tree Dungeon, Forest Up North III","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":12},{"id":"13","name":"Green Mushroom","spawns":16},{"id":"19","name":"Horny Mushroom","spawns":16}],"npcs":[]},{"id":"10002075","name":"Tree Dungeon, Forest Up North IV","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":13},{"id":"13","name":"Green Mushroom","spawns":31}],"npcs":[]},{"id":"10002076","name":"Tree Dungeon, Forest Up North V","street":"Victoria Road","monsters":[{"id":"7","name":"Slime","spawns":14},{"id":"13","name":"Green Mushroom","spawns":13},{"id":"19","name":"Horny Mushroom","spawns":15}],"npcs":[]},{"id":"10002080","name":"Tree Dungeon, Forest Up North VI","street":"Victoria Road","monsters":[{"id":"27","name":"Fairy 3","spawns":2},{"id":"31","name":"Curse Eye","spawns":15}],"npcs":[]},{"id":"10002081","name":"Tree Dungeon, Forest Up North VII","street":"Victoria Road","monsters":[{"id":"27","name":"Fairy 3","spawns":2},{"id":"31","name":"Curse Eye","spawns":13},{"id":"37","name":"Cold Eye","spawns":4}],"npcs":[]},{"id":"10002082","name":"Tree Dungeon, Forest Up North VIII","street":"Victoria Road","monsters":[{"id":"31","name":"Curse Eye","spawns":17}],"npcs":[]},{"id":"10002083","name":"Tree Dungeon, Forest Up North IX","street":"Victoria Road","monsters":[{"id":"31","name":"Curse Eye","spawns":20}],"npcs":[]},{"id":"10002090","name":"Ellinia Station","street":"Victoria Road","monsters":[],"npcs":[{"id":"322"},{"id":"323"}]},{"id":"10002091","name":"Before Takeoff \u003cTo Orbis>","street":"Victoria Road","monsters":[],"npcs":[{"id":"324"}]},{"id":"10003000","name":"Kerning City","street":"Victoria Road","monsters":[],"npcs":[{"id":"401"},{"id":"402"},{"id":"403"},{"id":"404"},{"id":"400"},{"id":"405"},{"id":"800000"},{"id":"406"},{"id":"407"},{"id":"900015"},{"id":"800011"},{"id":"800014"},{"id":"431"},{"id":"427"},{"id":"432"},{"id":"900026"},{"id":"9010000"}]},{"id":"10003001","name":"Kerning City Self-Defence Item Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"408"},{"id":"409"}]},{"id":"10003002","name":"Kerning City Pharmacy","street":"Victoria Road","monsters":[],"npcs":[{"id":"410"}]},{"id":"10003003","name":"Thieves' Hideout","street":"Victoria Road","monsters":[],"npcs":[{"id":"411"}]},{"id":"10003004","name":"Niora Hospital","street":"Victoria Road","monsters":[],"npcs":[{"id":"412"}]},{"id":"10003005","name":"Kerning City Hair Salon","street":"Victoria Road","monsters":[],"npcs":[{"id":"413"},{"id":"414"}]},{"id":"10003006","name":"Kerning City Repair Shop","street":"Victoria Road","monsters":[],"npcs":[{"id":"415"}]},{"id":"10003007","name":"Kerning City Civic Center","street":"Victoria Road","monsters":[],"npcs":[{"id":"425"},{"id":"426"},{"id":"428"},{"id":"429"},{"id":"430"}]},{"id":"10003008","name":"Backalley Semi-Basement","street":"Victoria Road","monsters":[],"npcs":[]},{"id":"10003010","name":"Kerning City Construction Site","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":8},{"id":"6","name":"Stump","spawns":24},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"12","name":"Octopus","spawns":10},{"id":"13","name":"Green Mushroom","spawns":2}],"npcs":[{"id":"900014"}]},{"id":"10003011","name":"Caution Falling Down","street":"Hidden Street","monsters":[{"id":"9","name":"Orange Mushroom","spawns":5},{"id":"12","name":"Octopus","spawns":12},{"id":"16","name":"Blue Mushroom","spawns":3}],"npcs":[]},{"id":"10003020","name":"L Forest I","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":8},{"id":"4","name":"Shroom","spawns":9},{"id":"5","name":"Red Snail","spawns":7},{"id":"6","name":"Stump","spawns":2},{"id":"7","name":"Slime","spawns":6},{"id":"8","name":"Pig","spawns":9},{"id":"9","name":"Orange Mushroom","spawns":7},{"id":"10","name":"Ribbon Pig","spawns":21},{"id":"13","name":"Green Mushroom","spawns":3},{"id":"24","name":"Iron Hog","spawns":1}],"npcs":[]},{"id":"10003030","name":"L Forest II","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":1},{"id":"3","name":"Blue Snail","spawns":2},{"id":"4","name":"Shroom","spawns":8},{"id":"5","name":"Red Snail","spawns":5},{"id":"6","name":"Stump","spawns":3},{"id":"7","name":"Slime","spawns":6},{"id":"8","name":"Pig","spawns":9},{"id":"9","name":"Orange Mushroom","spawns":3},{"id":"10","name":"Ribbon Pig","spawns":10},{"id":"13","name":"Green Mushroom","spawns":4},{"id":"16","name":"Blue Mushroom","spawns":2},{"id":"35","name":"Lupin","spawns":1}],"npcs":[]},{"id":"10003040","name":"L Forest III","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":4},{"id":"3","name":"Blue Snail","spawns":6},{"id":"4","name":"Shroom","spawns":5},{"id":"5","name":"Red Snail","spawns":14},{"id":"6","name":"Stump","spawns":3},{"id":"7","name":"Slime","spawns":23},{"id":"8","name":"Pig","spawns":7},{"id":"10","name":"Ribbon Pig","spawns":7},{"id":"13","name":"Green Mushroom","spawns":10},{"id":"16","name":"Blue Mushroom","spawns":4}],"npcs":[]},{"id":"10003050","name":"Kerning City Middle Forest I","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":14},{"id":"4","name":"Shroom","spawns":3},{"id":"5","name":"Red Snail","spawns":10},{"id":"7","name":"Slime","spawns":10},{"id":"8","name":"Pig","spawns":3},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"10","name":"Ribbon Pig","spawns":5}],"npcs":[]},{"id":"10003051","name":"Kerning City Middle Forest II","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":9},{"id":"4","name":"Shroom","spawns":3},{"id":"5","name":"Red Snail","spawns":8},{"id":"7","name":"Slime","spawns":10},{"id":"8","name":"Pig","spawns":2},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"10","name":"Ribbon Pig","spawns":5},{"id":"13","name":"Green Mushroom","spawns":2}],"npcs":[]},{"id":"10003052","name":"Kerning City Middle Forest III","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":5},{"id":"3","name":"Blue Snail","spawns":6},{"id":"5","name":"Red Snail","spawns":8},{"id":"7","name":"Slime","spawns":13},{"id":"8","name":"Pig","spawns":3},{"id":"9","name":"Orange Mushroom","spawns":10},{"id":"10","name":"Ribbon Pig","spawns":3},{"id":"13","name":"Green Mushroom","spawns":2}],"npcs":[]},{"id":"10003060","name":"Subway Ticketing Booth","street":"Victoria Road","monsters":[],"npcs":[{"id":"417"},{"id":"418"}]},{"id":"10003061","name":"Line 1 \u003cArea 1>","street":"Kerning City Subway","monsters":[{"id":"14","name":"Bubbling","spawns":64}],"npcs":[]},{"id":"10003062","name":"Transfer Area","street":"Kerning City Subway","monsters":[{"id":"17","name":"Stirge","spawns":38}],"npcs":[]},{"id":"10003063","name":"Line 1 \u003cArea 2>","street":"Kerning City Subway","monsters":[{"id":"17","name":"Stirge","spawns":21},{"id":"32","name":"Jr. Wraith","spawns":69}],"npcs":[]},{"id":"10003064","name":"Line 1 \u003cArea 3>","street":"Kerning City Subway","monsters":[{"id":"17","name":"Stirge","spawns":18},{"id":"32","name":"Jr. Wraith","spawns":31},{"id":"43","name":"Wraith","spawns":48}],"npcs":[]},{"id":"10003065","name":"Line 1 \u003cArea 4>","street":"Kerning City Subway","monsters":[{"id":"43","name":"Wraith","spawns":59}],"npcs":[]},{"id":"10003066","name":"Line 2 \u003cArea 1>","street":"Kerning City Subway","monsters":[{"id":"18","name":"Jr. Necki","spawns":14},{"id":"32","name":"Jr. Wraith","spawns":83}],"npcs":[]},{"id":"10003067","name":"Line 2 \u003cArea 2>","street":"Kerning City Subway","monsters":[{"id":"18","name":"Jr. Necki","spawns":18},{"id":"32","name":"Jr. Wraith","spawns":32},{"id":"43","name":"Wraith","spawns":57}],"npcs":[]},{"id":"10003068","name":"Line 2 \u003cArea 3>","street":"Kerning City Subway","monsters":[{"id":"43","name":"Wraith","spawns":68}],"npcs":[]},{"id":"10003070","name":"Sunset Sky","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":7},{"id":"6","name":"Stump","spawns":15},{"id":"9","name":"Orange Mushroom","spawns":8},{"id":"11","name":"Dark Stump","spawns":7},{"id":"13","name":"Green Mushroom","spawns":7}],"npcs":[]},{"id":"10003080","name":"Construction Site North of Kerning City","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":23},{"id":"9","name":"Orange Mushroom","spawns":9},{"id":"11","name":"Dark Stump","spawns":11},{"id":"12","name":"Octopus","spawns":8},{"id":"15","name":"Axe Stump","spawns":2},{"id":"16","name":"Blue Mushroom","spawns":1}],"npcs":[{"id":"424"}]},{"id":"10003081","name":"Northern Top of Construction Site","street":"Hidden Street","monsters":[{"id":"9","name":"Orange Mushroom","spawns":6},{"id":"12","name":"Octopus","spawns":12},{"id":"16","name":"Blue Mushroom","spawns":3}],"npcs":[]},{"id":"10003090","name":"The Swamp of Despair I","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":9},{"id":"18","name":"Jr. Necki","spawns":10},{"id":"19","name":"Horny Mushroom","spawns":3},{"id":"29","name":"Ligator","spawns":41}],"npcs":[]},{"id":"10003091","name":"The Swamp of Despair II","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":6},{"id":"18","name":"Jr. Necki","spawns":17},{"id":"19","name":"Horny Mushroom","spawns":20},{"id":"29","name":"Ligator","spawns":36}],"npcs":[{"id":"416"}]},{"id":"10003092","name":"The Swamp of Despair III","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":7},{"id":"18","name":"Jr. Necki","spawns":19},{"id":"29","name":"Ligator","spawns":28}],"npcs":[]},{"id":"10003093","name":"Dangerous Croko I","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":7},{"id":"18","name":"Jr. Necki","spawns":27},{"id":"29","name":"Ligator","spawns":14},{"id":"46","name":"Croco","spawns":6}],"npcs":[]},{"id":"10003094","name":"Dangerous Croko II","street":"Warning Street","monsters":[{"id":"7","name":"Slime","spawns":9},{"id":"18","name":"Jr. Necki","spawns":21},{"id":"46","name":"Croco","spawns":24}],"npcs":[]},{"id":"10003095","name":"Monkey Swamp I","street":"Hidden Street","monsters":[{"id":"18","name":"Jr. Necki","spawns":3},{"id":"35","name":"Lupin","spawns":28}],"npcs":[]},{"id":"10003096","name":"Monkey Swamp II","street":"Hidden Street","monsters":[{"id":"18","name":"Jr. Necki","spawns":3},{"id":"35","name":"Lupin","spawns":10},{"id":"38","name":"Zombie Lupin","spawns":13}],"npcs":[]},{"id":"10003097","name":"Monkey Swamp III","street":"Hidden Street","monsters":[{"id":"18","name":"Jr. Necki","spawns":11},{"id":"38","name":"Zombie Lupin","spawns":31}],"npcs":[]},{"id":"10003098","name":"The Hermit's Cabin","street":"Hidden Street","monsters":[],"npcs":[{"id":"436"}]},{"id":"10003100","name":"B1 \u003cArea 1>","street":"Line 3 Construction Site","monsters":[{"id":"90","name":"Super Jr. Necki","spawns":3}],"npcs":[{"id":"419"},{"id":"419"},{"id":"419"},{"id":"419"},{"id":"419"}]},{"id":"10003101","name":"B1 \u003cArea 2>","street":"Line 3 Construction Site","monsters":[{"id":"93","name":"Super Stirge","spawns":12}],"npcs":[{"id":"419"},{"id":"419"}]},{"id":"10003102","name":"B1 \u003cSubway Depot>","street":"Line 3 Construction Site","monsters":[{"id":"14","name":"Bubbling","spawns":9}],"npcs":[{"id":"420"}]},{"id":"10003103","name":"B2 \u003cArea 1>","street":"Line 3 Construction Site","monsters":[],"npcs":[{"id":"419"}]},{"id":"10003104","name":"B2 \u003cArea 2>","street":"Line 3 Construction Site","monsters":[],"npcs":[{"id":"419"},{"id":"419"}]},{"id":"10003105","name":"B2 \u003cSubway Depot>","street":"Line 3 Construction Site","monsters":[{"id":"32","name":"Jr. Wraith","spawns":12},{"id":"33","name":"Jr. Boogie 1","spawns":1}],"npcs":[{"id":"421"}]},{"id":"10003106","name":"B3 \u003cArea 1>","street":"Line 3 Construction Site","monsters":[{"id":"93","name":"Super Stirge","spawns":4}],"npcs":[{"id":"419"}]},{"id":"10003107","name":"B3 \u003cArea 2>","street":"Line 3 Construction Site","monsters":[],"npcs":[{"id":"419"}]},{"id":"10003108","name":"B3 \u003cArea 3>","street":"Line 3 Construction Site","monsters":[],"npcs":[{"id":"419"}]},{"id":"10003109","name":"B3 \u003cSubway Depot>","street":"Line 3 Construction Site","monsters":[{"id":"33","name":"Jr. Boogie 1","spawns":1},{"id":"34","name":"Jr. Boogie 2","spawns":1},{"id":"43","name":"Wraith","spawns":10}],"npcs":[{"id":"422"}]},{"id":"10003110","name":"The Murky Swamp I","street":"Hidden Street","monsters":[{"id":"18","name":"Jr. Necki","spawns":16},{"id":"29","name":"Ligator","spawns":17}],"npcs":[]},{"id":"10003111","name":"The Murky Swamp II","street":"Hidden Street","monsters":[{"id":"18","name":"Jr. Necki","spawns":12},{"id":"29","name":"Ligator","spawns":14}],"npcs":[]},{"id":"10003112","name":"Cabin of the Forsaken","street":"Hidden Street","monsters":[{"id":"700006","name":"Shade","spawns":1}],"npcs":[]},{"id":"10004000","name":"Perion","street":"Victoria Road","monsters":[],"npcs":[{"id":"500"},{"id":"501"},{"id":"502"},{"id":"503"},{"id":"504"},{"id":"505"},{"id":"506"},{"id":"800011"},{"id":"800010"}]},{"id":"10004001","name":"Perion Weapon Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"507"},{"id":"508"}]},{"id":"10004002","name":"Perion Department Store","street":"Victoria Road","monsters":[],"npcs":[{"id":"509"},{"id":"510"}]},{"id":"10004003","name":"Warriors' Sanctuary","street":"Victoria Road","monsters":[],"npcs":[{"id":"511"}]},{"id":"10004010","name":"West Street Corner of Perion","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":10},{"id":"6","name":"Stump","spawns":24},{"id":"11","name":"Dark Stump","spawns":14},{"id":"13","name":"Green Mushroom","spawns":5}],"npcs":[]},{"id":"10004020","name":"West Rocky Mountain I","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":22},{"id":"6","name":"Stump","spawns":27},{"id":"15","name":"Axe Stump","spawns":4}],"npcs":[]},{"id":"10004021","name":"West Rocky Mountain II","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":12},{"id":"6","name":"Stump","spawns":20},{"id":"11","name":"Dark Stump","spawns":10},{"id":"15","name":"Axe Stump","spawns":7}],"npcs":[]},{"id":"10004022","name":"West Rocky Mountain III","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":9},{"id":"6","name":"Stump","spawns":9},{"id":"11","name":"Dark Stump","spawns":3},{"id":"13","name":"Green Mushroom","spawns":32},{"id":"15","name":"Axe Stump","spawns":5},{"id":"20","name":"Dark Axe Stump","spawns":9}],"npcs":[]},{"id":"10004023","name":"West Rocky Mountain IV","street":"Victoria Road","monsters":[{"id":"15","name":"Axe Stump","spawns":1},{"id":"20","name":"Dark Axe Stump","spawns":14},{"id":"22","name":"Wild Boar","spawns":15},{"id":"35","name":"Lupin","spawns":3}],"npcs":[{"id":"514"}]},{"id":"10004030","name":"West Domain of Perion","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":6},{"id":"3","name":"Blue Snail","spawns":8},{"id":"5","name":"Red Snail","spawns":1},{"id":"6","name":"Stump","spawns":15},{"id":"11","name":"Dark Stump","spawns":21},{"id":"13","name":"Green Mushroom","spawns":14}],"npcs":[]},{"id":"10004040","name":"Perion Street Corner","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":6},{"id":"3","name":"Blue Snail","spawns":1},{"id":"5","name":"Red Snail","spawns":7},{"id":"6","name":"Stump","spawns":15},{"id":"11","name":"Dark Stump","spawns":11}],"npcs":[]},{"id":"10004042","name":"Over the Wall","street":"Hidden Street","monsters":[{"id":"6","name":"Stump","spawns":4},{"id":"11","name":"Dark Stump","spawns":4},{"id":"15","name":"Axe Stump","spawns":11},{"id":"20","name":"Dark Axe Stump","spawns":5}],"npcs":[]},{"id":"10004050","name":"East Rocky Mountain I","street":"Victoria Road","monsters":[{"id":"3","name":"Blue Snail","spawns":9},{"id":"5","name":"Red Snail","spawns":16},{"id":"6","name":"Stump","spawns":14},{"id":"11","name":"Dark Stump","spawns":13}],"npcs":[]},{"id":"10004051","name":"East Rocky Mountain II","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":9},{"id":"6","name":"Stump","spawns":16},{"id":"15","name":"Axe Stump","spawns":12}],"npcs":[{"id":"512"}]},{"id":"10004052","name":"East Rocky Mountain III","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":8},{"id":"6","name":"Stump","spawns":8},{"id":"11","name":"Dark Stump","spawns":14},{"id":"15","name":"Axe Stump","spawns":12}],"npcs":[]},{"id":"10004053","name":"East Rocky Mountain IV","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":11},{"id":"11","name":"Dark Stump","spawns":17},{"id":"15","name":"Axe Stump","spawns":6},{"id":"20","name":"Dark Axe Stump","spawns":23}],"npcs":[]},{"id":"10004054","name":"East Rocky Mountain V","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":5},{"id":"11","name":"Dark Stump","spawns":17},{"id":"20","name":"Dark Axe Stump","spawns":25},{"id":"30","name":"Fire Boar","spawns":4}],"npcs":[]},{"id":"10004055","name":"East Rocky Mountain VI","street":"Victoria Road","monsters":[{"id":"11","name":"Dark Stump","spawns":4},{"id":"15","name":"Axe Stump","spawns":3},{"id":"20","name":"Dark Axe Stump","spawns":17},{"id":"30","name":"Fire Boar","spawns":10},{"id":"35","name":"Lupin","spawns":3}],"npcs":[]},{"id":"10004056","name":"East Rocky Mountain VII","street":"Victoria Road","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":15},{"id":"30","name":"Fire Boar","spawns":20},{"id":"40","name":"Copper Drake","spawns":22}],"npcs":[]},{"id":"10004057","name":"Parched Land","street":"Victoria Road","monsters":[{"id":"15","name":"Axe Stump","spawns":5},{"id":"20","name":"Dark Axe Stump","spawns":2},{"id":"33","name":"Jr. Boogie 1","spawns":1},{"id":"34","name":"Jr. Boogie 2","spawns":1},{"id":"700007","name":"Stumpy","spawns":1}],"npcs":[]},{"id":"10004060","name":"Rocky Road I","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":9},{"id":"5","name":"Red Snail","spawns":11},{"id":"6","name":"Stump","spawns":15},{"id":"11","name":"Dark Stump","spawns":3},{"id":"13","name":"Green Mushroom","spawns":6}],"npcs":[]},{"id":"10004070","name":"Rocky Road II","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":12},{"id":"5","name":"Red Snail","spawns":4},{"id":"6","name":"Stump","spawns":6},{"id":"11","name":"Dark Stump","spawns":5},{"id":"15","name":"Axe Stump","spawns":5},{"id":"20","name":"Dark Axe Stump","spawns":5},{"id":"22","name":"Wild Boar","spawns":4}],"npcs":[]},{"id":"10004080","name":"Rocky Road III","street":"Victoria Road","monsters":[{"id":"5","name":"Red Snail","spawns":8},{"id":"6","name":"Stump","spawns":2},{"id":"15","name":"Axe Stump","spawns":3},{"id":"20","name":"Dark Axe Stump","spawns":11},{"id":"22","name":"Wild Boar","spawns":7}],"npcs":[]},{"id":"10004090","name":"East Domain of Perion","street":"Victoria Road","monsters":[{"id":"2","name":"Snail","spawns":3},{"id":"3","name":"Blue Snail","spawns":15},{"id":"5","name":"Red Snail","spawns":5},{"id":"6","name":"Stump","spawns":8},{"id":"11","name":"Dark Stump","spawns":10},{"id":"13","name":"Green Mushroom","spawns":12},{"id":"15","name":"Axe Stump","spawns":8},{"id":"20","name":"Dark Axe Stump","spawns":10}],"npcs":[]},{"id":"10004091","name":"The Land of Wild Boar II","street":"Hidden Street","monsters":[{"id":"11","name":"Dark Stump","spawns":2},{"id":"15","name":"Axe Stump","spawns":6},{"id":"20","name":"Dark Axe Stump","spawns":2},{"id":"22","name":"Wild Boar","spawns":23}],"npcs":[]},{"id":"10004100","name":"Deep Valley I","street":"Warning Street","monsters":[{"id":"3","name":"Blue Snail","spawns":1},{"id":"5","name":"Red Snail","spawns":15},{"id":"11","name":"Dark Stump","spawns":6},{"id":"15","name":"Axe Stump","spawns":1},{"id":"20","name":"Dark Axe Stump","spawns":8},{"id":"22","name":"Wild Boar","spawns":5},{"id":"30","name":"Fire Boar","spawns":4}],"npcs":[]},{"id":"10004101","name":"Dangerous Valley","street":"Hidden Street","monsters":[{"id":"30","name":"Fire Boar","spawns":21},{"id":"40","name":"Copper Drake","spawns":13}],"npcs":[]},{"id":"10004102","name":"Dangerous Valley II","street":"Hidden Street","monsters":[{"id":"30","name":"Fire Boar","spawns":8},{"id":"40","name":"Copper Drake","spawns":5},{"id":"50","name":"Red Drake","spawns":17}],"npcs":[]},{"id":"10004110","name":"Deep Valley II","street":"Warning Street","monsters":[{"id":"11","name":"Dark Stump","spawns":5},{"id":"15","name":"Axe Stump","spawns":11},{"id":"20","name":"Dark Axe Stump","spawns":5},{"id":"22","name":"Wild Boar","spawns":5},{"id":"30","name":"Fire Boar","spawns":5}],"npcs":[]},{"id":"10004111","name":"The Burnt Land I","street":"Warning Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":7},{"id":"30","name":"Fire Boar","spawns":18}],"npcs":[]},{"id":"10004112","name":"The Burnt Land II","street":"Warning Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":12},{"id":"30","name":"Fire Boar","spawns":19}],"npcs":[]},{"id":"10004113","name":"The Burnt Land III","street":"Warning Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":13},{"id":"30","name":"Fire Boar","spawns":24}],"npcs":[]},{"id":"10004114","name":"The Burnt Land IV","street":"Warning Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":10},{"id":"30","name":"Fire Boar","spawns":21},{"id":"35","name":"Lupin","spawns":14}],"npcs":[]},{"id":"10004115","name":"The Burnt Land V","street":"Warning Street","monsters":[{"id":"20","name":"Dark Axe Stump","spawns":10},{"id":"30","name":"Fire Boar","spawns":26},{"id":"35","name":"Lupin","spawns":12}],"npcs":[]},{"id":"10004120","name":"Deep Valley III","street":"Warning Street","monsters":[{"id":"11","name":"Dark Stump","spawns":10},{"id":"15","name":"Axe Stump","spawns":12},{"id":"20","name":"Dark Axe Stump","spawns":11},{"id":"22","name":"Wild Boar","spawns":7},{"id":"30","name":"Fire Boar","spawns":9}],"npcs":[]},{"id":"10004121","name":"Perion Dungeon Entrance","street":"Warning Street","monsters":[{"id":"11","name":"Dark Stump","spawns":10},{"id":"20","name":"Dark Axe Stump","spawns":15},{"id":"22","name":"Wild Boar","spawns":11},{"id":"30","name":"Fire Boar","spawns":9}],"npcs":[{"id":"513"}]},{"id":"10004130","name":"Excavation Site I","street":"Victoria Road","monsters":[{"id":"39","name":"Ghost Stump","spawns":23},{"id":"42","name":"Wooden Mask","spawns":10}],"npcs":[]},{"id":"10004131","name":"Excavation Site II","street":"Victoria Road","monsters":[{"id":"39","name":"Ghost Stump","spawns":11},{"id":"42","name":"Wooden Mask","spawns":30},{"id":"64","name":"Rocky Mask","spawns":12}],"npcs":[]},{"id":"10004132","name":"Excavation Site III","street":"Victoria Road","monsters":[{"id":"42","name":"Wooden Mask","spawns":8},{"id":"64","name":"Rocky Mask","spawns":17}],"npcs":[]},{"id":"10004133","name":"Excavation Site \u003cCamp>","street":"Victoria Road","monsters":[],"npcs":[{"id":"515"},{"id":"516"},{"id":"517"}]},{"id":"10004134","name":"Remains \u003cTomb> I","street":"Victoria Road","monsters":[{"id":"65","name":"Skeledog","spawns":16},{"id":"66","name":"Mummydog","spawns":7}],"npcs":[]},{"id":"10004135","name":"Remains \u003cTomb> II","street":"Victoria Road","monsters":[{"id":"65","name":"Skeledog","spawns":13},{"id":"66","name":"Mummydog","spawns":10},{"id":"67","name":"Skeleton Soldier","spawns":2}],"npcs":[]},{"id":"10004136","name":"Remains \u003cTomb> III","street":"Victoria Road","monsters":[{"id":"65","name":"Skeledog","spawns":4},{"id":"66","name":"Mummydog","spawns":15},{"id":"67","name":"Skeleton Soldier","spawns":2}],"npcs":[]},{"id":"10004137","name":"Remains \u003cTomb> IV","street":"Victoria Road","monsters":[{"id":"68","name":"Officer Skeleton","spawns":9},{"id":"69","name":"Commander Skeleton","spawns":5}],"npcs":[]},{"id":"10004138","name":"Remains \u003cCliff>","street":"Victoria Road","monsters":[{"id":"68","name":"Officer Skeleton","spawns":3},{"id":"69","name":"Commander Skeleton","spawns":14}],"npcs":[]},{"id":"10004140","name":"Camp 1","street":"Victoria Road","monsters":[{"id":"67","name":"Skeleton Soldier","spawns":20},{"id":"68","name":"Officer Skeleton","spawns":5}],"npcs":[]},{"id":"10004141","name":"Camp 2","street":"Victoria Road","monsters":[{"id":"67","name":"Skeleton Soldier","spawns":12},{"id":"68","name":"Officer Skeleton","spawns":8}],"npcs":[]},{"id":"10004142","name":"Camp 3","street":"Victoria Road","monsters":[{"id":"67","name":"Skeleton Soldier","spawns":6},{"id":"68","name":"Officer Skeleton","spawns":14}],"npcs":[]},{"id":"10005000","name":"Sleepywood","street":"Dungeon","monsters":[],"npcs":[{"id":"602"},{"id":"603"},{"id":"609"},{"id":"604"},{"id":"605"},{"id":"600"},{"id":"800015"}]},{"id":"10005001","name":"Sleepywood Hotel","street":"Dungeon","monsters":[],"npcs":[{"id":"606"}]},{"id":"10005002","name":"Regular Sauna","street":"Dungeon","monsters":[],"npcs":[{"id":"607"}]},{"id":"10005003","name":"VIP Sauna","street":"Dungeon","monsters":[],"npcs":[{"id":"608"}]},{"id":"10005010","name":"Swampy Land in a Deep Forest","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":16},{"id":"11","name":"Dark Stump","spawns":4},{"id":"12","name":"Octopus","spawns":2},{"id":"13","name":"Green Mushroom","spawns":16},{"id":"18","name":"Jr. Necki","spawns":3},{"id":"19","name":"Horny Mushroom","spawns":9}],"npcs":[]},{"id":"10005011","name":"Hunting Ground in the Deep Forest I","street":"Dungeon","monsters":[{"id":"2","name":"Snail","spawns":1},{"id":"7","name":"Slime","spawns":8},{"id":"12","name":"Octopus","spawns":2},{"id":"13","name":"Green Mushroom","spawns":2},{"id":"18","name":"Jr. Necki","spawns":11},{"id":"31","name":"Curse Eye","spawns":11},{"id":"33","name":"Jr. Boogie 1","spawns":1}],"npcs":[]},{"id":"10005012","name":"Hunting Ground in the Deep Forest II","street":"Dungeon","monsters":[{"id":"2","name":"Snail","spawns":1},{"id":"7","name":"Slime","spawns":2},{"id":"19","name":"Horny Mushroom","spawns":16},{"id":"31","name":"Curse Eye","spawns":20},{"id":"35","name":"Lupin","spawns":15}],"npcs":[]},{"id":"10005020","name":"Deep Forest","street":"Dungeon","monsters":[{"id":"2","name":"Snail","spawns":7},{"id":"6","name":"Stump","spawns":4},{"id":"7","name":"Slime","spawns":15},{"id":"11","name":"Dark Stump","spawns":1},{"id":"13","name":"Green Mushroom","spawns":8},{"id":"19","name":"Horny Mushroom","spawns":6},{"id":"20","name":"Dark Axe Stump","spawns":2}],"npcs":[]},{"id":"10005030","name":"Damp Tree-Forest","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":13},{"id":"12","name":"Octopus","spawns":19},{"id":"18","name":"Jr. Necki","spawns":8},{"id":"20","name":"Dark Axe Stump","spawns":6}],"npcs":[]},{"id":"10005031","name":"Damp Forest","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":2},{"id":"12","name":"Octopus","spawns":15},{"id":"18","name":"Jr. Necki","spawns":11}],"npcs":[]},{"id":"10005040","name":"The Deep Forest of Patience \u003cStep 1>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"}]},{"id":"10005041","name":"The Deep Forest of Patience \u003cStep 2>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"},{"id":"611"}]},{"id":"10005042","name":"The Deep Forest of Patience \u003cStep 3>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"}]},{"id":"10005043","name":"The Deep Forest of Patience \u003cStep 4>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"},{"id":"612"}]},{"id":"10005044","name":"The Deep Forest of Patience \u003cStep 5>","street":"Hidden Street","monsters":[{"id":"90","name":"Super Jr. Necki","spawns":5},{"id":"91","name":"Super Slime","spawns":11}],"npcs":[{"id":"610"},{"id":"610"}]},{"id":"10005045","name":"The Deep Forest of Patience \u003cStep 6>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"}]},{"id":"10005046","name":"The Deep Forest of Patience \u003cStep 7>","street":"Hidden Street","monsters":[],"npcs":[{"id":"610"},{"id":"613"}]},{"id":"10005050","name":"Sleepy Dungeon I","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":4},{"id":"12","name":"Octopus","spawns":2},{"id":"13","name":"Green Mushroom","spawns":4},{"id":"18","name":"Jr. Necki","spawns":1},{"id":"19","name":"Horny Mushroom","spawns":10},{"id":"31","name":"Curse Eye","spawns":2},{"id":"35","name":"Lupin","spawns":2}],"npcs":[{"id":"616"}]},{"id":"10005051","name":"Sleepy Dungeon II","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":9},{"id":"13","name":"Green Mushroom","spawns":7},{"id":"18","name":"Jr. Necki","spawns":5},{"id":"19","name":"Horny Mushroom","spawns":9},{"id":"20","name":"Dark Axe Stump","spawns":7},{"id":"31","name":"Curse Eye","spawns":2},{"id":"35","name":"Lupin","spawns":10}],"npcs":[]},{"id":"10005052","name":"Sleepy Dungeon III","street":"Dungeon","monsters":[{"id":"18","name":"Jr. Necki","spawns":4},{"id":"31","name":"Curse Eye","spawns":19},{"id":"33","name":"Jr. Boogie 1","spawns":1},{"id":"35","name":"Lupin","spawns":12},{"id":"49","name":"Dark Stone Golem","spawns":9}],"npcs":[]},{"id":"10005053","name":"Sleepy Dungeon IV","street":"Dungeon","monsters":[{"id":"18","name":"Jr. Necki","spawns":3},{"id":"31","name":"Curse Eye","spawns":14},{"id":"33","name":"Jr. Boogie 1","spawns":3},{"id":"34","name":"Jr. Boogie 2","spawns":3},{"id":"49","name":"Dark Stone Golem","spawns":7}],"npcs":[]},{"id":"10005054","name":"Sleepy Dungeon V","street":"Dungeon","monsters":[{"id":"7","name":"Slime","spawns":4},{"id":"18","name":"Jr. Necki","spawns":9},{"id":"31","name":"Curse Eye","spawns":23},{"id":"33","name":"Jr. Boogie 1","spawns":5},{"id":"34","name":"Jr. Boogie 2","spawns":5},{"id":"35","name":"Lupin","spawns":23},{"id":"49","name":"Dark Stone Golem","spawns":19}],"npcs":[]},{"id":"10005060","name":"Ant Tunnel I","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":15},{"id":"21","name":"Zombie Mushroom","spawns":11}],"npcs":[]},{"id":"10005061","name":"Ant Tunnel II","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":15},{"id":"21","name":"Zombie Mushroom","spawns":32}],"npcs":[]},{"id":"10005062","name":"Ant Tunnel III","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":38},{"id":"21","name":"Zombie Mushroom","spawns":61}],"npcs":[]},{"id":"10005063","name":"Ant Tunnel IV","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":41},{"id":"21","name":"Zombie Mushroom","spawns":23}],"npcs":[]},{"id":"10005064","name":"Dark Cave","street":"Dungeon","monsters":[{"id":"17","name":"Stirge","spawns":35},{"id":"19","name":"Horny Mushroom","spawns":9},{"id":"21","name":"Zombie Mushroom","spawns":7}],"npcs":[]},{"id":"10005065","name":"Dangerous Steam","street":"Dungeon","monsters":[{"id":"17","name":"Stirge","spawns":38},{"id":"19","name":"Horny Mushroom","spawns":5},{"id":"21","name":"Zombie Mushroom","spawns":6}],"npcs":[]},{"id":"10005066","name":"Deep Ant Tunnel I","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":16},{"id":"21","name":"Zombie Mushroom","spawns":29},{"id":"23","name":"Evil Eye","spawns":21},{"id":"34","name":"Jr. Boogie 2","spawns":2}],"npcs":[]},{"id":"10005067","name":"Deep Ant Tunnel II","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":9},{"id":"21","name":"Zombie Mushroom","spawns":9},{"id":"23","name":"Evil Eye","spawns":16}],"npcs":[]},{"id":"10005070","name":"Ant Tunnel Park","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":4},{"id":"21","name":"Zombie Mushroom","spawns":23},{"id":"23","name":"Evil Eye","spawns":31}],"npcs":[{"id":"614"}]},{"id":"10005071","name":"The Cave of Evil Eye I","street":"Dungeon","monsters":[{"id":"23","name":"Evil Eye","spawns":19},{"id":"34","name":"Jr. Boogie 2","spawns":2}],"npcs":[]},{"id":"10005072","name":"The Cave of Evil Eye II","street":"Dungeon","monsters":[{"id":"23","name":"Evil Eye","spawns":36},{"id":"34","name":"Jr. Boogie 2","spawns":2}],"npcs":[]},{"id":"10005073","name":"The Cave of Evil Eye III","street":"Dungeon","monsters":[{"id":"23","name":"Evil Eye","spawns":38},{"id":"34","name":"Jr. Boogie 2","spawns":2}],"npcs":[]},{"id":"10005074","name":"The Cave of Evil Eye IV","street":"Dungeon","monsters":[{"id":"23","name":"Evil Eye","spawns":23},{"id":"34","name":"Jr. Boogie 2","spawns":2}],"npcs":[]},{"id":"10005075","name":"Drake Hunting Ground","street":"Dungeon","monsters":[{"id":"19","name":"Horny Mushroom","spawns":2},{"id":"34","name":"Jr. Boogie 2","spawns":2},{"id":"45","name":"Drake","spawns":18}],"npcs":[]},{"id":"10005076","name":"The Tunnel That Lost Light I","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":32},{"id":"45","name":"Drake","spawns":20}],"npcs":[]},{"id":"10005077","name":"The Tunnel That Lost Light II","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":25},{"id":"45","name":"Drake","spawns":15},{"id":"51","name":"Wild Kargo","spawns":7}],"npcs":[]},{"id":"10005078","name":"The Grave of Mushmom","street":"Dungeon","monsters":[{"id":"21","name":"Zombie Mushroom","spawns":13},{"id":"34","name":"Jr. Boogie 2","spawns":2},{"id":"700002","name":"Zombie Mushmom","spawns":1}],"npcs":[]},{"id":"10005080","name":"Another Entrance","street":"Dungeon","monsters":[],"npcs":[]},{"id":"10005090","name":"Drake's Meal Table","street":"Dungeon","monsters":[{"id":"2","name":"Snail","spawns":1},{"id":"37","name":"Cold Eye","spawns":22},{"id":"45","name":"Drake","spawns":23},{"id":"51","name":"Wild Kargo","spawns":10}],"npcs":[]},{"id":"10005091","name":"Wild Kargo's Area","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":17},{"id":"51","name":"Wild Kargo","spawns":14}],"npcs":[]},{"id":"10005100","name":"Another Path","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":23}],"npcs":[]},{"id":"10005101","name":"Sanctuary Entrance I","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":13},{"id":"52","name":"Tauromacis","spawns":4}],"npcs":[]},{"id":"10005102","name":"Sanctuary Entrance II","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":15},{"id":"52","name":"Tauromacis","spawns":4}],"npcs":[]},{"id":"10005103","name":"Sanctuary Entrance III","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":8},{"id":"52","name":"Tauromacis","spawns":2},{"id":"53","name":"Taurospear","spawns":4}],"npcs":[]},{"id":"10005104","name":"Sanctuary Entrance IV","street":"Dungeon","monsters":[{"id":"37","name":"Cold Eye","spawns":5},{"id":"52","name":"Tauromacis","spawns":2},{"id":"53","name":"Taurospear","spawns":5}],"npcs":[]},{"id":"10005105","name":"The Cursed Sanctuary","street":"Dungeon","monsters":[{"id":"700001","name":"Jr. Balrog","spawns":1}],"npcs":[]},{"id":"10006121","name":"Someone Else's Grave","street":"Hidden Street","monsters":[{"id":"21","name":"Zombie Mushroom","spawns":2},{"id":"27","name":"Fairy 3","spawns":1},{"id":"62","name":"Rotten Mushroom","spawns":4},{"id":"700003","name":"Rotten Mushmom","spawns":1}],"npcs":[]},{"id":"10007000","name":"Florina Beach","street":"Florina Road","monsters":[],"npcs":[{"id":"802"},{"id":"800"},{"id":"801"},{"id":"803"},{"id":"804"}]},{"id":"10007010","name":"A Look-Out Shed Around the Beach","street":"Florina Road","monsters":[{"id":"35","name":"Lupin","spawns":27},{"id":"36","name":"Lorang","spawns":36}],"npcs":[]},{"id":"10007020","name":"Lorang Lorang","street":"Florina Road","monsters":[{"id":"35","name":"Lupin","spawns":5},{"id":"36","name":"Lorang","spawns":35}],"npcs":[]},{"id":"10007021","name":"Lorang Lorang Lorang","street":"Hidden Street","monsters":[{"id":"36","name":"Lorang","spawns":17},{"id":"41","name":"Tortie","spawns":6}],"npcs":[]},{"id":"10007030","name":"Lorang and Clang","street":"Florina Road","monsters":[{"id":"36","name":"Lorang","spawns":18},{"id":"44","name":"Clang","spawns":29}],"npcs":[]},{"id":"10007031","name":"Clang and Lorang","street":"Florina Road","monsters":[{"id":"36","name":"Lorang","spawns":8},{"id":"41","name":"Tortie","spawns":6},{"id":"44","name":"Clang","spawns":17}],"npcs":[]},{"id":"10007040","name":"Hot Sand","street":"Florina Road","monsters":[{"id":"41","name":"Tortie","spawns":25},{"id":"44","name":"Clang","spawns":13}],"npcs":[]}],"quests":[{"npc":"Heena","name":"Borrowing Sera's Mirror"},{"npc":"Olaf","name":"Olaf's First Training"},{"npc":"Phil","name":"Phil's Call"},{"npc":"Jane","name":"Jane and the Mushroom"},{"npc":"Jane","name":"Jane's First Challenge"},{"npc":"Jane","name":"Jane's Second Challenge"},{"npc":"Jane","name":"Jane's Final Challenge"},{"npc":"John","name":"[Deep Forest of Patience] John's Pink Flower Basket"},{"npc":"John","name":"[Deep Forest of Patience] John's Present"},{"npc":"John","name":"[Deep Forest of Patience] John's Last Present"},{"npc":"Olaf","name":"Olaf's Second Training"},{"npc":"Sera","name":"Bringing a Mirror to Heena"},{"npc":"Teo","name":"Teo's Weird Hobby"},{"npc":"Teo","name":"Teo's Even Weirder Hobby"},{"npc":"Roger","name":"Roger's Apple"},{"npc":"Nina","name":"What Sen wants to eat"},{"npc":"Sen","name":"Returning to Nina"},{"npc":"Todd","name":"Todd's How-to-Hunt"},{"npc":"Sam","name":"Sam's Suggestion"},{"npc":"Maria","name":"Letter for Lucas"},{"npc":"Lucas","name":"Lucas's Reply"},{"npc":"Mai","name":"Mai's Training"},{"npc":"Mai","name":"Mai's Final Training"},{"npc":"Mrs. Ming Ming","name":"Mrs. Ming Ming's First Worry"},{"npc":"Mrs. Ming Ming","name":"Mrs. Ming Ming's Second Worry"},{"npc":"Estelle","name":"Estelle's Request"},{"npc":"Estelle","name":"Estelle's Special Sauce"},{"npc":"Pia","name":"Pia and the Blue Mushroom"},{"npc":"Camila","name":"Camila's Gem"},{"npc":"Maya","name":"Maya of Henesys"},{"npc":"Teo","name":"Finding Sophia"},{"npc":"Sophia","name":"Making a Sparkling Rock"},{"npc":"Manji","name":"Arcon's Blood?"},{"npc":"Biggs","name":"Biggs's Collection of Items"},{"npc":"Manji","name":"Getting Arcon's Blood"},{"npc":"Sophia","name":"Making Sparkling Rock"},{"npc":"Teo","name":"Delivering the Weird Medicine"},{"npc":"Luke","name":"Luke the Security Guy"},{"npc":"Luke","name":"Luke the Security Guy's Wish to Travel"},{"npc":"Maya","name":"Maya's First Collection"},{"npc":"Maya","name":"Maya's Second Collection"},{"npc":"Maya","name":"Maya's Third Collection"},{"npc":"Maya","name":"Maya's Last Collection"},{"npc":"Pia","name":"Pia's Present For a Friend"},{"npc":"Pio","name":"Pio's Collecting Recycled Goods"},{"npc":"Pia","name":"Looking for the Red Cape"},{"npc":"Rina","name":"What Pia Borrowed"},{"npc":"Rina","name":"Pia's Gift"},{"npc":"Bruce","name":"The Reason Behind the Mushroom Studies"},{"npc":"Bruce","name":"I Need to Find My Daughter 1"},{"npc":"Ayan","name":"I Need to Find My Daughter 2"},{"npc":"Pia","name":"The Old Snail"},{"npc":"Mrs. Ming Ming","name":"Hero of the Story"},{"npc":"Wing the Fairy","name":"Snail Hunt"},{"npc":"Wing the Fairy","name":"What I Learned About Snails"},{"npc":"Rain","name":"Rain's Maple Quiz 1"},{"npc":"Pia","name":"A rainbow snail shell that makes wishes come true!?"},{"npc":"Rain","name":"Rain's Maple Quiz 2"},{"npc":"Rain","name":"Rain's Maple Quiz 3"},{"npc":"Rain","name":"Rain's Maple Quiz 4"},{"npc":"Rain","name":"Rain's Maple Quiz 5"},{"npc":"Rain","name":"Rain's Maple Quiz 6"},{"npc":"Rain","name":"Rain's Maple Quiz 7"},{"npc":"Arwen the Fairy","name":"Arwen and the Glass Shoe"},{"npc":"Rowen the Fairy","name":"Collecting 50 Cursed Dolls"},{"npc":"Rowen the Fairy","name":"Collecting 70 Cursed Dolls"},{"npc":"Rowen the Fairy","name":"Collecting 100 Cursed Dolls"},{"npc":"Rowen the Fairy","name":"Collecting 150 Cursed Dolls"},{"npc":"Rowen the Fairy","name":"Collecting 200 Cursed Dolls"},{"npc":"Ronnie","name":"First Material Delivery for Building a New House"},{"npc":"Ronnie","name":"Second Material Delivery for Building a New House"},{"npc":"Ronnie","name":"Third Material Delivery for Building a New House"},{"npc":"Ronnie","name":"Last Material Delivery for Building a New House"},{"npc":"Wing the Fairy","name":"I Need Help on My Homework!"},{"npc":"Shane","name":"How to Enjoy Mushrooms"},{"npc":"Shane","name":"How to Enjoy Mushrooms Even More"},{"npc":"Lyn the Librarian","name":"The Filing Error"},{"npc":"Chief Stan","name":"Chief Stan's Signature"},{"npc":"Manji","name":"Repairing the Book"},{"npc":"Chrishrama","name":"The Faded Ink"},{"npc":"Dark Lord","name":"The Dark Lord's Signature"},{"npc":"Grendel the Really Old","name":"We Hold Your Place"},{"npc":"Alex","name":"Alex's Request"},{"npc":"Chief Stan","name":"Talking to Stan"},{"npc":"Chief Stan","name":"Mother's Gold Watch"},{"npc":"Nella","name":"Don Hwang's Request"},{"npc":"Nella","name":"Shumi's Request"},{"npc":"Nella","name":"Andre's Request"},{"npc":"Nella","name":"Dr. Faymus's Request"},{"npc":"Nella","name":"Chris's Request"},{"npc":"Nella","name":"Cutthroat Manny's Request"},{"npc":"Jane Doe","name":"Stranger's Request"},{"npc":"Jane Doe","name":"Stranger's Identity"},{"npc":"Lakelis","name":"Proof of Companionship"},{"npc":"Shumi","name":"[Construction Site B1] Shumi's Lost Coin"},{"npc":"Shumi","name":"[Construction Site B2] Shumi's Lost Roll of Cash"},{"npc":"Shumi","name":"[Construction Site B3] Shumi's Lost Sack of Cash"},{"npc":"Icarus","name":"I'm Bored 1"},{"npc":"Icarus","name":"I'm Bored 2"},{"npc":"Icarus","name":"Icarus's Hang Glider"},{"npc":"Icarus","name":"Icarus and the Balloon"},{"npc":"Icarus","name":"In search of Wing the Fairy"},{"npc":"Wing the Fairy","name":"The Ingredients for the Flying Medicine"},{"npc":"Wing the Fairy","name":"Delivering the Flying Medicine"},{"npc":"Blackbull","name":"Fixing Blackbull's House"},{"npc":"Blackbull","name":"Building a New House For Blackbull"},{"npc":"Manji","name":"Old Gladius"},{"npc":"Chrishrama","name":"Reawakening the Gladius"},{"npc":"Chrishrama","name":"Hero's Gladius"},{"npc":"Winston","name":"Searching for Fossils"},{"npc":"Winston","name":"Delivering a Box of Fossils"},{"npc":"Betty","name":"Research on Plant Fossils"},{"npc":"Betty","name":"Research on Animal Fossils"},{"npc":"Anne","name":"Transporting Drake's Skull"},{"npc":"Betty","name":"Progress on Fossil Research"},{"npc":"Ayan","name":"The Stump Horror Story"},{"npc":"Ayan","name":"Taking Out the Alligators 1"},{"npc":"Ayan","name":"Taking Out the Alligators 2"},{"npc":"Winston","name":"Truth of the Rumor"},{"npc":"Blackbull","name":"Truth of the Rumor-Blackbull"},{"npc":"Ayan","name":"Truth of the Rumor-Manji"},{"npc":"Manji","name":"Truth of the Rumor- Dances with Balrog"},{"npc":"Dances with Balrog","name":"Truth of the Rumor-Betty"},{"npc":"Betty","name":"A Report for the Doctor"},{"npc":"Winston","name":"Stump Research"},{"npc":"Winston","name":"Monstrous Tree Stumpy"},{"npc":"Mr. Wetbottom","name":"A Clue to the Secret Book"},{"npc":"Ronnie","name":"Hungry Ronnie"},{"npc":"Ronnie","name":"Still Hungry Ronnie"},{"npc":"Rina","name":"Secret to Unagi Special"},{"npc":"Rina","name":"Rina's Unagi Special"},{"npc":"Ronnie","name":"Thirsty Ronnie"},{"npc":"Rowen the Fairy","name":"Cold Milk"},{"npc":"Rowen the Fairy","name":"Satisfied Ronnie"},{"npc":"Ronnie","name":"Returned Secret Book"},{"npc":"Sabitrama","name":"[Forest of Patience] Sabitrama and the Diet Medicine"},{"npc":"Sabitrama","name":"[Forest of Patience] Sabitrama's Anti-Aging Medicine"},{"npc":"Nyroth","name":"Matters of the Heart"},{"npc":"Jaime the Wandering Explorer","name":"A Memory of Iron"},{"npc":"Daniel the Scholar","name":"A Heart of Stillness and Wood"},{"npc":"Daniel the Scholar","name":"The Sage's Burden"},{"npc":"Tamya","name":"Embers in the Garden"},{"npc":"Tamya","name":"Words Nobody Taught"},{"npc":"Daniel the Scholar","name":"Boughs for the Lanterns"},{"npc":"Jaime the Wandering Explorer","name":"Charms Gone Gray"},{"npc":"Jaime the Wandering Explorer","name":"The Dilapidated Tomb"},{"npc":"Daniel the Scholar","name":"The Last Lantern"},{"npc":"Riel","name":"Special Taste of Florina Beach I"},{"npc":"Riel","name":"Special Taste of Florina Beach II"},{"npc":"Riel","name":"Special Taste of Florina Beach III"},{"npc":"Riel","name":"Special Taste of Florina Beach IV"},{"npc":"Dances with Balrog","name":"The Warrior's Next Journey"},{"npc":"Dances with Balrog","name":"Finding the Instructor"},{"npc":"Warrior Job Instructor","name":"Test of Qualification"},{"npc":"Warrior Job Instructor","name":"Proof of Qualification"},{"npc":"Grendel the Really Old","name":"The Magician's Next Journey"},{"npc":"Grendel the Really Old","name":"Finding the Instructor"},{"npc":"Magician Job Instructor","name":"Test of Qualification"},{"npc":"Magician Job Instructor","name":"Proof of Qualification"},{"npc":"Athena Pierce","name":"The Bowman's Next Journey"},{"npc":"Athena Pierce","name":"Finding the Instructor"},{"npc":"Bowman Job Instructor","name":"Test of Qualification"},{"npc":"Bowman Job Instructor","name":"Proof of Qualification"},{"npc":"Dark Lord","name":"The Thief's Next Journey"},{"npc":"Dark Lord","name":"Finding the Instructor"},{"npc":"Thief Job Instructor","name":"Test of Qualification"},{"npc":"Thief Job Instructor","name":"Proof of Qualification"},{"npc":"Arwen the Fairy","name":"[Event] A Strange and Familiar Wood"},{"npc":"Arwen the Fairy","name":"[Event] Beyond the Unknown"},{"npc":"Grendel the Really Old","name":"[Event] The One Who Sealed the Darkness"},{"npc":"Maple Administrator","name":"[Event] Gathering Leaves "},{"npc":"Maple Administrator","name":"[Event] Gift for the New Journey"},{"npc":"Betty","name":"[Event] A New Adventure Awaits"},{"npc":"Maple Administrator","name":"[Event] Growing Leaf"},{"npc":"Malady","name":"[Event] Halloween Candies"},{"npc":"Malady","name":"[Event] Trick or Treat!"},{"npc":"Community Board","name":"First Greeting with Rina, the Town Resident"},{"npc":"Community Board","name":"Asking After Rina, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Mrs. Ming Ming, the Town Resident"},{"npc":"Community Board","name":"Asking After Mrs. Ming Ming, the Town Resident."},{"npc":"Community Board","name":"First Greeting with Camila, the Town Resident"},{"npc":"Community Board","name":"Asking After Camila, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Bruce, the Town Resident"},{"npc":"Community Board","name":"Asking After Bruce, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Maya, the Town Resident"},{"npc":"Community Board","name":"Asking After Maya, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Pia, the Town Resident"},{"npc":"Community Board","name":"Asking After Pia, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Anne, the Town Resident"},{"npc":"Community Board","name":"Asking After Anne, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Chief Stan"},{"npc":"Community Board","name":"Asking After Chief Stan"},{"npc":"Community Board","name":"First Greeting with Athena Pierce"},{"npc":"Community Board","name":"Asking After Athena Pierce"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Community Board","name":"Donating to Henesys"},{"npc":"Bruce","name":"Bruce's Dilemma"},{"npc":"Mrs. Ming Ming","name":"Mrs. Ming Ming's Advice"},{"npc":"Bruce","name":"Bruce's Cooking Ingredients"},{"npc":"Bruce","name":"A Father's Love for His Daughter"},{"npc":"Ayan","name":"The Best Dad"},{"npc":"Mrs. Ming Ming","name":"Mrs. Ming Ming's Concern"},{"npc":"Jay","name":"Chief Stan's Past"},{"npc":"Mrs. Ming Ming","name":"Chief Stan's Hammer"},{"npc":"Mrs. Ming Ming","name":"Memories of Youth"},{"npc":"Chief Stan","name":"Regained Vitality"},{"npc":"Camila","name":"A Gift for Pia"},{"npc":"Pia","name":"Pia's Mischievous Wish"},{"npc":"Camila","name":"Materials for a Special Marble"},{"npc":"Camila","name":"A Marble Made With Care"},{"npc":"Pia","name":"A Promise Between Three Friends"},{"npc":"Maya","name":"An Unknown Savior"},{"npc":"Maya","name":"A Name on a Note"},{"npc":"Chrishrama","name":"A Price to Pay"},{"npc":"Chrishrama","name":"A Man Atoning"},{"npc":"Manji","name":"A Name Never Given"},{"npc":"Athena Pierce","name":"A Box Hidden Long Ago"},{"npc":"Athena Pierce","name":"A Worn-Out Bow"},{"npc":"Vicious","name":"A Craftsman's Touch"},{"npc":"Vicious","name":"A Memory Restored"},{"npc":"Arthur","name":"The Right to Own a Home"},{"npc":"Tommy","name":"Looking for a House"},{"npc":"Arthur","name":"To the Gray City, Kerning City"},{"npc":"Community Board","name":"First Greeting with Alex, the Town Resident"},{"npc":"Community Board","name":"Asking After Alex, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Shumi, the Town Resident"},{"npc":"Community Board","name":"Asking After Shumi, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Nella, the Town Resident"},{"npc":"Community Board","name":"Asking After Nella, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Icarus, the Town Resident"},{"npc":"Community Board","name":"Asking After Icarus, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Jane Doe, the Town Resident"},{"npc":"Community Board","name":"Asking After Jane Doe, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Jake, the Town Resident"},{"npc":"Community Board","name":"Asking After Jake, the Town Resident"},{"npc":"Community Board","name":"First Greeting with Mr. Pickall, the Town Resident"},{"npc":"Community Board","name":"Asking After Mr. Pickall, the Town Resident "},{"npc":"Community Board","name":"First Greeting with Chun Ji "},{"npc":"Community Board","name":"Asking After Chun Ji "},{"npc":"Community Board","name":"First Greeting with Dark Lord"},{"npc":"Community Board","name":"Asking After Dark Lord"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Community Board","name":"Donating to Kerning City"},{"npc":"Jake","name":"Stirge Phobia"},{"npc":"Mong from Kong","name":"Making the Medicine"},{"npc":"Mong from Kong","name":"The Final Ingredient for the Cure"},{"npc":"Mr. Goldstein","name":"Grandfather's Vitamin Gummy"},{"npc":"Mong from Kong","name":"It's All in the Mind"},{"npc":"Alex","name":"A Lost Thank-You"},{"npc":"Alex","name":"Too Shy to Say It Himself"},{"npc":"Nella","name":"Nella's Old Memory"},{"npc":"Alex","name":"One More Debt to Repay"},{"npc":"JM From tha Streetz","name":"Not Ready to Go Home Yet"},{"npc":"Jane Doe","name":"Worn Bandages"},{"npc":"Jane Doe","name":"A Torn Letter"},{"npc":"Roxy","name":"Once a Renowned Doctor"},{"npc":"Nella","name":"The Price of Information"},{"npc":"Nella","name":"A Truth Finally Known"},{"npc":"Chun Ji","name":"A Quiet Line of Work"},{"npc":"Chun Ji","name":"Another Lead"},{"npc":"Roxy","name":"A Name She Couldn't Say"},{"npc":"Jane Doe","name":"An Old Grudge"},{"npc":"Roxy","name":"An Unresolved Question"},{"npc":"Dark Lord","name":"A Missing Comrade "},{"npc":"Dark Lord","name":"An Unbreakable Code"},{"npc":"Slade","name":"What It Takes"},{"npc":"Slade","name":"The Weight of Truth"},{"npc":"Roxy","name":"The Right to Own a Home"},{"npc":"Jack","name":"Looking for a House"},{"npc":"Maple Administrator","name":"[Event] Founder's First Step"},{"npc":"Maple Administrator","name":"[Event] The Journey Begins"},{"npc":"Jay","name":"[Event] The Marks We Leave Behind"},{"npc":"Jay","name":"[Event] The First Mark"},{"npc":"Jay","name":"[Event] The Second Mark"},{"npc":"Jay","name":"[Event] The Third Mark"},{"npc":"Jay","name":"[Event] The Fourth Mark"},{"npc":"Jay","name":"[Event] The Fifth Mark"},{"npc":"Jay","name":"[Event] The Final Mark"},{"npc":"Maple Administrator","name":"Midnight Rest Quest"},{"npc":"Casey","name":"Make a Match Cards Set"},{"npc":"Casey","name":"Make a Slime & Mushroom Omok Set"},{"npc":"Casey","name":"Make a Slime & Pig Omok Set"},{"npc":"Casey","name":"Make a Slime & Octopus Omok Set"},{"npc":"Casey","name":"Make a Pig & Mushroom Omok Set"},{"npc":"Casey","name":"Make a Octopus & Mushroom Omok Set"},{"npc":"Casey","name":"Make a Pig & Octopus Omok Set"},{"npc":"Silas Irons","name":"Silas Irons in Need of an Apprentice"},{"npc":"Silas Irons","name":"A Blacksmith in My Own Right!"},{"npc":"Silas Irons","name":"Silas Irons in Need of Help"},{"npc":"Mr. Thunder","name":"Mr. Thunder in Need of an Apprentice"},{"npc":"Mr. Thunder","name":"A Weaponcrafter in My Own Right!"},{"npc":"Mr. Thunder","name":"Mr. Thunder in Need of Help"},{"npc":"Francois","name":"Francois in Need of an Apprentice"},{"npc":"Francois","name":"A Tailor in My Own Right!"},{"npc":"Francois","name":"Francois in Need of Help"},{"npc":"Vicious","name":"Vicious in Need of an Apprentice"},{"npc":"Vicious","name":"A Carpenter in My Own Right!"},{"npc":"Vicious","name":"Vicious in Need of Help"},{"npc":"JM From tha Streetz","name":"JM From tha Streetz Looking for a Partner"},{"npc":"JM From tha Streetz","name":"A Leatherworker in My Own Right!"},{"npc":"JM From tha Streetz","name":"JM From tha Streetz in Need of Help"},{"npc":"Chrishrama","name":"Chrishrama in Need of an Apprentice"},{"npc":"Chrishrama","name":"An Arcforger in My Own Right!"},{"npc":"Chrishrama","name":"Chrishrama in Need of Help"},{"npc":"Lewis","name":"Welcome to the Free Market!"},{"npc":"Chief Stan","name":"Chief Stan's Reply"},{"npc":"Lewis","name":"Asking Perion for Help"},{"npc":"Dances with Balrog","name":"Dances with Balrog's Reply"}]};
+  const engine=MapleLookEngine.create({look:DATA.look,catalogUrl:DATA.catalog});
+  const maps=DATA.maps,mapOf=id=>maps.find(m=>m.id===String(id));
+  // To the app: WKWebView's message handler (Mac), the DevTools binding lookProgress (Windows).
+  const post=m=>{try{scope.webkit?.messageHandlers?.look?.postMessage(m);}catch(_){}try{if(typeof scope.lookProgress==='function')scope.lookProgress(JSON.stringify(m));}catch(_){}};
+  let catalog=null,prices=new Map();
+  const nameKey=n=>String(n).normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
+  async function loadCatalog(){
+    if(catalog)return catalog;
+    const r=await fetch(DATA.catalog);if(!r.ok)throw Error('The database did not load.');
+    const data=await r.json();catalog={by:new Map((data.entities||[]).map(e=>[e.type+':'+e.id,e])),commit:data.sourceCommit||DATA.sourceCommit};
+    return catalog;
+  }
+  // Prices: the site's copy of the player market (refreshed hourly), checked every 10 minutes.
+  let pricesAt=0;
+  async function loadPrices(){
+    if(Date.now()-pricesAt<600000)return;
+    try{const r=await fetch('./data/market.json',{cache:'no-cache'});if(r.ok){const d=await r.json();prices=new Map((d.items||[]).map(i=>[nameKey(i.name),i]));pricesAt=Date.now();}}catch(_){}
+  }
+  const env=()=>({catalog,mapOf,quests:DATA.quests||[],priceOf:e=>prices.get(nameKey(e.name))||null});
+  const mapInfo=id=>{const m=mapOf(id);return m?{id:m.id,name:m.name,monsters:(m.monsters||[]).map(x=>({id:String(x.id),name:x.name})),npcs:(m.npcs||[]).map(x=>({id:String(x.id)}))}:null;};
+  function stageText(p){
+    if(p.stage==='download')return 'Getting Look ready ('+p.done+'/'+p.total+')…';
+    if(p.stage==='detector')return 'Finding monsters, NPCs and items…';
+    if(p.stage==='naming')return 'Naming '+(p.done+1)+' of '+p.total+'…';
+    if(p.stage==='items')return 'Checking '+(p.done+1)+' of '+p.total+'…';
+    return 'Looking…';
+  }
+  async function decode(jpeg){
+    const bytes=Uint8Array.from(atob(jpeg),c=>c.charCodeAt(0)),bmp=await createImageBitmap(new Blob([bytes],{type:'image/jpeg'}));
+    const c=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(bmp.width,bmp.height):Object.assign(document.createElement('canvas'),{width:bmp.width,height:bmp.height});
+    const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0);bmp.close?.();return x.getImageData(0,0,c.width,c.height);
+  }
+  let queue=Promise.resolve();
+  function analyze({jpeg,lines=[],map=null,mark=null}){
+    // One look at a time (a second waits for the first).
+    const run=queue.then(async()=>{
+      const [image]=await Promise.all([decode(jpeg),loadCatalog(),loadPrices()]);
+      const L=(lines||[]).map(l=>Array.isArray(l)?{text:String(l[0]),x:+l[1],y:+l[2],w:+l[3],h:+l[4]}:l);
+      const whole=!mark||mark.w>.98&&mark.h>.98,region=whole?null:{x:mark.x*image.width,y:mark.y*image.height,w:mark.w*image.width,h:mark.h*image.height};
+      let last=0;
+      const r=await engine.analyze({image,lines:L,map:mapInfo(map)},region,p=>{const t=Date.now();if(t-last>200){last=t;post({progress:stageText(p)});}});
+      // The phone's view needs the things (with their boxes), not the pictures behind them.
+      const result={found:r.found,players:r.players,player:r.player,mapId:r.mapId,drops:r.drops,w:image.width,h:image.height};
+      return {card:MapleLookCard.card(r,whole?'Around you':'In the box',env()),result};
+    });
+    queue=run.catch(()=>{});
+    return run;
+  }
+  scope.MapleLookHost={ready:()=>Promise.all([loadCatalog(),loadPrices()]).then(()=>true),analyze,prefetch:()=>engine.prefetch()};
+  // Everything Look compares against, into this web view's cache, right away.
+  void engine.prefetch();
+  post({ready:true});
+})(globalThis);
+
+</script>
+</body></html>
