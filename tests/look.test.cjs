@@ -79,6 +79,15 @@ function image(w,h,paint){const data=new Uint8ClampedArray(w*h*4);for(let y=0;y<
   const itemBox=[{cls:'item',score:.8,box:{x:300,y:100,w:30,h:30},items:[{id:'1007142',p:.98}]}];
   assert.deepEqual(L.identify({image:screen,detections:itemBox,lines:[],k,thumbs:{cell:16,per:1,ids:[],sheet:image(16,16,()=>[0,0,0,0])},itemIcon:()=>null,itemName:id=>id==='1007142'?'Bunny Ears':id}).found.map(f=>[f.name,f.via]),[['Bunny Ears','namer']]);
   assert.deepEqual(L.identify({image:screen,detections:[{...itemBox[0],items:[{id:'1007142',p:.6}]}],lines:[],k,thumbs:{cell:16,per:1,ids:[],sheet:image(16,16,()=>[0,0,0,0])},itemIcon:()=>null,itemName:id=>id}).found,[],'not when unsure');
+  // A window's last item alone in its row still counts as in the window (equipment allowed);
+  // the same item alone on the ground does not (only Use and Etc items are dropped there).
+  const slotAt=(x,y,id)=>({cls:'item',score:.8,box:{x,y,w:30,h:30},items:[{id,p:.98}]});
+  const noThumbs={cell:16,per:1,ids:[],sheet:image(16,16,()=>[0,0,0,0])},ground=new Set(['2000000']);
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647,busy=image(800,450,()=>[rnd()*255,rnd()*255,rnd()*255]);
+  const grid=[slotAt(500,100,'1040000'),slotAt(500,138,'1040000'),slotAt(538,100,'1040000'),slotAt(500,176,'1040000'),slotAt(500,214,'1002000')];
+  const g=L.identify({image:busy,detections:grid,lines:[],k,thumbs:noThumbs,groundItems:ground,itemIcon:()=>null,itemName:id=>id});
+  assert(g.found.some(f=>f.id==='1002000'),'the last slot, alone in its row: '+JSON.stringify(g.found.map(f=>f.id)));
+  assert.deepEqual(L.identify({image:busy,detections:[slotAt(500,214,'1002000')],lines:[],k,thumbs:noThumbs,groundItems:ground,itemIcon:()=>null,itemName:id=>id}).found,[],'equipment alone on the ground');
   console.log('look: naming the detector\'s boxes passes');
 }
 // Items anywhere (inventory, shops): the shortlist over 16x16 thumbnails picks the right icon,

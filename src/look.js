@@ -280,9 +280,9 @@
   // ways; each item keeps its best score.
   // allow: item ids that may be considered (null: any).
   // In a window's slot the game draws over the icon's corners: the cash badge (a red "C") at the
-  // bottom right, the count at the bottom left. Those parts are left out of the comparison
-  // (fractions of the box / of the icon).
-  const SLOT_COVER=[{x0:.52,y0:.5,x1:1,y1:1},{x0:0,y0:.58,x1:.34,y1:1}];
+  // bottom right, the count at the bottom left, the timer of an item that expires (a small clock)
+  // at the top left. Those parts are left out of the comparison (fractions of the box / icon).
+  const SLOT_COVER=[{x0:.52,y0:.5,x1:1,y1:1},{x0:0,y0:.58,x1:.34,y1:1},{x0:0,y0:0,x1:.32,y1:.3}];
   const covered=(cover,fx,fy)=>!!cover&&cover.some(c=>fx>=c.x0&&fx<=c.x1&&fy>=c.y0&&fy<=c.y1);
   // A template without the covered parts of the icon.
   function masked(t,cover){const px=t.px.filter(p=>!covered(cover,(p.x+.5)/t.w,(p.y+.5)/t.h));return {w:t.w,h:t.h,flip:t.flip,px};}
@@ -347,11 +347,12 @@
     // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
     const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
       if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
-    // Also in a window: an item box with two or more like-sized item boxes beside it at a slot's
-    // spacing (an inventory or a shop is a grid; the ring around a packed slot is not flat).
+    // Also in a window: an item box with two or more like-sized item boxes lined up with it, in its
+    // row or its column, up to four slots away (an inventory or a shop is a grid; the ring around
+    // a packed slot is not flat, and the last item of a page may sit alone in its row).
     const itemBoxes=detections.filter(d=>d.cls==='item').map(d=>d.box);
     const inGrid=b=>itemBoxes.filter(o=>o!==b&&Math.abs(o.w-b.w)<b.w*.35&&Math.abs(o.h-b.h)<b.h*.35&&(
-      Math.abs(o.y-b.y)<b.h*.3&&Math.abs(o.x-b.x)>b.w*.75&&Math.abs(o.x-b.x)<b.w*2.2||Math.abs(o.x-b.x)<b.w*.3&&Math.abs(o.y-b.y)>b.h*.75&&Math.abs(o.y-b.y)<b.h*2.2)).length>=2;
+      Math.abs(o.y-b.y)<b.h*.3&&Math.abs(o.x-b.x)>b.w*.75&&Math.abs(o.x-b.x)<b.w*4.6||Math.abs(o.x-b.x)<b.w*.3&&Math.abs(o.y-b.y)>b.h*.75&&Math.abs(o.y-b.y)<b.h*4.6)).length>=2;
     const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
     k=k||frame.w/GAME_WIDTH;
     const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
@@ -452,7 +453,7 @@
         // The item namer's first answer, when it is sure and the icon agrees at least loosely
         // (or it is all but certain), wins; it reads a badge-covered or small icon better.
         const n=said[0],nh=n&&hits.find(h=>String(h.s.id)===String(n.id));
-        if(n&&(n.p>=.97||n.p>=.8&&nh&&nh.score>=.55)){
+        if(n&&(n.p>=.97||n.p>=.8&&nh&&nh.score>=.55||slot&&n.p>=.85&&nh&&nh.score>=.45)){
           found.push({type:'item',id:String(n.id),name:itemName(n.id),box:b,via:'namer',score:Math.round(n.p*100)/100});continue;
         }
         if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;
