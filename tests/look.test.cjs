@@ -52,6 +52,18 @@ function image(w,h,paint){const data=new Uint8ClampedArray(w*h*4);for(let y=0;y<
   assert.equal(L.identify({image:screen,detections,lines,k,names,sprites:[stand],region:{x:0,y:150,w:200,h:150}}).found.length,1,'only what is in the box');
   // Not one of the map's: found in the full reference set instead (the detector being sure).
   assert.equal(L.identify({image:screen,detections,lines,k,names,sprites:[],allSprites:[stand]}).found.filter(f=>f.type==='monster').length,1);
+  // The mouse pointer is not named, even where it looks like one of the map's drops.
+  const glove={type:'cursor',id:'0_0',name:'0_0',image:sprite},asItem={type:'item',id:'2000',name:'Look-alike',image:sprite};
+  const pointed=[{cls:'item',score:.7,box:{x:99,y:199,w:27,h:32}}];
+  assert.deepEqual(L.identify({image:screen,detections:pointed,lines:[],k,sprites:[asItem]}).found.map(f=>f.name),['Look-alike']);
+  assert.deepEqual(L.identify({image:screen,detections:pointed,lines:[],k,sprites:[asItem],allSprites:[glove]}).found,[],'a cursor is dropped');
+  // A pet: by its tag when that is a pet's name, else by its sprite; a monster of the same name is not it.
+  const petNames=L.nameIndex([{type:'monster',id:'2',name:'Snail'},{type:'item',id:'5000033',name:'Snail',category:'Pet'},{type:'item',id:'5000005',name:'White Bunny',category:'Pet'}]);
+  const petBox=[{cls:'pet',score:.8,box:{x:99,y:199,w:27,h:32}}];
+  const tagged=L.identify({image:screen,detections:petBox,lines:[{text:'Snail',x:98,y:236,w:30,h:12}],k,names:petNames});
+  assert.deepEqual(tagged.found.map(f=>[f.type,f.id]),[['item','5000033']],JSON.stringify(tagged.found));
+  const renamed=L.identify({image:screen,detections:petBox,lines:[{text:'Fluffy',x:98,y:236,w:30,h:12}],k,names:petNames,allSprites:[{type:'pet',id:'5000005',name:'5000005',image:sprite}],itemName:id=>id==='5000005'?'White Bunny':id});
+  assert.deepEqual(renamed.found.map(f=>f.name),['White Bunny'],JSON.stringify(renamed.found));
   console.log('look: naming the detector\'s boxes passes');
 }
 // Items anywhere (inventory, shops): the shortlist over 16x16 thumbnails picks the right icon,

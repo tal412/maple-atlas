@@ -1,14 +1,14 @@
 /* The Look detector: a small YOLO model, trained on synthetic game screens made from the
  * game's own sprites and map renders (the training scripts live outside this repository),
- * that finds monsters, NPCs, dropped items and players on a screenshot. It runs in the
+ * that finds monsters, NPCs, dropped items, players and pets on a screenshot. It runs in the
  * browser with ONNX Runtime Web (vendor/ort/ on this site), loaded only when Look is first used;
  * the model and the runtime's WebAssembly come as bytes from Look's own cache (src/look-ui.js).
  *
- * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player', score, box: {x, y, w, h}}] in the
+ * detect(image) -> [{cls: 'monster'|'npc'|'item'|'player'|'pet', score, box: {x, y, w, h}}] in the
  * image's pixels.
  */
 (function(scope){
-  const CLASSES=['monster','npc','item','player'];
+  const CLASSES=['monster','npc','item','player','pet'];
   const ORT='./vendor/ort/';
   // model, runtime: () => Promise<ArrayBuffer> (the detector, the runtime's .wasm).
   function create({model,runtime,inputW=832,inputH=480,minScore=.35,iou=.5}={}){

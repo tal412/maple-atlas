@@ -325,7 +325,8 @@
   // (allSprites, the reference atlas), within a time limit. Sprites are compared only when
   // their size is close to the box's. NPCs and players are also named by the tag under them.
   // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most.
-  const ACCEPT={monster:.6,npc:.6,item:.7};
+  // Items need 0.8 by any path (a pet matched a wand's icon at 0.71).
+  const ACCEPT={monster:.6,npc:.6,item:.8,pet:.6};
   // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
   // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData
   // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).
@@ -343,7 +344,7 @@
     const tagUnder=b=>lines.filter(l=>l.y>=b.y+b.h*.6&&l.y<=b.y+b.h+Math.max(28,b.h*.6)&&Math.abs(l.x+l.w/2-(b.x+b.w/2))<Math.max(b.w*.7,l.w*.6)).sort((a,c)=>a.y-c.y);
     const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));
     const local={monster:usable(sprites,'monster'),npc:usable(sprites,'npc'),item:usable(sprites,'item')};
-    const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]};
+    const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]},cursors=usable(allSprites,'cursor'),pets=usable(allSprites,'pet');
     const templates=new Map();
     const tmpl=(s,flip,kk)=>{let m=templates.get(s.image);if(!m){m={};templates.set(s.image,m);}return m[flip+':'+kk]??=template(s.image,kk,flip);};
     // The scale measured from the minimap strip can be off by a few percent (the screenshot's
@@ -355,7 +356,7 @@
       for(const s of list){
         const w=s.image.width*k,h=s.image.height*k;if(w<b.w*.6||w>b.w*1.4||h<b.h*.6||h>b.h*1.4)continue;
         if(now()>deadline)break;
-        for(const kk of scales)for(const flip of s.type==='item'?[false]:[false,true]){
+        for(const kk of scales)for(const flip of s.type==='item'||s.type==='cursor'?[false]:[false,true]){
           const hit=findSprite(image,tmpl(s,flip,kk),r,{threshold:.35})[0];
           if(hit&&(!best||hit.score>best.score))best={s,score:hit.score};
         }
@@ -371,12 +372,25 @@
         players.push({name:name||'Player',box:b,you:!!(name&&player.name&&editDistance(norm(name),norm(player.name),1)<=1),score:det.score});
         continue;
       }
+      // A pet (an item in the database): by its name tag when that is the kind's name (pets can
+      // be renamed), else by its sprite among every pet's.
+      if(det.cls==='pet'){
+        const named=names&&tags.map(t=>names(t.text).find(m=>m.entry.type==='item'&&m.entry.category==='Pet'&&m.exact)).find(Boolean);
+        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'tag',pet:true,score:det.score});continue;}
+        const best=bestSprite(pets,b,now()+600);
+        if(best&&best.score>=ACCEPT.pet)found.push({type:'item',id:best.s.id,name:itemName(best.s.id),box:b,via:'sprite',pet:true,score:Math.round(best.score*100)/100});
+        continue;
+      }
       if(det.cls==='npc'&&names){
         const named=tags.map(t=>names(t.text).find(m=>m.entry.type==='npc')).find(Boolean);
         if(named){if(!isObjectNpc(named.entry.name))found.push({type:'npc',id:named.entry.id,name:named.entry.name,box:b,via:'tag',score:det.score});continue;}
       }
       // The status bar at the bottom holds the game's buttons (Cash Shop, Menu), never items.
       if(det.cls==='item'&&b.y+b.h/2>frame.h*.915)continue;
+      // A drop has no name tag; something small with one under it is a pet.
+      if(det.cls==='item'&&tags.length&&!onSlot(b))continue;
+      // The mouse pointer (the game's own cursors, in the reference set) is not a thing to name.
+      if(det.cls!=='npc'&&cursors.length&&Math.max(b.w,b.h)<=48*k){const c=bestSprite(cursors,b);if(c&&c.score>=.75)continue;}
       if(det.cls==='item'&&names){
         const named=textBeside(b).map(t=>names(t.text).find(m=>m.entry.type==='item')).find(Boolean);
         if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}
