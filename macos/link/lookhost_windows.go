@@ -9,10 +9,14 @@ package main
 // (lookProgress). A box marked on the game is recognized here; the phone only shows results.
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/jpeg"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -304,7 +308,13 @@ func (e *edgeLook) analyze(shot lookShot, mark []float64, progress func(string))
 	return v.Card, v.Result, nil
 }
 
-// lookWarm opens Look in the background when the helper starts, so the first look is quick.
+// lookSetup remembers the site and the app's folder and opens Look in the background, so the
+// first look is quick.
+func lookSetup(site, dir string) {
+	lookSite, lookDir = site, dir
+	lookWarm()
+}
+
 func lookWarm() {
 	go func() {
 		lookEngine.mu.Lock()
@@ -315,4 +325,41 @@ func lookWarm() {
 			}
 		}
 	}()
+}
+
+func init() { lookCheck = lookSelfCheck }
+
+// lookSelfCheck (--look-check): Look in a hidden Edge from the live site answers for a drawn
+// picture (sky, ground, no game things): a card comes back, with its progress on the way.
+func lookSelfCheck() int {
+	dir, _ := os.MkdirTemp("", "look-check")
+	lookSite, lookDir = "https://tal412.github.io/maple-atlas/", dir
+	img := image.NewRGBA(image.Rect(0, 0, 1366, 768))
+	for y := 0; y < 768; y++ {
+		for x := 0; x < 1366; x++ {
+			c := color.RGBA{uint8(90 + y/8), uint8(150 + y/12), 230, 255}
+			if y > 600 {
+				c = color.RGBA{110, 80, 40, 255}
+			}
+			img.Set(x, y, c)
+		}
+	}
+	var buf bytes.Buffer
+	jpeg.Encode(&buf, img, &jpeg.Options{Quality: 85})
+	steps := 0
+	start := time.Now()
+	card, result, err := lookEngine.analyze(lookShot{Req: "c1", JPEG: buf.Bytes(), W: 1366, H: 768}, nil, func(t string) { steps++; fmt.Println("progress:", t) })
+	if err != nil {
+		fmt.Println("FAIL:", err)
+		return 1
+	}
+	if _, ok := lookCard(card); !ok || len(result) < 2 {
+		fmt.Println("FAIL: no card:", string(card))
+		return 1
+	}
+	fmt.Printf("PASS: Look answered in %s (%d progress lines): %s\n", time.Since(start).Round(time.Millisecond), steps, string(card))
+	lookEngine.mu.Lock()
+	lookEngine.stop()
+	lookEngine.mu.Unlock()
+	return 0
 }

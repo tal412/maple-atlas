@@ -3,12 +3,14 @@
 package main
 
 // The Look feature on Windows: the helper captures the game window and reads its text itself,
-// then sends the screenshot to the phone (look.go).
+// sends the screenshot to the phone, then recognizes it here (lookhost_windows.go) and sends
+// what it found (look.go).
 
 import (
 	"bytes"
 	"image"
 	"image/jpeg"
+	"time"
 )
 
 func init() { lookRequested = lookFromGame }
@@ -45,4 +47,20 @@ func lookFromGame(s *session, req string) {
 		return
 	}
 	gameLog("look: sent a %d×%d screenshot (%d KB, %d text lines)", shot.W, shot.H, len(shot.JPEG)/1024, len(shot.Lines))
+	// Then this PC recognizes it and sends what it found; the phone only shows it.
+	var last time.Time
+	_, result, err := lookEngine.analyze(shot, nil, func(text string) {
+		if time.Since(last) > 250*time.Millisecond {
+			last = time.Now()
+			s.sendLookProgress(req, text)
+		}
+	})
+	if err != nil {
+		gameLog("look: %v", err)
+		s.sendLookProgress(req, "Could not look: "+clip(err.Error(), 40))
+		return
+	}
+	if err := s.sendLookFound(req, result); err != nil {
+		gameLog("look: the result did not reach the phone: %v", err)
+	}
 }

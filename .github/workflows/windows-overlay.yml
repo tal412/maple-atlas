@@ -11,6 +11,7 @@ on:
       - 'macos/link/pins.go'
       - 'macos/link/nav.go'
       - 'macos/link/look_overlay_windows.go'
+      - 'macos/link/lookhost_windows.go'
       - '.github/workflows/windows-overlay.yml'
 permissions:
   contents: read

@@ -209,6 +209,7 @@ func lookCard(raw json.RawMessage) (map[string]any, bool) {
 			D string `json:"d"`
 			E string `json:"e"`
 			C int    `json:"c"`
+			P string `json:"p"`
 		} `json:"items"`
 	}
 	if len(raw) == 0 || len(raw) > 6000 || json.Unmarshal(raw, &in) != nil || len(in.Items) > 6 {
@@ -229,7 +230,7 @@ func lookCard(raw json.RawMessage) (map[string]any, bool) {
 		if count < 0 || count > 99 {
 			count = 0
 		}
-		items = append(items, map[string]any{"type": it.T, "name": clip(it.N, 50), "icon": icon, "detail": clip(it.D, 90), "extra": clip(it.E, 90), "count": count})
+		items = append(items, map[string]any{"type": it.T, "name": clip(it.N, 50), "icon": icon, "detail": clip(it.D, 90), "extra": clip(it.E, 90), "count": count, "price": clip(it.P, 40)})
 	}
 	return map[string]any{"title": clip(in.Title, 60), "note": clip(in.Note, 90), "items": items}, true
 }

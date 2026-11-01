@@ -142,6 +142,8 @@ func runDesktop(site, stateDir string, _ bool) {
 		return ctrl.current
 	}
 	overlayStart()
+	// Look: recognition on this computer (Windows: Edge, hidden), opened early.
+	lookSetup(site, stateDir)
 	token := randomHex(16)
 
 	files, _ := fs.Sub(webui, "webui")

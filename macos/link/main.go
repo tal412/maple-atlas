@@ -209,9 +209,16 @@ var overlayDemo func() int
 // captures and reads a stand-in game window showing a Quest Helper panel, for CI.
 var captureDemo func(image string) int
 
+// lookCheck handles --look-check on Windows (lookhost_windows.go): opens Look in a hidden Edge
+// and looks at a drawn test picture, for the CI.
+var lookCheck func() int
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "--overlay-demo" && overlayDemo != nil {
 		os.Exit(overlayDemo())
+	}
+	if len(os.Args) >= 2 && os.Args[1] == "--look-check" && lookCheck != nil {
+		os.Exit(lookCheck())
 	}
 	if len(os.Args) >= 2 && os.Args[1] == "--capture-demo" && captureDemo != nil {
 		image := ""

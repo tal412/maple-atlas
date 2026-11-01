@@ -13,6 +13,7 @@ func overlayTracking(string)                   {}
 func overlayLookCard(map[string]any)           {}
 func overlayLookProgress(map[string]any)       {}
 func overlayStart()                            {}
+func lookSetup(string, string)                 {}
 
 // lookSession is used by the Windows Look overlay only.
 var lookSession = func() *session { return nil }

@@ -48,6 +48,7 @@ type lookCardItem struct {
 	Detail string `json:"detail"`
 	Extra  string `json:"extra"`
 	Count  int    `json:"count"`
+	Price  string `json:"price"` // an item's market price ("≈ 39,999 mesos")
 }
 
 type lookCardData struct {
@@ -250,37 +251,39 @@ func (l *lookUI) lookAll() {
 	l.start([]float64{0, 0, 1, 1}, mid)
 }
 
-// start sends the screenshot with the box to the phone and shows the card waiting for it.
+// start looks at the marked box on this PC (lookEngine: Look's page in a hidden Edge) and shows
+// the card, waiting with its progress; no phone needed.
 func (l *lookUI) start(mark []float64, box winRect) {
-	s := lookSession()
 	l.mu.Lock()
 	l.box = box
-	if s == nil {
-		l.waiting, l.data, l.message = false, nil, "Open Maple Atlas on your phone to look: it finds what is on the screen."
-		l.mu.Unlock()
-		l.showCard(8 * time.Second)
-		return
-	}
 	l.count++
 	req := "c" + strconv.Itoa(l.count)
 	l.pending, l.waiting, l.data, l.message, l.progress = req, true, nil, "Looking…", ""
 	if l.failTimer != nil {
 		l.failTimer.Stop()
 	}
-	l.failTimer = time.AfterFunc(18*time.Second, func() { l.fail(req, "No answer from the phone. Keep Maple Atlas open on it.") })
+	l.failTimer = time.AfterFunc(90*time.Second, func() { l.fail(req, "Look took too long. Try again.") })
 	l.mu.Unlock()
-	l.showCard(20 * time.Second)
+	l.showCard(90 * time.Second)
 	go func() {
 		shot, err := lookShotOf(req, mark)
+		var card json.RawMessage
 		if err == nil {
-			err = s.sendLook(shot)
+			card, _, err = lookEngine.analyze(shot, mark, func(text string) {
+				overlayLookProgress(map[string]any{"req": req, "text": text})
+			})
 		}
 		if err != nil {
 			gameLog("look: %v", err)
-			l.fail(req, "The screenshot did not reach the phone ("+err.Error()+").")
+			l.fail(req, "Could not look: "+clip(err.Error(), 70))
 			return
 		}
-		gameLog("look: sent a %d×%d screenshot (%d KB) with a box", shot.W, shot.H, len(shot.JPEG)/1024)
+		normal, ok := lookCard(card)
+		if !ok {
+			l.fail(req, "Look gave no answer.")
+			return
+		}
+		overlayLookCard(map[string]any{"req": req, "card": normal})
 	}()
 }
 
@@ -311,7 +314,7 @@ func overlayLookProgress(v map[string]any) {
 	if l.failTimer != nil {
 		l.failTimer.Stop()
 	}
-	l.failTimer = time.AfterFunc(18*time.Second, func() { l.fail(req, "No answer from the phone. Keep Maple Atlas open on it.") })
+	l.failTimer = time.AfterFunc(90*time.Second, func() { l.fail(req, "Look took too long. Try again.") })
 	card := l.card
 	l.mu.Unlock()
 	if grow {
@@ -394,6 +397,9 @@ func (l *lookUI) cardSize(scale float64) (int32, int32) {
 	if l.data != nil {
 		for _, it := range l.data.Items {
 			h += px(30)
+			if it.Price != "" {
+				h += px(18)
+			}
 			if it.Detail != "" {
 				h += px(18)
 			}
@@ -496,6 +502,10 @@ func (l *lookUI) paintCard(hwnd uintptr) {
 		left := px(14 + pinIcon + 10)
 		text(name, left, y, w-px(12), y+px(28), px(15), 700, rgb(255, 255, 255))
 		y += px(30)
+		if it.Price != "" {
+			text(it.Price, left, y-px(2), w-px(12), y+px(16), px(13), 600, rgb(81, 207, 102))
+			y += px(18)
+		}
 		if it.Detail != "" {
 			text(it.Detail, left, y-px(2), w-px(12), y+px(16), px(12), 400, rgb(215, 218, 224))
 			y += px(18)

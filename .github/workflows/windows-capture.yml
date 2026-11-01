@@ -13,6 +13,7 @@ on:
       - 'macos/link/frames.go'
       - 'macos/link/look.go'
       - 'macos/link/look_windows.go'
+      - 'macos/link/lookhost_windows.go'
       - '.github/workflows/windows-capture.yml'
 permissions:
   contents: read
@@ -42,6 +43,13 @@ jobs:
           Write-Host $out
           if ($code -ne 0) { throw "capture self-check failed ($code)" }
           Write-Host 'PASS: game window found, captured and read'
+      - name: Look on this PC (hidden Edge, the live site's look-host.html)
+        shell: pwsh
+        run: |
+          $out = & "$env:RUNNER_TEMP\app\MapleAtlasCompanion.exe" --look-check | Out-String
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 0) { throw "look self-check failed ($code)" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
