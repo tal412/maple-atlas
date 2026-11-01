@@ -57,7 +57,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     src = project / "src"
     read = lambda name: (src / name).read_text(encoding="utf-8")
     template = read("template.html")
-    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-detector', 'look-ui', 'offline', 'runtime', 'intro'])
+    runtime = '\n'.join(read(name + '.js') for name in ['map-labels', 'map-gestures', 'map-images', 'local-maps', 'quest-flow', 'search-index', 'search-data', 'item-data', 'item-sources', 'market-data', 'search-ui', 'companion-link', 'companion-device', 'minimap-position', 'quest-helper', 'quest-panel', 'companion-ui', 'look', 'look-detector', 'look-namer', 'look-ui', 'offline', 'runtime', 'intro'])
     data = json.loads((project / "data" / "world.json").read_text(encoding="utf-8"))
     visual = json.loads((project / 'docs/data/visual-index.json').read_text())
     data['visualMaps'] = visual['maps']
@@ -69,7 +69,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     look_manifest = project / 'docs/assets/look/manifest.json'
     if look_manifest.exists():
         m = json.loads(look_manifest.read_text())
-        data['look'] = {'base': './assets/look/', **{k: m[k] for k in ('detector', 'atlas', 'icons', 'raw', 'thumbs', 'drops', 'files', 'bytes')}}
+        data['look'] = {'base': './assets/look/', **{k: m[k] for k in ('detector', 'atlas', 'icons', 'raw', 'thumbs', 'drops', 'files', 'bytes')}, **{k: m[k] for k in ('namer', 'namerClasses') if k in m}}
     assets = json.loads((project / 'data/map-assets.json').read_text())['maps']
     for m in data['maps']:
         m['localImage'] = './' + assets[m['id']]['image']['path']

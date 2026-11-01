@@ -110,6 +110,14 @@
     // looked for directly.
     const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({
       model:()=>lookFile(file(look.detector)).then(r=>r.arrayBuffer()),runtime:()=>lookFile(RUNTIME).then(r=>r.arrayBuffer()),minScore:.25}):null;
+    // The namer (src/look-namer.js): which monster or pet a box holds when templates cannot tell.
+    const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({
+      model:()=>lookFile(file(look.namer)).then(r=>r.arrayBuffer()),runtime:()=>lookFile(RUNTIME).then(r=>r.arrayBuffer()),classes:look.namerClasses||[]}):null;
+    const namerEntry=({cls,p})=>{
+      if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:catalog?.by.get('monster:'+id)?.name||id,p};}
+      if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:catalog?.by.get('item:'+id)?.name||id,pet:true,p};}
+      return {type:'other',p};
+    };
     async function analyze(s,region,onProgress){
       await loadCatalog();
       const mapId=s.map||liveMap();
@@ -118,6 +126,8 @@
       let r=null;
       if(detector)try{
         if(!s.detections){onProgress?.('detector');s.detections=await detector.detect(s.image);}
+        if(namer)try{for(const d of s.detections)if((d.cls==='monster'||d.cls==='pet')&&!d.names)d.names=(await namer.name(s.image,d.box)).map(namerEntry);}
+        catch(e){console.warn('Look namer:',e);}
         const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);
         const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);
         r=MapleLook.identify({image:s.image,detections:s.detections,lines:s.lines,region,k:s.k,names,sprites,allSprites,thumbs:th,groundItems:ground,

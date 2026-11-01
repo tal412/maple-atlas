@@ -101,7 +101,7 @@ assert len(re.findall(r'\bfetch\s*\(', page)) == 7 and "fetch('./data/spawn-poin
 # cached loader; nothing from other hosts (no maplestory.io, no CDN for its pictures).
 look_ui = (ROOT / 'src/look-ui.js').read_text()
 assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 2 and 'fetch(catalogUrl)' in look_ui and "fetch(url,{credentials:'same-origin'})" in look_ui
-assert 'maplestory.io' not in look_ui and 'fetch(' not in (ROOT / 'src/look-detector.js').read_text()
+assert 'maplestory.io' not in look_ui and 'fetch(' not in (ROOT / 'src/look-detector.js').read_text() and 'fetch(' not in (ROOT / 'src/look-namer.js').read_text()
 assert "const ORT='./vendor/ort/'" in page and (ROOT / 'docs/vendor/ort/ort-wasm-simd-threaded.wasm').exists()
 assert "const api='https://mapleclassic.wiki/api.php'" in page, 'Item sources come only from the MapleClassic Wiki API'
 from market import validate as validate_market

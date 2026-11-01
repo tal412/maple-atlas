@@ -324,7 +324,9 @@
   // only when none matches, and the detector is fairly sure, every known monster and NPC
   // (allSprites, the reference atlas), within a time limit. Sprites are compared only when
   // their size is close to the box's. NPCs and players are also named by the tag under them.
-  // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most.
+  // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most. What templates
+  // cannot name (partly hidden, cut by the screen's edge, heaped, see-through) the namer
+  // (src/look-namer.js) names, when sure.
   // Items need 0.8 by any path (a pet matched a wand's icon at 0.71).
   const ACCEPT={monster:.6,npc:.6,item:.8,pet:.6};
   // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
@@ -345,6 +347,19 @@
     const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));
     const local={monster:usable(sprites,'monster'),npc:usable(sprites,'npc'),item:usable(sprites,'item')};
     const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]},cursors=usable(allSprites,'cursor'),pets=usable(allSprites,'pet');
+    // The namer's answer for a box (det.names: [{type: 'monster'|'item'|'other', id, name, p}],
+    // best first; pets are items): taken when sure (0.9). Otherwise this map decides between
+    // look-alikes (a Slime and a Super Slime split about evenly): one of the map's own monsters
+    // is taken when it has 0.3 or more and 85% of what the map's monsters, pets and 'other' have.
+    const localIds=new Set(local.monster.map(s=>String(s.id)));
+    const isLocal=n=>n.type==='monster'&&localIds.has(String(n.id));
+    const byNamer=det=>{
+      const list=det.names||[],top=list[0];if(!top)return null;
+      if(top.type!=='other'&&top.p>=.9)return top;
+      const allowed=list.filter(n=>n.type==='other'||n.pet||isLocal(n)),mine=allowed.find(isLocal),sum=allowed.reduce((a,n)=>a+n.p,0);
+      return mine&&mine.p>=.3&&mine.p>=sum*.85?mine:null;
+    };
+    const fromNamer=(n,b)=>({type:n.type,id:String(n.id),name:n.name,box:b,via:'namer',...(n.pet?{pet:true}:{}),score:Math.round(n.p*100)/100});
     const templates=new Map();
     const tmpl=(s,flip,kk)=>{let m=templates.get(s.image);if(!m){m={};templates.set(s.image,m);}return m[flip+':'+kk]??=template(s.image,kk,flip);};
     // The scale measured from the minimap strip can be off by a few percent (the screenshot's
@@ -379,6 +394,7 @@
         if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'tag',pet:true,score:det.score});continue;}
         const best=bestSprite(pets,b,now()+600);
         if(best&&best.score>=ACCEPT.pet)found.push({type:'item',id:best.s.id,name:itemName(best.s.id),box:b,via:'sprite',pet:true,score:Math.round(best.score*100)/100});
+        else{const n=byNamer(det);if(n)found.push(fromNamer(n,b));}
         continue;
       }
       if(det.cls==='npc'&&names){
@@ -415,6 +431,7 @@
         if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;
         else if(!best||best.score<accept)continue;
       }
+      if(det.cls==='monster'&&(!best||best.score<accept)){const n=byNamer(det);if(n){found.push(fromNamer(n,b));continue;}}
       if((!best||best.score<accept)&&det.score>=.45&&global[det.cls]?.length&&now()-started<budget){
         const wide=bestSprite(global[det.cls],b,started+budget);
         if(wide&&wide.score>=accept+.05&&(!best||wide.score>best.score))best=wide;

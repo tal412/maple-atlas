@@ -64,6 +64,17 @@ function image(w,h,paint){const data=new Uint8ClampedArray(w*h*4);for(let y=0;y<
   assert.deepEqual(tagged.found.map(f=>[f.type,f.id]),[['item','5000033']],JSON.stringify(tagged.found));
   const renamed=L.identify({image:screen,detections:petBox,lines:[{text:'Fluffy',x:98,y:236,w:30,h:12}],k,names:petNames,allSprites:[{type:'pet',id:'5000005',name:'5000005',image:sprite}],itemName:id=>id==='5000005'?'White Bunny':id});
   assert.deepEqual(renamed.found.map(f=>f.name),['White Bunny'],JSON.stringify(renamed.found));
+  // The namer: what templates cannot match (the box over plain scenery here) is named when the
+  // namer is sure (0.9), or fairly sure (0.6) and it is one of this map's monsters; never 'other'.
+  const hidden=[{cls:'monster',score:.85,box:{x:300,y:100,w:30,h:30}}];
+  const withNames=names=>L.identify({image:screen,detections:[{...hidden[0],names}],lines:[],k,sprites:[stand]}).found.map(f=>f.name+':'+f.via);
+  assert.deepEqual(withNames([{type:'monster',id:'99',name:'Elsewhere',p:.95}]),['Elsewhere:namer']);
+  assert.deepEqual(withNames([{type:'monster',id:'16',name:'Stand-in',p:.7}]),['Stand-in:namer'],'one of the map\'s, fairly sure');
+  assert.deepEqual(withNames([{type:'monster',id:'99',name:'Elsewhere',p:.7}]),[],'not the map\'s and not sure');
+  assert.deepEqual(withNames([{type:'other',p:.99}]),[]);
+  assert.deepEqual(withNames([{type:'monster',id:'98',name:'Super Stand-in',p:.49},{type:'monster',id:'16',name:'Stand-in',p:.48}]),['Stand-in:namer'],'the map decides between look-alikes');
+  assert.deepEqual(withNames([{type:'other',p:.45},{type:'monster',id:'16',name:'Stand-in',p:.4}]),[],'not when it may be something else');
+  assert.deepEqual(L.identify({image:screen,detections:[{cls:'pet',score:.8,box:{x:300,y:100,w:30,h:30},names:[{type:'item',id:'5000005',name:'White Bunny',pet:true,p:.93}]}],lines:[],k}).found.map(f=>[f.name,f.pet]),[['White Bunny',true]]);
   console.log('look: naming the detector\'s boxes passes');
 }
 // Items anywhere (inventory, shops): the shortlist over 16x16 thumbnails picks the right icon,
