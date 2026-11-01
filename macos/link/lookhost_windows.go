@@ -147,9 +147,18 @@ func (e *edgeLook) start() error {
 	e.session = attached.SessionID
 	e.call("Runtime.enable", map[string]any{}, e.session, nil)
 	e.call("Runtime.addBinding", map[string]any{"name": "lookProgress"}, e.session, nil)
-	if _, err := e.evaluate(`(async()=>{for(let i=0;i<600&&!window.MapleLookHost;i++)await new Promise(r=>setTimeout(r,100));if(!window.MapleLookHost)throw new Error('Look did not start');await MapleLookHost.ready();return 'ok';})()`); err != nil {
+	// A new tab answers before its page has loaded: while the page is still coming in, its
+	// context is replaced ("Execution context was destroyed"); ask again until it is there.
+	var readyErr error
+	for deadline := time.Now().Add(60 * time.Second); time.Now().Before(deadline); time.Sleep(300 * time.Millisecond) {
+		_, readyErr = e.evaluate(`(async()=>{for(let i=0;i<600&&!window.MapleLookHost;i++)await new Promise(r=>setTimeout(r,100));if(!window.MapleLookHost)throw new Error('Look did not start');await MapleLookHost.ready();return 'ok';})()`)
+		if readyErr == nil || !strings.Contains(strings.ToLower(readyErr.Error()), "context") {
+			break
+		}
+	}
+	if readyErr != nil {
 		e.stop()
-		return err
+		return readyErr
 	}
 	return nil
 }
