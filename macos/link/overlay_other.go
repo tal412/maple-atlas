@@ -10,3 +10,8 @@ func overlayPosition(string, float64, float64) {}
 func overlayWindow(string)                     {}
 func overlayEnabled(bool)                      {}
 func overlayTracking(string)                   {}
+func overlayLookCard(map[string]any)           {}
+func overlayStart()                            {}
+
+// lookSession is used by the Windows Look overlay only.
+var lookSession = func() *session { return nil }

@@ -11,6 +11,8 @@ on:
       - 'macos/link/capture_demo_windows.go'
       - 'macos/link/gameapi.go'
       - 'macos/link/frames.go'
+      - 'macos/link/look.go'
+      - 'macos/link/look_windows.go'
       - '.github/workflows/windows-capture.yml'
 permissions:
   contents: read

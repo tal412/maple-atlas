@@ -5,7 +5,7 @@
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the QR reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
   const busy=['connecting','verifying'];
-  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},device}){
+  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},onLook=()=>{},device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),input=$('#mc-pair-input'),scanVideo=$('#mc-scan-video');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
@@ -54,7 +54,7 @@
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
       lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
-    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onReading:state=>{
+    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onLook:value=>onLook(value),onReading:state=>{
       lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the map name showing on the in-game minimap (press + on it) while your computer reads it.');onConnection(state==='paused'?'stale':'searching');
     },onState:value=>{
       paint(value);
@@ -173,7 +173,7 @@
       $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;if(/Mac/i.test(navigator.platform||navigator.userAgent)){$('#mc-get-mac').classList.add('mc-primary');$('#mc-get-windows').classList.remove('mc-primary');root.querySelector('.mc-get-app-links').prepend($('#mc-get-mac'));}
       $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
       $('#mc-companion-desktop').onclick=open;
-      return {open,enterFullscreen,nav:()=>false};
+      return {open,enterFullscreen,nav:()=>false,look:()=>false,lookResult:()=>false,get connected(){return false;}};
     }
     // One tap: open the companion and, when a paired computer isn't connected, reconnect.
     const tap=()=>{open();if(remembered()&&!link.connected&&!busy.includes(currentState.phase))void resume({manual:true});};
@@ -197,7 +197,7 @@
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value)};
+    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:(req,card)=>link.lookResult(req,card),get connected(){return link.connected;}};
   }
   scope.MapleCompanionUI={create};
 })(globalThis);

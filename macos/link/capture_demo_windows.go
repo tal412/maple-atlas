@@ -9,9 +9,11 @@ package main
 // exactly (with a picture: when any line was read).
 
 import (
+	"bytes"
 	"encoding/json"
 	"image"
 	"image/draw"
+	"image/jpeg"
 	_ "image/png"
 	"os"
 	"regexp"
@@ -122,10 +124,21 @@ func runCaptureDemo(picture string) int {
 		report["wholeWindowLines"] = len(all)
 	}
 	report["lines"] = lines
+	// Look: the screenshot the phone gets (JPEG of the game window with its text).
+	if shot, err := lookShotOf("p1", nil); err != nil {
+		report["lookError"] = err.Error()
+	} else if _, err := jpeg.Decode(bytes.NewReader(shot.JPEG)); err != nil {
+		report["lookError"] = "the screenshot is not a JPEG: " + err.Error()
+	} else {
+		report["look"] = map[string]any{"width": shot.W, "height": shot.H, "kb": len(shot.JPEG) / 1024, "lines": len(shot.Lines)}
+		if len(shot.Lines) == 0 {
+			report["lookError"] = "no text read on the screenshot"
+		}
+	}
 	var rect winRect
 	pGetWindowRect.Call(demo, uintptr(unsafe.Pointer(&rect)))
 	report["screenshot"] = screenshot(rect, "capture-demo.bmp")
-	if found != demo {
+	if found != demo || report["lookError"] != nil {
 		return demoReport(report, 1)
 	}
 	if pic != nil {

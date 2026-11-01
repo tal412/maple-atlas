@@ -126,9 +126,19 @@ func runDesktop(site, stateDir string, _ bool) {
 		if v["event"] == "pins" {
 			overlayPins(v)
 		}
+		if v["event"] == "look-result" {
+			overlayLookCard(v)
+		}
 		h.emit(v)
 	}
 	ctrl := &controller{site: site, stateDir: stateDir, emit: emit}
+	// Look: the hotkeys live on the overlay's window, so it runs from the start.
+	lookSession = func() *session {
+		ctrl.mu.Lock()
+		defer ctrl.mu.Unlock()
+		return ctrl.current
+	}
+	overlayStart()
 	token := randomHex(16)
 
 	files, _ := fs.Sub(webui, "webui")

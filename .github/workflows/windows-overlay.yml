@@ -10,6 +10,7 @@ on:
       - 'macos/link/overlay_pins_windows.go'
       - 'macos/link/pins.go'
       - 'macos/link/nav.go'
+      - 'macos/link/look_overlay_windows.go'
       - '.github/workflows/windows-overlay.yml'
 permissions:
   contents: read

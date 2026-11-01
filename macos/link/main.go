@@ -36,6 +36,14 @@ type command struct {
 	On    bool   `json:"on"`
 	// log: a line from the Windows window for the companion log (diagnostics).
 	Message string `json:"message"`
+	// look: a screenshot for the phone (look.go): the JPEG's file (deleted once read), its size,
+	// the text read on it ([[text, x, y, w, h]…] in its pixels), the box marked (0…1) and the map.
+	Req    string    `json:"req"`
+	Path   string    `json:"path"`
+	Width  int       `json:"width"`
+	Height int       `json:"height"`
+	Lines  [][]any   `json:"lines"`
+	Mark   []float64 `json:"mark"`
 }
 
 // controller runs one pairing session at a time and applies app commands to it.
@@ -113,11 +121,52 @@ func (c *controller) handle(cmd command) {
 		if c.current != nil {
 			c.current.sendTracking(cmd.State)
 		}
+	case "look":
+		if c.current != nil {
+			go c.current.lookFromFile(cmd)
+		} else {
+			os.Remove(cmd.Path)
+		}
 	case "stop":
 		if c.current != nil {
 			c.current.disconnect()
 		}
 	}
+}
+
+// lookFromFile sends the app's screenshot (a JPEG file it wrote) to the phone and deletes it.
+func (s *session) lookFromFile(cmd command) {
+	defer os.Remove(cmd.Path)
+	report := func(msg string) {
+		if msg != "" && strings.HasPrefix(cmd.Req, "p") {
+			s.sendLookError(cmd.Req, msg)
+		}
+		s.emit(map[string]any{"event": "look-sent", "req": cmd.Req, "error": msg})
+	}
+	if !filepath.IsAbs(cmd.Path) || !strings.HasSuffix(cmd.Path, ".jpg") {
+		report("bad file")
+		return
+	}
+	data, err := os.ReadFile(cmd.Path)
+	if err != nil {
+		report(err.Error())
+		return
+	}
+	lines := make([]lookLine, 0, len(cmd.Lines))
+	for _, l := range cmd.Lines {
+		if len(l) != 5 {
+			continue
+		}
+		t, _ := l[0].(string)
+		n := func(v any) float64 { f, _ := v.(float64); return f }
+		lines = append(lines, lookLine{Text: t, X: n(l[1]), Y: n(l[2]), W: n(l[3]), H: n(l[4])})
+	}
+	shot := lookShot{Req: cmd.Req, JPEG: data, W: cmd.Width, H: cmd.Height, Lines: lines, Mark: cmd.Mark, Map: cmd.ID}
+	if err := s.sendLook(shot); err != nil {
+		report(err.Error())
+		return
+	}
+	report("")
 }
 
 func (c *controller) close() {

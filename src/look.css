@@ -1,0 +1,39 @@
+/* Look: a screenshot of the game with a box, and what was found in it (src/look-ui.js). */
+#maple-atlas-concept .mc-look-chip {display:inline-flex;align-items:center;gap:6px;}
+#maple-atlas-concept .mc-look-chip svg {width:16px;height:16px;}
+#maple-atlas-concept .mc-mobile-dialog.mc-look {width:min(720px,calc(100vw - 16px));height:calc(100dvh - 16px);max-height:none;display:none;flex-direction:column;gap:10px;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));overflow:hidden;}
+#maple-atlas-concept .mc-mobile-dialog.mc-look[open] {display:flex;}
+#maple-atlas-concept .mc-look header {margin:0;}
+#maple-atlas-concept .mc-look .mc-look-status {margin:0;min-height:1.4em;color:var(--mc-ink);font-weight:500;}
+#maple-atlas-concept .mc-look-stage {position:relative;flex:1 1 48%;min-height:220px;border-radius:18px;overflow:hidden;background:#111;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+#maple-atlas-concept .mc-look-stage:active {cursor:grabbing;}
+#maple-atlas-concept .mc-look-stage canvas {position:absolute;inset:0;width:100%;height:100%;}
+#maple-atlas-concept .mc-look-box {position:absolute;border:3px solid #4dabf7;border-radius:10px;box-shadow:0 0 0 9999px #0000004d;pointer-events:none;}
+#maple-atlas-concept .mc-look-handle {position:absolute;right:-14px;bottom:-14px;width:28px;height:28px;border-radius:50%;background:#4dabf7;border:3px solid #fff;pointer-events:auto;cursor:nwse-resize;touch-action:none;}
+#maple-atlas-concept .mc-look-actions {display:flex;gap:8px;}
+#maple-atlas-concept .mc-look-actions button {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:22px;font-weight:500;}
+#maple-atlas-concept .mc-look-actions button:not(#mc-look-retake) {flex:1;}
+#maple-atlas-concept .mc-look-actions button svg {width:18px;height:18px;}
+#maple-atlas-concept .mc-look-actions button:disabled {opacity:.55;}
+#maple-atlas-concept .mc-look .mc-look-hint {margin:0;font-size:12px;}
+#maple-atlas-concept .mc-look-results {flex:1 1 32%;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;}
+#maple-atlas-concept .mc-look-row {flex:none;display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);text-align:left;}
+#maple-atlas-concept .mc-look-row > svg {flex:none;width:18px;height:18px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-thumb {flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--mc-paper);box-shadow:inset 0 0 0 2px var(--c,transparent);overflow:hidden;}
+#maple-atlas-concept .mc-look-thumb img {max-width:40px;max-height:40px;image-rendering:pixelated;}
+#maple-atlas-concept .mc-look-text {display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+#maple-atlas-concept .mc-look-text strong {font-size:15px;font-weight:600;}
+#maple-atlas-concept .mc-look-text small {font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-text .mc-look-extra {color:var(--mc-orange);}
+#maple-atlas-concept .mc-look-map .mc-look-thumb {color:var(--mc-blue);}
+#maple-atlas-concept .mc-look-empty {margin:8px 4px;}
+#maple-atlas-concept .mc-look-heading {margin:2px 4px;font-size:13px;font-weight:600;color:var(--mc-muted);text-transform:uppercase;letter-spacing:.04em;}
+#maple-atlas-concept .mc-look-box[hidden] {display:none;}
+#maple-atlas-concept .mc-look-num {flex:none;display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--c);color:#000;font-size:12px;font-weight:700;}
+#maple-atlas-concept .mc-look .mc-look-players {display:flex;align-items:center;gap:8px;margin:4px;font-size:12px;}
+#maple-atlas-concept .mc-look-players svg {flex:none;width:16px;height:16px;}
+#maple-atlas-concept .mc-look-ui summary {padding:8px 4px;color:var(--mc-muted);font-size:13px;cursor:pointer;}
+#maple-atlas-concept .mc-look-ui .mc-look-row {margin-top:6px;}
+@media (max-width:700px) {
+  #maple-atlas-concept .mc-mobile-dialog.mc-look {width:100%;height:calc(100dvh - env(safe-area-inset-top,0px) - 6px);margin:auto 0 0;border-radius:24px 24px 0 0;}
+}

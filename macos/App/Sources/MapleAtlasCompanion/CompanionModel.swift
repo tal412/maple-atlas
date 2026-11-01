@@ -192,6 +192,7 @@ final class CompanionModel {
     // MARK: Lifecycle
 
     func start() {
+        startLook()
         updater.start()
         launchHelper()
         startPreviewLoop()
@@ -371,6 +372,67 @@ final class CompanionModel {
                 log("Pinned on the phone: " + (quests.isEmpty ? "none" : quests.map(\.title).joined(separator: ", ")))
             }
             if quests != pins { pins = quests }
+        case .lookRequest(let req):
+            log("Look: the phone asked for a screenshot")
+            Task { await sendLook(req: req, mark: nil) }
+        case .lookResult(let req, let card):
+            log("Look: the phone found " + (card.items.isEmpty ? "nothing" : card.items.map(\.name).joined(separator: ", ")))
+            if req == lookPending { lookPending = nil; look.show(card) }
+        case .lookSent(let req, let error):
+            if !error.isEmpty {
+                log("Look: the screenshot was not sent · \(error)")
+                if req == lookPending { lookPending = nil; look.fail("The screenshot did not reach the phone (\(error)).") }
+            }
+        }
+    }
+
+    // MARK: Look
+
+    @ObservationIgnored private let look = LookController()
+
+    private func lookAsked(_ box: CGRect?) {
+        guard isPhoneConnected else { look.fail("Open Maple Atlas on your phone to look: it finds what is on the screen."); return }
+        lookCount += 1
+        let req = "c\(lookCount)"
+        lookPending = req
+        Task { await sendLook(req: req, mark: box ?? CGRect(x: 0, y: 0, width: 1, height: 1)) }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(18))
+            guard let self, self.lookPending == req else { return }
+            self.lookPending = nil
+            self.look.fail("No answer from the phone. Keep Maple Atlas open on it.")
+        }
+    }
+    @ObservationIgnored private var lookCount = 0
+    @ObservationIgnored private var lookPending: String?
+
+    /// Starts the Look hotkeys (⌃⌥M mark a box, ⌃⌥A the whole window).
+    func startLook() {
+        look.windowID = { [weak self] in self?.capture.windowID }
+        look.onLook = { [weak self] box in self?.lookAsked(box) }
+        look.start()
+    }
+
+    /// A screenshot of the game window for the phone, with the text read on it.
+    private func sendLook(req: String, mark: CGRect?) async {
+        let capture = self.capture, dir = Self.stateDirectory(for: site), map = lastConfirmed?.id
+        do {
+            struct Shot: Sendable { let path: String; let width: Int; let height: Int; let lines: [(String, Int, Int, Int, Int)] }
+            let shot = try await Task.detached { () -> Shot in
+                let image = try capture.wholeWindowCGImage(maxSide: 1600)
+                let lines = QuestText.recognize(image).filter { $0.confidence >= 0.5 }.map { l in (l.text, Int(l.box.minX), Int(l.box.minY), Int(l.box.width), Int(l.box.height)) }
+                let url = dir.appendingPathComponent("look-\(req).jpg")
+                guard let dest = CGImageDestinationCreateWithURL(url as CFURL, "public.jpeg" as CFString, 1, nil) else { throw GameCapture.CaptureError.encodingFailed }
+                CGImageDestinationAddImage(dest, image, [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary)
+                guard CGImageDestinationFinalize(dest) else { throw GameCapture.CaptureError.encodingFailed }
+                return Shot(path: url.path, width: image.width, height: image.height, lines: lines)
+            }.value
+            let lines: [[Any]] = shot.lines.map { [$0.0, $0.1, $0.2, $0.3, $0.4] }
+            helper?.send(.look(req: req, path: shot.path, width: shot.width, height: shot.height, lines: lines, mark: mark, map: map))
+            log("Look: sent a \(shot.width)×\(shot.height) screenshot with \(lines.count) text lines" + (mark.map { " · box " + Self.describe($0) } ?? ""))
+        } catch {
+            log("Look: no screenshot · \(error.localizedDescription)")
+            if req == lookPending { lookPending = nil; look.fail("No game window to look at.") }
         }
     }
 

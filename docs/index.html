@@ -734,6 +734,46 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-ore-pin .mc-qh-pin {margin-left:0;}
 #maple-atlas-concept .mc-update-bar {position:fixed;z-index:60;left:12px;right:12px;bottom:calc(var(--mc-nav-height,64px) + 12px);min-height:48px;padding:12px 16px;border:0;border-radius:16px;background:var(--mc-blue);color:#fff;font:inherit;font-weight:600;box-shadow:0 8px 24px #0006;cursor:pointer;}
 
+/* Look: a screenshot of the game with a box, and what was found in it (src/look-ui.js). */
+#maple-atlas-concept .mc-look-chip {display:inline-flex;align-items:center;gap:6px;}
+#maple-atlas-concept .mc-look-chip svg {width:16px;height:16px;}
+#maple-atlas-concept .mc-mobile-dialog.mc-look {width:min(720px,calc(100vw - 16px));height:calc(100dvh - 16px);max-height:none;display:none;flex-direction:column;gap:10px;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));overflow:hidden;}
+#maple-atlas-concept .mc-mobile-dialog.mc-look[open] {display:flex;}
+#maple-atlas-concept .mc-look header {margin:0;}
+#maple-atlas-concept .mc-look .mc-look-status {margin:0;min-height:1.4em;color:var(--mc-ink);font-weight:500;}
+#maple-atlas-concept .mc-look-stage {position:relative;flex:1 1 48%;min-height:220px;border-radius:18px;overflow:hidden;background:#111;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;}
+#maple-atlas-concept .mc-look-stage:active {cursor:grabbing;}
+#maple-atlas-concept .mc-look-stage canvas {position:absolute;inset:0;width:100%;height:100%;}
+#maple-atlas-concept .mc-look-box {position:absolute;border:3px solid #4dabf7;border-radius:10px;box-shadow:0 0 0 9999px #0000004d;pointer-events:none;}
+#maple-atlas-concept .mc-look-handle {position:absolute;right:-14px;bottom:-14px;width:28px;height:28px;border-radius:50%;background:#4dabf7;border:3px solid #fff;pointer-events:auto;cursor:nwse-resize;touch-action:none;}
+#maple-atlas-concept .mc-look-actions {display:flex;gap:8px;}
+#maple-atlas-concept .mc-look-actions button {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:22px;font-weight:500;}
+#maple-atlas-concept .mc-look-actions button:not(#mc-look-retake) {flex:1;}
+#maple-atlas-concept .mc-look-actions button svg {width:18px;height:18px;}
+#maple-atlas-concept .mc-look-actions button:disabled {opacity:.55;}
+#maple-atlas-concept .mc-look .mc-look-hint {margin:0;font-size:12px;}
+#maple-atlas-concept .mc-look-results {flex:1 1 32%;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;}
+#maple-atlas-concept .mc-look-row {flex:none;display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);text-align:left;}
+#maple-atlas-concept .mc-look-row > svg {flex:none;width:18px;height:18px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-thumb {flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--mc-paper);box-shadow:inset 0 0 0 2px var(--c,transparent);overflow:hidden;}
+#maple-atlas-concept .mc-look-thumb img {max-width:40px;max-height:40px;image-rendering:pixelated;}
+#maple-atlas-concept .mc-look-text {display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+#maple-atlas-concept .mc-look-text strong {font-size:15px;font-weight:600;}
+#maple-atlas-concept .mc-look-text small {font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-text .mc-look-extra {color:var(--mc-orange);}
+#maple-atlas-concept .mc-look-map .mc-look-thumb {color:var(--mc-blue);}
+#maple-atlas-concept .mc-look-empty {margin:8px 4px;}
+#maple-atlas-concept .mc-look-heading {margin:2px 4px;font-size:13px;font-weight:600;color:var(--mc-muted);text-transform:uppercase;letter-spacing:.04em;}
+#maple-atlas-concept .mc-look-box[hidden] {display:none;}
+#maple-atlas-concept .mc-look-num {flex:none;display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--c);color:#000;font-size:12px;font-weight:700;}
+#maple-atlas-concept .mc-look .mc-look-players {display:flex;align-items:center;gap:8px;margin:4px;font-size:12px;}
+#maple-atlas-concept .mc-look-players svg {flex:none;width:16px;height:16px;}
+#maple-atlas-concept .mc-look-ui summary {padding:8px 4px;color:var(--mc-muted);font-size:13px;cursor:pointer;}
+#maple-atlas-concept .mc-look-ui .mc-look-row {margin-top:6px;}
+@media (max-width:700px) {
+  #maple-atlas-concept .mc-mobile-dialog.mc-look {width:100%;height:calc(100dvh - env(safe-area-inset-top,0px) - 6px);margin:auto 0 0;border-radius:24px 24px 0 0;}
+}
+
 /* Homepage (src/intro.html). Illustrations use the atlas palette, light and dark. */
 #maple-atlas-concept #mc-intro {
   --i-water:light-dark(#d7e9e9,#213e43); --i-water-2:light-dark(#c4e0e2,#1a3439); --i-land:light-dark(#e2e7c5,#4b6047); --i-forest:light-dark(#bad2a8,#375444);
@@ -948,7 +988,7 @@ body {background:light-dark(#d7e9e9,#142937);}
           <circle id="mc-traveler" r="6" fill="var(--mc-blue)" stroke="var(--mc-paper)" stroke-width="3" visibility="hidden"/>
         </g></svg>
         <div id="mc-markers"></div>
-        <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Your quests</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button><button type="button" id="mc-crafting" class="cursor-interaction">Crafting</button></div>
+        <div class="mc-maptools"><button type="button" id="mc-all" aria-pressed="true" class="cursor-interaction">Explore</button><button type="button" id="mc-for-you" aria-pressed="false" class="cursor-interaction">Your quests</button><button type="button" id="mc-shops" aria-pressed="false" class="cursor-interaction">Shops</button><button type="button" id="mc-crafting" class="cursor-interaction">Crafting</button><button type="button" id="mc-look" class="cursor-interaction mc-look-chip"><i data-lucide="scan-search" aria-hidden="true"></i>Look</button></div>
         <div class="mc-zooms"><button type="button" id="mc-plus" aria-label="Zoom in" class="cursor-interaction"><i data-lucide="plus" aria-hidden="true"></i></button><button type="button" id="mc-minus" aria-label="Zoom out" class="cursor-interaction"><i data-lucide="minus" aria-hidden="true"></i></button><button type="button" id="mc-fit" aria-label="Fit island" class="cursor-interaction"><i data-lucide="maximize" aria-hidden="true"></i></button></div>
         <div class="mc-mobile-mapactions"><button type="button" id="mc-mobile-locate" aria-label="Show my starting location"><i data-lucide="locate-fixed" aria-hidden="true"></i></button><button type="button" id="mc-mobile-directions" aria-label="Plan a route"><i data-lucide="route" aria-hidden="true"></i></button></div>
         <button type="button" id="mc-route-chip" hidden aria-label="End route"><span>Route</span><i data-lucide="x" aria-hidden="true"></i><b>End route</b></button>
@@ -1007,6 +1047,7 @@ body {background:light-dark(#d7e9e9,#142937);}
     </div>
     <div id="mc-search-entity" hidden></div>
   </dialog>
+  <dialog id="mc-look-dialog" class="mc-mobile-dialog mc-look" aria-labelledby="mc-look-title"><header><h2 id="mc-look-title">Look</h2><button type="button" data-close-dialog="mc-look-dialog" aria-label="Close Look"><i data-lucide="x" aria-hidden="true"></i></button></header><p id="mc-look-status" class="mc-look-status" role="status">Taking a screenshot of the game…</p><div id="mc-look-stage" class="mc-look-stage"><canvas id="mc-look-canvas"></canvas><div id="mc-look-box" class="mc-look-box" aria-hidden="true"><span class="mc-look-handle"></span></div></div><div class="mc-look-actions"><button type="button" id="mc-look-identify" class="mc-primary"><i data-lucide="scan" aria-hidden="true"></i>Identify box</button><button type="button" id="mc-look-around"><i data-lucide="radar" aria-hidden="true"></i>Around me</button><button type="button" id="mc-look-retake" aria-label="New screenshot"><i data-lucide="refresh-cw" aria-hidden="true"></i></button></div><p class="mc-look-hint">Drag the picture to move the box over something, pinch to zoom, drag the corner to resize. On the computer: ⌃⌥M (Ctrl+Alt+M) marks a box on the game, ⌃⌥A (Ctrl+Alt+A) looks around you.</p><div id="mc-look-results" class="mc-look-results"></div></dialog>
   <dialog id="mc-route-dialog" class="mc-mobile-dialog" aria-labelledby="mc-route-title"><header><h2 id="mc-route-title">Directions</h2><button type="button" data-close-dialog="mc-route-dialog" aria-label="Close route planner"><i data-lucide="x" aria-hidden="true"></i></button></header><div id="mc-route-slot"></div><p id="mc-route-note" role="status">Set your current map and where you want to go.</p><button type="button" id="mc-clear-route" class="mc-clear-route">Clear route</button></dialog>
   <dialog id="mc-profile-dialog" class="mc-mobile-dialog" aria-labelledby="mc-profile-title">
     <header><h2 id="mc-profile-title">Maple Atlas</h2><button type="button" data-close-dialog="mc-profile-dialog" aria-label="Close character settings"><i data-lucide="x" aria-hidden="true"></i></button></header>
@@ -1873,7 +1914,27 @@ window.mapleStorageReady.then(() => {
       })().finally(()=>{craftTask=null;});
       try{return await craftTask;}catch(e){if(saved?.rows)return saved.rows;throw e;}
     }
-    return {load,craftDrops};
+    // What these monsters drop (the monsters on a map), cached a week per set: [{monster, item, rate}].
+    async function monsterDrops(names){
+      names=[...new Set(names.filter(Boolean))].sort();if(!names.length)return [];
+      const key='__drops:'+names.join('|').slice(0,200),saved=store.read(key);
+      if(saved?.schema===1&&Number.isFinite(saved.checked)&&now()-saved.checked<week)return saved.rows;
+      try{
+        const out=[],where='monster_id IN ('+names.map(quote).join(',')+')';
+        for(let offset=0;offset<2000;offset+=500){
+          const params=new URLSearchParams({action:'cargoquery',tables:'monster_drops',fields:'monster_id,item_id,drop_rate',where,limit:'500',offset:String(offset),format:'json',origin:'*'});
+          const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+          let page;
+          try{const r=await request(api+'?'+params,{credentials:'omit',signal:controller.signal});if(!r.ok)throw Error('Wiki request failed');page=rows(await r.json(),500);}
+          finally{clearTimeout(timer);}
+          for(const r of page)if(r['monster id']&&r['item id'])out.push({monster:r['monster id'],item:r['item id'],rate:number(r['drop rate'])});
+          if(page.length<500)break;
+        }
+        store.write(key,{schema:1,name:key,checked:now(),rows:out});
+        return out;
+      }catch(e){if(saved?.rows)return saved.rows;throw e;}
+    }
+    return {load,craftDrops,monsterDrops};
   }
   const exported={create,parse,rows,empty,pageURL,imageURL,license:'https://creativecommons.org/licenses/by-nc-sa/4.0/'};
   scope.MapleItemSources=exported;if(typeof module!=='undefined')module.exports=exported;
@@ -2356,7 +2417,7 @@ window.mapleStorageReady.then(() => {
   // is an ICE-lite peer that learns this phone's ICE username from its connectivity
   // checks, so one scan is enough; the phone then proves the QR secret over the
   // encrypted channel before the usual hello, heartbeat and location messages.
-  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
+  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
     let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
     const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
@@ -2414,6 +2475,8 @@ window.mapleStorageReady.then(() => {
             return;
           }
           if(!verified||phase!=='connected')return;
+          // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
+          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'){lookMessage(value);return;}
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
           // The player's dot on that map, in the portal data's coordinates.
           else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
@@ -2451,10 +2514,31 @@ window.mapleStorageReady.then(() => {
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
     // Navigation for the computer's on-game overlay; true when it went out.
+    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
+    const looks=new Map();
+    function lookMessage(m){
+      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
+      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
+      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
+      if(m.kind==='look-meta'){
+        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
+        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
+        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
+        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
+        return;
+      }
+      const l=looks.get(m.req);
+      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
+      l.parts[m.i]=m.data;l.got++;
+      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
+    }
+    // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
+    function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
+    function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
     // Pinned quests for the computer's overlay row.
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
-    return {join,stop,nav,pins,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    return {join,stop,nav,pins,look,lookResult,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);
@@ -3386,7 +3470,7 @@ window.mapleStorageReady.then(() => {
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the QR reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
   const busy=['connecting','verifying'];
-  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},device}){
+  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},onLook=()=>{},device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),input=$('#mc-pair-input'),scanVideo=$('#mc-scan-video');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
@@ -3435,7 +3519,7 @@ window.mapleStorageReady.then(() => {
     }
     const link=MapleCompanionLink.create({ids,onLocation:value=>{
       lastSeen=Date.now();activity('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);
-    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onReading:state=>{
+    },onPosition:value=>{lastSeen=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onLook:value=>onLook(value),onReading:state=>{
       lastSeen=0;activity(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'The connection is working. Start tracking in Maple Atlas Companion.':'The connection is working. Keep the map name showing on the in-game minimap (press + on it) while your computer reads it.');onConnection(state==='paused'?'stale':'searching');
     },onState:value=>{
       paint(value);
@@ -3554,7 +3638,7 @@ window.mapleStorageReady.then(() => {
       $('#mc-get-app').hidden=false;$('#mc-phone-flow').hidden=true;if(/Mac/i.test(navigator.platform||navigator.userAgent)){$('#mc-get-mac').classList.add('mc-primary');$('#mc-get-windows').classList.remove('mc-primary');root.querySelector('.mc-get-app-links').prepend($('#mc-get-mac'));}
       $('#mc-companion-desktop').querySelector('span').textContent='Get the companion';
       $('#mc-companion-desktop').onclick=open;
-      return {open,enterFullscreen,nav:()=>false};
+      return {open,enterFullscreen,nav:()=>false,look:()=>false,lookResult:()=>false,get connected(){return false;}};
     }
     // One tap: open the companion and, when a paired computer isn't connected, reconnect.
     const tap=()=>{open();if(remembered()&&!link.connected&&!busy.includes(currentState.phase))void resume({manual:true});};
@@ -3578,9 +3662,541 @@ window.mapleStorageReady.then(() => {
     });
     window.addEventListener('pageshow',event=>{if(event.persisted)void resume();});
     if(!linked)setTimeout(()=>void resume({opening:true}),0);
-    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value)};
+    return {open,enterFullscreen,nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:(req,card)=>link.lookResult(req,card),get connected(){return link.connected;}};
   }
   scope.MapleCompanionUI={create};
+})(globalThis);
+
+/* What is on a game screenshot: the "Look" feature.
+ *
+ * The computer sends a screenshot of the game window and the text its system reader found
+ * on it (Vision on the Mac, Windows.Media.Ocr on Windows); this module finds what in it is in
+ * the database, inside a marked box or on the whole screen ("Around me"):
+ *   - names: NPC name tags, item names in chat, shops and quests, the map name, read from the
+ *     text lines and matched to the database's names;
+ *   - sprites: monsters, NPCs and dropped items, by their own sprites from the datamine drawn
+ *     at the game's scale (the game draws sprites 1:1 in game pixels; the minimap's title strip
+ *     is 45 game px tall, which gives that scale in the screenshot). Only what can be on this
+ *     map is looked for: its monsters, its NPCs and what those monsters drop.
+ *
+ * Works on ImageData-like objects ({width, height, data: RGBA}). Browser and Node.
+ */
+(function(scope){
+  const GAME_WIDTH=1366;   // the game's own width in pixels, when the minimap strip is not seen
+
+  // ---- Names ----
+  const norm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'").replace(/[^a-z0-9']+/g,' ').trim();
+  function editDistance(a,b,max=2){
+    if(Math.abs(a.length-b.length)>max)return max+1;
+    let prev=Array.from({length:b.length+1},(_,i)=>i);
+    for(let i=1;i<=a.length;i++){
+      const cur=[i];let best=i;
+      for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));if(cur[j]<best)best=cur[j];}
+      if(best>max)return max+1;prev=cur;
+    }
+    return prev[b.length];
+  }
+  // entries: [{type, id, name, ...}]. Returns a matcher: line text -> [{entry, exact}].
+  function nameIndex(entries){
+    const byName=new Map(),byWord=new Map();
+    for(const e of entries){
+      const n=norm(e.name);if(n.length<3)continue;
+      if(!byName.has(n))byName.set(n,[]);byName.get(n).push(e);
+      const first=n.split(' ')[0];if(!byWord.has(first))byWord.set(first,[]);byWord.get(first).push(n);
+    }
+    return function match(text){
+      const t=norm(text);if(t.length<3)return [];
+      if(byName.has(t))return byName.get(t).map(entry=>({entry,exact:true}));
+      const words=t.split(' '),found=[];
+      // A name inside the line ("Dances with Balrog's Letter x1 earned", "13/15 Blue Mushroom Cap"):
+      // the longest name that starts at some word, compared whole-word.
+      for(let i=0;i<words.length;i++){
+        for(const n of byWord.get(words[i])||[]){
+          const len=n.split(' ').length;if(len===1&&n.length<5)continue;
+          if(words.slice(i,i+len).join(' ')===n)found.push({n,at:i,len});
+        }
+      }
+      if(found.length){
+        found.sort((a,b)=>b.n.length-a.n.length);const taken=new Set(),out=[];
+        for(const f of found){let free=true;for(let i=f.at;i<f.at+f.len;i++)if(taken.has(i))free=false;if(!free)continue;for(let i=f.at;i<f.at+f.len;i++)taken.add(i);for(const entry of byName.get(f.n))out.push({entry,exact:true});}
+        return out;
+      }
+      // A reading slip in a whole line that is a name ("Mr. Thundor").
+      if(t.length>=6){
+        let best=null;
+        for(const n of byWord.get(words[0])||[])if(Math.abs(n.length-t.length)<=2){const d=editDistance(t,n,t.length>=10?2:1);if(d<=(t.length>=10?2:1)&&(!best||d<best.d))best={n,d};}
+        if(best)return byName.get(best.n).map(entry=>({entry,exact:false}));
+      }
+      return [];
+    };
+  }
+  // The player's own name: the one in the status bar at the bottom ("LV. 18 Archer TalTBest").
+  function playerName(lines,frame){
+    const bottom=lines.filter(l=>l.y>frame.h*.9&&/^[A-Za-z0-9]{3,13}$/.test(String(l.text).trim()));
+    const lv=lines.find(l=>l.y>frame.h*.9&&/^lv\.?$/i.test(String(l.text).trim()));
+    const pick=lv?bottom.filter(l=>l.x>lv.x).sort((a,b)=>a.x-b.x).find(l=>!/^(archer|warrior|magician|thief|pirate|beginner|bowman|cleric|wizard|hunter|crossbowman|fighter|page|spearman|assassin|bandit|brawler|gunslinger)$/i.test(l.text.trim())):null;
+    return pick?String(pick.text).trim():null;
+  }
+  // Where the player stands on screen: their name tag (the status bar's name, shown again
+  // under the character), the one nearest the middle; else the middle (the camera follows you).
+  function findPlayer(lines,frame){
+    const name=playerName(lines,frame),mid={x:frame.w/2,y:frame.h*.6};
+    if(name){
+      const n=norm(name),tags=lines.filter(l=>l.y<frame.h*.9&&l.x<frame.w*.86&&(norm(l.text)===n||editDistance(norm(l.text),n,1)<=1));
+      tags.sort((a,b)=>Math.hypot(a.x+a.w/2-mid.x,a.y-mid.y)-Math.hypot(b.x+b.w/2-mid.x,b.y-mid.y));
+      if(tags[0]){const t=tags[0];return {x:t.x+t.w/2,y:t.y-t.h*2.5,name,found:true};}
+    }
+    return {x:mid.x,y:mid.y,name,found:false};
+  }
+
+  // A name tag: light letters on a dark box, so much of the text's own box is dark.
+  function darkTag(img,l){
+    let dark=0,n=0;
+    const x0=Math.max(0,Math.round(l.x)),x1=Math.min(img.width,Math.round(l.x+l.w)),y0=Math.max(0,Math.round(l.y)),y1=Math.min(img.height,Math.round(l.y+l.h));
+    for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){const j=(y*img.width+x)*4;if(img.data[j]*.299+img.data[j+1]*.587+img.data[j+2]*.114<75)dark++;n++;}
+    return n>=20&&dark/n>=.3;
+  }
+
+  // ---- Sprites ----
+  const at=(img,x,y)=>(y*img.width+x)*4;
+  // A sprite drawn at scale k (bilinear, as the game window is scaled), with its opaque pixels.
+  function template(sprite,k,flip=false){
+    const w=Math.max(2,Math.round(sprite.width*k)),h=Math.max(2,Math.round(sprite.height*k)),px=[];
+    const src=sprite.data,sw=sprite.width,sh=sprite.height;
+    const sample=(fx,fy,c)=>{const x0=Math.max(0,Math.min(sw-1,Math.floor(fx))),y0=Math.max(0,Math.min(sh-1,Math.floor(fy))),x1=Math.min(sw-1,x0+1),y1=Math.min(sh-1,y0+1),ax=Math.max(0,Math.min(1,fx-x0)),ay=Math.max(0,Math.min(1,fy-y0));
+      const v=(x,y)=>src[(y*sw+x)*4+c];return (v(x0,y0)*(1-ax)+v(x1,y0)*ax)*(1-ay)+(v(x0,y1)*(1-ax)+v(x1,y1)*ax)*ay;};
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const fx=((flip?w-1-x:x)+.5)/k-.5,fy=(y+.5)/k-.5;
+      // Fully opaque here and around: edges blend with whatever is behind the sprite.
+      let solid=true;for(const [dx,dy] of [[0,0],[-.6,0],[.6,0],[0,-.6],[0,.6]])if(sample(fx+dx/k*k,fy+dy/k*k,3)<250)solid=false;
+      if(solid)px.push({x,y,r:sample(fx,fy,0),g:sample(fx,fy,1),b:sample(fx,fy,2)});
+    }
+    return {w,h,px,flip};
+  }
+  // Masked match score at origin (ox, oy): normalized correlation of the colours, less the
+  // mean colour difference (a shape in the wrong colours is not the sprite).
+  function score(img,t,ox,oy,step=1){
+    let n=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;const d=img.data;
+    for(let i=0;i<t.px.length;i+=step){
+      const p=t.px[i],j=at(img,ox+p.x,oy+p.y);
+      for(const [a,b] of [[d[j],p.r],[d[j+1],p.g],[d[j+2],p.b]]){n++;sa+=a;sb+=b;sab+=a*b;saa+=a*a;sbb+=b*b;diff+=Math.abs(a-b);}
+    }
+    const va=saa-sa*sa/n,vb=sbb-sb*sb/n;if(va<=0||vb<=0)return -1;
+    return (sab-sa*sb/n)/Math.sqrt(va*vb)-diff/n/255;
+  }
+  const close=(img,j,c,tol)=>Math.abs(img.data[j]-c.r)+Math.abs(img.data[j+1]-c.g)+Math.abs(img.data[j+2]-c.b)<=tol;
+  // Where template t is in the region: candidates from its two rarest colours (both in place),
+  // then the full score. Returns [{x, y, w, h, score}] in image pixels.
+  // Every pixel of a region by its colour (16 levels a channel): a sprite's anchor colour is then
+  // looked up instead of scanning the whole screen for it.
+  function colorIndex(img,region){
+    const x0=Math.max(0,Math.floor(region.x)),y0=Math.max(0,Math.floor(region.y)),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    const n=Math.max(0,(x1-x0)*(y1-y0)),bin=new Uint16Array(n),count=new Uint32Array(4097),d=img.data;let i=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++,i++){const j=(y*img.width+x)*4,q=((d[j]>>4)<<8)|((d[j+1]>>4)<<4)|(d[j+2]>>4);bin[i]=q;count[q+1]++;}
+    for(let q=1;q<=4096;q++)count[q]+=count[q-1];
+    const fill=count.slice(0,4096),pos=new Int32Array(n);i=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++,i++)pos[fill[bin[i]]++]=y*img.width+x;
+    return {start:count,pos,x0,y0,x1,y1,hist:q=>count[q+1]-count[q]};
+  }
+  function findSprite(img,t,region,{threshold=.55,hist=null,tol=60,index=null}={}){
+    if(t.px.length<12)return [];
+    const rx0=Math.max(0,Math.floor(region.x)),ry0=Math.max(0,Math.floor(region.y)),rx1=Math.min(img.width,Math.ceil(region.x+region.w)),ry1=Math.min(img.height,Math.ceil(region.y+region.h));
+    if(rx1-rx0<t.w||ry1-ry0<t.h)return [];
+    const q=p=>((p.r>>4)<<8)|((p.g>>4)<<4)|(p.b>>4);
+    // Anchors: well-separated pixels in flat areas of the sprite (not a blend at the border of two
+    // colours, which the screen may not have) whose colours are rarest on the screen.
+    if(!t.flat){
+      const at2=new Map(t.px.map(p=>[p.y*t.w+p.x,p])),near=(p,o)=>o&&Math.abs(p.r-o.r)+Math.abs(p.g-o.g)+Math.abs(p.b-o.b)<=24;
+      t.flat=t.px.filter(p=>near(p,at2.get(p.y*t.w+p.x-1))&&near(p,at2.get(p.y*t.w+p.x+1))&&near(p,at2.get((p.y-1)*t.w+p.x))&&near(p,at2.get((p.y+1)*t.w+p.x)));
+      if(t.flat.length<8)t.flat=t.px;
+    }
+    const ranked=t.flat.map(p=>({p,rare:index?index.hist(q(p)):hist?hist[q(p)]||0:0})).sort((a,b)=>a.rare-b.rare);
+    const hits=[],far=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y)>Math.max(t.w,t.h)*.35;
+    // Two anchor pairs: the rarest colour and one far from it; then the next rarest that is far
+    // from the first (a colour shifted by the screenshot's compression is caught by the other).
+    const b1=ranked.find(r=>far(r.p,ranked[0].p))?.p||ranked[1].p;
+    const c0=ranked.find(r=>r.p!==ranked[0].p&&r.p!==b1&&far(r.p,ranked[0].p))?.p||ranked[2]?.p||ranked[0].p;
+    const pairs=[[ranked[0].p,b1],[c0,ranked[0].p]],seen=new Set();
+    for(const [a1,a2] of pairs){
+    const test=(x,y)=>{
+      if(x<rx0+a1.x||x>=rx1-(t.w-a1.x)||y<ry0+a1.y||y>=ry1-(t.h-a1.y))return;
+      if(!close(img,at(img,x,y),a1,tol))return;
+      const ox=x-a1.x,oy=y-a1.y,key=oy*img.width+ox;
+      if(seen.has(key)||!close(img,at(img,ox+a2.x,oy+a2.y),a2,tol*1.4))return;
+      seen.add(key);
+      const s=score(img,t,ox,oy,3);if(s>=threshold-.15)hits.push({x:ox,y:oy,s});
+    };
+    if(index){
+      // The pixels whose colour is within a level of the anchor's, from the index.
+      const r=a1.r>>4,g=a1.g>>4,b=a1.b>>4;
+      for(let dr=-2;dr<=2;dr++)for(let dg=-2;dg<=2;dg++)for(let db=-2;db<=2;db++){
+        const R=r+dr,G=g+dg,B=b+db;if(R<0||G<0||B<0||R>15||G>15||B>15)continue;
+        const q=(R<<8)|(G<<4)|B;for(let i=index.start[q];i<index.start[q+1];i++){const p=index.pos[i],y=(p/img.width)|0;test(p-y*img.width,y);}
+      }
+    }else for(let y=ry0+a1.y;y<ry1-(t.h-a1.y);y++)for(let x=rx0+a1.x;x<rx1-(t.w-a1.x);x++)test(x,y);
+    }
+    // Best of each neighbourhood, scored in full.
+    hits.sort((a,b)=>b.s-a.s);const out=[];
+    for(const h of hits){
+      if(out.some(o=>Math.abs(o.x-h.x)<t.w*.6&&Math.abs(o.y-h.y)<t.h*.6))continue;
+      let best={x:h.x,y:h.y,s:score(img,t,h.x,h.y)};
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const x=h.x+dx,y=h.y+dy;if(x<0||y<0||x+t.w>img.width||y+t.h>img.height)continue;const s=score(img,t,x,y);if(s>best.s)best={x,y,s};}
+      if(best.s>=threshold)out.push({x:best.x,y:best.y,w:t.w,h:t.h,score:Math.round(best.s*100)/100});
+      if(out.length>=12)break;
+    }
+    return out;
+  }
+  // Half size (2x2 averages) of a region of the image, for scanning large areas faster.
+  function half(img,region){
+    const x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    const w=(x1-x0)>>1,h=(y1-y0)>>1,data=new Uint8ClampedArray(w*h*4),d=img.data;
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const a=at(img,x0+x*2,y0+y*2),b=a+4,c=a+img.width*4,e=c+4,o=(y*w+x)*4;
+      for(let ch=0;ch<3;ch++)data[o+ch]=(d[a+ch]+d[b+ch]+d[c+ch]+d[e+ch]+2)>>2;data[o+3]=255;
+    }
+    return {image:{width:w,height:h,data},x0,y0};
+  }
+  function colorHistogram(img,region){
+    const hist=new Uint32Array(4096),x0=Math.max(0,region.x|0),y0=Math.max(0,region.y|0),x1=Math.min(img.width,Math.ceil(region.x+region.w)),y1=Math.min(img.height,Math.ceil(region.y+region.h));
+    for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){const j=at(img,x,y);hist[((img.data[j]>>4)<<8)|((img.data[j+1]>>4)<<4)|(img.data[j+2]>>4)]++;}
+    return hist;
+  }
+
+  // ---- The whole look ----
+  // image: the screenshot. lines: [{text, x, y, w, h}] in its pixels. region: {x, y, w, h} in its
+  // pixels (the marked box), or null for the whole screen. k: image pixels per game pixel.
+  // names: a nameIndex() matcher. sprites: [{type, id, name, image: ImageData-like}] to look for.
+  // Returns {player, found: [{type, id, name, box, via: 'name'|'sprite', score}]}, most certain first.
+  function analyze({image,lines=[],region=null,k=null,names=null,sprites=[],now=()=>Date.now(),budget=6000}){
+    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
+    k=k||frame.w/GAME_WIDTH;
+    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
+    const found=[],players=[],candidates=[];
+    const player=findPlayer(lines,frame);
+    if(names)for(const l of lines){
+      if(!inside(l))continue;
+      const uiLine=l.y>frame.h*.9||l.x>frame.w*.83&&l.y<frame.h*.62;
+      if(player.name&&norm(l.text)===norm(player.name)){if(!uiLine&&!players.some(p=>p.you))players.push({name:player.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:true});continue;}
+      // Text in the game's own windows (Quest Helper, chat and status bar) rather than over the world.
+      const ui=l.y>frame.h*.9||l.x>frame.w*.83&&l.y<frame.h*.62;
+      const seen=new Set();let matched=false;
+      for(const {entry,exact} of names(l.text)){
+        // Monsters carry no name tag in the game: a tag over the world with a monster's name is
+        // a pet's or a player's.
+        if(entry.type==='monster'&&!ui&&norm(l.text)===norm(entry.name))continue;
+        // A one-word tag over the world that is an item's name is a pet's or a player's too.
+        if(entry.type==='item'&&!ui&&norm(l.text)===norm(entry.name)&&!/\s/.test(norm(entry.name)))continue;
+        const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);
+        matched=true;found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui,score:exact?(ui?.9:1):.8});}
+      // Other players: a one-word name tag over the world on the tag's dark box, that is nothing
+      // in the database (not the minimap's name, an NPC's title or a button's label).
+      const word=String(l.text).trim();
+      if(!matched&&!ui&&l.y<frame.h*.86&&/^[A-Za-z0-9]{3,13}$/.test(word)&&/[a-z]/.test(word)&&l.h<frame.h*.04&&darkTag(image,l))candidates.push({name:word,box:{x:l.x,y:l.y,w:l.w,h:l.h},you:false});
+    }
+    // An NPC's title sits right under its name ("Mr. Thunder" / "Weaponcrafter"): not a player.
+    for(const c of candidates){
+      // A slip of your own name ("TalTBestU") is you; each name once.
+      if(player.name&&editDistance(norm(c.name),norm(player.name),1)<=1){c.you=true;c.name=player.name;}
+      if(players.some(p=>norm(p.name)===norm(c.name)))continue;
+      const title=found.some(f=>f.type==='npc'&&f.via==='name'&&Math.abs(c.box.y-(f.box.y+f.box.h))<f.box.h*1.6&&Math.abs(c.box.x+c.box.w/2-(f.box.x+f.box.w/2))<Math.max(f.box.w,c.box.w));
+      if(!title)players.push(c);
+    }
+    // A little margin: a sprite cut by the box still counts when most of it is inside.
+    const pad=40*k,search={x:area.x-pad,y:area.y-pad,w:area.w+pad*2,h:area.h+pad*2};
+    // Large areas are scanned at half size (monsters and NPCs only; dropped items are too small).
+    const big=search.w*search.h>300000&&k>=.9,small=big?half(image,search):null;
+    const index=colorIndex(image,search),smallIndex=small?colorIndex(small.image,{x:0,y:0,w:small.image.width,h:small.image.height}):null;
+    for(const s of sprites){
+      if(now()-started>budget)break;
+      // Small sprites (a snail) lose too much at half size: those are scanned in full.
+      const useHalf=big&&s.type!=='item'&&Math.min(s.image.width,s.image.height)*k>=48;
+      for(const flip of s.type==='item'?[false]:[false,true]){
+        const t=template(s.image,useHalf?k/2:k,flip);
+        // A dropped item's icon is small: only one with enough solid pixels is told apart from
+        // the scenery (a thin sword is not).
+        if(s.type==='item'&&t.px.length<150)continue;
+        const hits=useHalf?findSprite(small.image,t,{x:0,y:0,w:small.image.width,h:small.image.height},{index:smallIndex,threshold:.58})
+          .map(h=>({...h,x:small.x0+h.x*2,y:small.y0+h.y*2,w:h.w*2,h:h.h*2})):findSprite(image,t,search,{index,threshold:s.type==='item'?.82:.5});
+        for(const hit of hits){
+          const box={x:hit.x,y:hit.y,w:hit.w,h:hit.h};if(!inside(box))continue;
+          found.push({type:s.type,id:s.id,name:s.name,box,via:'sprite',score:hit.score});
+        }
+      }
+    }
+    // An item seen on a monster or an NPC is part of it (a Blue Mushroom's cap), not a drop.
+    const bodies=found.filter(f=>f.via==='sprite'&&f.type!=='item').map(f=>f.box);
+    const overlaps=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y))>a.w*a.h*.3;
+    for(let i=found.length-1;i>=0;i--)if(found[i].type==='item'&&found[i].via==='sprite'&&bodies.some(b=>overlaps(found[i].box,b)))found.splice(i,1);
+    // One entry per thing seen: the same sprite flipped, or a name tag over its own NPC.
+    found.sort((a,b)=>b.score-a.score);const out=[];
+    for(const f of found){
+      const same=out.find(o=>o.type===f.type&&o.id===f.id&&Math.abs(o.box.x+o.box.w/2-(f.box.x+f.box.w/2))<Math.max(o.box.w,f.box.w)*.8&&Math.abs(o.box.y-f.box.y)<Math.max(o.box.h,f.box.h)*1.5);
+      if(same){same.count=(same.count||1);continue;}
+      out.push(f);
+    }
+    return {player,k,found:out,players,elapsed:now()-started};
+  }
+  // Summary: each thing once, with how many were seen.
+  function summary(found){
+    const by=new Map();
+    for(const f of found){const key=f.type+':'+f.id;const e=by.get(key);if(e){e.count++;e.score=Math.max(e.score,f.score);if(!f.ui)e.ui=false;if(f.via==='sprite')e.via='sprite';}else by.set(key,{type:f.type,id:f.id,name:f.name,count:1,score:f.score,via:f.via,ui:!!f.ui,box:f.box});}
+    const order={monster:0,npc:1,item:2,map:3,quest:4};
+    return [...by.values()].sort((a,b)=>(order[a.type]??9)-(order[b.type]??9)||b.count-a.count||b.score-a.score);
+  }
+
+  const api={analyze,summary,nameIndex,findPlayer,playerName,template,findSprite,colorIndex,score,norm,editDistance,GAME_WIDTH};
+  scope.MapleLook=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+/* The phone's Look view: a screenshot of the game from the computer, zoomed on your character,
+ * with a box you move by dragging the picture (pinch or the corner handle to resize).
+ * "Identify box" finds what is in the box, "Around me" what is on the whole screen; each thing
+ * found is marked on the picture and listed, and opens its page in the search.
+ *
+ * It also answers looks marked on the computer (⌃⌥M / Ctrl+Alt+M on the game): the same
+ * recognition on the marked box, sent back as a small card for the overlay.
+ *
+ * Recognition is src/look.js; sprites come from maplestory.io (every animation frame of
+ * monsters and NPCs, and items' dropped icons), else the datamine picture.
+ */
+(function(scope){
+  const API='https://maplestory.io/api/MCW/1/';
+  function create({root,maps,quests=[],catalogUrl,sourceCommit,request,answer,liveMap,openEntity,drops,connected,esc,icon,icons=()=>{}}){
+    const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results');
+    const mapOf=id=>maps.find(m=>m.id===String(id));
+    let shot=null,view={s:1,tx:0,ty:0},boxSize={w:.62,h:.5},found=[],shotPlayers=[],seq=0,waiting=null,busy=false;
+
+    // ---- Data: the catalog (names), sprites, drops ----
+    let catalog=null,names=null;
+    async function loadCatalog(){
+      if(catalog)return catalog;
+      const r=await fetch(catalogUrl);if(!r.ok)throw Error('The database did not load.');
+      const data=await r.json();catalog={entities:data.entities||[],commit:data.sourceCommit||sourceCommit};
+      catalog.by=new Map(catalog.entities.map(e=>[e.type+':'+e.id,e]));
+      catalog.itemByName=new Map();for(const e of catalog.entities)if(e.type==='item'&&!catalog.itemByName.has(e.name.toLowerCase()))catalog.itemByName.set(e.name.toLowerCase(),e);
+      names=MapleLook.nameIndex(catalog.entities.filter(e=>['npc','monster','item','quest'].includes(e.type)));
+      return catalog;
+    }
+    const spritePath=e=>e?.image&&catalog?catalog.commit+'/data/'+e.image:'';
+    const spriteURL=e=>e?.image&&catalog?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+spritePath(e):null;
+    // Images as ImageData, fetched two at a time and retried when the server is busy.
+    const images=new Map();let active=0;const queue=[];
+    const slot=()=>new Promise(res=>{if(active<2){active++;res();}else queue.push(res);});
+    const free=()=>{const next=queue.shift();if(next)next();else active--;};
+    async function fetchRetry(url,as){
+      await slot();
+      try{for(let i=0;i<3;i++){const r=await fetch(url,{mode:'cors',credentials:'omit'}).catch(()=>null);if(r?.ok)return as==='json'?await r.json():await r.blob();if(r&&r.status!==503&&r.status!==429)return null;await new Promise(res=>setTimeout(res,500*(i+1)));}return null;}
+      finally{free();}
+    }
+    function imageData(url){
+      if(!url)return Promise.resolve(null);
+      if(!images.has(url))images.set(url,(async()=>{
+        const blob=await fetchRetry(url,'blob');if(!blob)return null;
+        try{const bmp=await createImageBitmap(blob),c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);bmp.close?.();return x.getImageData(0,0,c.width,c.height);}catch(_){return null;}
+      })());
+      return images.get(url);
+    }
+    // Every useful frame of a monster or NPC (a few of each pose), else its datamine picture.
+    const frameLists=new Map();
+    function frames(kind,e){
+      const key=kind+':'+e.id;
+      if(!frameLists.has(key))frameLists.set(key,(async()=>{
+        const rec=await fetchRetry(API+kind+'/'+e.id,'json'),books=rec?.framebooks||{},urls=[];
+        const poses=kind==='mob'?['stand','move','jump','hit1']:Object.keys(books).slice(0,2);
+        for(const pose of poses)for(let i=0;i<Math.min(books[pose]||0,kind==='mob'?4:2);i++)urls.push(API+kind+'/'+e.id+'/render/'+pose+'/'+i);
+        const got=(await Promise.all(urls.slice(0,12).map(imageData))).filter(Boolean);
+        if(got.length)return got;
+        const own=await imageData(spriteURL(e));return own?[own]:[];
+      })());
+      return frameLists.get(key);
+    }
+    // What can be on this map: its monsters (all frames), its NPCs, and what its monsters drop.
+    const mapSets=new Map();
+    function spritesFor(mapId,onProgress){
+      if(!mapSets.has(mapId))mapSets.set(mapId,(async()=>{
+        const m=mapOf(mapId),list=[];if(!m)return list;
+        const mobs=(m.monsters||[]).map(x=>catalog.by.get('monster:'+x.id)||{id:String(x.id),name:x.name,type:'monster'});
+        const npcs=(m.npcs||[]).map(x=>catalog.by.get('npc:'+x.id)||{id:String(x.id),name:x.name,type:'npc'});
+        let done=0;const total=mobs.length+npcs.length;
+        for(const [kind,type,group] of [['mob','monster',mobs],['npc','npc',npcs]])await Promise.all(group.map(async e=>{
+          for(const image of await frames(kind,e))list.push({type,id:String(e.id),name:e.name,image});
+          onProgress?.(++done,total);
+        }));
+        let dropRows=[];try{dropRows=await drops((m.monsters||[]).map(x=>x.name));}catch(_){}
+        const items=[...new Set(dropRows.map(r=>r.item))].map(n=>catalog.itemByName.get(String(n).toLowerCase())).filter(Boolean).slice(0,40);
+        await Promise.all(items.map(async e=>{const image=await imageData(API+'item/'+e.id+'/iconRaw')||await imageData(spriteURL(e));if(image)list.push({type:'item',id:String(e.id),name:e.name,image});}));
+        list.drops=dropRows;
+        return list;
+      })().catch(e=>{mapSets.delete(mapId);throw e;}));
+      return mapSets.get(mapId);
+    }
+
+    // ---- Recognition ----
+    // The game's scale in the screenshot: the minimap title strip is 45 game px tall.
+    function scaleOf(image){
+      // Measured in the top-left corner, where the game keeps the minimap (as the apps read it).
+      try{
+        const w=Math.round(image.width*.45),h=Math.round(image.height*.76),data=new Uint8ClampedArray(w*h*4);
+        for(let y=0;y<h;y++)data.set(image.data.subarray(y*image.width*4,y*image.width*4+w*4),y*w*4);
+        const band=MapleMinimapPosition.findTitleBand({width:w,height:h,data},{frameHeight:image.height});
+        const k=band?band.h/45:0,guess=image.width/MapleLook.GAME_WIDTH;
+        if(k>guess*.6&&k<guess*1.6)return k;
+      }catch(_){}
+      return image.width/MapleLook.GAME_WIDTH;
+    }
+    async function analyze(s,region,onProgress){
+      await loadCatalog();
+      const mapId=s.map||liveMap();
+      const sprites=mapId?await spritesFor(mapId,onProgress):[];
+      const r=MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites});
+      const summary=MapleLook.summary(r.found);summary.forEach((f,i)=>f.n=i+1);
+      // Each thing on the picture carries its row's number.
+      for(const f of r.found){const s=summary.find(x=>x.type===f.type&&x.id===f.id);f.n=s?.n;}
+      return {...r,mapId,drops:sprites.drops||[],summary};
+    }
+    // One line or two about a thing found, for the list and the overlay card.
+    function describe(f,ctx){
+      const e=catalog.by.get(f.type+':'+f.id)||{},here=mapOf(ctx.mapId);
+      const pct=v=>v==null?'':v>=10?Math.round(v)+'%':v>=1?v.toFixed(1)+'%':v.toFixed(2)+'%';
+      if(f.type==='monster'){
+        const spawns=(here?.monsters||[]).find(x=>String(x.id)===f.id)?.spawns;
+        const top=ctx.drops.filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,3);
+        return {detail:['Lv '+(e.level??'?'),e.hp!=null?e.hp.toLocaleString()+' HP':'',e.exp!=null?e.exp+' EXP':'',spawns?spawns+' spawns here':''].filter(Boolean).join(' · '),
+          extra:top.length?'Drops '+top.map(d=>d.item+' '+pct(d.rate)).join(', '):''};
+      }
+      if(f.type==='npc'){
+        const given=quests.filter(q=>q.npc===f.name).map(q=>q.name).slice(0,2);
+        return {detail:'NPC'+(here&&(here.npcs||[]).some(x=>String(x.id)===f.id)?' on '+here.name:''),extra:given.length?'Quests: '+given.join(', '):''};
+      }
+      if(f.type==='item'){
+        const by=ctx.drops.filter(d=>d.item===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate).slice(0,2);
+        return {detail:[e.category||'Item',e.sell?'sells for '+e.sell.toLocaleString()+' mesos':''].filter(Boolean).join(' · '),extra:by.length?'Dropped here by '+by.map(d=>d.monster+' '+pct(d.rate)).join(', '):''};
+      }
+      return {detail:{quest:'Quest',map:'Map'}[f.type]||'',extra:''};
+    }
+    function card(r,title){
+      const items=r.summary.slice(0,6).map(f=>{const d=describe(f,r);return {t:f.type,n:f.name,i:spritePath(catalog.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count};});
+      const m=mapOf(r.mapId);
+      return {title,note:items.length?(m?'On '+m.name:''):'Nothing from the database found here'+(m?' on '+m.name:'')+'.',items};
+    }
+
+    // ---- The screenshot from the computer ----
+    async function decode(value){
+      const bytes=Uint8Array.from(atob(value.jpeg),c=>c.charCodeAt(0));
+      const bmp=await createImageBitmap(new Blob([bytes],{type:'image/jpeg'})),c=document.createElement('canvas');
+      c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);
+      const image=x.getImageData(0,0,c.width,c.height),k=scaleOf(image);
+      return {bitmap:bmp,image,k,lines:value.lines||[],map:value.map,player:MapleLook.findPlayer(value.lines||[],{w:image.width,h:image.height})};
+    }
+    async function received(value){
+      if(value.req.startsWith('c')){void markedOnComputer(value);return;}
+      if(!waiting||value.req!==waiting)return;
+      waiting=null;
+      if(value.error){say(value.error);return;}
+      try{shot=await decode(value);}catch(_){say('The screenshot could not be read.');return;}
+      found=[];shotPlayers=[];results.innerHTML='';box.hidden=false;centre();draw();
+      void identify();
+    }
+    // A look marked on the computer: recognize the box, answer with a card.
+    async function markedOnComputer(value){
+      if(value.error)return;
+      try{
+        const s=await decode(value),m=value.mark||{x:0,y:0,w:1,h:1},whole=m.w>.98&&m.h>.98;
+        const region=whole?null:{x:m.x*s.image.width,y:m.y*s.image.height,w:m.w*s.image.width,h:m.h*s.image.height};
+        const r=await analyze(s,region);
+        const reply=card(r,whole?'Around you':'In the box');if(scope.MapleLookDebug)scope.MapleLookDebug.lastCard=reply;answer(value.req,reply);
+        if(dialog.open){shot=s;found=r.found;shotPlayers=r.players||[];box.hidden=!region;if(region){centre(region);draw();}else fitAll();list(r,(region?'In the box':'On the whole screen')+' (marked on the computer)');say((whole?'Around you':'In the box')+' (marked on the computer)');}
+      }catch(e){answer(value.req,{title:'Look',note:'Could not look: '+String(e.message||e).slice(0,60),items:[]});}
+    }
+
+    // ---- View: pan, pinch, the box ----
+    function size(){const r=stage.getBoundingClientRect(),d=devicePixelRatio||1,w=Math.round(r.width*d),h=Math.round(r.height*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;draw();}return r;}
+    function boxRect(){const r=stage.getBoundingClientRect(),w=r.width*boxSize.w,h=r.height*boxSize.h;return {x:(r.width-w)/2,y:(r.height-h)/2,w,h};}
+    function placeBox(){const b=boxRect();Object.assign(box.style,{left:b.x+'px',top:b.y+'px',width:b.w+'px',height:b.h+'px'});}
+    // Your character in the middle with about 560 game px of the world around it (or a region).
+    function centre(region){
+      if(!shot)return;const r=size(),p=region?{x:region.x+region.w/2,y:region.y+region.h/2}:shot.player,span=region?Math.max(region.w/boxSize.w,region.h*r.width/r.height/boxSize.h):560*shot.k;
+      view.s=Math.max(r.width/shot.image.width,Math.min(8,r.width/span));view.tx=r.width/2-p.x*view.s;view.ty=r.height/2-p.y*view.s;clamp();placeBox();
+    }
+    // The whole screenshot in view (after Around me, so every mark shows).
+    function fitAll(){const r=size();view.s=Math.min(r.width/shot.image.width,r.height/shot.image.height);view.tx=(r.width-shot.image.width*view.s)/2;view.ty=(r.height-shot.image.height*view.s)/2;draw();}
+    function clamp(){const r=stage.getBoundingClientRect(),w=shot.image.width*view.s,h=shot.image.height*view.s;view.tx=Math.min(r.width*.5,Math.max(r.width*.5-w,view.tx));view.ty=Math.min(r.height*.5,Math.max(r.height*.5-h,view.ty));}
+    const colors={monster:'#ff6b6b',npc:'#4dabf7',item:'#ffd43b',quest:'#a9e34b'};
+    function draw(){
+      if(!shot)return;const d=devicePixelRatio||1,x=canvas.getContext('2d');
+      x.setTransform(1,0,0,1,0,0);x.fillStyle='#111';x.fillRect(0,0,canvas.width,canvas.height);
+      x.setTransform(view.s*d,0,0,view.s*d,view.tx*d,view.ty*d);x.imageSmoothingEnabled=view.s<2;x.drawImage(shot.bitmap,0,0);
+      x.lineWidth=2.5/view.s;x.font=(13/view.s)+'px system-ui, sans-serif';
+      const tag=(b,label,color,fill='rgba(0,0,0,.72)')=>{const tw=x.measureText(label).width+8/view.s;x.fillStyle=fill;x.fillRect(b.x,b.y-18/view.s,tw,17/view.s);x.fillStyle=color;x.fillText(label,b.x+4/view.s,b.y-5/view.s);};
+      // Players (yourself and others) are only labelled: they are not in the database.
+      for(const p of shotPlayers){x.strokeStyle='rgba(255,255,255,.55)';x.setLineDash([4/view.s,3/view.s]);x.strokeRect(p.box.x-2/view.s,p.box.y-2/view.s,p.box.w+4/view.s,p.box.h+4/view.s);x.setLineDash([]);tag(p.box,p.you?'You':'Player','#ddd','rgba(60,60,60,.8)');}
+      for(const f of found){if(f.via==='name'&&f.ui)continue;x.strokeStyle=colors[f.type]||'#fff';x.strokeRect(f.box.x,f.box.y,f.box.w,f.box.h);tag(f.box,(f.n?f.n+' · ':'')+f.name,'#fff');}
+    }
+    let pointers=new Map(),pinch=null,resizing=null;
+    stage.addEventListener('pointerdown',e=>{if(!shot)return;if(box.hidden){box.hidden=false;placeBox();}stage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(e.target.closest('.mc-look-handle'))resizing={x:e.clientX,y:e.clientY,w:boxSize.w,h:boxSize.h};
+      if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:view.s,mx:(a.x+b.x)/2,my:(a.y+b.y)/2};}});
+    stage.addEventListener('pointermove',e=>{
+      const p=pointers.get(e.pointerId);if(!p||!shot)return;const r=stage.getBoundingClientRect();
+      if(resizing){boxSize.w=Math.max(.15,Math.min(.95,resizing.w+(e.clientX-resizing.x)*2/r.width));boxSize.h=Math.max(.12,Math.min(.9,resizing.h+(e.clientY-resizing.y)*2/r.height));placeBox();p.x=e.clientX;p.y=e.clientY;return;}
+      if(pointers.size===2&&pinch){p.x=e.clientX;p.y=e.clientY;const [a,b]=[...pointers.values()],dd=Math.hypot(a.x-b.x,a.y-b.y);zoomAt(pinch.s*dd/pinch.d,pinch.mx-r.left,pinch.my-r.top);return;}
+      view.tx+=e.clientX-p.x;view.ty+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;clamp();draw();});
+    const up=e=>{pointers.delete(e.pointerId);if(pointers.size<2)pinch=null;if(!pointers.size)resizing=null;};
+    stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+    stage.addEventListener('wheel',e=>{if(!shot)return;e.preventDefault();const r=stage.getBoundingClientRect();zoomAt(view.s*Math.exp(-e.deltaY/400),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+    function zoomAt(s,mx,my){const r=stage.getBoundingClientRect(),min=r.width/shot.image.width*.9;s=Math.max(min,Math.min(8,s));const ix=(mx-view.tx)/view.s,iy=(my-view.ty)/view.s;view.s=s;view.tx=mx-ix*s;view.ty=my-iy*s;clamp();draw();}
+    // The box in screenshot pixels.
+    function regionOfBox(){const b=boxRect();return {x:(b.x-view.tx)/view.s,y:(b.y-view.ty)/view.s,w:b.w/view.s,h:b.h/view.s};}
+
+    // ---- Results ----
+    function say(text){status.textContent=text;}
+    function list(r,heading=''){
+      const m=mapOf(r.mapId),rows=r.summary.filter(f=>!(f.via==='name'&&f.ui)),ui=r.summary.filter(f=>f.via==='name'&&f.ui);
+      const row=f=>{const e=catalog.by.get(f.type+':'+f.id),d=describe(f,r),src=spriteURL(e);
+        return '<button type="button" class="mc-look-row" data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'">'+(f.ui?'':'<span class="mc-look-num" style="--c:'+(colors[f.type]||'#999')+'">'+f.n+'</span>')+'<span class="mc-look-thumb" style="--c:'+(colors[f.type]||'#999')+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span><span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span>'+icon('chevron-right')+'</button>';};
+      results.innerHTML=(heading?'<h3 class="mc-look-heading">'+esc(heading)+'</h3>':'')+(m?'<button type="button" class="mc-look-row mc-look-map" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span>'+icon('chevron-right')+'</button>':'')
+        +(rows.length?rows.map(row).join(''):'<p class="mc-look-empty">Nothing from the database found here. Move the box over a monster, an NPC or an item, or try Around me.</p>')
+        +(r.players?.length?'<p class="mc-look-players">'+icon('users')+'<span>Players and pets (not in the database): '+r.players.map(p=>esc(p.you?'you ('+p.name+')':p.name)).join(', ')+'</span></p>':'')
+        +(ui.length?'<details class="mc-look-ui"><summary>Also in the game\'s windows ('+ui.length+')</summary>'+ui.map(row).join('')+'</details>':'');
+      icons();
+      results.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
+      results.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{dialog.close();openEntity('map',mapOf(b.dataset.map)?.name);});
+    }
+    async function run(region,label){
+      if(!shot||busy)return;busy=true;$('#mc-look-identify').disabled=$('#mc-look-around').disabled=true;
+      say(label+'…');
+      try{
+        const r=await analyze(shot,region,(done,total)=>say('Getting this map\'s monsters and NPCs ('+done+'/'+total+')…'));
+        // Around me looks at the whole screen: the box is hidden until you move the picture again.
+        found=r.found;shotPlayers=r.players||[];box.hidden=!region;if(!region)fitAll();else draw();list(r,region?'In the box':'On the whole screen');
+        const n=r.summary.filter(f=>!(f.via==='name'&&f.ui)).length;
+        say((region?'In the box: ':'On the whole screen: ')+(n?n+' found':'nothing from the database')+'.');
+      }catch(e){say('Could not look: '+(e.message||e));}
+      finally{busy=false;$('#mc-look-identify').disabled=$('#mc-look-around').disabled=false;}
+    }
+    const identify=()=>{if(box.hidden){box.hidden=false;placeBox();}return run(regionOfBox(),'Looking in the box');};
+    const around=()=>run(null,'Looking around you');
+
+    function take(){
+      if(!connected()){say('Connect Maple Atlas Companion on your computer first: Look uses its screenshot of the game.');return;}
+      seq++;waiting='p'+seq.toString(36)+Date.now().toString(36).slice(-4);
+      if(!request(waiting)){waiting=null;say('The computer is not connected.');return;}
+      say('Taking a screenshot of the game…');
+      const mine=waiting;setTimeout(()=>{if(waiting===mine){waiting=null;say('No screenshot came from the computer. Is the game open there?');}},20000);
+    }
+    function open(){
+      if(!dialog.open)dialog.showModal();
+      requestAnimationFrame(()=>{size();placeBox();draw();});
+      void loadCatalog().catch(()=>{});
+      take();
+    }
+    $('#mc-look-identify').onclick=identify;$('#mc-look-around').onclick=around;$('#mc-look-retake').onclick=take;
+    addEventListener('resize',()=>{if(dialog.open&&shot){size();placeBox();clamp();draw();}});
+    // ?lookdebug: show a given screenshot as if the computer had sent it (for checking the view).
+    if(/[?&]lookdebug\b/.test(location.search))scope.MapleLookDebug={show:value=>{if(!dialog.open)dialog.showModal();requestAnimationFrame(()=>{size();placeBox();draw();});waiting=value.req;void received(value);}};
+    return {open,received};
+  }
+  scope.MapleLookUI={create};
 })(globalThis);
 
 (function(){
@@ -3751,6 +4367,7 @@ window.mapleStorageReady.then(() => {
     const at=liveFresh&&state.route.includes(liveLocation)?liveLocation:state.route[Math.min(state.step,state.route.length-1)],i=state.route.indexOf(at);
     if(i>=0&&(i<state.route.length-1||huntOn(at)||npcOn(at)))localMaps.open(at,state.route[i+1]||'',huntOn(at),npcOn(at));
   }
+  let lookUI=null;
   let liveLocation=null,liveFresh=false,livePosition=null,liveHint='',liveAt=0,linkPhase='',searchTimer=null;
   const GRACE=15000;
   // While the computer briefly cannot read the map name, keep showing the last map; after
@@ -3814,7 +4431,7 @@ window.mapleStorageReady.then(() => {
     $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
     if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
     pushNav();if(arrivedAt)checkArrival();
-  },onQuests:value=>questPanel.update(value),onConnection:phase=>{
+  },onQuests:value=>questPanel.update(value),onLook:value=>lookUI?.received(value),onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
     if(['failed','disconnected'].includes(phase))clearPosition();
@@ -3843,6 +4460,11 @@ window.mapleStorageReady.then(() => {
   // Ores tab: every crafting material (ore, rare ore, gem, Maker item) the monsters on this map
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
+  // Look: what is on a screenshot of the game (src/look-ui.js, src/look.js).
+  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),
+    liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},drops:names=>oreSources.monsterDrops(names),
+    connected:()=>companion.connected,esc,icon,icons});
+  $('#mc-look').onclick=()=>lookUI.open();
   let oreDrops=null,oreState='idle';
   const ORE_PIN_KEY='maple-atlas-pin-ores';
   let oresPinned=false;try{oresPinned=localStorage.getItem(ORE_PIN_KEY)==='on';}catch(_){}

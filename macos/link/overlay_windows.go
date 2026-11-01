@@ -152,6 +152,13 @@ type overlayState struct {
 
 var overlay = &overlayState{on: true}
 
+// overlayReady runs on the overlay's thread once its windows exist; overlayExtraProc sees each
+// window message first (Look: look_overlay_windows.go).
+var (
+	overlayReady     func(owner uintptr)
+	overlayExtraProc func(hwnd, msg, wparam, lparam uintptr) (uintptr, bool)
+)
+
 func rgb(r, g, b byte) uintptr { return uintptr(r) | uintptr(g)<<8 | uintptr(b)<<16 }
 
 func utf16(s string) *uint16 { p, _ := syscall.UTF16PtrFromString(s); return p }
@@ -266,6 +273,9 @@ func (o *overlayState) run() {
 	o.pinsHwnd = pins
 	o.mu.Unlock()
 	pSetTimer.Call(hwnd, 1, 250, 0)
+	if overlayReady != nil {
+		overlayReady(hwnd)
+	}
 	var m winMsg
 	for {
 		r, _, _ := pGetMessageW.Call(uintptr(unsafe.Pointer(&m)), 0, 0, 0)
@@ -278,6 +288,11 @@ func (o *overlayState) run() {
 }
 
 func (o *overlayState) proc(hwnd, msg, wparam, lparam uintptr) uintptr {
+	if overlayExtraProc != nil {
+		if r, done := overlayExtraProc(hwnd, msg, wparam, lparam); done {
+			return r
+		}
+	}
 	switch msg {
 	case wmTimer:
 		o.tick(hwnd)

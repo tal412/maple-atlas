@@ -108,7 +108,7 @@
   // is an ICE-lite peer that learns this phone's ICE username from its connectivity
   // checks, so one scan is enough; the phone then proves the QR secret over the
   // encrypted channel before the usual hello, heartbeat and location messages.
-  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
+  function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
     let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
     const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
@@ -166,6 +166,8 @@
             return;
           }
           if(!verified||phase!=='connected')return;
+          // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
+          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'){lookMessage(value);return;}
           if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
           // The player's dot on that map, in the portal data's coordinates.
           else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
@@ -203,10 +205,31 @@
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
     // Navigation for the computer's on-game overlay; true when it went out.
+    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
+    const looks=new Map();
+    function lookMessage(m){
+      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
+      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
+      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
+      if(m.kind==='look-meta'){
+        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
+        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
+        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
+        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
+        return;
+      }
+      const l=looks.get(m.req);
+      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
+      l.parts[m.i]=m.data;l.got++;
+      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
+    }
+    // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
+    function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
+    function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
     function nav(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'nav',v:1,session,nav:value});return true;}
     // Pinned quests for the computer's overlay row.
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
-    return {join,stop,nav,pins,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
+    return {join,stop,nav,pins,look,lookResult,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
   scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

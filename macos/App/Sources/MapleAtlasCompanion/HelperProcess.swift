@@ -58,6 +58,12 @@ enum HelperEvent: Sendable {
     case nav(NavInfo?)
     /// Quests pinned on the phone (empty: none).
     case pins([PinnedQuest])
+    /// The phone asks for a screenshot of the game (Look).
+    case lookRequest(req: String)
+    /// What the phone found in a look marked on this Mac.
+    case lookResult(req: String, card: LookCard)
+    /// A screenshot was sent to the phone, or why not (empty error: sent).
+    case lookSent(req: String, error: String)
 
     private struct Raw: Decodable {
         let event: String
@@ -79,6 +85,9 @@ enum HelperEvent: Sendable {
         let hint: String?
         let target: NavInfo.Target?
         let quests: [PinnedQuest]?
+        let req: String?
+        let card: LookCard?
+        let error: String?
     }
 
     /// Returns nil for unknown or malformed events, which the contract says to ignore.
@@ -110,6 +119,15 @@ enum HelperEvent: Sendable {
                                 live: raw.live ?? false, hint: raw.hint ?? "", target: target))
         case "pins":
             self = .pins(raw.quests ?? [])
+        case "look-request":
+            guard let req = raw.req else { return nil }
+            self = .lookRequest(req: req)
+        case "look-result":
+            guard let req = raw.req, let card = raw.card else { return nil }
+            self = .lookResult(req: req, card: card)
+        case "look-sent":
+            guard let req = raw.req else { return nil }
+            self = .lookSent(req: req, error: raw.error ?? "")
         default:
             return nil
         }
@@ -129,6 +147,9 @@ enum HelperCommand {
     case position(id: String, x: Int, y: Int, observedAt: Date)
     /// The quests tracked in the game's Quest Helper (engine's compact form).
     case quests(visible: Bool, quests: [Any], observedAt: Date)
+    /// A screenshot for the phone: a JPEG file (the helper deletes it), its size, the text read on
+    /// it ([text, x, y, w, h] in its pixels), the box marked (0…1) and the map.
+    case look(req: String, path: String, width: Int, height: Int, lines: [[Any]], mark: CGRect?, map: String?)
 
     var payload: [String: Any] {
         switch self {
@@ -152,6 +173,12 @@ enum HelperCommand {
             [
                 "cmd": "position", "id": id, "x": x, "y": y,
                 "observedAt": Int64((observedAt.timeIntervalSince1970 * 1000).rounded()),
+            ]
+        case .look(let req, let path, let width, let height, let lines, let mark, let map):
+            [
+                "cmd": "look", "req": req, "path": path, "width": width, "height": height, "lines": lines,
+                "mark": mark.map { [Double($0.minX), Double($0.minY), Double($0.width), Double($0.height)] } ?? NSNull(),
+                "id": map ?? "",
             ]
         }
     }

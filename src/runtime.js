@@ -124,6 +124,7 @@
     const at=liveFresh&&state.route.includes(liveLocation)?liveLocation:state.route[Math.min(state.step,state.route.length-1)],i=state.route.indexOf(at);
     if(i>=0&&(i<state.route.length-1||huntOn(at)||npcOn(at)))localMaps.open(at,state.route[i+1]||'',huntOn(at),npcOn(at));
   }
+  let lookUI=null;
   let liveLocation=null,liveFresh=false,livePosition=null,liveHint='',liveAt=0,linkPhase='',searchTimer=null;
   const GRACE=15000;
   // While the computer briefly cannot read the map name, keep showing the last map; after
@@ -187,7 +188,7 @@
     $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
     if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
     pushNav();if(arrivedAt)checkArrival();
-  },onQuests:value=>questPanel.update(value),onConnection:phase=>{
+  },onQuests:value=>questPanel.update(value),onLook:value=>lookUI?.received(value),onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
     if(['failed','disconnected'].includes(phase))clearPosition();
@@ -216,6 +217,11 @@
   // Ores tab: every crafting material (ore, rare ore, gem, Maker item) the monsters on this map
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
+  // Look: what is on a screenshot of the game (src/look-ui.js, src/look.js).
+  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),
+    liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},drops:names=>oreSources.monsterDrops(names),
+    connected:()=>companion.connected,esc,icon,icons});
+  $('#mc-look').onclick=()=>lookUI.open();
   let oreDrops=null,oreState='idle';
   const ORE_PIN_KEY='maple-atlas-pin-ores';
   let oresPinned=false;try{oresPinned=localStorage.getItem(ORE_PIN_KEY)==='on';}catch(_){}
