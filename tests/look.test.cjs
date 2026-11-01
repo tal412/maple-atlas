@@ -75,6 +75,10 @@ function image(w,h,paint){const data=new Uint8ClampedArray(w*h*4);for(let y=0;y<
   assert.deepEqual(withNames([{type:'monster',id:'98',name:'Super Stand-in',p:.49},{type:'monster',id:'16',name:'Stand-in',p:.48}]),['Stand-in:namer'],'the map decides between look-alikes');
   assert.deepEqual(withNames([{type:'other',p:.45},{type:'monster',id:'16',name:'Stand-in',p:.4}]),[],'not when it may be something else');
   assert.deepEqual(L.identify({image:screen,detections:[{cls:'pet',score:.8,box:{x:300,y:100,w:30,h:30},names:[{type:'item',id:'5000005',name:'White Bunny',pet:true,p:.93}]}],lines:[],k}).found.map(f=>[f.name,f.pet]),[['White Bunny',true]]);
+  // The item namer: a sure answer names an item box even where no icon is at hand to compare.
+  const itemBox=[{cls:'item',score:.8,box:{x:300,y:100,w:30,h:30},items:[{id:'1007142',p:.98}]}];
+  assert.deepEqual(L.identify({image:screen,detections:itemBox,lines:[],k,thumbs:{cell:16,per:1,ids:[],sheet:image(16,16,()=>[0,0,0,0])},itemIcon:()=>null,itemName:id=>id==='1007142'?'Bunny Ears':id}).found.map(f=>[f.name,f.via]),[['Bunny Ears','namer']]);
+  assert.deepEqual(L.identify({image:screen,detections:[{...itemBox[0],items:[{id:'1007142',p:.6}]}],lines:[],k,thumbs:{cell:16,per:1,ids:[],sheet:image(16,16,()=>[0,0,0,0])},itemIcon:()=>null,itemName:id=>id}).found,[],'not when unsure');
   console.log('look: naming the detector\'s boxes passes');
 }
 // Items anywhere (inventory, shops): the shortlist over 16x16 thumbnails picks the right icon,

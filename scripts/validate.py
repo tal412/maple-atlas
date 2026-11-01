@@ -96,10 +96,10 @@ for quest in world['quests']:
 page = (ROOT / 'docs/index.html').read_text()
 assert 'indexedDB.open' in page
 assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected backend request'
-# Catalog, market snapshot, MCW item, wiki item-source and same-origin spawn points (5), Look's
-# list catalog (1), and Look's engine (2: its cached file loader and its catalog), which is in the
-# page and again in the code of Look's background worker (2).
-assert len(re.findall(r'\bfetch\s*\(', page)) == 10 and "fetch('./data/spawn-points.json')" in page, 'Only the known loaders may fetch'
+# Catalog, market snapshot, MCW item, wiki item-source and same-origin spawn points (5), the
+# same-origin price history (1), Look's list catalog (1), and Look's engine (2: its cached file
+# loader and its catalog), which is in the page and again in the code of Look's worker (2).
+assert len(re.findall(r'\bfetch\s*\(', page)) == 11 and "fetch('./data/spawn-points.json')" in page and "fetch('./data/market-history.json'" in page, 'Only the known loaders may fetch'
 # Look loads only this site's files: the catalog, and assets/look/ + vendor/ort/ through one
 # cached loader; nothing from other hosts (no maplestory.io, no CDN for its pictures).
 look_ui = (ROOT / 'src/look-ui.js').read_text()

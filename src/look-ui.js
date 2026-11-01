@@ -17,7 +17,7 @@
 (function(scope){
   // The worker's code, put here by scripts/build.py (the page is one file).
   const WORKER_SOURCE=__LOOK_WORKER_SOURCE__;
-  function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,progress=()=>{},liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
+  function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,progress=()=>{},prices=null,liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
     const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results'),bar=$('#mc-look-progress');
     const mapOf=id=>maps.find(m=>m.id===String(id));
     const engine=scope.MapleLookEngine?MapleLookEngine.create({look,catalogUrl}):null;
@@ -250,33 +250,110 @@
       if(!force&&key===lastKey){mark();return;}lastKey=key;
       list(things,ui,mode==='box'?'In the box':'On the whole screen');
     }
+    // ---- Prices (the player market, by item name) ----
+    const fmt=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+    const priceOf=f=>{if(f.type!=='item'||!prices)return null;const e=catalog?.by.get('item:'+f.id);return e?prices.of(e):null;};
+    const pct=(a,b)=>a!=null&&b?(a-b)/b*100:null;
+    // The change against a day and a week before (the nearest earlier day with a price).
+    function trend(h){
+      const m=h.median,last=m.length-1;let i=last;while(i>=0&&m[i]==null)i--;if(i<0)return {};
+      const before=d=>{for(let j=i-d;j>=0;j--)if(m[j]!=null)return m[j];return null;};
+      return {now:m[i],day:pct(m[i],i>=1?before(1):null),week:pct(m[i],i>=7?before(7):before(Math.min(7,i)))};
+    }
+    const chip=(label,v)=>v==null||!Number.isFinite(v)?'':'<span class="mc-look-chip '+(v>0.05?'up':v<-0.05?'down':'flat')+'">'+label+' '+(v>0?'▲ ':v<0?'▼ ':'')+Math.abs(v).toFixed(1)+'%</span>';
+    // The price chart: the usual range as a band, the typical price as a line, sales as bars.
+    function chart(h){
+      const W=320,H=132,top=8,bottom=96,bars=24,n=h.days.length,xs=i=>n<2?W/2:8+i*(W-56)/(n-1);
+      const vals=[...h.low,...h.high,...h.median].filter(v=>v!=null);if(!vals.length)return '';
+      let lo=Math.min(...vals),hi=Math.max(...vals);if(hi===lo){hi*=1.05;lo*=.95;}
+      const ys=v=>bottom-(v-lo)/(hi-lo)*(bottom-top);
+      const pts=k=>h[k].map((v,i)=>v==null?null:[xs(i),ys(v)]);
+      const path=list=>{let d='',pen=false;for(const p of list){if(!p){pen=false;continue;}d+=(pen?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);pen=true;}return d;};
+      const lowP=pts('low'),highP=pts('high');let band='';
+      for(let i=0;i<n;i++)if(lowP[i]&&highP[i]){band+=(band?'L':'M')+highP[i][0].toFixed(1)+' '+highP[i][1].toFixed(1);}
+      for(let i=n-1;i>=0;i--)if(lowP[i]&&highP[i])band+='L'+lowP[i][0].toFixed(1)+' '+lowP[i][1].toFixed(1);
+      const sales=h.sales.filter(v=>v!=null),maxS=Math.max(1,...sales),bw=Math.max(2,Math.min(10,(W-56)/Math.max(1,n)-2));
+      const last=pts('median').filter(Boolean).at(-1);
+      return '<svg class="mc-look-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Price history">'
+        +'<line x1="8" x2="'+(W-48)+'" y1="'+top+'" y2="'+top+'" class="grid"/><line x1="8" x2="'+(W-48)+'" y1="'+bottom+'" y2="'+bottom+'" class="grid"/>'
+        +'<text x="'+(W-44)+'" y="'+(top+4)+'">'+fmt(hi)+'</text><text x="'+(W-44)+'" y="'+(bottom+4)+'">'+fmt(lo)+'</text>'
+        +(band?'<path d="'+band+'Z" class="band"/>':'')
+        +h.sales.map((v,i)=>v==null?'':'<rect x="'+(xs(i)-bw/2).toFixed(1)+'" y="'+(H-12-v/maxS*bars).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(v/maxS*bars).toFixed(1)+'" class="sales"/>').join('')
+        +'<path d="'+path(pts('median'))+'" class="line"/>'+(last?'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="3.5" class="dot"/>':'')
+        +'<text x="8" y="'+(H-1)+'">'+esc(h.days[0].slice(5))+'</text><text x="'+(W-48)+'" y="'+(H-1)+'" text-anchor="end">'+esc(h.days[n-1].slice(5))+'</text></svg>';
+    }
+    // The open row's details: a price block and its history for items, the rest for others.
+    function details(f,ctx){
+      const e=catalog?.by.get(f.type+':'+f.id)||{},here=mapOf(ctx.mapId),parts=[];
+      const desc=String(e.description||'').replace(/\\n|\n/g,' ').trim();
+      if(f.type==='item'){
+        const p=priceOf(f);
+        if(p){const unit=p.unit==='set'?'mesos / set':'mesos';
+          parts.push('<div class="mc-look-price-block"><div><span>Typical</span><strong>'+(p.median==null?'No sales':fmt(p.median)+' <small>'+unit+'</small>')+'</strong>'
+            +(p.typicalLow!=null&&p.typicalHigh!=null?'<small>Usually '+fmt(p.typicalLow)+'–'+fmt(p.typicalHigh)+'</small>':'')+'</div>'
+            +(p.askingMedian!=null?'<div><span>Asking</span><strong>'+fmt(p.askingMedian)+'</strong></div>':'')+'<div><span>Sales</span><strong>'+fmt(p.sales)+'</strong></div></div>'
+            +'<div class="mc-look-trend" data-history="'+esc(p.name)+'"></div><div class="mc-look-chart" data-history="'+esc(p.name)+'"><p class="mc-look-fine">Loading the price history…</p></div>'
+            +'<p class="mc-look-fine">'+(p.sales<p.lowDataBelow?'Few sales · ':'')+'Prices as of '+esc(new Date(p.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+' · player shops</p>');
+        }else parts.push('<p class="mc-look-fine">'+(prices?'No player-market record for this item.':'')+'</p>');
+        if(e.sell)parts.push('<p class="mc-look-fine">Sells to NPC shops for '+fmt(e.sell)+' mesos.</p>');
+        const stats=Object.entries(e.stats||{}).filter(([k,v])=>k!=='price'&&v).slice(0,8);
+        if(stats.length)parts.push('<p class="mc-look-stats">'+stats.map(([k,v])=>'<span>'+esc(k)+' '+esc(String(v))+'</span>').join('')+'</p>');
+      }
+      if(f.type==='monster'){
+        const all=(ctx.drops||[]).filter(d=>d.monster===f.name&&d.rate!=null).sort((a,b)=>b.rate-a.rate);
+        const r=v=>v>=10?Math.round(v)+'%':v>=1?v.toFixed(1)+'%':v.toFixed(2)+'%';
+        if(all.length)parts.push('<p class="mc-look-stats">'+all.slice(0,12).map(d=>'<span>'+esc(d.item)+' '+r(d.rate)+'</span>').join('')+'</p>');
+        const maps=(e.maps||[]).length;if(maps)parts.push('<p class="mc-look-fine">Lives on '+maps+' map'+(maps>1?'s':'')+(here?' · this one: '+esc(here.name):'')+'.</p>');
+      }
+      if(f.type==='npc'){const given=quests.filter(q=>q.npc===f.name).map(q=>q.name);if(given.length)parts.push('<p class="mc-look-stats">'+given.slice(0,10).map(q=>'<span>'+esc(q)+'</span>').join('')+'</p>');}
+      if(desc&&f.type!=='monster')parts.push('<p class="mc-look-fine">'+esc(desc.slice(0,240))+'</p>');
+      parts.push('<button type="button" class="mc-look-page" data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'">Open its page</button>');
+      return '<div class="mc-look-more">'+parts.join('')+'</div>';
+    }
+    // Fill in the history of the open item (downloaded once, when first needed).
+    function loadHistory(){
+      const box=results.querySelector('.mc-look-chart[data-history]');if(!box||!prices)return;
+      const name=box.dataset.history;
+      void prices.history(name).then(h=>{
+        const now=results.querySelector('.mc-look-chart[data-history="'+CSS.escape(name)+'"]');if(!now)return;
+        const t=results.querySelector('.mc-look-trend[data-history="'+CSS.escape(name)+'"]');
+        const days=h?h.median.filter(v=>v!=null).length:0;
+        if(t&&h){const x=trend(h);t.innerHTML=chip('24h',x.day)+chip('7d',x.week);}
+        now.innerHTML=h&&days?chart(h)+(days<2?'<p class="mc-look-fine">Maple Atlas records prices once a day from '+esc(h.days[0])+': the chart and trends fill in day by day.</p>':''):'<p class="mc-look-fine">No price history yet: it is recorded once a day from today.</p>';
+      });
+    }
+    let expanded=null;
     function list(things,ui,heading){
       const ctx={mapId:all?.mapId||shot?.map||liveMap(),drops:all?.drops||[]},m=mapOf(ctx.mapId);
+      if(expanded&&!things.some(f=>keyOf(f)===expanded))expanded=null;
       const row=(f,i,inWindows)=>{
-        const e=catalog?.by.get(f.type+':'+f.id),d=catalog?describe(f,ctx):{detail:'',extra:''},src=spriteURL(e),color=inWindows?'#868e96':rows[i]?.color||'#868e96';
-        return '<div class="mc-look-row'+(inWindows?' mc-look-plain':'')+'" style="--c:'+color+'"'+(inWindows?'':' data-key="'+esc(keyOf(f))+'"')+'>'
-          +'<button type="button" class="mc-look-pick" '+(inWindows?'data-open="1" ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-label="'+esc(inWindows?'Open '+f.name:'Show '+f.name+' on the picture')+'">'
+        const e=catalog?.by.get(f.type+':'+f.id),d=catalog?describe(f,ctx):{detail:'',extra:''},src=spriteURL(e),color=inWindows?'#868e96':rows[i]?.color||'#868e96',key=keyOf(f),open=!inWindows&&expanded===key;
+        const p=catalog?priceOf(f):null,price=p&&p.median!=null?'<small class="mc-look-price">≈ '+fmt(p.median)+' mesos</small>':'';
+        return '<div class="mc-look-row'+(inWindows?' mc-look-plain':'')+(open?' mc-look-open-row':'')+'" style="--c:'+color+'"'+(inWindows?'':' data-key="'+esc(key)+'"')+'>'
+          +'<div class="mc-look-line"><button type="button" class="mc-look-pick" '+(inWindows?'data-open="1" ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-expanded="'+open+'" aria-label="'+esc((inWindows?'Open ':'Show ')+f.name)+'">'
           +(inWindows?'':'<span class="mc-look-num">'+(i+1)+'</span>')
           +'<span class="mc-look-thumb">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span>'
-          +'<span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span></button>'
-          +'<button type="button" class="mc-look-open" data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-label="Open '+esc(f.name)+'">'+icon('chevron-right')+'</button></div>';
+          +'<span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong>'+price+'<small>'+esc(d.detail)+'</small>'+(d.extra&&!open?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span></button>'
+          +'<button type="button" class="mc-look-open" '+(inWindows?'data-open="1" ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'" aria-label="'+esc((inWindows?'Open ':'More about ')+f.name)+'">'+icon(inWindows?'chevron-right':open?'chevron-up':'chevron-down')+'</button></div>'
+          +(open?details(f,ctx):'')+'</div>';
       };
       results.innerHTML=(heading?'<h3 class="mc-look-heading">'+esc(heading)+'</h3>':'')
-        +(m?'<div class="mc-look-row mc-look-map"><button type="button" class="mc-look-pick" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span></button><button type="button" class="mc-look-open" data-map="'+esc(m.id)+'" aria-label="Open '+esc(m.name)+'">'+icon('chevron-right')+'</button></div>':'')
+        +(m?'<div class="mc-look-row mc-look-map"><div class="mc-look-line"><button type="button" class="mc-look-pick" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span></button><button type="button" class="mc-look-open" data-map="'+esc(m.id)+'" aria-label="Open '+esc(m.name)+'">'+icon('chevron-right')+'</button></div></div>':'')
         +(things.length?things.map((f,i)=>row(f,i,false)).join(''):busy?'':'<p class="mc-look-empty">Nothing from the database found here. Move the box over a monster, an NPC or an item, or try Around me.</p>')
         +(ui.length?'<details class="mc-look-ui"><summary>Also in the game\'s windows ('+ui.length+')</summary>'+ui.map(f=>row(f,0,true)).join('')+'</details>':'');
       icons();
-      results.querySelectorAll('.mc-look-open[data-type],[data-open][data-type]').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
+      results.querySelectorAll('[data-open][data-type],.mc-look-page').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
       results.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{dialog.close();openEntity('map',mapOf(b.dataset.map)?.name);});
-      // Tapping a row shows where it is on the picture; tapping it again opens its page.
-      results.querySelectorAll('.mc-look-pick:not([data-open]):not([data-map])').forEach(b=>b.onclick=()=>{const k=b.closest('[data-key]').dataset.key;if(selected===k)openEntity(b.dataset.type,b.dataset.name);else select(k,false);});
-      mark();
+      // Tapping a row (or its arrow) shows where it is on the picture and opens its details here.
+      results.querySelectorAll('[data-key] .mc-look-pick,[data-key] .mc-look-open').forEach(b=>b.onclick=()=>{
+        const k=b.closest('[data-key]').dataset.key;expanded=expanded===k?null:k;select(expanded?k:selected===k?null:selected,false);lastKey='';refresh(true);
+        if(expanded)results.querySelector('[data-key="'+CSS.escape(k)+'"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});});
+      mark();loadHistory();
     }
     function mark(){results.querySelectorAll('[data-key]').forEach(r=>r.classList.toggle('mc-look-selected',r.dataset.key===selected));}
     function select(key,fromPicture){
       selected=key;mark();draw();
       if(key&&fromPicture)results.querySelector('[data-key="'+CSS.escape(key)+'"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});
-      if(key&&!fromPicture)stage.scrollIntoView({block:'nearest',behavior:'smooth'});
     }
     // Around me: the picture as tall as the screenshot needs (no empty bands); the box view
     // gets its taller frame back.
@@ -291,7 +368,12 @@
       say('Taking a screenshot of the game…');bar.hidden=false;bar.classList.add('mc-look-indeterminate');
       const mine=waiting;setTimeout(()=>{if(waiting===mine){waiting=null;bar.hidden=true;say('No screenshot came from the computer. Is the game open there?');}},20000);
     }
+    // New prices: the list shows them; the market is checked while Look is open.
+    let pricesSeen='';
+    prices?.watch(st=>{const v=(st.data?.digest||'')+(st.data?.updatedAt||'');if(v===pricesSeen)return;pricesSeen=v;if(dialog.open&&shot){lastKey='';refresh(true);}});
+    dialog.addEventListener('close',()=>prices?.view(false));
     function open(){
+      prices?.view(true);
       if(!dialog.open)dialog.showModal();
       requestAnimationFrame(()=>{size();placeBox();draw();});
       void loadCatalog().catch(()=>{});startWorker();

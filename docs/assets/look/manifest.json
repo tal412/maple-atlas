@@ -153,6 +153,8 @@
   "p5000033",
   "p5000054"
  ],
+ "itemNamer": "items-f8ca592d564d.onnx",
+ "itemClasses": "items-classes-25e541783f52.json",
  "atlas": "atlas-f199008730bd.json",
  "icons": "icons-c8b73d0dcf19.json",
  "thumbs": "thumbs-2591c21751c7.json",
@@ -168,11 +170,13 @@
   "icons-c8b73d0dcf19.json",
   "icons0-607e61ef38eb.png",
   "icons1-9bc55610ca46.png",
+  "items-classes-25e541783f52.json",
+  "items-f8ca592d564d.onnx",
   "namer-955142a4e70d.onnx",
   "raw-6f0857938b0a.json",
   "raw0-ef86d823e717.png",
   "thumbs-11836eb81e3f.png",
   "thumbs-2591c21751c7.json"
  ],
- "bytes": 27751482
+ "bytes": 40959821
 }

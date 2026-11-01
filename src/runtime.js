@@ -218,7 +218,7 @@
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
   // Look: what is on a screenshot of the game (src/look-ui.js, src/look.js).
-  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,look:DATA.look,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),progress:(req,text)=>companion.lookProgress?.(req,text),
+  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,look:DATA.look,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),progress:(req,text)=>companion.lookProgress?.(req,text),prices:{of:e=>search.priceOf(e),history:n=>search.priceHistory(n),watch:fn=>search.watchPrices(fn),view:on=>search.viewPrices(on)},
     liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},
     connected:()=>companion.connected,esc,icon,icons});
   $('#mc-look').onclick=()=>lookUI.open();

@@ -271,7 +271,19 @@
       if(!e){input.value=name;showResults();return false;}
       openEntity(e.key);return true;
     }
-    return {open,show};
+    // Prices for Look's list: the market's record for an item, its daily history (recorded by
+    // the site's hourly publish, data/market-history.json), and updates as new prices arrive.
+    function priceOf(entity){
+      const st=market.getState();if(!st.data||entity?.type!=='item')return null;
+      const m=market.match(entity,itemIdentities);
+      return m?{...m.record,ambiguous:m.ambiguous,updatedAt:st.data.updatedAt,lowDataBelow:st.data.lowDataBelow,page:st.data.page}:null;
+    }
+    let history=null;
+    function priceHistory(name){
+      history??=fetch('./data/market-history.json',{cache:'no-cache',credentials:'omit'}).then(r=>r.ok?r.json():null).catch(()=>null).then(h=>{if(!h)history=null;return h;});
+      return history.then(h=>{const v=h?.items?.[name];return v&&Array.isArray(h.days)?{days:h.days,median:v[0],low:v[1],high:v[2],asking:v[3],sales:v[4]}:null;});
+    }
+    return {open,show,priceOf,priceHistory,watchPrices:fn=>market.subscribe(fn),viewPrices:on=>marketWatch.view(on)};
   }
   scope.MapleSearchUI={create};
 })(globalThis);

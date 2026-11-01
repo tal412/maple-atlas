@@ -279,13 +279,20 @@
   // A box a little off the icon (a count in its corner, a loose edge) is tried trimmed a few
   // ways; each item keeps its best score.
   // allow: item ids that may be considered (null: any).
-  function shortlistItems(image,b,thumbs,n=8,allow=null){
+  // In a window's slot the game draws over the icon's corners: the cash badge (a red "C") at the
+  // bottom right, the count at the bottom left. Those parts are left out of the comparison
+  // (fractions of the box / of the icon).
+  const SLOT_COVER=[{x0:.52,y0:.5,x1:1,y1:1},{x0:0,y0:.58,x1:.34,y1:1}];
+  const covered=(cover,fx,fy)=>!!cover&&cover.some(c=>fx>=c.x0&&fx<=c.x1&&fy>=c.y0&&fy<=c.y1);
+  // A template without the covered parts of the icon.
+  function masked(t,cover){const px=t.px.filter(p=>!covered(cover,(p.x+.5)/t.w,(p.y+.5)/t.h));return {w:t.w,h:t.h,flip:t.flip,px};}
+  function shortlistItems(image,b,thumbs,n=8,allow=null,cover=null){
     const t=Math.max(2,Math.round(Math.min(b.w,b.h)*.12)),best=new Map();
     for(const v of [b,{x:b.x+t,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t/2,y:b.y+t/2,w:b.w-t,h:b.h-t},{x:b.x,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t,y:b.y+t,w:b.w-t,h:b.h-t}])
-      for(const c of shortlistOnce(image,v,thumbs,n*2,allow))if(!best.has(c.id)||best.get(c.id)<c.score)best.set(c.id,c.score);
+      for(const c of shortlistOnce(image,v,thumbs,n*2,allow,cover&&{box:b,cover}))if(!best.has(c.id)||best.get(c.id)<c.score)best.set(c.id,c.score);
     return [...best].map(([id,score])=>({id,score})).sort((a,c)=>c.score-a.score).slice(0,n);
   }
-  function shortlistOnce(image,b,thumbs,n,allow){
+  function shortlistOnce(image,b,thumbs,n,allow,mask=null){
     const C=thumbs.cell,sheet=thumbs.sheet,box=new Float32Array(C*C*3),k=C/Math.max(b.w,b.h),w=b.w*k,h=b.h*k,ox=(C-w)/2,oy=(C-h)/2;
     for(let y=0;y<C;y++)for(let x=0;x<C;x++){
       // The screenshot pixels this thumbnail pixel covers, averaged.
@@ -301,7 +308,10 @@
         for(let y=0;y<C;y++)for(let x=0;x<C;x++){const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160)continue;r+=sheet.data[j];g+=sheet.data[j+1];bl+=sheet.data[j+2];c++;}
         if(c){thumbs.means[i*3]=r/c;thumbs.means[i*3+1]=g/c;thumbs.means[i*3+2]=bl/c;}else thumbs.means[i*3]=-999;}
     }
-    let br=0,bg=0,bb=0;for(let i=0;i<C*C;i++){br+=box[i*3];bg+=box[i*3+1];bb+=box[i*3+2];}br/=C*C;bg/=C*C;bb/=C*C;
+    // Thumbnail pixels over a covered part of the slot (by where they land in the slot's box).
+    const skip=new Uint8Array(C*C);
+    if(mask)for(let y=0;y<C;y++)for(let x=0;x<C;x++){const sx=b.x+(x+.5-ox)/k,sy=b.y+(y+.5-oy)/k;skip[y*C+x]=covered(mask.cover,(sx-mask.box.x)/mask.box.w,(sy-mask.box.y)/mask.box.h)?1:0;}
+    let br=0,bg=0,bb=0,bn=0;for(let i=0;i<C*C;i++){if(skip[i])continue;br+=box[i*3];bg+=box[i*3+1];bb+=box[i*3+2];bn++;}bn=Math.max(1,bn);br/=bn;bg/=bn;bb/=bn;
     const out=[];
     for(let i=0;i<thumbs.ids.length;i++){
       if(allow&&!allow.has(thumbs.ids[i]))continue;
@@ -309,10 +319,10 @@
       if(Math.abs(thumbs.means[i*3]-br)+Math.abs(thumbs.means[i*3+1]-bg)+Math.abs(thumbs.means[i*3+2]-bb)>150)continue;
       const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let n2=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;
       for(let y=0;y<C;y++)for(let x=0;x<C;x++){
-        const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160)continue;
+        const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160||skip[y*C+x])continue;
         const o=(y*C+x)*3;for(let ch=0;ch<3;ch++){const a=box[o+ch],v=sheet.data[j+ch];sa+=a;sb+=v;sab+=a*v;saa+=a*a;sbb+=v*v;diff+=Math.abs(a-v);n2++;}
       }
-      if(n2<30)continue;
+      if(n2<24)continue;
       const va=saa-sa*sa/n2,vb=sbb-sb*sb/n2,score=(va>0&&vb>0?(sab-sa*sb/n2)/Math.sqrt(va*vb):0)-diff/n2/255;
       if(out.length<n||score>out[out.length-1].score){out.push({id:thumbs.ids[i],score});out.sort((a,c)=>c.score-a.score);if(out.length>n)out.pop();}
     }
@@ -337,6 +347,11 @@
     // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
     const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
       if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
+    // Also in a window: an item box with two or more like-sized item boxes beside it at a slot's
+    // spacing (an inventory or a shop is a grid; the ring around a packed slot is not flat).
+    const itemBoxes=detections.filter(d=>d.cls==='item').map(d=>d.box);
+    const inGrid=b=>itemBoxes.filter(o=>o!==b&&Math.abs(o.w-b.w)<b.w*.35&&Math.abs(o.h-b.h)<b.h*.35&&(
+      Math.abs(o.y-b.y)<b.h*.3&&Math.abs(o.x-b.x)>b.w*.75&&Math.abs(o.x-b.x)<b.w*2.2||Math.abs(o.x-b.x)<b.w*.3&&Math.abs(o.y-b.y)>b.h*.75&&Math.abs(o.y-b.y)<b.h*2.2)).length>=2;
     const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
     k=k||frame.w/GAME_WIDTH;
     const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
@@ -367,13 +382,13 @@
     // compression blurs the strip's edges): each sprite is tried at it and 4% either side.
     const scales=[k,k*.96,k*1.04];
     // The best of these sprites inside the box, among those of about the box's size.
-    function bestSprite(list,b,deadline=Infinity){
+    function bestSprite(list,b,deadline=Infinity,cover=null){
       const pad=Math.max(6,Math.max(b.w,b.h)*.15),r={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2};let best=null;
       for(const s of list){
         const w=s.image.width*k,h=s.image.height*k;if(w<b.w*.6||w>b.w*1.4||h<b.h*.6||h>b.h*1.4)continue;
         if(now()>deadline)break;
         for(const kk of scales)for(const flip of s.type==='item'||s.type==='cursor'?[false]:[false,true]){
-          const hit=findSprite(image,tmpl(s,flip,kk),r,{threshold:.35})[0];
+          const t=tmpl(s,flip,kk),hit=findSprite(image,cover?(t.masked??=masked(t,cover)):t,r,{threshold:.35})[0];
           if(hit&&(!best||hit.score>best.score))best={s,score:hit.score};
         }
         if(best&&best.score>=.85)break;   // a clear match: no need to try the rest
@@ -407,7 +422,7 @@
       // The status bar at the bottom holds the game's buttons (Cash Shop, Menu), never items.
       if(det.cls==='item'&&b.y+b.h/2>frame.h*.915)continue;
       // A drop has no name tag; something small with one under it is a pet.
-      if(det.cls==='item'&&tags.length&&!onSlot(b))continue;
+      if(det.cls==='item'&&tags.length&&!onSlot(b)&&!inGrid(b))continue;
       // The mouse pointer (the game's own cursors, in the reference set) is not a thing to name.
       if(det.cls!=='npc'&&cursors.length&&Math.max(b.w,b.h)<=48*k){const c=bestSprite(cursors,b);if(c&&c.score>=.75)continue;}
       if(det.cls==='item'&&names){
@@ -415,22 +430,31 @@
         if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}
       }
       const accept=ACCEPT[det.cls]??.6;
-      let best=bestSprite(local[det.cls]||[],b);
+      let best=bestSprite(local[det.cls]||[],b,Infinity,det.cls==='item'&&(onSlot(b)||inGrid(b))?SLOT_COVER:null);
       if(det.cls==='item'&&(!best||best.score<accept)&&thumbs){
         // Any item: the shortlist, each checked in full at the game's scale.
         // Without a name beside it, an item must match clearly: 0.8 or more, and ahead of the
         // next candidate (a different item) by 0.05. A doubtful icon is left unnamed.
         // In a window (the inventory, a shop: the icon sits on a flat slot) any item can show;
         // on the ground only what drops (Use and Etc items, dropped: groundItems).
-        const list=shortlistItems(image,b,thumbs,8,onSlot(b)?null:groundItems),missing=[],hits=[];
+        const slot=onSlot(b)||inGrid(b),cover=slot?SLOT_COVER:null;
+        // Candidates: the item namer's answers (det.items, best first), then the thumbnail shortlist.
+        const said=(det.items||[]).filter(x=>slot||!groundItems||groundItems.has(String(x.id)));
+        const list=[...said.map(x=>({id:String(x.id)})),...shortlistItems(image,b,thumbs,8,slot?null:groundItems,cover)].filter((c,i,a)=>a.findIndex(x=>String(x.id)===String(c.id))===i),missing=[],hits=[];
         for(const c of list){
           const icon=itemIcon(c.id);if(icon===undefined){missing.push(c.id);continue;}if(!icon)continue;
-          const hit=bestSprite([{type:'item',id:c.id,name:itemName(c.id),image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4});
+          const hit=bestSprite([{type:'item',id:c.id,name:itemName(c.id),image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4},Infinity,cover);
           if(hit)hits.push(hit);
         }
         if(missing.length&&!hits.some(h=>h.score>=.8)){pendingItems.push({box:b,ids:missing});continue;}
         hits.sort((a,c)=>c.score-a.score);
         const top=hits[0],next=hits.find(h=>h.s.name!==top?.s.name);
+        // The item namer's first answer, when it is sure and the icon agrees at least loosely
+        // (or it is all but certain), wins; it reads a badge-covered or small icon better.
+        const n=said[0],nh=n&&hits.find(h=>String(h.s.id)===String(n.id));
+        if(n&&(n.p>=.97||n.p>=.8&&nh&&nh.score>=.55)){
+          found.push({type:'item',id:String(n.id),name:itemName(n.id),box:b,via:'namer',score:Math.round(n.p*100)/100});continue;
+        }
         if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;
         else if(!best||best.score<accept)continue;
       }

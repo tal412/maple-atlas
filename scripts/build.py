@@ -69,7 +69,7 @@ def build(project: Path = PROJECT, channel: str = 'main') -> Path:
     look_manifest = project / 'docs/assets/look/manifest.json'
     if look_manifest.exists():
         m = json.loads(look_manifest.read_text())
-        data['look'] = {'base': './assets/look/', **{k: m[k] for k in ('detector', 'atlas', 'icons', 'raw', 'thumbs', 'drops', 'files', 'bytes')}, **{k: m[k] for k in ('namer', 'namerClasses') if k in m}}
+        data['look'] = {'base': './assets/look/', **{k: m[k] for k in ('detector', 'atlas', 'icons', 'raw', 'thumbs', 'drops', 'files', 'bytes')}, **{k: m[k] for k in ('namer', 'namerClasses', 'itemNamer', 'itemClasses') if k in m}}
     assets = json.loads((project / 'data/map-assets.json').read_text())['maps']
     for m in data['maps']:
         m['localImage'] = './' + assets[m['id']]['image']['path']

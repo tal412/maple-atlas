@@ -102,6 +102,11 @@
     const bytes=url=>()=>lookFile(url).then(r=>r.arrayBuffer());
     const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({model:bytes(file(look.detector)),runtime:bytes(RUNTIME),minScore:.25,base}):null;
     const namer=scope.MapleLookNamer&&look?.namer?MapleLookNamer.create({model:bytes(file(look.namer)),runtime:bytes(RUNTIME),classes:look.namerClasses||[]}):null;
+    // The item namer (every item's icon): its top answers become candidates, each checked
+    // against the item's full icon (src/look.js).
+    const itemClasses=once(()=>json(look.itemClasses));
+    const itemNamerClasses=[];   // filled from look.itemClasses before the first use
+    const itemNamer=scope.MapleLookNamer&&look?.itemNamer&&look?.itemClasses?MapleLookNamer.create({model:bytes(file(look.itemNamer)),runtime:bytes(RUNTIME),size:64,top:5,classes:itemNamerClasses}):null;
     const namerEntry=({cls,p})=>{
       if(cls[0]==='m'){const id=cls.slice(1);return {type:'monster',id,name:nameOf('monster',id),p};}
       if(cls[0]==='p'){const id=cls.slice(1);return {type:'item',id,name:nameOf('item',id),pet:true,p};}
@@ -122,6 +127,9 @@
         const named=s.detections.filter(d=>(d.cls==='monster'||d.cls==='pet')&&!d.names);
         if(namer)try{let i=0;for(const d of named){say('naming',i++,named.length);d.names=(await namer.name(s.image,d.box)).map(namerEntry);}}
         catch(e){console.warn('Look namer:',e);}
+        const things=s.detections.filter(d=>d.cls==='item'&&!d.items);
+        if(itemNamer&&things.length)try{if(!itemNamerClasses.length)itemNamerClasses.push(...await itemClasses());let i=0;for(const d of things){say('naming',i++,things.length);d.items=(await itemNamer.name(s.image,d.box)).map(x=>({id:x.cls.slice(1),p:x.p}));}}
+        catch(e){console.warn('Look item namer:',e);}
         const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);
         const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);
         let last=0;

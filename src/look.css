@@ -17,7 +17,8 @@
 #maple-atlas-concept .mc-look-actions button:disabled {opacity:.55;}
 #maple-atlas-concept .mc-look .mc-look-hint {margin:0;font-size:12px;}
 #maple-atlas-concept .mc-look-results {flex:none;display:flex;flex-direction:column;gap:6px;padding-bottom:8px;}
-#maple-atlas-concept .mc-look-row {flex:none;display:flex;align-items:stretch;width:100%;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+#maple-atlas-concept .mc-look-row {flex:none;width:100%;border:1px solid var(--mc-edge);border-radius:16px;background:var(--mc-soft);color:var(--mc-ink);overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+#maple-atlas-concept .mc-look-line {display:flex;align-items:stretch;}
 #maple-atlas-concept .mc-look-row.mc-look-selected {border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset;}
 #maple-atlas-concept .mc-look-pick {flex:1;min-width:0;min-height:0;display:flex;align-items:center;gap:12px;padding:8px 4px 8px 10px;border:0;border-radius:0;background:none;color:inherit;text-align:left;font:inherit;cursor:pointer;}
 #maple-atlas-concept .mc-look-open {flex:none;display:grid;place-items:center;width:44px;min-height:0;padding:0;border:0;border-left:1px solid var(--mc-edge);border-radius:0;background:none;color:var(--mc-muted);cursor:pointer;}
@@ -53,3 +54,30 @@
 #maple-atlas-concept .mc-look-actions button.mc-look-working svg {animation:mc-look-spin 1s linear infinite;}
 @keyframes mc-look-spin {to {transform:rotate(360deg);}}
 @media (prefers-reduced-motion:reduce) {#maple-atlas-concept .mc-look-progress.mc-look-indeterminate span, #maple-atlas-concept .mc-look-actions button.mc-look-working svg {animation:none;}}
+/* An item's price on its row, and a row's details when it is open. */
+#maple-atlas-concept .mc-look-text .mc-look-price {color:#51cf66;font-weight:600;font-size:13px;}
+#maple-atlas-concept .mc-look-more {display:flex;flex-direction:column;gap:8px;padding:4px 12px 12px;border-top:1px solid var(--mc-edge);}
+#maple-atlas-concept .mc-look-price-block {display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+#maple-atlas-concept .mc-look-price-block > div {flex:1 1 90px;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:12px;background:var(--mc-paper);}
+#maple-atlas-concept .mc-look-price-block span {font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-price-block strong {font-size:17px;white-space:nowrap;}
+#maple-atlas-concept .mc-look-price-block > div:first-child {flex:2 1 150px;}
+#maple-atlas-concept .mc-look-price-block strong small {font-size:11px;}
+#maple-atlas-concept .mc-look-price-block small {font-size:11px;color:var(--mc-muted);font-weight:500;}
+#maple-atlas-concept .mc-look-trend {display:flex;gap:6px;flex-wrap:wrap;}
+#maple-atlas-concept .mc-look-trend:empty {display:none;}
+#maple-atlas-concept .mc-look-chip {padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;background:var(--mc-paper);}
+#maple-atlas-concept .mc-look-chip.up {color:#51cf66;}
+#maple-atlas-concept .mc-look-chip.down {color:#ff6b6b;}
+#maple-atlas-concept .mc-look-chip.flat {color:var(--mc-muted);}
+#maple-atlas-concept .mc-look-svg {width:100%;height:auto;display:block;}
+#maple-atlas-concept .mc-look-svg .grid {stroke:var(--mc-edge);stroke-width:1;}
+#maple-atlas-concept .mc-look-svg .band {fill:#4dabf733;}
+#maple-atlas-concept .mc-look-svg .line {fill:none;stroke:#4dabf7;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
+#maple-atlas-concept .mc-look-svg .dot {fill:#4dabf7;stroke:var(--mc-soft);stroke-width:1.5;}
+#maple-atlas-concept .mc-look-svg .sales {fill:#ffd43b66;}
+#maple-atlas-concept .mc-look-svg text {font-size:10px;fill:var(--mc-muted);}
+#maple-atlas-concept .mc-look .mc-look-fine {margin:0;font-size:12px;color:var(--mc-muted);}
+#maple-atlas-concept .mc-look .mc-look-stats {display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 0;}
+#maple-atlas-concept .mc-look-stats span {padding:3px 8px;border-radius:10px;background:var(--mc-paper);font-size:12px;}
+#maple-atlas-concept .mc-look-page {align-self:flex-start;min-height:36px;padding:0 14px;border-radius:18px;font-size:13px;}

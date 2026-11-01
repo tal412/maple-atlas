@@ -62,6 +62,9 @@ jobs:
           mkdir -p site/dev
           cp -R stable/docs/. site/
           cp -R preview/docs/. site/dev/
+          # Price history: the published history plus this snapshot (one point a day, 60 days).
+          python3 stable/scripts/market_history.py stable/data/market-snapshot.json site/data/market-history.json
+          cp site/data/market-history.json site/dev/data/market-history.json
           python3 - <<'PY'
           import json, pathlib, subprocess
           for folder, target in [('stable', 'site'), ('preview', 'site/dev')]:

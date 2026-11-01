@@ -5,13 +5,14 @@
  * hidden behind ropes or grass, cut by the screen's edge, heaped together, or see-through.
  * It runs with the same ONNX Runtime as the detector (src/look-detector.js loads it).
  *
- * create({model, runtime, classes}) -> {ready, name(image, box) -> [{cls, p}] (best first, 3)}
+ * create({model, runtime, classes, size, top}) -> {ready, name(image, box) -> [{cls, p}] (best first, top)}
+ * The same code runs Look's item namer (every item's icon; size 64).
  * classes: the model's class names ('m<id>' a monster, 'p<id>' a pet, 'other').
  */
 (function(scope){
-  const SIZE=96,GREY=114;
+  const GREY=114;
   const canvas=(w,h)=>typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):Object.assign(document.createElement('canvas'),{width:w,height:h});
-  function create({model,runtime,classes=[]}={}){
+  function create({model,runtime,classes=[],size:SIZE=96,top=3}={}){
     let session=null,loading=null;
     function ready(){
       loading??=(async()=>{
@@ -44,10 +45,11 @@
     async function name(image,box){
       await ready();
       const out=await session.run({[session.inputNames[0]]:input(image,box,sourceOf(image))}),p=out[session.outputNames[0]].data;
-      return [...p].map((v,i)=>({cls:classes[i]||String(i),p:v})).sort((a,b)=>b.p-a.p).slice(0,3);
+      const best=[];for(let i=0;i<p.length;i++){const v=p[i];if(best.length<top||v>best[best.length-1].p){best.push({cls:classes[i]||String(i),p:v});best.sort((a,b)=>b.p-a.p);if(best.length>top)best.pop();}}
+      return best;
     }
     return {ready,name};
   }
-  const api={create,SIZE};
+  const api={create};
   scope.MapleLookNamer=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
