@@ -90,5 +90,24 @@ async function connect(h,code){
  assert.equal(mm.reason,'version');
  const network=harness();await network.link.join(code);Peer.last.connectionState='failed';Peer.last.onconnectionstatechange();assert.equal(network.last().reason,'network');
  const twice=harness();await twice.link.join(code);const first=Peer.last;await twice.link.join(code);assert.equal(Peer.last,first,'Scanning the same code again keeps the connection attempt');
+ // Look: a screenshot in parts (meta, then base64 pieces in any order), the request and the reply.
+ {
+  const looks=[],h=harness({onLook:v=>looks.push(v)}),{channel,deliver}=await connect(h,code);
+  assert(h.link.look('p1'),'asks for a screenshot');assert.deepEqual(channel.messages.at(-1),{kind:'look',v:1,session:offer.session,req:'p1'});
+  assert(!h.link.look('c1'),'the phone asks with p… only');
+  const data=Buffer.from('jpeg bytes, as if').toString('base64'),parts=[data.slice(0,8),data.slice(8)];
+  deliver({kind:'look-meta',v:1,session:offer.session,req:'p1',w:1600,h:900,parts:2,bytes:17,mark:null,map:'1',lines:[['TalTBest',798,644,63,14],['bad']]});
+  deliver({kind:'look-part',v:1,session:offer.session,req:'p1',i:1,data:parts[1]});assert.equal(looks.length,0,'waits for every part');
+  deliver({kind:'look-part',v:1,session:offer.session,req:'p1',i:1,data:parts[1]});
+  deliver({kind:'look-part',v:1,session:offer.session,req:'p1',i:0,data:parts[0]});
+  assert.equal(looks.length,1);assert.equal(looks[0].jpeg,data);assert.equal(looks[0].map,'1');assert.deepEqual(looks[0].lines,[{text:'TalTBest',x:798,y:644,w:63,h:14}]);
+  deliver({kind:'look-meta',v:1,session:offer.session,req:'c7',w:1600,h:900,parts:1,bytes:5,mark:[.1,.2,.3,.4],lines:[]});
+  deliver({kind:'look-part',v:1,session:offer.session,req:'c7',i:0,data:'AAAA'});
+  assert.deepEqual(looks[1].mark,{x:.1,y:.2,w:.3,h:.4});
+  assert(h.link.lookResult('c7',{title:'In the box',items:[]}));assert.equal(channel.messages.at(-1).kind,'look-result');
+  deliver({kind:'look-error',v:1,session:offer.session,req:'p2',message:'No game window'});assert.equal(looks[2].error,'No game window');
+  deliver({kind:'look-meta',v:1,session:offer.session,req:'p3',w:1600,h:900,parts:9999,bytes:5,lines:[]});
+  deliver({kind:'look-part',v:1,session:offer.session,req:'p3',i:0,data:'AAAA'});assert.equal(looks.length,3,'a screenshot of too many parts is refused');
+ }
  console.log('PASS: app-only codes (golden, QR link, case, expiry, old codes refused) · one-scan join with HMAC auth · hello, heartbeat, positions, tracking · goodbyes, quiet leave · timeout, expiry, verification, version, network');
 })().catch(e=>{console.error(e);process.exitCode=1;});
