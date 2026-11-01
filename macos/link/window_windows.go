@@ -46,7 +46,7 @@ func openWindow(url, profile string) error {
 func appWindowArgs(url, profile string) []string {
 	return []string{"--app=" + url, "--user-data-dir=" + profile, "--no-first-run", "--no-default-browser-check",
 		"--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows",
-		"--window-size=560,920"}
+		"--window-size=1280,880"}
 }
 
 // fatal shows a message box (the app has no console) and exits.

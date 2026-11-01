@@ -10,6 +10,9 @@
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
     const known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
+    // Inside Maple Atlas Companion's own window: linked to this computer's game, no pairing.
+    const appToken=MapleCompanionLink.localToken?.();
+    if(appToken)return desktop(appToken);
     let scanner=null,scanEpoch=0,scanTimer=null,lastSeen=0,accepting=false,scanning=false;
     let currentState={phase:'idle',message:'',expires:0};
 
@@ -167,6 +170,61 @@
       const page=document.documentElement;
       if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
       page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+    }
+    // The app's own window (Mac or Windows): the page follows the game on this computer through
+    // the app (MapleCompanionLink.createLocal). The dialog shows how it is going and opens the
+    // companion's controls: the game window, the minimap box and pairing a phone.
+    function desktop(token){
+      dialog.dataset.role='desktop';root.dataset.companionApp='true';
+      $('#mc-get-app').hidden=true;$('#mc-phone-flow').hidden=true;$('#mc-desktop-flow').hidden=false;
+      for(const el of [$('#mc-mobile-channel'),$('.mc-companion-help')])if(el)el.hidden=true;
+      $('#mc-companion-title').textContent='Companion';
+      let seenAt=0,drawer=null;
+      const tracking=(title,message)=>{$('#mc-desktop-tracking-title').textContent=title;$('#mc-desktop-tracking-message').textContent=message;};
+      function paintState(v){
+        const linked=v.phase==='connected',bad=v.phase==='failed',tone=linked?'success':bad?'error':'pending';
+        $('#mc-desktop-status').dataset.tone=tone;$('#mc-desktop-icon').textContent=linked?'✓':bad?'!':'…';
+        $('#mc-desktop-title').textContent=linked?'Following the game on this computer':bad?'Companion closed':v.phase==='reconnecting'?'Companion not answering':'Connecting…';
+        $('#mc-desktop-message').textContent=v.message||'';
+        $('#mc-desktop-tracking').hidden=!linked;$('#mc-desktop-controls').disabled=!linked;
+        const state=linked?'connected':bad?'off':'pending',label='Companion · '+{connected:'Following the game',pending:'Connecting',off:'Closed'}[state];
+        for(const button of [$('#mc-mobile-companion'),$('#mc-companion-desktop')]){button.dataset.state=state;button.setAttribute('aria-label',label);}
+      }
+      // Windows: the controls page in a side panel of this window (it also reads the game).
+      function controls(ui){
+        if(drawer||!ui)return;
+        drawer=document.createElement('aside');drawer.id='mc-controls-drawer';drawer.setAttribute('aria-label','Game window and phone');drawer.dataset.open='false';
+        drawer.innerHTML='<header><strong>Game window &amp; phone</strong><button type="button" aria-label="Close">×</button></header>';
+        const frame=document.createElement('iframe');frame.title='Maple Atlas Companion';frame.allow='display-capture; clipboard-write';frame.src=ui;drawer.append(frame);
+        drawer.querySelector('button').onclick=()=>{drawer.dataset.open='false';};
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.dataset.open==='true')drawer.dataset.open='false';});
+        document.body.append(drawer);
+      }
+      const link=MapleCompanionLink.createLocal({token,ids,
+        onLocation:value=>{seenAt=Date.now();tracking('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);},
+        onPosition:value=>{seenAt=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onLook:value=>onLook(value),
+        onReading:state=>{seenAt=0;tracking(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'Start tracking under Game window & phone.':'Keep the map name showing on the in-game minimap (press + on it).');onConnection(state==='paused'?'stale':'searching');},
+        onState:value=>{
+          paintState(value);
+          if(value.phase==='connected'){onConnection('connected');controls(link.hello?.ui);if(!seenAt)tracking('Waiting for the game','Open MapleStory. The companion finds its window and reads the map name on the minimap.');}
+          else if(value.phase==='reconnecting')onConnection('reconnecting');
+          else if(value.phase==='failed'){seenAt=0;onConnection('disconnected');}
+          else onConnection('linking');
+        }});
+      $('#mc-desktop-controls').onclick=()=>{
+        if(drawer){dialog.close();drawer.dataset.open='true';drawer.querySelector('button').focus();}
+        else link.controls();
+      };
+      const open=()=>{$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();};
+      for(const button of [$('#mc-mobile-companion'),$('#mc-companion-desktop')])button.onclick=open;
+      $('#mc-companion-desktop').querySelector('span').textContent='Companion';
+      $('#mc-companion-desktop').insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');
+      $('#mc-companion-badge').onclick=open;
+      setInterval(()=>{if(link.connected&&seenAt&&Date.now()-seenAt>12000){tracking('No recent location update','Check tracking under Game window & phone.');onConnection('stale');}},1000);
+      paintState({phase:'connecting',message:''});
+      link.start();
+      return {open,enterFullscreen:()=>{},nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:()=>false,lookProgress:()=>false,
+        controls:()=>$('#mc-desktop-controls').click(),get connected(){return link.connected;},desktop:true};
     }
     if(role==='pc'){
       // A computer runs the companion app; the dialog only points to it.

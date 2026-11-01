@@ -104,12 +104,69 @@
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
+  // What the computer sends once linked, the same from the phone's link and the app's own
+  // window: the live map, dot, Quest Helper and tracking messages (each newer than the last),
+  // and Look's screenshot and results. Everything is checked field by field.
+  function receiver({ids,onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},now=Date.now}){
+    let lastSeq=-1;
+    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
+    const looks=new Map();
+    function lookMessage(m){
+      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
+      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
+      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
+      // The computer recognizes its screenshot itself: how far it is, then what it found.
+      if(m.kind==='look-progress'){if(typeof m.text==='string'&&m.req[0]==='p')onLook({req:m.req,progress:m.text.slice(0,60)});return;}
+      if(m.kind==='look-found'){
+        if(m.req[0]!=='p'||!Number.isInteger(m.n)||m.n<1||m.n>120||!Number.isInteger(m.i)||m.i<0||m.i>=m.n||typeof m.data!=='string'||m.data.length>6000)return;
+        const key='found:'+m.req;let f=looks.get(key);if(!f||f.parts.length!==m.n){f={at:now(),parts:new Array(m.n),got:0};looks.set(key,f);}
+        if(f.parts[m.i]!==undefined)return;f.parts[m.i]=m.data;f.got++;
+        if(f.got===f.parts.length){looks.delete(key);try{const text=new TextDecoder().decode(Uint8Array.from(atob(f.parts.join('')),c=>c.charCodeAt(0)));const found=lookFound(JSON.parse(text));if(found)onLook({req:m.req,found});}catch(_){}}
+        return;
+      }
+      if(m.kind==='look-meta'){
+        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
+        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
+        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
+        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
+        return;
+      }
+      const l=looks.get(m.req);
+      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
+      l.parts[m.i]=m.data;l.got++;
+      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
+    }
+    // What the computer found, checked field by field: each thing a known type with a name, an id
+    // and a box (numbers); the map's drop rows; the players' boxes. Anything else is dropped.
+    function lookFound(r){
+      if(!r||typeof r!=='object')return null;
+      const num=v=>Number.isFinite(v)?v:0,str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+      const box=b=>b&&typeof b==='object'?{x:num(b.x),y:num(b.y),w:Math.max(0,num(b.w)),h:Math.max(0,num(b.h))}:null;
+      const types=new Set(['monster','npc','item','quest','map']);
+      const found=(Array.isArray(r.found)?r.found:[]).slice(0,400).filter(f=>f&&types.has(f.type)&&typeof f.name==='string'&&box(f.box)).map(f=>({type:f.type,id:str(String(f.id??''),24),name:str(f.name,80),box:box(f.box),via:str(f.via,12),score:num(f.score),ui:!!f.ui,pet:!!f.pet}));
+      const drops=(Array.isArray(r.drops)?r.drops:[]).slice(0,400).filter(d=>d&&typeof d.monster==='string'&&typeof d.item==='string').map(d=>({monster:str(d.monster,80),item:str(d.item,80),id:d.id==null?null:str(String(d.id),24),rate:Number.isFinite(d.rate)?d.rate:null}));
+      const players=(Array.isArray(r.players)?r.players:[]).slice(0,60).filter(p=>p&&box(p.box)).map(p=>({name:str(p.name,40),box:box(p.box),you:!!p.you}));
+      return {found,drops,players,mapId:typeof r.mapId==='string'&&ids.has(r.mapId)?r.mapId:null};
+    }
+    function deliver(value){
+      // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
+      if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'||value.kind==='look-found'||value.kind==='look-progress'){lookMessage(value);return;}
+      if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
+      // The player's dot on that map, in the portal data's coordinates.
+      else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
+      // The quests tracked in the game's Quest Helper (MapleQuestHelper.pack form).
+      else if(value.kind==='quests'&&typeof value.visible==='boolean'&&Array.isArray(value.quests)&&value.quests.length<=8&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onQuests({visible:value.visible,quests:value.quests,observedAt:value.observedAt,receivedAt:now()});}
+      else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+    }
+    return {deliver,reset(){lastSeq=-1;looks.clear();}};
+  }
   // The phone side of the link to Maple Atlas Companion (Mac or Windows app). The app
   // is an ICE-lite peer that learns this phone's ICE username from its connectivity
   // checks, so one scan is enough; the phone then proves the QR secret over the
   // encrypted channel before the usual hello, heartbeat and location messages.
   function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
-    let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
+    let pc=null,channel=null,session=null,expires=0,epoch=0,phase='idle',secret=null,joined=null;
+    const rx=receiver({ids,onLocation,onReading,onPosition,onQuests,onLook,now});
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
     const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
     const random=(n=16)=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -118,7 +175,7 @@
       expiryTimer=connectTimer=verifyTimer=heartbeat=null;
       if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
       if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
-      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;pingSeq=0;pongSeq=-1;secret=null;joined=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;rx.reset();pingSeq=0;pongSeq=-1;secret=null;joined=null;
     }
     // quiet: leave without a goodbye (the page is only going away), so the app keeps
     // the pairing and the phone can resume it. A goodbye ends it on the computer too.
@@ -166,14 +223,7 @@
             return;
           }
           if(!verified||phase!=='connected')return;
-          // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
-          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'||value.kind==='look-found'||value.kind==='look-progress'){lookMessage(value);return;}
-          if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
-          // The player's dot on that map, in the portal data's coordinates.
-          else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
-          // The quests tracked in the game's Quest Helper (MapleQuestHelper.pack form).
-          else if(value.kind==='quests'&&typeof value.visible==='boolean'&&Array.isArray(value.quests)&&value.quests.length<=8&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onQuests({visible:value.visible,quests:value.quests,observedAt:value.observedAt,receivedAt:now()});}
-          else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+          rx.deliver(value);
         }catch(_){}
       };
     }
@@ -204,46 +254,6 @@
         if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
-    // Navigation for the computer's on-game overlay; true when it went out.
-    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
-    const looks=new Map();
-    function lookMessage(m){
-      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
-      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
-      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
-      // The computer recognizes its screenshot itself: how far it is, then what it found.
-      if(m.kind==='look-progress'){if(typeof m.text==='string'&&m.req[0]==='p')onLook({req:m.req,progress:m.text.slice(0,60)});return;}
-      if(m.kind==='look-found'){
-        if(m.req[0]!=='p'||!Number.isInteger(m.n)||m.n<1||m.n>120||!Number.isInteger(m.i)||m.i<0||m.i>=m.n||typeof m.data!=='string'||m.data.length>6000)return;
-        const key='found:'+m.req;let f=looks.get(key);if(!f||f.parts.length!==m.n){f={at:now(),parts:new Array(m.n),got:0};looks.set(key,f);}
-        if(f.parts[m.i]!==undefined)return;f.parts[m.i]=m.data;f.got++;
-        if(f.got===f.parts.length){looks.delete(key);try{const text=new TextDecoder().decode(Uint8Array.from(atob(f.parts.join('')),c=>c.charCodeAt(0)));const found=lookFound(JSON.parse(text));if(found)onLook({req:m.req,found});}catch(_){}}
-        return;
-      }
-      if(m.kind==='look-meta'){
-        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
-        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
-        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
-        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
-        return;
-      }
-      const l=looks.get(m.req);
-      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
-      l.parts[m.i]=m.data;l.got++;
-      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
-    }
-    // What the computer found, checked field by field: each thing a known type with a name, an id
-    // and a box (numbers); the map's drop rows; the players' boxes. Anything else is dropped.
-    function lookFound(r){
-      if(!r||typeof r!=='object')return null;
-      const num=v=>Number.isFinite(v)?v:0,str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
-      const box=b=>b&&typeof b==='object'?{x:num(b.x),y:num(b.y),w:Math.max(0,num(b.w)),h:Math.max(0,num(b.h))}:null;
-      const types=new Set(['monster','npc','item','quest','map']);
-      const found=(Array.isArray(r.found)?r.found:[]).slice(0,400).filter(f=>f&&types.has(f.type)&&typeof f.name==='string'&&box(f.box)).map(f=>({type:f.type,id:str(String(f.id??''),24),name:str(f.name,80),box:box(f.box),via:str(f.via,12),score:num(f.score),ui:!!f.ui,pet:!!f.pet}));
-      const drops=(Array.isArray(r.drops)?r.drops:[]).slice(0,400).filter(d=>d&&typeof d.monster==='string'&&typeof d.item==='string').map(d=>({monster:str(d.monster,80),item:str(d.item,80),id:d.id==null?null:str(String(d.id),24),rate:Number.isFinite(d.rate)?d.rate:null}));
-      const players=(Array.isArray(r.players)?r.players:[]).slice(0,60).filter(p=>p&&box(p.box)).map(p=>({name:str(p.name,40),box:box(p.box),you:!!p.you}));
-      return {found,drops,players,mapId:typeof r.mapId==='string'&&ids.has(r.mapId)?r.mapId:null};
-    }
     // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
     function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
     function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
@@ -254,5 +264,57 @@
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
     return {join,stop,nav,pins,look,lookResult,lookProgress,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
-  scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
+  // Inside Maple Atlas Companion: the app opens this page from its own loopback address with a
+  // per-launch token in the fragment (#companion=…). The token is kept for this tab (reloads)
+  // and removed from the address bar. null when this page is not the app's own window.
+  function localToken({loc=scope.location,store=scope.sessionStorage,history=scope.history}={}){
+    if(!loc||!/^(127\.0\.0\.1|localhost)$/.test(loc.hostname))return null;
+    const key='maple-atlas-companion-token',m=/^#companion=([a-f0-9]{32})$/.exec(loc.hash||'');
+    if(m){try{store?.setItem(key,m[1]);}catch(_){}try{history?.replaceState(null,'',loc.pathname+loc.search);}catch(_){}return m[1];}
+    try{const t=store?.getItem(key);return /^[a-f0-9]{32}$/.test(t||'')?t:null;}catch(_){return null;}
+  }
+  // The page's link to the app it runs in (macos/link/local.go): an event stream for what the
+  // computer sends (the phone link's own messages) and POST for what the page sends. No
+  // pairing: the app's token is the proof. hello carries the app ({host, ui}): ui is where the
+  // companion's controls open in this page (Windows), "" when the app shows them (Mac).
+  function createLocal({token,ids,base='',onState=()=>{},onLocation,onReading,onPosition,onQuests,onLook,Source=scope.EventSource,send=(url,init)=>scope.fetch(url,init),now=Date.now,timers=scope}={}){
+    const rx=receiver({ids,onLocation,onReading,onPosition,onQuests,onLook,now});
+    let source=null,phase='idle',hello=null,failures=0,lost=null;
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires:0,local:true,...extra});};
+    function start(){
+      if(source)return;
+      if(!Source){state('failed','This window cannot reach Maple Atlas Companion.',{reason:'unsupported'});return;}
+      state('connecting','Connecting to Maple Atlas Companion…');
+      source=new Source(base+'/__companion/link?t='+encodeURIComponent(token));
+      source.onmessage=e=>{
+        if(typeof e.data!=='string'||e.data.length>8192)return;
+        let value;try{value=JSON.parse(e.data);}catch(_){return;}
+        if(value.kind==='hello'){
+          if(value.v!==2||value.role!=='pc'){state('failed','Maple Atlas Companion uses a different version. Update it.',{reason:'version'});stop();return;}
+          hello={host:value.host==='windows'?'windows':'mac',ui:typeof value.ui==='string'&&/^\/__companion\/ui\/\?t=[a-f0-9]{32}$/.test(value.ui)?value.ui:'',version:String(value.version||'').slice(0,20)};
+          failures=0;timers.clearTimeout(lost);rx.reset();
+          state('connected','This window follows the game on this computer.',{host:hello.host});return;
+        }
+        if(phase==='connected')rx.deliver(value);
+      };
+      // The stream reconnects by itself; after a few failures (the app quit) it says so.
+      source.onerror=()=>{
+        failures++;
+        if(source?.readyState===2){source=null;state('failed','Maple Atlas Companion is closed. Open it again to follow the game.',{reason:'closed'});return;}
+        if(phase==='connected'){state('reconnecting','Maple Atlas Companion is not answering. Reconnecting…');timers.clearTimeout(lost);lost=timers.setTimeout(()=>{if(phase!=='connected'){stop();state('failed','Maple Atlas Companion is closed. Open it again to follow the game.',{reason:'closed'});}},20000);}
+      };
+    }
+    function stop(){timers.clearTimeout(lost);if(source){source.onmessage=source.onerror=null;source.close();}source=null;}
+    function post(value){
+      if(phase!=='connected')return false;
+      send(base+'/__companion/send',{method:'POST',headers:{'Content-Type':'application/json','X-Companion-Token':token},body:JSON.stringify(value)}).catch(()=>{});
+      return true;
+    }
+    return {start,stop,
+      nav:value=>post({kind:'nav',v:1,nav:value}),pins:value=>post({kind:'pins',v:1,pins:value}),
+      look:req=>/^p[0-9a-z]{1,16}$/.test(req)&&post({kind:'look',v:1,req}),lookResult:()=>false,lookProgress:()=>false,
+      controls:()=>post({kind:'controls'}),
+      get connected(){return phase==='connected';},get hello(){return hello;}};
+  }
+  scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create,createLocal,localToken};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);

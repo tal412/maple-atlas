@@ -12,7 +12,7 @@ struct ContentView: View {
             TrackingSection(model: model)
         }
         .formStyle(.grouped)
-        .frame(minWidth: 480, idealWidth: 520, minHeight: 560, idealHeight: 820)
+        .frame(minWidth: 380, idealWidth: 460, minHeight: 480)
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Text(model.updater.label)
@@ -32,14 +32,6 @@ struct ContentView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(.bar)
-        }
-        // The engine's web view must stay in a window hierarchy so WebKit keeps it running.
-        .background(alignment: .topLeading) {
-            EngineWebView(webView: model.engine.webView)
-                .frame(width: 1, height: 1)
-                .opacity(0)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
         }
     }
 }
@@ -332,7 +324,7 @@ private struct TrackingSection: View {
 
 // MARK: - Engine host view
 
-private struct EngineWebView: NSViewRepresentable {
+struct EngineWebView: NSViewRepresentable {
     let webView: WKWebView
     func makeNSView(context: Context) -> WKWebView { webView }
     func updateNSView(_ nsView: WKWebView, context: Context) {}

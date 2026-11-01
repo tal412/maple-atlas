@@ -48,6 +48,28 @@ final class CompanionModel {
     private(set) var hasPairedPhone = false
     var lastError: String?
 
+    // MARK: Maple Atlas window
+    /// The site in the app's own window, through the helper (AtlasView.swift).
+    @ObservationIgnored let atlas = AtlasBrowser()
+    private(set) var atlasURL: URL?
+    /// The Maple Atlas window is linked (it gets the map, dot and quests like a phone).
+    private(set) var isAtlasOpen = false
+    /// The companion's controls panel next to the map.
+    var showControls = true {
+        didSet { if showControls != oldValue { controlsChosen = true } }
+    }
+    @ObservationIgnored private var controlsChosen = false
+    @ObservationIgnored private var controlsAutoHidden = false
+    func toggleControls() { showControls.toggle() }
+    /// Something is listening for the game: the phone or this Mac's own Maple Atlas window.
+    var isLinked: Bool { isPhoneConnected || isAtlasOpen }
+    /// One line for the window's toolbar.
+    var liveStatus: String {
+        if isTracking, let map = lastConfirmed { return "Live · " + map.name }
+        if isTracking { return "Finding your map…" }
+        return gameWindowLabel == nil ? "Choose the game window" : "Not tracking"
+    }
+
     // MARK: Game window
     /// Name of the window chosen in the system picker, if one is being read.
     private(set) var gameWindowLabel: String?
@@ -84,8 +106,8 @@ final class CompanionModel {
     }()
 
     private func refreshOverlay() {
-        let why = !showOverlay ? "off in Settings" : !isTracking ? "hidden · not tracking" : !isPhoneConnected ? "hidden · phone not connected" : nav == nil ? "hidden · no route on the phone" : nil
-        overlay.update(nav: isPhoneConnected ? nav : nil, pins: isPhoneConnected ? pins : [], position: lastPosition, onMap: lastConfirmed?.id,
+        let why = !showOverlay ? "off in Settings" : !isTracking ? "hidden · not tracking" : !isLinked ? "hidden · no phone or Maple Atlas window" : nav == nil ? "hidden · no route" : nil
+        overlay.update(nav: isLinked ? nav : nil, pins: isLinked ? pins : [], position: lastPosition, onMap: lastConfirmed?.id,
                        windowID: capture.windowID, enabled: showOverlay && isTracking, why: why)
     }
     /// What the game's Quest Helper panel showed at the last read.
@@ -372,8 +394,20 @@ final class CompanionModel {
                 log("Pinned on the phone: " + (quests.isEmpty ? "none" : quests.map(\.title).joined(separator: ", ")))
             }
             if quests != pins { pins = quests }
+        case .atlas(let url):
+            atlasURL = url
+            atlas.open(url)
+        case .desk(let open):
+            log(open ? "Maple Atlas window linked" : "Maple Atlas window closed")
+            let was = isLinked
+            isAtlasOpen = open
+            if open { questsSentAt = nil; lastSearchingSent = nil; if !isTracking { helper?.send(.tracking(state: "paused")) } }
+            if isLinked != was { refreshOverlay() }
+        case .controls:
+            showControls = true
+            NSApp.activate()
         case .lookRequest(let req):
-            log("Look: the phone asked to look")
+            log("Look: asked to look")
             Task { await lookForPhone(req: req) }
         case .lookResult(let req, let card):
             log("Look: the phone found " + (card.items.isEmpty ? "nothing" : card.items.map(\.name).joined(separator: ", ")))
@@ -763,6 +797,8 @@ final class CompanionModel {
     func startTracking() {
         guard !isTracking, hasGameWindow else { return }
         isTracking = true
+        // The map is the point once the game is being read: the controls step aside, once.
+        if !controlsChosen, !controlsAutoHidden { controlsAutoHidden = true; showControls = false; controlsChosen = false }
         readingText = "Reading the map name…"
         refreshOverlay()
         // Keep App Nap from stretching the capture interval while the game is in front.
@@ -835,7 +871,7 @@ final class CompanionModel {
         }
         guard let found = located.position else { return }
         lastPosition = found
-        if isPhoneConnected {
+        if isLinked {
             helper?.send(.position(id: map.id, x: Int(found.x.rounded()), y: Int(found.y.rounded()), observedAt: .now))
         }
     }
@@ -876,7 +912,7 @@ final class CompanionModel {
             }
             questSummary = summary
             let due = questsSentAt.map { Date.now.timeIntervalSince($0) >= 15 } ?? true
-            if isPhoneConnected, reading.changed || due {
+            if isLinked, reading.changed || due {
                 helper?.send(.quests(visible: reading.visible, quests: reading.quests, observedAt: .now))
                 questsSentAt = .now
             }
@@ -966,7 +1002,7 @@ final class CompanionModel {
             lastPosition = reading.position
             let place = reading.position == nil ? "" : " · your dot found"
             readingText = (isPhoneConnected ? "Following on phone · " : "Map name · ") + name + place
-            if isPhoneConnected {
+            if isLinked {
                 helper?.send(.location(id: id, confidence: reading.confidence ?? 0, observedAt: .now))
                 if let position = reading.position {
                     helper?.send(.position(id: id, x: Int(position.x.rounded()), y: Int(position.y.rounded()), observedAt: .now))

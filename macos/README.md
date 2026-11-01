@@ -21,6 +21,10 @@ Click **Choose game window…** and pick the game in macOS's own window picker. 
 
 The phone uses the website (Main by default; switch to Dev in Settings). The site must include the single-scan pairing code, so deploy the web changes before using a new protocol.
 
+## Maple Atlas on the computer
+
+The app's window is Maple Atlas itself: the map, search, your quests and pins, Look and market prices, all following the game on this computer, with no phone needed. The helper serves the published site on a fixed loopback address (`http://127.0.0.1:47913/`, dev `47914`) and links the page to the game the way a paired phone is linked, over an event stream and POST on that same address, guarded by a per-launch token (`macos/link/local.go`, `MapleCompanionLink.createLocal` in `src/companion-link.js`). The companion's controls (game window, minimap box, phone pairing, updates) sit in a side panel: on the Mac the SwiftUI panel (toolbar button, ⇧⌘K), on Windows the controls page inside the window. A phone can still pair and follow at the same time.
+
 ## Your position and portal guidance
 
 The map name is read every 1.5 s. Between those reads the app locates only your dot, about **5 times a second**, on the confirmed map (a few milliseconds per read), so the phone follows smoothly. On every confirmed map, the engine also finds **your gold dot** and the **teal portal rings** on the minimap. Because Classic World's minimap scrolls with you, it fits the rings to the map's known visible portals (scale and offset), which puts your dot in the same coordinates as the portal data. A learned scale lets one ring suffice once two have been seen. The phone then shows a gold **You** dot on the local game map and, during a route, a live hint toward the next portal, for example "Head right, about one screen, then drop down".

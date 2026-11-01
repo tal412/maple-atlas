@@ -21,6 +21,8 @@
   // A visit that opened the companion (a pairing QR) or a phone already paired with a
   // Mac is a returning player: no homepage.
   const pairing=root.querySelector('#mc-companion-dialog')?.open;
-  if(pairing||paired())markSeen();
+  // Inside Maple Atlas Companion's own window (served from this computer) there is nothing to introduce.
+  const inApp=/^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+  if(pairing||paired()||inApp)markSeen();
   else if(!seen())open();
 })();

@@ -13,12 +13,10 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -93,13 +91,6 @@ func (h *hub) windowGone(after time.Duration) bool {
 	return h.ever && len(h.clients) == 0 && time.Since(h.lastGone) > after
 }
 
-func channelOf(site string) string {
-	if strings.Contains(site, "/dev") {
-		return "dev"
-	}
-	return "main"
-}
-
 func runDesktop(site, stateDir string, _ bool) {
 	if stateDir == "" {
 		base, err := os.UserConfigDir()
@@ -134,7 +125,10 @@ func runDesktop(site, stateDir string, _ bool) {
 		}
 		h.emit(v)
 	}
-	ctrl := &controller{site: site, stateDir: stateDir, emit: emit}
+	// Maple Atlas itself opens in the window, linked to this PC like a phone (local.go); the
+	// companion's controls (this folder's webui) open inside it, at /__companion/ui/.
+	d := newDesk("windows", emit)
+	ctrl := &controller{site: site, stateDir: stateDir, emit: emit, desk: d}
 	// Look: the hotkeys live on the overlay's window, so it runs from the start.
 	lookSession = func() *session {
 		ctrl.mu.Lock()
@@ -144,17 +138,17 @@ func runDesktop(site, stateDir string, _ bool) {
 	overlayStart()
 	// Look: recognition on this computer (Windows: Edge, hidden), opened early.
 	lookSetup(site, stateDir)
-	token := randomHex(16)
+	token := d.token
+	d.ui = "/__companion/ui/?t=" + token
 
 	files, _ := fs.Sub(webui, "webui")
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	server, err := newAtlas(site, d, logger.Printf)
 	if err != nil {
 		fatal("Maple Atlas Companion could not start its window: " + err.Error())
 	}
-	origin := "http://" + ln.Addr().String()
-	mux := http.NewServeMux()
-	static := http.FileServer(http.FS(files))
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	origin, mux := server.Origin, server.Mux
+	static := http.StripPrefix("/__companion/ui", http.FileServer(http.FS(files)))
+	mux.Handle("/__companion/ui/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		static.ServeHTTP(w, r)
@@ -295,10 +289,10 @@ func runDesktop(site, stateDir string, _ bool) {
 		}()
 		w.WriteHeader(http.StatusAccepted)
 	})
-	go http.Serve(ln, mux)
+	go server.Serve()
 
 	ctrl.handle(command{Cmd: "start"})
-	url := origin + "/?t=" + token
+	url := server.URL()
 	logger.Printf("window at %s/ (state %s)", origin, stateDir)
 	if err := openWindow(url, filepath.Join(stateDir, "window")); err != nil {
 		fatal("Maple Atlas Companion could not open its window: " + err.Error() + "\n\nOpen this address in Microsoft Edge or Google Chrome:\n" + url)

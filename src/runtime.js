@@ -198,6 +198,7 @@
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
     if(phase==='connected'){setTimeout(()=>pushNav(true),500);setTimeout(()=>pushPins(true),700);}
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
+    if(phase==='linking'){liveFresh=false;$('#mc-companion-badge').textContent='Connecting to the companion…';}
     if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
     if(phase==='failed'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Connection failed · Try again';$('#mc-status').textContent='Companion is not connected';}

@@ -4,6 +4,8 @@
 (function(){
   const $=id=>document.getElementById(id);
   const token=new URLSearchParams(location.search).get('t')||'';
+  // Shown inside the Maple Atlas window's side panel: that window has the title already.
+  if(window.top!==window)document.body.classList.add('embedded');
   const cmd=body=>fetch('/api/cmd',{method:'POST',headers:{'Content-Type':'application/json','X-Companion-Token':token},body:JSON.stringify(body)}).catch(()=>{});
   const DEFAULT_BOX={x:0,y:0,w:.4,h:.4},BOX_KEY='maple-atlas-companion-minimap-box';
   let contactAt=0,contactFrom='',phase='idle',paired=false,code=null,stream=null,video=null,tracking=false,box=loadBox();
@@ -295,7 +297,7 @@
       if(!tracking)return;
       if(!r.visible)panelsLost=true;
       $('quests').textContent=!r.visible?'Not found · keep the Quest Helper open in the game':r.quests.length?r.quests.length+' quest'+(r.quests.length===1?'':'s')+' tracked':'Open · no quests read';
-      if(phase==='connected'&&(r.changed||Date.now()-questsSentAt>=15000)){cmd({cmd:'quests',visible:r.visible,quests:r.quests,observedAt:Date.now()});questsSentAt=Date.now();}
+      if(r.changed||Date.now()-questsSentAt>=15000){cmd({cmd:'quests',visible:r.visible,quests:r.quests,observedAt:Date.now()});questsSentAt=Date.now();}
     }catch(_){}finally{questBusy=false;}
   }
   // Windows' own text recognition reads the panel (far better than the bundled reader on

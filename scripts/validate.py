@@ -99,7 +99,9 @@ assert not re.search(r'\b(XMLHttpRequest|WebSocket)\s*\(', page), 'Unexpected ba
 # Catalog, market snapshot, MCW item, wiki item-source and same-origin spawn points (5), the
 # same-origin price history (1) and Look's list catalog (1). Look's recognition is not in the
 # page: the computer runs it (look-host.html), so the phone downloads no models.
-assert len(re.findall(r'\bfetch\s*\(', page)) == 7 and "fetch('./data/spawn-points.json')" in page and "fetch('./data/market-history.json'" in page, 'Only the known loaders may fetch'
+assert len(re.findall(r'\bfetch\s*\(', page)) == 8 and "fetch('./data/spawn-points.json')" in page and "fetch('./data/market-history.json'" in page and "scope.fetch(url,init)" in page, 'Only the known loaders may fetch'
+# The app's own window: its link goes only to this computer's companion, on the page's own origin.
+assert "'/__companion/send'" in page and "'/__companion/link?t='" in page and 'https://' not in page.split('function createLocal',1)[1].split('scope.MapleCompanionLink=',1)[0], 'The app window link stays on its own origin'
 look_ui = (ROOT / 'src/look-ui.js').read_text()
 assert len(re.findall(r'\bfetch\s*\(', look_ui)) == 1 and 'fetch(catalogUrl)' in look_ui and 'MapleLookEngine' not in page
 # Look for the computer loads only this site's files: the catalog, assets/look/ and vendor/ort/

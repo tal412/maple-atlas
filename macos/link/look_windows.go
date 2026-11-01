@@ -36,7 +36,7 @@ func lookShotOf(req string, mark []float64) (lookShot, error) {
 	return lookShot{Req: req, JPEG: buf.Bytes(), W: shot.W, H: shot.H, Lines: lines, Mark: mark}, nil
 }
 
-func lookFromGame(s *session, req string) {
+func lookFromGame(s peer, req string) {
 	shot, err := lookShotOf(req, nil)
 	if err == nil {
 		err = s.sendLook(shot)

@@ -56,7 +56,7 @@ type lookShot struct {
 
 // lookRequested handles a screenshot request on Windows, where the helper captures the game
 // itself (set by look_windows.go); nil on the Mac, where the app does it.
-var lookRequested func(s *session, req string)
+var lookRequested func(p peer, req string)
 
 // sendLook sends a screenshot to the live phone, in parts. It waits while the link is busy,
 // so the position and quest messages keep flowing between parts.

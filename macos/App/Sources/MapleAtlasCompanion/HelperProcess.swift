@@ -60,6 +60,12 @@ enum HelperEvent: Sendable {
     case pins([PinnedQuest])
     /// The phone asks for a screenshot of the game (Look).
     case lookRequest(req: String)
+    /// Where Maple Atlas opens in the app's own window (with its link token).
+    case atlas(URL)
+    /// Whether that window is linked now.
+    case desk(open: Bool)
+    /// The window asks to show the companion's controls.
+    case controls
     /// What the phone found in a look marked on this Mac.
     case lookResult(req: String, card: LookCard)
     /// How that look is going on the phone ("Naming 3 of 12…").
@@ -91,6 +97,7 @@ enum HelperEvent: Sendable {
         let card: LookCard?
         let text: String?
         let error: String?
+        let open: Bool?
     }
 
     /// Returns nil for unknown or malformed events, which the contract says to ignore.
@@ -131,6 +138,13 @@ enum HelperEvent: Sendable {
         case "look-progress":
             guard let req = raw.req, let text = raw.text, !text.isEmpty else { return nil }
             self = .lookProgress(req: req, text: String(text.prefix(60)))
+        case "atlas":
+            guard let string = raw.url, let url = URL(string: string), url.host == "127.0.0.1" else { return nil }
+            self = .atlas(url)
+        case "desk":
+            self = .desk(open: raw.open ?? false)
+        case "controls":
+            self = .controls
         case "look-sent":
             guard let req = raw.req else { return nil }
             self = .lookSent(req: req, error: raw.error ?? "")

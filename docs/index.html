@@ -651,6 +651,28 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept .mc-install-steps code {font-size:12px;}
 #maple-atlas-concept #mc-pair-checklist {margin:10px 0 0;padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.45;}
 
+/* Inside Maple Atlas Companion (the app's own window). */
+#maple-atlas-concept #mc-desktop-flow{display:grid;gap:14px}
+#maple-atlas-concept #mc-desktop-flow[hidden]{display:none}
+#maple-atlas-concept #mc-desktop-status{display:flex;align-items:flex-start;gap:12px;margin:0;padding:16px;background:var(--mc-soft);border:1px solid var(--mc-edge);border-radius:18px}
+#maple-atlas-concept #mc-desktop-status[data-tone="success"]{border-color:#4f8766;background:light-dark(#eaf5ee,#203c2c)}
+#maple-atlas-concept #mc-desktop-status[data-tone="error"]{border-color:#b96c66;background:light-dark(#fff0ee,#462724)}
+#maple-atlas-concept #mc-desktop-status[data-tone="pending"]{border-color:var(--mc-blue)}
+#maple-atlas-concept #mc-desktop-status p,#maple-atlas-concept #mc-desktop-tracking p{margin:2px 0 0;color:var(--mc-muted)}
+#maple-atlas-concept #mc-desktop-tracking{padding:0 4px}
+#maple-atlas-concept #mc-desktop-tracking h3{margin:0;font-size:15px;font-weight:600}
+#maple-atlas-concept #mc-desktop-controls{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+#maple-atlas-concept #mc-desktop-controls svg{width:18px;height:18px}
+/* Windows: the companion's own controls (game window, phone pairing) in a side panel. Kept
+   rendered while closed (only moved off screen): it also runs the map reader. */
+#mc-controls-drawer{position:fixed;z-index:2147483000;top:0;right:0;bottom:0;width:min(460px,100vw);display:grid;grid-template-rows:auto 1fr;background:light-dark(#f0f4f9,#131314);border-left:1px solid light-dark(#dde3ea,#3c4043);box-shadow:-12px 0 32px #0003;transform:translateX(calc(100% + 40px));transition:transform .22s ease;font:15px/1.4 system-ui,sans-serif;color:light-dark(#1f1f1f,#e3e3e3);color-scheme:light dark}
+#mc-controls-drawer[data-open="true"]{transform:none}
+#mc-controls-drawer header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 10px 18px;border-bottom:1px solid light-dark(#dde3ea,#3c4043)}
+#mc-controls-drawer header strong{font-size:16px;font-weight:600}
+#mc-controls-drawer header button{font:inherit;width:40px;height:40px;border-radius:20px;border:0;background:transparent;color:inherit;cursor:pointer;font-size:22px;line-height:1}
+#mc-controls-drawer header button:hover{background:light-dark(#0001,#fff1)}
+#mc-controls-drawer iframe{border:0;width:100%;height:100%}
+
 /* Quest helper (src/quest-panel.js) */
 #maple-atlas-concept button.mc-profile {border:0;cursor:pointer;color:var(--mc-ink);}
 #maple-atlas-concept .mc-qh-status {display:flex;align-items:center;gap:8px;margin:2px 0 14px;font-size:12px;color:var(--mc-muted);}
@@ -1056,6 +1078,14 @@ body {background:light-dark(#d7e9e9,#142937);}
       </div>
       <ol class="mc-install-steps"><li><strong>Windows:</strong> run <code>MapleAtlasCompanion-Setup.exe</code>. If SmartScreen appears, choose More info → Run anyway, and allow private networks when the firewall asks.</li><li><strong>Mac:</strong> open the downloaded file and drag the app to Applications. If macOS blocks it the first time, go to System Settings → Privacy &amp; Security → Open Anyway.</li><li>Open Maple Atlas on your phone and scan the QR the app shows. Only once.</li></ol>
     </section>
+    <div id="mc-desktop-flow" hidden>
+      <section id="mc-desktop-status" data-tone="pending" role="status" aria-live="polite" aria-atomic="true">
+        <span id="mc-desktop-icon" aria-hidden="true">…</span><div><strong id="mc-desktop-title">Connecting…</strong><p id="mc-desktop-message"></p></div>
+      </section>
+      <section id="mc-desktop-tracking"><h3 id="mc-desktop-tracking-title">Waiting for the game</h3><p id="mc-desktop-tracking-message">Open MapleStory. The companion finds its window and reads the map name on the minimap.</p></section>
+      <button type="button" id="mc-desktop-controls" class="mc-primary"><i data-lucide="settings-2" aria-hidden="true"></i>Game window &amp; phone</button>
+      <p class="mc-companion-note">This window is Maple Atlas inside the companion app: your map, dot, quests, Look and prices follow the game on this computer. Your phone can follow too: pair it under Game window &amp; phone.</p>
+    </div>
     <div id="mc-phone-flow">
       <p id="mc-companion-intro">Run Maple Atlas Companion on the computer with the game, then scan its QR with this phone. Both devices must use the same Wi-Fi.</p>
       <section id="mc-companion-status" data-tone="neutral" role="status" aria-live="polite" aria-atomic="true">
@@ -2469,12 +2499,69 @@ window.mapleStorageReady.then(() => {
   function location(value,ids){
     return value&&value.kind==='location'&&typeof value.id==='string'&&ids.has(value.id)&&Number.isFinite(value.confidence)&&value.confidence>=0&&value.confidence<=100&&Number.isSafeInteger(value.seq)&&value.seq>=0&&Number.isFinite(value.observedAt)&&value.observedAt>0;
   }
+  // What the computer sends once linked, the same from the phone's link and the app's own
+  // window: the live map, dot, Quest Helper and tracking messages (each newer than the last),
+  // and Look's screenshot and results. Everything is checked field by field.
+  function receiver({ids,onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},now=Date.now}){
+    let lastSeq=-1;
+    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
+    const looks=new Map();
+    function lookMessage(m){
+      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
+      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
+      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
+      // The computer recognizes its screenshot itself: how far it is, then what it found.
+      if(m.kind==='look-progress'){if(typeof m.text==='string'&&m.req[0]==='p')onLook({req:m.req,progress:m.text.slice(0,60)});return;}
+      if(m.kind==='look-found'){
+        if(m.req[0]!=='p'||!Number.isInteger(m.n)||m.n<1||m.n>120||!Number.isInteger(m.i)||m.i<0||m.i>=m.n||typeof m.data!=='string'||m.data.length>6000)return;
+        const key='found:'+m.req;let f=looks.get(key);if(!f||f.parts.length!==m.n){f={at:now(),parts:new Array(m.n),got:0};looks.set(key,f);}
+        if(f.parts[m.i]!==undefined)return;f.parts[m.i]=m.data;f.got++;
+        if(f.got===f.parts.length){looks.delete(key);try{const text=new TextDecoder().decode(Uint8Array.from(atob(f.parts.join('')),c=>c.charCodeAt(0)));const found=lookFound(JSON.parse(text));if(found)onLook({req:m.req,found});}catch(_){}}
+        return;
+      }
+      if(m.kind==='look-meta'){
+        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
+        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
+        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
+        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
+        return;
+      }
+      const l=looks.get(m.req);
+      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
+      l.parts[m.i]=m.data;l.got++;
+      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
+    }
+    // What the computer found, checked field by field: each thing a known type with a name, an id
+    // and a box (numbers); the map's drop rows; the players' boxes. Anything else is dropped.
+    function lookFound(r){
+      if(!r||typeof r!=='object')return null;
+      const num=v=>Number.isFinite(v)?v:0,str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
+      const box=b=>b&&typeof b==='object'?{x:num(b.x),y:num(b.y),w:Math.max(0,num(b.w)),h:Math.max(0,num(b.h))}:null;
+      const types=new Set(['monster','npc','item','quest','map']);
+      const found=(Array.isArray(r.found)?r.found:[]).slice(0,400).filter(f=>f&&types.has(f.type)&&typeof f.name==='string'&&box(f.box)).map(f=>({type:f.type,id:str(String(f.id??''),24),name:str(f.name,80),box:box(f.box),via:str(f.via,12),score:num(f.score),ui:!!f.ui,pet:!!f.pet}));
+      const drops=(Array.isArray(r.drops)?r.drops:[]).slice(0,400).filter(d=>d&&typeof d.monster==='string'&&typeof d.item==='string').map(d=>({monster:str(d.monster,80),item:str(d.item,80),id:d.id==null?null:str(String(d.id),24),rate:Number.isFinite(d.rate)?d.rate:null}));
+      const players=(Array.isArray(r.players)?r.players:[]).slice(0,60).filter(p=>p&&box(p.box)).map(p=>({name:str(p.name,40),box:box(p.box),you:!!p.you}));
+      return {found,drops,players,mapId:typeof r.mapId==='string'&&ids.has(r.mapId)?r.mapId:null};
+    }
+    function deliver(value){
+      // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
+      if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'||value.kind==='look-found'||value.kind==='look-progress'){lookMessage(value);return;}
+      if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
+      // The player's dot on that map, in the portal data's coordinates.
+      else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
+      // The quests tracked in the game's Quest Helper (MapleQuestHelper.pack form).
+      else if(value.kind==='quests'&&typeof value.visible==='boolean'&&Array.isArray(value.quests)&&value.quests.length<=8&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onQuests({visible:value.visible,quests:value.quests,observedAt:value.observedAt,receivedAt:now()});}
+      else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+    }
+    return {deliver,reset(){lastSeq=-1;looks.clear();}};
+  }
   // The phone side of the link to Maple Atlas Companion (Mac or Windows app). The app
   // is an ICE-lite peer that learns this phone's ICE username from its connectivity
   // checks, so one scan is enough; the phone then proves the QR secret over the
   // encrypted channel before the usual hello, heartbeat and location messages.
   function create({ids,onState=()=>{},onLocation=()=>{},onReading=()=>{},onPosition=()=>{},onQuests=()=>{},onLook=()=>{},Peer=scope.RTCPeerConnection,now=Date.now,timers=scope}={}){
-    let pc=null,channel=null,session=null,expires=0,lastSeq=-1,epoch=0,phase='idle',secret=null,joined=null;
+    let pc=null,channel=null,session=null,expires=0,epoch=0,phase='idle',secret=null,joined=null;
+    const rx=receiver({ids,onLocation,onReading,onPosition,onQuests,onLook,now});
     let expiryTimer,connectTimer,verifyTimer,heartbeat,verified=false,helloSeen=false,helloAck=false,nonce='',pingSeq=0,pongSeq=-1,lastPong=0;
     const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires,...extra});};
     const random=(n=16)=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -2483,7 +2570,7 @@ window.mapleStorageReady.then(() => {
       expiryTimer=connectTimer=verifyTimer=heartbeat=null;
       if(channel){channel.onopen=channel.onmessage=channel.onclose=channel.onerror=null;channel.close();}channel=null;
       if(pc){pc.onconnectionstatechange=pc.ondatachannel=null;pc.close();}pc=null;
-      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;lastSeq=-1;pingSeq=0;pongSeq=-1;secret=null;joined=null;
+      verified=helloSeen=helloAck=false;nonce='';lastPong=0;session=null;expires=0;rx.reset();pingSeq=0;pongSeq=-1;secret=null;joined=null;
     }
     // quiet: leave without a goodbye (the page is only going away), so the app keeps
     // the pairing and the phone can resume it. A goodbye ends it on the computer too.
@@ -2531,14 +2618,7 @@ window.mapleStorageReady.then(() => {
             return;
           }
           if(!verified||phase!=='connected')return;
-          // Look: a screenshot of the game in parts (look-meta, then look-part 0…n-1), or why none.
-          if(value.kind==='look-meta'||value.kind==='look-part'||value.kind==='look-error'||value.kind==='look-found'||value.kind==='look-progress'){lookMessage(value);return;}
-          if(location(value,ids)&&value.seq>lastSeq){lastSeq=value.seq;onLocation({...value,receivedAt:now()});}
-          // The player's dot on that map, in the portal data's coordinates.
-          else if(value.kind==='position'&&typeof value.id==='string'&&ids.has(value.id)&&[value.x,value.y].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onPosition({id:value.id,x:value.x,y:value.y,observedAt:value.observedAt,receivedAt:now()});}
-          // The quests tracked in the game's Quest Helper (MapleQuestHelper.pack form).
-          else if(value.kind==='quests'&&typeof value.visible==='boolean'&&Array.isArray(value.quests)&&value.quests.length<=8&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onQuests({visible:value.visible,quests:value.quests,observedAt:value.observedAt,receivedAt:now()});}
-          else if(value.kind==='tracking'&&['searching','paused'].includes(value.state)&&Number.isSafeInteger(value.seq)&&value.seq>lastSeq&&Number.isFinite(value.observedAt)&&value.observedAt>0){lastSeq=value.seq;onReading(value.state);}
+          rx.deliver(value);
         }catch(_){}
       };
     }
@@ -2569,46 +2649,6 @@ window.mapleStorageReady.then(() => {
         if(!resume)expiryTimer=timers.setTimeout(()=>{if(!verified){clear();state('expired','This code expired. Create a new code in Maple Atlas Companion and scan it again.');}},Math.max(1,expires-now()));
       }catch(e){if(version===epoch)fail(e.message,'setup');throw e;}
     }
-    // Navigation for the computer's on-game overlay; true when it went out.
-    // Screenshots being received, by request: kept until whole (at most 3 MB) or 20 s old.
-    const looks=new Map();
-    function lookMessage(m){
-      if(m.v!==1||typeof m.req!=='string'||!/^[pc][0-9a-z]{1,16}$/.test(m.req))return;
-      for(const [req,l] of looks)if(now()-l.at>20000)looks.delete(req);
-      if(m.kind==='look-error'){looks.delete(m.req);onLook({req:m.req,error:String(m.message||'The computer could not take a screenshot.').slice(0,200)});return;}
-      // The computer recognizes its screenshot itself: how far it is, then what it found.
-      if(m.kind==='look-progress'){if(typeof m.text==='string'&&m.req[0]==='p')onLook({req:m.req,progress:m.text.slice(0,60)});return;}
-      if(m.kind==='look-found'){
-        if(m.req[0]!=='p'||!Number.isInteger(m.n)||m.n<1||m.n>120||!Number.isInteger(m.i)||m.i<0||m.i>=m.n||typeof m.data!=='string'||m.data.length>6000)return;
-        const key='found:'+m.req;let f=looks.get(key);if(!f||f.parts.length!==m.n){f={at:now(),parts:new Array(m.n),got:0};looks.set(key,f);}
-        if(f.parts[m.i]!==undefined)return;f.parts[m.i]=m.data;f.got++;
-        if(f.got===f.parts.length){looks.delete(key);try{const text=new TextDecoder().decode(Uint8Array.from(atob(f.parts.join('')),c=>c.charCodeAt(0)));const found=lookFound(JSON.parse(text));if(found)onLook({req:m.req,found});}catch(_){}}
-        return;
-      }
-      if(m.kind==='look-meta'){
-        if(!(m.parts>0&&m.parts<=600&&m.bytes>0&&m.bytes<=3<<20&&m.w>=16&&m.h>=16&&m.w<=4096&&m.h<=4096))return;
-        const lines=(Array.isArray(m.lines)?m.lines:[]).filter(l=>Array.isArray(l)&&l.length===5&&typeof l[0]==='string'&&l.slice(1).every(Number.isFinite)).slice(0,200).map(([text,x,y,w,h])=>({text:text.slice(0,60),x,y,w,h}));
-        const mark=Array.isArray(m.mark)&&m.mark.length===4&&m.mark.every(n=>Number.isFinite(n)&&n>=-0.01&&n<=1.01)?{x:m.mark[0],y:m.mark[1],w:m.mark[2],h:m.mark[3]}:null;
-        looks.set(m.req,{at:now(),w:m.w,h:m.h,parts:new Array(m.parts),got:0,lines,mark,map:typeof m.map==='string'&&ids.has(m.map)?m.map:null});
-        return;
-      }
-      const l=looks.get(m.req);
-      if(!l||!Number.isInteger(m.i)||m.i<0||m.i>=l.parts.length||typeof m.data!=='string'||m.data.length>6000||l.parts[m.i]!==undefined)return;
-      l.parts[m.i]=m.data;l.got++;
-      if(l.got===l.parts.length){looks.delete(m.req);onLook({req:m.req,w:l.w,h:l.h,lines:l.lines,mark:l.mark,map:l.map,jpeg:l.parts.join('')});}
-    }
-    // What the computer found, checked field by field: each thing a known type with a name, an id
-    // and a box (numbers); the map's drop rows; the players' boxes. Anything else is dropped.
-    function lookFound(r){
-      if(!r||typeof r!=='object')return null;
-      const num=v=>Number.isFinite(v)?v:0,str=(v,n)=>typeof v==='string'?v.slice(0,n):'';
-      const box=b=>b&&typeof b==='object'?{x:num(b.x),y:num(b.y),w:Math.max(0,num(b.w)),h:Math.max(0,num(b.h))}:null;
-      const types=new Set(['monster','npc','item','quest','map']);
-      const found=(Array.isArray(r.found)?r.found:[]).slice(0,400).filter(f=>f&&types.has(f.type)&&typeof f.name==='string'&&box(f.box)).map(f=>({type:f.type,id:str(String(f.id??''),24),name:str(f.name,80),box:box(f.box),via:str(f.via,12),score:num(f.score),ui:!!f.ui,pet:!!f.pet}));
-      const drops=(Array.isArray(r.drops)?r.drops:[]).slice(0,400).filter(d=>d&&typeof d.monster==='string'&&typeof d.item==='string').map(d=>({monster:str(d.monster,80),item:str(d.item,80),id:d.id==null?null:str(String(d.id),24),rate:Number.isFinite(d.rate)?d.rate:null}));
-      const players=(Array.isArray(r.players)?r.players:[]).slice(0,60).filter(p=>p&&box(p.box)).map(p=>({name:str(p.name,40),box:box(p.box),you:!!p.you}));
-      return {found,drops,players,mapId:typeof r.mapId==='string'&&ids.has(r.mapId)?r.mapId:null};
-    }
     // Ask the computer for a screenshot (req "p…"); answer a look marked on the computer (req "c…").
     function look(req){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^p[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look',v:1,session,req});return true;}
     function lookResult(req,card){if(!verified||phase!=='connected'||channel?.readyState!=='open'||!/^c[0-9a-z]{1,16}$/.test(req))return false;control({kind:'look-result',v:1,session,req,card});return true;}
@@ -2619,7 +2659,59 @@ window.mapleStorageReady.then(() => {
     function pins(value){if(!verified||phase!=='connected'||channel?.readyState!=='open')return false;control({kind:'pins',v:1,session,pins:value});return true;}
     return {join,stop,nav,pins,look,lookResult,lookProgress,get connected(){return verified&&phase==='connected'&&channel?.readyState==='open';}};
   }
-  scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
+  // Inside Maple Atlas Companion: the app opens this page from its own loopback address with a
+  // per-launch token in the fragment (#companion=…). The token is kept for this tab (reloads)
+  // and removed from the address bar. null when this page is not the app's own window.
+  function localToken({loc=scope.location,store=scope.sessionStorage,history=scope.history}={}){
+    if(!loc||!/^(127\.0\.0\.1|localhost)$/.test(loc.hostname))return null;
+    const key='maple-atlas-companion-token',m=/^#companion=([a-f0-9]{32})$/.exec(loc.hash||'');
+    if(m){try{store?.setItem(key,m[1]);}catch(_){}try{history?.replaceState(null,'',loc.pathname+loc.search);}catch(_){}return m[1];}
+    try{const t=store?.getItem(key);return /^[a-f0-9]{32}$/.test(t||'')?t:null;}catch(_){return null;}
+  }
+  // The page's link to the app it runs in (macos/link/local.go): an event stream for what the
+  // computer sends (the phone link's own messages) and POST for what the page sends. No
+  // pairing: the app's token is the proof. hello carries the app ({host, ui}): ui is where the
+  // companion's controls open in this page (Windows), "" when the app shows them (Mac).
+  function createLocal({token,ids,base='',onState=()=>{},onLocation,onReading,onPosition,onQuests,onLook,Source=scope.EventSource,send=(url,init)=>scope.fetch(url,init),now=Date.now,timers=scope}={}){
+    const rx=receiver({ids,onLocation,onReading,onPosition,onQuests,onLook,now});
+    let source=null,phase='idle',hello=null,failures=0,lost=null;
+    const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires:0,local:true,...extra});};
+    function start(){
+      if(source)return;
+      if(!Source){state('failed','This window cannot reach Maple Atlas Companion.',{reason:'unsupported'});return;}
+      state('connecting','Connecting to Maple Atlas Companion…');
+      source=new Source(base+'/__companion/link?t='+encodeURIComponent(token));
+      source.onmessage=e=>{
+        if(typeof e.data!=='string'||e.data.length>8192)return;
+        let value;try{value=JSON.parse(e.data);}catch(_){return;}
+        if(value.kind==='hello'){
+          if(value.v!==2||value.role!=='pc'){state('failed','Maple Atlas Companion uses a different version. Update it.',{reason:'version'});stop();return;}
+          hello={host:value.host==='windows'?'windows':'mac',ui:typeof value.ui==='string'&&/^\/__companion\/ui\/\?t=[a-f0-9]{32}$/.test(value.ui)?value.ui:'',version:String(value.version||'').slice(0,20)};
+          failures=0;timers.clearTimeout(lost);rx.reset();
+          state('connected','This window follows the game on this computer.',{host:hello.host});return;
+        }
+        if(phase==='connected')rx.deliver(value);
+      };
+      // The stream reconnects by itself; after a few failures (the app quit) it says so.
+      source.onerror=()=>{
+        failures++;
+        if(source?.readyState===2){source=null;state('failed','Maple Atlas Companion is closed. Open it again to follow the game.',{reason:'closed'});return;}
+        if(phase==='connected'){state('reconnecting','Maple Atlas Companion is not answering. Reconnecting…');timers.clearTimeout(lost);lost=timers.setTimeout(()=>{if(phase!=='connected'){stop();state('failed','Maple Atlas Companion is closed. Open it again to follow the game.',{reason:'closed'});}},20000);}
+      };
+    }
+    function stop(){timers.clearTimeout(lost);if(source){source.onmessage=source.onerror=null;source.close();}source=null;}
+    function post(value){
+      if(phase!=='connected')return false;
+      send(base+'/__companion/send',{method:'POST',headers:{'Content-Type':'application/json','X-Companion-Token':token},body:JSON.stringify(value)}).catch(()=>{});
+      return true;
+    }
+    return {start,stop,
+      nav:value=>post({kind:'nav',v:1,nav:value}),pins:value=>post({kind:'pins',v:1,pins:value}),
+      look:req=>/^p[0-9a-z]{1,16}$/.test(req)&&post({kind:'look',v:1,req}),lookResult:()=>false,lookProgress:()=>false,
+      controls:()=>post({kind:'controls'}),
+      get connected(){return phase==='connected';},get hello(){return hello;}};
+  }
+  scope.MapleCompanionLink={pack,unpack,location,addressing,proof,create,createLocal,localToken};if(typeof module!=='undefined')module.exports=scope.MapleCompanionLink;
 })(globalThis);
 
 /* Device role uses browser platform signals, never viewport width. */
@@ -3554,6 +3646,9 @@ window.mapleStorageReady.then(() => {
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
     const known=new Map(visualMaps.map(m=>[String(m.id),m])),ids=new Set(visualMaps.map(m=>String(m.id)));
+    // Inside Maple Atlas Companion's own window: linked to this computer's game, no pairing.
+    const appToken=MapleCompanionLink.localToken?.();
+    if(appToken)return desktop(appToken);
     let scanner=null,scanEpoch=0,scanTimer=null,lastSeen=0,accepting=false,scanning=false;
     let currentState={phase:'idle',message:'',expires:0};
 
@@ -3711,6 +3806,61 @@ window.mapleStorageReady.then(() => {
       const page=document.documentElement;
       if(role!=='phone'||document.fullscreenElement||!page.requestFullscreen)return;
       page.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+    }
+    // The app's own window (Mac or Windows): the page follows the game on this computer through
+    // the app (MapleCompanionLink.createLocal). The dialog shows how it is going and opens the
+    // companion's controls: the game window, the minimap box and pairing a phone.
+    function desktop(token){
+      dialog.dataset.role='desktop';root.dataset.companionApp='true';
+      $('#mc-get-app').hidden=true;$('#mc-phone-flow').hidden=true;$('#mc-desktop-flow').hidden=false;
+      for(const el of [$('#mc-mobile-channel'),$('.mc-companion-help')])if(el)el.hidden=true;
+      $('#mc-companion-title').textContent='Companion';
+      let seenAt=0,drawer=null;
+      const tracking=(title,message)=>{$('#mc-desktop-tracking-title').textContent=title;$('#mc-desktop-tracking-message').textContent=message;};
+      function paintState(v){
+        const linked=v.phase==='connected',bad=v.phase==='failed',tone=linked?'success':bad?'error':'pending';
+        $('#mc-desktop-status').dataset.tone=tone;$('#mc-desktop-icon').textContent=linked?'✓':bad?'!':'…';
+        $('#mc-desktop-title').textContent=linked?'Following the game on this computer':bad?'Companion closed':v.phase==='reconnecting'?'Companion not answering':'Connecting…';
+        $('#mc-desktop-message').textContent=v.message||'';
+        $('#mc-desktop-tracking').hidden=!linked;$('#mc-desktop-controls').disabled=!linked;
+        const state=linked?'connected':bad?'off':'pending',label='Companion · '+{connected:'Following the game',pending:'Connecting',off:'Closed'}[state];
+        for(const button of [$('#mc-mobile-companion'),$('#mc-companion-desktop')]){button.dataset.state=state;button.setAttribute('aria-label',label);}
+      }
+      // Windows: the controls page in a side panel of this window (it also reads the game).
+      function controls(ui){
+        if(drawer||!ui)return;
+        drawer=document.createElement('aside');drawer.id='mc-controls-drawer';drawer.setAttribute('aria-label','Game window and phone');drawer.dataset.open='false';
+        drawer.innerHTML='<header><strong>Game window &amp; phone</strong><button type="button" aria-label="Close">×</button></header>';
+        const frame=document.createElement('iframe');frame.title='Maple Atlas Companion';frame.allow='display-capture; clipboard-write';frame.src=ui;drawer.append(frame);
+        drawer.querySelector('button').onclick=()=>{drawer.dataset.open='false';};
+        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.dataset.open==='true')drawer.dataset.open='false';});
+        document.body.append(drawer);
+      }
+      const link=MapleCompanionLink.createLocal({token,ids,
+        onLocation:value=>{seenAt=Date.now();tracking('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);},
+        onPosition:value=>{seenAt=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onLook:value=>onLook(value),
+        onReading:state=>{seenAt=0;tracking(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'Start tracking under Game window & phone.':'Keep the map name showing on the in-game minimap (press + on it).');onConnection(state==='paused'?'stale':'searching');},
+        onState:value=>{
+          paintState(value);
+          if(value.phase==='connected'){onConnection('connected');controls(link.hello?.ui);if(!seenAt)tracking('Waiting for the game','Open MapleStory. The companion finds its window and reads the map name on the minimap.');}
+          else if(value.phase==='reconnecting')onConnection('reconnecting');
+          else if(value.phase==='failed'){seenAt=0;onConnection('disconnected');}
+          else onConnection('linking');
+        }});
+      $('#mc-desktop-controls').onclick=()=>{
+        if(drawer){dialog.close();drawer.dataset.open='true';drawer.querySelector('button').focus();}
+        else link.controls();
+      };
+      const open=()=>{$('#mc-profile-dialog').close();if(!dialog.open)dialog.showModal();};
+      for(const button of [$('#mc-mobile-companion'),$('#mc-companion-desktop')])button.onclick=open;
+      $('#mc-companion-desktop').querySelector('span').textContent='Companion';
+      $('#mc-companion-desktop').insertAdjacentHTML('beforeend','<span class="mc-companion-dot" aria-hidden="true"></span>');
+      $('#mc-companion-badge').onclick=open;
+      setInterval(()=>{if(link.connected&&seenAt&&Date.now()-seenAt>12000){tracking('No recent location update','Check tracking under Game window & phone.');onConnection('stale');}},1000);
+      paintState({phase:'connecting',message:''});
+      link.start();
+      return {open,enterFullscreen:()=>{},nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:()=>false,lookProgress:()=>false,
+        controls:()=>$('#mc-desktop-controls').click(),get connected(){return link.connected;},desktop:true};
     }
     if(role==='pc'){
       // A computer runs the companion app; the dialog only points to it.
@@ -4843,6 +4993,7 @@ window.mapleStorageReady.then(() => {
     if(phase==='connected')$('#mc-companion-badge').textContent='Connected · Waiting for your map';
     if(phase==='connected'){setTimeout(()=>pushNav(true),500);setTimeout(()=>pushPins(true),700);}
     if(phase==='pairing'){liveFresh=false;$('#mc-companion-badge').textContent='Not connected · Finish pairing';}
+    if(phase==='linking'){liveFresh=false;$('#mc-companion-badge').textContent='Connecting to the companion…';}
     if(phase==='resuming'){liveFresh=false;$('#mc-companion-badge').textContent='Reconnecting to your Mac…';$('#mc-status').textContent='Reconnecting to your Mac · Last location retained';}
     if(phase==='reconnecting'){liveFresh=false;$('#mc-companion-badge').textContent='Connection interrupted · Reconnecting';$('#mc-status').textContent='Device connection interrupted · Last location retained';}
     if(phase==='failed'){liveLocation=null;liveFresh=false;$('#mc-companion-badge').textContent='Connection failed · Try again';$('#mc-status').textContent='Companion is not connected';}
@@ -5167,7 +5318,9 @@ window.mapleStorageReady.then(() => {
   // A visit that opened the companion (a pairing QR) or a phone already paired with a
   // Mac is a returning player: no homepage.
   const pairing=root.querySelector('#mc-companion-dialog')?.open;
-  if(pairing||paired())markSeen();
+  // Inside Maple Atlas Companion's own window (served from this computer) there is nothing to introduce.
+  const inApp=/^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+  if(pairing||paired()||inApp)markSeen();
   else if(!seen())open();
 })();
 

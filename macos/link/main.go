@@ -54,6 +54,19 @@ type controller struct {
 	stateDir string
 	emit     func(map[string]any)
 	current  *session
+	// desk: this computer's own Maple Atlas window (local.go), linked like a phone.
+	desk *desk
+}
+
+// peerFor is where a look's answer goes: the window that asked, or the phone.
+func (c *controller) peerFor(req string) peer {
+	if c.desk != nil && c.desk.owns(req) {
+		return c.desk
+	}
+	if c.current != nil {
+		return c.current
+	}
+	return nil
 }
 
 func (c *controller) handle(cmd command) {
@@ -105,43 +118,55 @@ func (c *controller) handle(cmd command) {
 		overlayEnabled(cmd.On)
 	case "location":
 		overlayTracking("tracking")
+		if c.desk != nil {
+			c.desk.sendLocation(cmd.ID, cmd.Confidence, cmd.ObservedAt)
+		}
 		if c.current != nil {
 			c.current.sendLocation(cmd.ID, cmd.Confidence, cmd.ObservedAt)
 		}
 	case "position":
 		overlayPosition(cmd.ID, cmd.X, cmd.Y)
+		if c.desk != nil {
+			c.desk.sendPosition(cmd.ID, cmd.X, cmd.Y, cmd.ObservedAt)
+		}
 		if c.current != nil {
 			c.current.sendPosition(cmd.ID, cmd.X, cmd.Y, cmd.ObservedAt)
 		}
 	case "quests":
+		if c.desk != nil {
+			c.desk.sendQuests(cmd.Visible, cmd.Quests, cmd.ObservedAt)
+		}
 		if c.current != nil {
 			c.current.sendQuests(cmd.Visible, cmd.Quests, cmd.ObservedAt)
 		}
 	case "tracking":
 		overlayTracking(cmd.State)
+		if c.desk != nil {
+			c.desk.sendTracking(cmd.State)
+		}
 		if c.current != nil {
 			c.current.sendTracking(cmd.State)
 		}
 	case "look":
-		if c.current != nil {
-			go c.current.lookFromFile(cmd)
+		if p := c.peerFor(cmd.Req); p != nil {
+			go lookFromFile(p, c.emit, cmd)
 		} else {
 			os.Remove(cmd.Path)
 		}
 	case "look-progress":
-		if c.current != nil {
-			go c.current.sendLookProgress(cmd.Req, cmd.Text)
+		if p := c.peerFor(cmd.Req); p != nil {
+			go p.sendLookProgress(cmd.Req, cmd.Text)
 		}
 	case "look-found":
-		// What the app found in the screenshot it sent (a JSON file it wrote), for the phone.
+		// What the app found in the screenshot it sent (a JSON file it wrote), for whoever asked.
 		raw, err := os.ReadFile(cmd.Path)
 		os.Remove(cmd.Path)
-		if err == nil && c.current != nil {
-			go func(s *session) {
-				if err := s.sendLookFound(cmd.Req, raw); err != nil {
-					s.emit(map[string]any{"event": "log", "message": "Look: the result did not reach the phone (" + err.Error() + ")"})
+		if p := c.peerFor(cmd.Req); err == nil && p != nil {
+			go func() {
+				if err := p.sendLookFound(cmd.Req, raw); err != nil {
+					c.emit(map[string]any{"event": "log", "message": "Look: the result did not arrive (" + err.Error() + ")"})
 				}
-			}(c.current)
+			}()
 		}
 	case "stop":
 		if c.current != nil {
@@ -150,14 +175,14 @@ func (c *controller) handle(cmd command) {
 	}
 }
 
-// lookFromFile sends the app's screenshot (a JPEG file it wrote) to the phone and deletes it.
-func (s *session) lookFromFile(cmd command) {
+// lookFromFile sends the app's screenshot (a JPEG file it wrote) to whoever asked and deletes it.
+func lookFromFile(s peer, emit func(map[string]any), cmd command) {
 	defer os.Remove(cmd.Path)
 	report := func(msg string) {
 		if msg != "" && strings.HasPrefix(cmd.Req, "p") {
 			s.sendLookError(cmd.Req, msg)
 		}
-		s.emit(map[string]any{"event": "look-sent", "req": cmd.Req, "error": msg})
+		emit(map[string]any{"event": "look-sent", "req": cmd.Req, "error": msg})
 	}
 	if !filepath.IsAbs(cmd.Path) || !strings.HasSuffix(cmd.Path, ".jpg") {
 		report("bad file")
@@ -255,7 +280,14 @@ func main() {
 			emit(map[string]any{"event": "engine", "url": url})
 		}
 	}
-	ctrl := &controller{site: *site, stateDir: *stateDir, emit: emit}
+	ctrl := &controller{site: *site, stateDir: *stateDir, emit: emit, desk: newDesk("mac", emit)}
+	// Maple Atlas in the app's own window (local.go).
+	if a, err := newAtlas(*site, ctrl.desk, func(f string, v ...any) { emit(map[string]any{"event": "log", "message": fmt.Sprintf(f, v...)}) }); err != nil {
+		emit(map[string]any{"event": "error", "message": "Maple Atlas could not open on this Mac: " + err.Error()})
+	} else {
+		go a.Serve()
+		emit(map[string]any{"event": "atlas", "url": a.URL()})
+	}
 	in := bufio.NewScanner(os.Stdin)
 	in.Buffer(make([]byte, 64*1024), 64*1024)
 	for in.Scan() {

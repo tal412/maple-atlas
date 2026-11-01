@@ -6,11 +6,19 @@ struct MapleAtlasCompanionApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Window("Maple Atlas Companion", id: "main") {
-            ContentView(model: appDelegate.model)
+        Window("Maple Atlas", id: "main") {
+            MainView(model: appDelegate.model)
         }
-        .defaultSize(width: 560, height: 900)
+        .defaultSize(width: 1360, height: 900)
         .windowResizability(.contentMinSize)
+        .commands {
+            CommandGroup(after: .toolbar) {
+                Button("Reload Maple Atlas") { appDelegate.model.atlas.reload() }
+                    .keyboardShortcut("r")
+                Button("Companion Controls") { appDelegate.model.toggleControls() }
+                    .keyboardShortcut("k", modifiers: [.command, .shift])
+            }
+        }
 
         Window("Diagnostics", id: "log") {
             LogView(model: appDelegate.model)
