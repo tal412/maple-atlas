@@ -101,3 +101,22 @@ function image(w,h,paint){const data=new Uint8ClampedArray(w*h*4);for(let y=0;y<
   assert.equal(L.shortlistItems(screen,{x:57,y:40,w:39,h:40},thumbs,2)[0].id,'red-yellow','a loose box still finds it');
   console.log('look: the item shortlist passes');
 }
+// A store's list: scroll icons all look alike, so the name written beside each one names it,
+// whole or cut short ("…"); a cut name that fits several items is settled by the icon.
+{
+  const scroll=(tint)=>image(24,24,(x,y)=>x<3||x>20||y<3||y>20?[0,0,0,0]:[220,170+tint,90]);
+  const greater=scroll(0),lesser=scroll(40),k=1,screen=image(400,300,()=>[205,215,225]);
+  const draw=(icon,ox,oy)=>{for(let y=0;y<24;y++)for(let x=0;x<24;x++){const i=(y*24+x)*4;if(icon.data[i+3]<128)continue;screen.data.set([icon.data[i],icon.data[i+1],icon.data[i+2],255],((oy+y)*400+ox+x)*4);}};
+  draw(greater,20,20);draw(greater,20,70);draw(lesser,20,120);draw(greater,20,170);
+  const items=['Hat Accuracy Scroll: Greater','Hat Accuracy Scroll: Lesser','Hat HP Scroll: Greater','Hat HP Scroll: Lesser','Pet Equip Jump Scroll: Intermediate'].map((name,i)=>({type:'item',id:String(100+i),name,category:'Armor Scroll'}));
+  const names=L.nameIndex(items),icons={100:greater,101:lesser,102:greater,103:lesser,104:greater};
+  const lines=[{text:'Hat Accuracy Scroll: Grea...',x:56,y:20,w:180,h:12},{text:'1 for 25,000 mesos',x:56,y:34,w:120,h:12},
+    {text:'Hat HP Scroll: Greater',x:56,y:70,w:150,h:12},{text:'Hat HP Scroll...',x:56,y:120,w:110,h:12},{text:'Pet Equlp Jump Scrol: Int…',x:56,y:170,w:170,h:12}];
+  const detections=[20,70,120,170].map(y=>({cls:'item',score:.9,box:{x:19,y:y-1,w:26,h:26},items:[{id:'102',p:.99}]}));
+  const r=L.identify({image:screen,detections,lines,k,names,itemIcon:id=>icons[id]??null,itemName:id=>items.find(e=>e.id===String(id))?.name});
+  assert.deepEqual(r.found.filter(f=>!f.ui).map(f=>f.name),['Hat Accuracy Scroll: Greater','Hat HP Scroll: Greater','Hat HP Scroll: Lesser','Pet Equip Jump Scroll: Intermediate'],JSON.stringify(r.found));
+  assert(r.found.filter(f=>!f.ui).every(f=>f.via==='text'),'named by the text, not the picture');
+  // No readable name beside it: nothing is named from text; the picture decides, as before.
+  assert(!L.identify({image:screen,detections:[detections[0]],lines:[],k,names,itemIcon:id=>icons[id]??null,itemName:id=>items.find(e=>e.id===String(id))?.name}).found.some(f=>f.via==='text'));
+  console.log('look: names beside items (whole, cut short, misread) pass');
+}

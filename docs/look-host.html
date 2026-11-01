@@ -331,7 +331,17 @@
       if(!byName.has(n))byName.set(n,[]);byName.get(n).push(e);
       const first=n.split(' ')[0];if(!byWord.has(first))byWord.set(first,[]);byWord.get(first).push(n);
     }
+    const all=[...byName.keys()];
     return function match(text){
+      // A name the game cut short to fit its list ("Hat Accuracy Scroll: Grea..."): every name it
+      // begins (a reading slip or two allowed in a long one); the icon then picks among them.
+      const cut=/(\.{2,}|…)\s*$/.exec(String(text||''));
+      if(cut){
+        const p=norm(String(text).slice(0,cut.index));if(p.length<6)return [];
+        let hits=all.filter(n=>n.startsWith(p));
+        if(!hits.length&&p.length>=10){const max=p.length>=20?3:2,near=n=>{for(let d=-2;d<=2;d++)if(n.length>=p.length+d&&editDistance(n.slice(0,p.length+d),p,max)<=max)return true;return false;};hits=all.filter(near);}
+        return hits.slice(0,12).flatMap(n=>byName.get(n).map(entry=>({entry,exact:false,cut:true})));
+      }
       const t=norm(text);if(t.length<3)return [];
       if(byName.has(t))return byName.get(t).map(entry=>({entry,exact:true}));
       const words=t.split(' '),found=[];
@@ -650,7 +660,7 @@
     const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
     const player=findPlayer(lines,frame),found=[],players=[],pendingItems=[];
     // The text printed right of an icon, on its row (a shop's or a store's list).
-    const textBeside=b=>lines.filter(l=>l.x>=b.x+b.w-2&&l.x<=b.x+b.w+60&&l.y+l.h>b.y-4&&l.y<b.y+b.h*.8).sort((a,c)=>a.y-c.y);
+    const textBeside=b=>lines.filter(l=>l.x>=b.x+b.w-2&&l.x<=b.x+b.w+Math.max(60,b.w*2)&&l.y+l.h>b.y-4&&l.y<b.y+b.h*.8).sort((a,c)=>a.y-c.y);
     // The name tag under a box: a text line just below it, centred on it.
     const tagUnder=b=>lines.filter(l=>l.y>=b.y+b.h*.6&&l.y<=b.y+b.h+Math.max(28,b.h*.6)&&Math.abs(l.x+l.w/2-(b.x+b.w/2))<Math.max(b.w*.7,l.w*.6)).sort((a,c)=>a.y-c.y);
     const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));
@@ -718,9 +728,18 @@
       if(det.cls==='item'&&tags.length&&!onSlot(b)&&!inGrid(b))continue;
       // The mouse pointer (the game's own cursors, in the reference set) is not a thing to name.
       if(det.cls!=='npc'&&cursors.length&&Math.max(b.w,b.h)<=48*k){const c=bestSprite(cursors,b);if(c&&c.score>=.75)continue;}
+      // The item's name written beside it (a shop's or a store's list) names it when it can be
+      // read: many icons look alike (every scroll), so a readable name wins over the picture. A
+      // name cut short ("…") can be several items: the one whose icon matches best is taken.
       if(det.cls==='item'&&names){
-        const named=textBeside(b).map(t=>names(t.text).find(m=>m.entry.type==='item')).find(Boolean);
-        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}
+        const options=textBeside(b).map(t=>names(t.text).filter(m=>m.entry.type==='item')).find(o=>o.length)||[];
+        let named=options.length===1?options[0]:null;
+        if(options.length>1){
+          const cover=onSlot(b)||inGrid(b)?SLOT_COVER:null;let top=null;
+          for(const o of options){const icon=itemIcon(String(o.entry.id));if(!icon)continue;const hit=bestSprite([{type:'item',id:o.entry.id,name:o.entry.name,image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4},Infinity,cover);if(hit&&(!top||hit.score>top.score))top={o,score:hit.score};}
+          named=top?.o||null;
+        }
+        if(named){found.push({type:'item',id:String(named.entry.id),name:named.entry.name,box:b,via:'text',score:det.score});continue;}
       }
       const accept=ACCEPT[det.cls]??.6;
       let best=bestSprite(local[det.cls]||[],b,Infinity,det.cls==='item'&&(onSlot(b)||inGrid(b))?SLOT_COVER:null);

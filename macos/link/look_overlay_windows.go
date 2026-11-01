@@ -465,6 +465,13 @@ func (l *lookUI) showCard(d time.Duration) {
 	box := l.box
 	l.hideAt = time.Now().Add(d)
 	l.mu.Unlock()
+	// Kept on screen too: the game window can run past the screen's edge.
+	if wa, ok := workArea(box); ok {
+		g = winRect{max(g.Left, wa.Left), max(g.Top, wa.Top), min(g.Right, wa.Right), min(g.Bottom, wa.Bottom)}
+		if g.Right-g.Left < 200 || g.Bottom-g.Top < 100 {
+			g = wa
+		}
+	}
 	x := box.Right + int32(12*scale)
 	if x+w > g.Right-8 {
 		x = box.Left - int32(12*scale) - w
@@ -566,4 +573,29 @@ func (l *lookUI) paintCard(hwnd uintptr) {
 		y += px(8)
 	}
 	pDeleteObject.Call(small)
+}
+
+var (
+	pMonitorFromPoint = user32.NewProc("MonitorFromPoint")
+	pGetMonitorInfoW  = user32.NewProc("GetMonitorInfoW")
+)
+
+// workArea is the usable part (no taskbar) of the screen a box is on.
+func workArea(b winRect) (winRect, bool) {
+	const nearest = 2
+	x, y := (b.Left+b.Right)/2, (b.Top+b.Bottom)/2
+	mon, _, _ := pMonitorFromPoint.Call(uintptr(uint32(x))|uintptr(uint32(y))<<32, nearest)
+	if mon == 0 {
+		return winRect{}, false
+	}
+	var info struct {
+		Size          uint32
+		Monitor, Work winRect
+		Flags         uint32
+	}
+	info.Size = uint32(unsafe.Sizeof(info))
+	if ok, _, _ := pGetMonitorInfoW.Call(mon, uintptr(unsafe.Pointer(&info))); ok == 0 {
+		return winRect{}, false
+	}
+	return info.Work, true
 }

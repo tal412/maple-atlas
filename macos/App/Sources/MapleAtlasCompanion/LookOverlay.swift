@@ -191,7 +191,12 @@ final class LookController {
     }
 
     private func showCard(for seconds: Double) {
-        guard let frame = Self.gameFrame(windowID()) else { return }
+        guard let game = Self.gameFrame(windowID()) else { return }
+        // Kept on screen too: the game window can run past the screen's edge.
+        let box0 = lastBox ?? CGRect(x: game.midX, y: game.midY, width: 1, height: 1)
+        let screen = NSScreen.screens.first(where: { $0.frame.contains(CGPoint(x: box0.midX, y: box0.midY)) }) ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? game
+        let frame = game.intersection(visible).width > 200 ? game.intersection(visible) : visible
         if cardPanel == nil {
             let p = NSPanel(contentRect: CGRect(x: 0, y: 0, width: 340, height: 120), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
             p.isOpaque = false
