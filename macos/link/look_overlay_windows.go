@@ -32,6 +32,7 @@ const (
 	wmHotkey      = 0x0312
 	wmMouseMove   = 0x0200
 	wmLButtonDown = 0x0201
+	wmMouseWheel  = 0x020A
 	wmLButtonUp   = 0x0202
 	wmRButtonDown = 0x0204
 	wmKeyDown     = 0x0100
@@ -71,7 +72,9 @@ type lookUI struct {
 	count     int
 	waiting   bool
 	message   string
-	progress  string // the phone's line while it looks ("Naming 3 of 12…")
+	progress  string // the line while it looks ("Naming 3 of 12…")
+	scroll    int32  // how far the card's list is scrolled (px)
+	full      int32  // the card's whole height (px), when taller than shown
 	data      *lookCardData
 	box       winRect // where the card goes (screen)
 	hideAt    time.Time
@@ -79,6 +82,9 @@ type lookUI struct {
 }
 
 var look = &lookUI{}
+
+// IntersectClipRect: the card's list is drawn under its title only (it scrolls).
+var pIntersectClipRect = gdi32.NewProc("IntersectClipRect")
 
 // lookSession returns the live phone session (set by desktop.go).
 var lookSession = func() *session { return nil }
@@ -105,7 +111,8 @@ func lookReady(owner uintptr) {
 	if mark != 0 {
 		pSetLayeredWindowAttributes.Call(mark, keyColor, 140, lwaColorKey|lwaAlpha)
 	}
-	card, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTransparent|wsExTopmost|wsExToolWindow|wsExNoActivate, uintptr(unsafe.Pointer(class)),
+	// The card takes the mouse (the wheel scrolls a long list, a click closes it), never the focus.
+	card, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTopmost|wsExToolWindow|wsExNoActivate, uintptr(unsafe.Pointer(class)),
 		uintptr(unsafe.Pointer(utf16("Maple Atlas Look card"))), wsPopup, 0, 0, 360, 120, 0, 0, 0, 0)
 	if card != 0 {
 		pSetLayeredWindowAttributes.Call(card, keyColor, 240, lwaColorKey|lwaAlpha)
@@ -182,6 +189,24 @@ func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
 		switch msg {
 		case wmPaint:
 			l.paintCard(hwnd)
+			return 0, true
+		case wmMouseWheel:
+			delta := int32(int16(wparam >> 16 & 0xFFFF))
+			var r winRect
+			pGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&r)))
+			l.mu.Lock()
+			if l.full > r.Bottom-r.Top {
+				l.scroll = max(0, min(l.full-(r.Bottom-r.Top), l.scroll-delta*48/120))
+				l.hideAt = time.Now().Add(60 * time.Second)
+			}
+			l.mu.Unlock()
+			pInvalidateRect.Call(hwnd, 0, 0)
+			return 0, true
+		case wmLButtonDown:
+			l.mu.Lock()
+			l.hideAt = time.Time{}
+			l.mu.Unlock()
+			pShowWindow.Call(hwnd, swHide)
 			return 0, true
 		case wmEraseBkgnd:
 			return 1, true
@@ -341,7 +366,7 @@ func overlayLookCard(v map[string]any) {
 	if l.failTimer != nil {
 		l.failTimer.Stop()
 	}
-	l.pending, l.waiting, l.data, l.progress = "", false, &card, ""
+	l.pending, l.waiting, l.data, l.progress, l.scroll = "", false, &card, "", 0
 	l.message = card.Note
 	if len(card.Items) == 0 && card.Note == "" {
 		l.message = "Nothing from the database found here."
@@ -350,7 +375,11 @@ func overlayLookCard(v map[string]any) {
 	for _, it := range card.Items {
 		icons.want(it.Icon)
 	}
-	l.showCard(15 * time.Second)
+	d := 15 * time.Second
+	if len(card.Items) > 0 {
+		d = 60 * time.Second
+	}
+	l.showCard(d)
 }
 
 // ---- Drawing ----
@@ -409,7 +438,15 @@ func (l *lookUI) cardSize(scale float64) (int32, int32) {
 			h += px(8)
 		}
 	}
-	return px(380), h + px(8)
+	h += px(8)
+	// At most about 75% of the game window: a longer list scrolls (the mouse wheel).
+	l.full = h
+	if g, ok := gameClient(); ok {
+		if most := (g.Bottom - g.Top) * 3 / 4; h > most && most > px(160) {
+			h = most
+		}
+	}
+	return px(380), h
 }
 
 func (l *lookUI) showCard(d time.Duration) {
@@ -491,7 +528,16 @@ func (l *lookUI) paintCard(hwnd uintptr) {
 	if data == nil {
 		return
 	}
-	y := px(44)
+	l.mu.Lock()
+	scroll := l.scroll
+	l.mu.Unlock()
+	if scroll > 0 || l.full > h {
+		pIntersectClipRect.Call(hdc, 0, uintptr(px(40)), uintptr(w), uintptr(h-px(6)))
+		if l.full > h {
+			text(strconv.Itoa(len(data.Items))+" found · scroll", w-px(150), px(10), w-px(14), px(36), px(12), 400, rgb(160, 166, 176))
+		}
+	}
+	y := px(44) - scroll
 	small := makeFont(px(13), 700)
 	for _, it := range data.Items {
 		drawPinIcon(hdc, it.Icon, it.Name, px(14), y, px(pinIcon), small, px)

@@ -196,7 +196,7 @@ func lookProgressText(s string) (string, bool) {
 }
 
 // lookCard checks the phone's result card for a look marked on the computer, field by field:
-// a title and at most 6 things, each a type, a name, an icon from the datamine CDN (spritePath)
+// a title and at most 40 things, each a type, a name, an icon from the datamine CDN (spritePath)
 // and two short lines of detail.
 func lookCard(raw json.RawMessage) (map[string]any, bool) {
 	var in struct {
@@ -212,7 +212,7 @@ func lookCard(raw json.RawMessage) (map[string]any, bool) {
 			P string `json:"p"`
 		} `json:"items"`
 	}
-	if len(raw) == 0 || len(raw) > 6000 || json.Unmarshal(raw, &in) != nil || len(in.Items) > 6 {
+	if len(raw) == 0 || len(raw) > 48000 || json.Unmarshal(raw, &in) != nil || len(in.Items) > 40 {
 		return nil, false
 	}
 	items := []map[string]any{}

@@ -46,7 +46,7 @@ struct LookCard: Decodable, Equatable, Sendable {
         }
         let page = try JSONDecoder().decode(Page.self, from: data)
         let clip = { (s: String?, n: Int) in String((s ?? "").prefix(n)) }
-        let items = (page.items ?? []).prefix(6).map { i in
+        let items = (page.items ?? []).prefix(40).map { i in
             let path = i.i ?? ""
             let icon = path.range(of: #"^[0-9a-f]{40}/data/[A-Za-z0-9_./-]+\.png$"#, options: .regularExpression) != nil
                 ? "https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@" + path : ""
@@ -62,6 +62,9 @@ final class LookState {
     var waiting = false
     var card: LookCard?
     var message = ""
+    /// The tallest the list may be before it scrolls (about 75% of the game window).
+    var maxListHeight: CGFloat = 520
+    var onClose: () -> Void = {}
 }
 
 /// Look on the Mac: ⌃⌥M marks a box on the game window (drag, or click for the area around the
@@ -174,7 +177,7 @@ final class LookController {
         state.waiting = false
         state.card = card
         state.message = card.items.isEmpty ? (card.note.isEmpty ? "Nothing from the database found here." : card.note) : card.note
-        showCard(for: 15)
+        showCard(for: card.items.isEmpty ? 15 : 60)
     }
 
     func fail(_ message: String) {
@@ -192,13 +195,18 @@ final class LookController {
             p.backgroundColor = .clear
             p.hasShadow = false
             p.level = .screenSaver
-            p.ignoresMouseEvents = true
+            // Takes the scroll wheel (a long list scrolls) and the close button; never the keyboard.
+            p.ignoresMouseEvents = false
+            p.becomesKeyOnlyIfNeeded = true
             p.isReleasedWhenClosed = false
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
             p.contentView = NSHostingView(rootView: LookCardView(state: state))
             cardPanel = p
         }
         guard let panel = cardPanel else { return }
+        state.maxListHeight = max(160, frame.height * 0.75 - 70)
+        state.onClose = { [weak self] in self?.hideTask?.cancel(); self?.cardPanel?.orderOut(nil) }
+        panel.contentView?.layoutSubtreeIfNeeded()
         let size = panel.contentView?.fittingSize ?? CGSize(width: 340, height: 120)
         let width = min(380, max(240, size.width)), height = max(56, size.height)
         // Beside the box (right, else left), kept inside the game window.
@@ -313,8 +321,40 @@ private struct LookCardView: View {
                 if state.waiting { ProgressView().controlSize(.small).tint(.white) }
                 Text(state.card?.title.isEmpty == false ? state.card!.title : state.message.isEmpty ? "Look" : state.message)
                     .font(.system(size: 13, weight: .semibold)).lineLimit(2)
+                Spacer(minLength: 4)
+                if let card = state.card, card.items.count > 1 {
+                    Text("\(card.items.count) found").font(.system(size: 11)).foregroundStyle(.white.opacity(0.6))
+                }
+                Button { state.onClose() } label: { Image(systemName: "xmark").font(.system(size: 11, weight: .bold)) }
+                    .buttonStyle(.plain).foregroundStyle(.white.opacity(0.7)).help("Close")
             }
             if let card = state.card {
+                // A long list scrolls inside the card.
+                let tall = min(state.maxListHeight, card.items.reduce(0) { $0 + Self.rowHeight($1) })
+                ScrollView(.vertical) {
+                    VStack(alignment: .leading, spacing: 8) { rows(card) }
+                }
+                .scrollIndicators(tall < card.items.reduce(0) { $0 + Self.rowHeight($1) } ? .visible : .hidden)
+                .frame(height: tall)
+                if !card.note.isEmpty && !card.items.isEmpty {
+                    Text(card.note).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).lineLimit(2)
+                }
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(14)
+        .frame(width: 340, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.8)))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.18), lineWidth: 1))
+    }
+
+    /// About how tall a row is (name, price, detail, extra), for the list's height.
+    static func rowHeight(_ item: LookCard.Item) -> CGFloat {
+        22 + (item.price.isEmpty ? 0 : 18) + (item.detail.isEmpty ? 0 : 17) + (item.extra.isEmpty ? 0 : 32) + 8
+    }
+
+    @ViewBuilder private func rows(_ card: LookCard) -> some View {
                 ForEach(Array(card.items.enumerated()), id: \.offset) { _, item in
                     HStack(alignment: .top, spacing: 10) {
                         LookIcon(url: URL(string: item.icon), name: item.name)
@@ -328,17 +368,6 @@ private struct LookCardView: View {
                         }
                     }
                 }
-                if !card.note.isEmpty && !card.items.isEmpty {
-                    Text(card.note).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).lineLimit(2)
-                }
-            }
-        }
-        .foregroundStyle(.white)
-        .padding(14)
-        .frame(width: 340, alignment: .leading)
-        .fixedSize(horizontal: false, vertical: true)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.8)))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.18), lineWidth: 1))
     }
 }
 

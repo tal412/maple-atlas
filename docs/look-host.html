@@ -1060,7 +1060,7 @@
  * player-market price.
  *
  * describe(f, ctx, env) -> {detail, extra}
- * card(result, title, env) -> {title, note, items: [{t, n, i, d, e, c, p}]} (at most 6 things)
+ * card(result, title, env) -> {title, note, items: [{t, n, i, d, e, c, p}]} (at most 40 things)
  * env: {catalog: {by: Map}, mapOf(id), quests: [{npc, name}], priceOf(entity) -> record|null}
  */
 (function(scope){
@@ -1096,7 +1096,7 @@
   }
   function card(r,title,env){
     const spritePath=e=>e?.image&&env.catalog?.commit?env.catalog.commit+'/data/'+e.image:'';
-    const items=r.summary.filter(f=>!(f.via==='name'&&f.ui)).slice(0,6).map(f=>{const d=describe(f,r,env);return {t:f.type,n:f.name,i:spritePath(env.catalog?.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count,p:priceLine(f,env)};});
+    const items=r.summary.filter(f=>!(f.via==='name'&&f.ui)).slice(0,40).map(f=>{const d=describe(f,r,env);return {t:f.type,n:f.name,i:spritePath(env.catalog?.by.get(f.type+':'+f.id)),d:d.detail,e:d.extra,c:f.count,p:priceLine(f,env)};});
     const m=env.mapOf?.(r.mapId);
     return {title,note:items.length?(m?'On '+m.name:''):'Nothing from the database found here'+(m?' on '+m.name:'')+'.',items};
   }

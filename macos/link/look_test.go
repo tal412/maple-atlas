@@ -27,13 +27,20 @@ func TestLookCard(t *testing.T) {
 	if _, ok := lookCard(bad); ok {
 		t.Fatal("an unknown type must be refused")
 	}
-	many := make([]map[string]any, 7)
+	many := make([]map[string]any, 41)
 	for i := range many {
 		many[i] = map[string]any{"t": "npc", "n": "x"}
 	}
 	tooMany, _ := json.Marshal(map[string]any{"items": many})
 	if _, ok := lookCard(tooMany); ok {
-		t.Fatal("more than 6 things must be refused")
+		t.Fatal("more than 40 things must be refused")
+	}
+	if c, ok := lookCard(mustJSON(map[string]any{"items": many[:40]})); !ok || len(c["items"].([]map[string]any)) != 40 {
+		t.Fatal("40 things fit")
+	}
+	priced, _ := lookCard(mustJSON(map[string]any{"items": []map[string]any{{"t": "item", "n": "Toga", "p": "≈ 22,167 mesos"}}}))
+	if priced["items"].([]map[string]any)[0]["price"] != "≈ 22,167 mesos" {
+		t.Fatal("the price is kept")
 	}
 	long, _ := json.Marshal(map[string]any{"title": strings.Repeat("a", 500), "items": []any{}})
 	if c, ok := lookCard(long); !ok || len([]rune(c["title"].(string))) > 61 {
@@ -68,4 +75,9 @@ func TestLookProgressText(t *testing.T) {
 	if got, _ := lookProgressText(strings.Repeat("a", 100)); len([]rune(got)) > 61 {
 		t.Fatalf("not clipped: %d", len([]rune(got)))
 	}
+}
+
+func mustJSON(v any) json.RawMessage {
+	b, _ := json.Marshal(v)
+	return b
 }
