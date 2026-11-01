@@ -972,7 +972,9 @@
     const loadRaw=once(async()=>new Map((await sheet(look.raw)).map(s=>[String(s.id),s.image])));
     const loadThumbs=once(async()=>{const meta=await json(look.thumbs);return {...meta,sheet:await pixels(meta.image)};});
     // What each monster drops: {monster: [[item name, item id, rate %]]}.
-    const loadDrops=once(()=>json(look.drops));
+    // Some names in the source data still carry HTML escapes ("Bubbling&#039;s Huge Bubble").
+    const unescaped=t=>String(t).replace(/&(#\d+|#x[0-9a-f]+|amp|quot|lt|gt|apos);/gi,(m,e)=>e[0]==='#'?String.fromCodePoint(e[1]==='x'||e[1]==='X'?parseInt(e.slice(2),16):+e.slice(1)):{amp:'&',quot:'"',lt:'<',gt:'>',apos:"'"}[e.toLowerCase()]);
+    const loadDrops=once(async()=>{const d=await json(look.drops);for(const rows of Object.values(d))for(const r of rows)if(Array.isArray(r))r[0]=unescaped(r[0]);return d;});
     // What can be on this map: its monsters (every frame), its NPCs, and its monsters' drops.
     const mapSets=new Map();
     function spritesFor(m){
