@@ -218,10 +218,13 @@
   // can drop, best chance first, with who drops it (MapleClassic Wiki drop tables, cached).
   const oreSources=MapleItemSources.create({channel:root.dataset.channel||'main'});
   // Look: what is on a screenshot of the game (src/look-ui.js, src/look.js).
-  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),
-    liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},drops:names=>oreSources.monsterDrops(names),
+  lookUI=MapleLookUI.create({root,maps:DATA.maps,quests:DATA.quests,look:DATA.look,catalogUrl:DATA.searchCatalog,request:req=>companion.look(req),answer:(req,card)=>companion.lookResult(req,card),
+    liveMap:()=>liveLocation,openEntity:(type,name)=>{$('#mc-look-dialog').close();if(name)void search.show(type,name);},
     connected:()=>companion.connected,esc,icon,icons});
   $('#mc-look').onclick=()=>lookUI.open();
+  // Look's pictures and model, downloaded once in the background a little after the page opens
+  // (not on a data saver), so a look never waits on the network.
+  if(!navigator.connection?.saveData)setTimeout(()=>{(window.requestIdleCallback||(f=>f()))(()=>void lookUI.prefetch());},6000);
   let oreDrops=null,oreState='idle';
   const ORE_PIN_KEY='maple-atlas-pin-ores';
   let oresPinned=false;try{oresPinned=localStorage.getItem(ORE_PIN_KEY)==='on';}catch(_){}

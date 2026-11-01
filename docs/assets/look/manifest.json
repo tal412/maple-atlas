@@ -1,0 +1,24 @@
+{
+ "detector": "detector-6f841298b0f2.onnx",
+ "atlas": "atlas-aa762c2102e0.json",
+ "icons": "icons-c8b73d0dcf19.json",
+ "thumbs": "thumbs-2591c21751c7.json",
+ "raw": "raw-6f0857938b0a.json",
+ "drops": "drops-628d22922260.json",
+ "files": [
+  "atlas-aa762c2102e0.json",
+  "atlas0-9203f48bd24f.png",
+  "atlas1-6efc2ea9d81c.png",
+  "atlas2-765c843e3400.png",
+  "detector-6f841298b0f2.onnx",
+  "drops-628d22922260.json",
+  "icons-c8b73d0dcf19.json",
+  "icons0-607e61ef38eb.png",
+  "icons1-9bc55610ca46.png",
+  "raw-6f0857938b0a.json",
+  "raw0-ef86d823e717.png",
+  "thumbs-11836eb81e3f.png",
+  "thumbs-2591c21751c7.json"
+ ],
+ "bytes": 20022012
+}

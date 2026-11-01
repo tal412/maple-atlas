@@ -6,76 +6,87 @@
  * It also answers looks marked on the computer (⌃⌥M / Ctrl+Alt+M on the game): the same
  * recognition on the marked box, sent back as a small card for the overlay.
  *
- * Recognition is src/look.js; sprites come from maplestory.io (every animation frame of
- * monsters and NPCs, and items' dropped icons), else the datamine picture.
+ * Recognition is src/look.js. Everything it compares against is a file on this site
+ * (assets/look/, listed in DATA.look by scripts/build.py): the detector, every monster frame
+ * and human NPC, every item's icon and thumbnail, the drops table. The first visit downloads
+ * them all in the background (prefetch) into the phone's own cache, so a look never waits on
+ * the network; a new release only downloads the files that changed (their names carry their
+ * content's hash).
  */
 (function(scope){
-  const API='https://maplestory.io/api/MCW/1/';
-  function create({root,maps,quests=[],catalogUrl,sourceCommit,request,answer,liveMap,openEntity,drops,connected,esc,icon,icons=()=>{}}){
+  const CACHE='maple-atlas-look';
+  // One loader for Look's files: the phone's own cache, else the site (and then kept).
+  async function lookFile(path){
+    const url=new URL(path,location.href).href;let cache=null;
+    try{cache=await caches.open(CACHE);const hit=await cache.match(url);if(hit)return hit;}catch(_){}
+    const r=await fetch(url,{credentials:'same-origin'});if(!r.ok)throw Error('Could not load '+path+'.');
+    try{await cache?.put(url,r.clone());}catch(_){}
+    return r;
+  }
+  function create({root,maps,quests=[],look=null,catalogUrl,sourceCommit,request,answer,liveMap,openEntity,connected,esc,icon,icons=()=>{}}){
     const $=s=>root.querySelector(s),dialog=$('#mc-look-dialog'),stage=$('#mc-look-stage'),canvas=$('#mc-look-canvas'),box=$('#mc-look-box'),status=$('#mc-look-status'),results=$('#mc-look-results');
     const mapOf=id=>maps.find(m=>m.id===String(id));
     let shot=null,view={s:1,tx:0,ty:0},boxSize={w:.62,h:.5},found=[],shotPlayers=[],seq=0,waiting=null,busy=false;
+    const base=look?.base||'./assets/look/',file=name=>base+name;
+    const RUNTIME='./vendor/ort/ort-wasm-simd-threaded.wasm';
 
-    // ---- Data: the catalog (names), sprites, drops ----
+    // ---- Downloading once, in the background ----
+    let fetched=null;
+    // Every Look file into the phone's cache (each once), then the ones no longer listed are dropped.
+    function prefetch(){
+      if(!look?.files?.length)return Promise.resolve(false);
+      fetched??=(async()=>{
+        try{await navigator.storage?.persist?.();}catch(_){}
+        const wanted=[...look.files.map(f=>new URL(file(f),location.href).href),new URL(RUNTIME,location.href).href];
+        let done=0;
+        for(const url of wanted){await lookFile(url).catch(()=>null);prefetchState={done:++done,total:wanted.length};}
+        try{const cache=await caches.open(CACHE),keep=new Set(wanted);for(const req of await cache.keys())if(!keep.has(req.url))await cache.delete(req);}catch(_){}
+        return true;
+      })().catch(()=>{fetched=null;return false;});
+      return fetched;
+    }
+    let prefetchState={done:0,total:0};
+
+    // ---- Data: the catalog (names), the reference set, items, drops ----
     let catalog=null,names=null;
     async function loadCatalog(){
       if(catalog)return catalog;
       const r=await fetch(catalogUrl);if(!r.ok)throw Error('The database did not load.');
       const data=await r.json();catalog={entities:data.entities||[],commit:data.sourceCommit||sourceCommit};
       catalog.by=new Map(catalog.entities.map(e=>[e.type+':'+e.id,e]));
-      catalog.itemByName=new Map();for(const e of catalog.entities)if(e.type==='item'&&!catalog.itemByName.has(e.name.toLowerCase()))catalog.itemByName.set(e.name.toLowerCase(),e);
       names=MapleLook.nameIndex(catalog.entities.filter(e=>['npc','monster','item','quest'].includes(e.type)));
       return catalog;
     }
     const spritePath=e=>e?.image&&catalog?catalog.commit+'/data/'+e.image:'';
     const spriteURL=e=>e?.image&&catalog?'https://cdn.jsdelivr.net/gh/ohmi69/osms_datamine_dashboard@'+spritePath(e):null;
-    // Images as ImageData, fetched two at a time and retried when the server is busy.
-    const images=new Map();let active=0;const queue=[];
-    const slot=()=>new Promise(res=>{if(active<2){active++;res();}else queue.push(res);});
-    const free=()=>{const next=queue.shift();if(next)next();else active--;};
-    async function fetchRetry(url,as){
-      await slot();
-      try{for(let i=0;i<3;i++){const r=await fetch(url,{mode:'cors',credentials:'omit'}).catch(()=>null);if(r?.ok)return as==='json'?await r.json():await r.blob();if(r&&r.status!==503&&r.status!==429)return null;await new Promise(res=>setTimeout(res,500*(i+1)));}return null;}
-      finally{free();}
+    const json=name=>lookFile(file(name)).then(r=>r.json());
+    async function canvasOf(name){
+      const b=await createImageBitmap(await lookFile(file(name)).then(r=>r.blob())),c=document.createElement('canvas');c.width=b.width;c.height=b.height;
+      const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(b,0,0);b.close?.();return x;
     }
-    function imageData(url){
-      if(!url)return Promise.resolve(null);
-      if(!images.has(url))images.set(url,(async()=>{
-        const blob=await fetchRetry(url,'blob');if(!blob)return null;
-        try{const bmp=await createImageBitmap(blob),c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;const x=c.getContext('2d');x.drawImage(bmp,0,0);bmp.close?.();return x.getImageData(0,0,c.width,c.height);}catch(_){return null;}
-      })());
-      return images.get(url);
+    // A packed set of pictures (index + sheets) -> [{...entry, image}].
+    async function sheet(name){
+      const index=await json(name),sheets=await Promise.all(index.sheets.map(canvasOf));
+      return index.sprites.map(s=>({...s,image:sheets[s.s].getImageData(s.x,s.y,s.w,s.h)}));
     }
-    // Every useful frame of a monster or NPC (a few of each pose), else its datamine picture.
-    const frameLists=new Map();
-    function frames(kind,e){
-      const key=kind+':'+e.id;
-      if(!frameLists.has(key))frameLists.set(key,(async()=>{
-        const rec=await fetchRetry(API+kind+'/'+e.id,'json'),books=rec?.framebooks||{},urls=[];
-        const poses=kind==='mob'?['stand','move','jump','hit1']:Object.keys(books).slice(0,2);
-        for(const pose of poses)for(let i=0;i<Math.min(books[pose]||0,kind==='mob'?4:2);i++)urls.push(API+kind+'/'+e.id+'/render/'+pose+'/'+i);
-        const got=(await Promise.all(urls.slice(0,12).map(imageData))).filter(Boolean);
-        if(got.length)return got;
-        const own=await imageData(spriteURL(e));return own?[own]:[];
-      })());
-      return frameLists.get(key);
-    }
-    // What can be on this map: its monsters (all frames), its NPCs, and what its monsters drop.
+    const once=f=>{let p=null;return ()=>(p??=f().catch(e=>{p=null;throw e;}));};
+    const loadAtlas=once(async()=>(await sheet(look.atlas)).map(s=>({type:s.t,id:String(s.id),name:catalog?.by.get(s.t+':'+s.id)?.name||String(s.id),image:s.image})));
+    const loadIcons=once(async()=>new Map((await sheet(look.icons)).map(s=>[String(s.id),s.image])));
+    const loadRaw=once(async()=>new Map((await sheet(look.raw)).map(s=>[String(s.id),s.image])));
+    const loadThumbs=once(async()=>{const meta=await json(look.thumbs),x=await canvasOf(meta.image);return {...meta,sheet:x.getImageData(0,0,x.canvas.width,x.canvas.height)};});
+    // What each monster drops: {monster: [[item name, item id, rate %]]}.
+    const loadDrops=once(()=>json(look.drops));
+    // What can be on this map: its monsters (every frame), its NPCs, and its monsters' drops.
     const mapSets=new Map();
-    function spritesFor(mapId,onProgress){
+    function spritesFor(mapId){
       if(!mapSets.has(mapId))mapSets.set(mapId,(async()=>{
-        const m=mapOf(mapId),list=[];if(!m)return list;
-        const mobs=(m.monsters||[]).map(x=>catalog.by.get('monster:'+x.id)||{id:String(x.id),name:x.name,type:'monster'});
-        const npcs=(m.npcs||[]).map(x=>catalog.by.get('npc:'+x.id)||{id:String(x.id),name:x.name,type:'npc'});
-        let done=0;const total=mobs.length+npcs.length;
-        for(const [kind,type,group] of [['mob','monster',mobs],['npc','npc',npcs]])await Promise.all(group.map(async e=>{
-          for(const image of await frames(kind,e))list.push({type,id:String(e.id),name:e.name,image});
-          onProgress?.(++done,total);
-        }));
-        let dropRows=[];try{dropRows=await drops((m.monsters||[]).map(x=>x.name));}catch(_){}
-        const items=[...new Set(dropRows.map(r=>r.item))].map(n=>catalog.itemByName.get(String(n).toLowerCase())).filter(Boolean).slice(0,40);
-        await Promise.all(items.map(async e=>{const image=await imageData(API+'item/'+e.id+'/iconRaw')||await imageData(spriteURL(e));if(image)list.push({type:'item',id:String(e.id),name:e.name,image});}));
-        list.drops=dropRows;
+        const m=mapOf(mapId);if(!m)return Object.assign([],{drops:[]});
+        const [atlas,drops,raw,icons]=await Promise.all([loadAtlas(),loadDrops(),loadRaw(),loadIcons()]);
+        const ids=new Set([...(m.monsters||[]).map(x=>'monster:'+x.id),...(m.npcs||[]).map(x=>'npc:'+x.id)]);
+        const list=atlas.filter(s=>ids.has(s.type+':'+s.id));
+        const rows=(m.monsters||[]).flatMap(x=>(drops[x.name]||[]).map(([item,id,rate])=>({monster:x.name,item,id,rate})));
+        for(const id of new Set(rows.map(r=>r.id).filter(Boolean))){const image=raw.get(String(id))||icons.get(String(id));if(image)list.push({type:'item',id:String(id),name:catalog.by.get('item:'+id)?.name||String(id),image});}
+        list.drops=rows;
         return list;
       })().catch(e=>{mapSets.delete(mapId);throw e;}));
       return mapSets.get(mapId);
@@ -94,12 +105,27 @@
       }catch(_){}
       return image.width/MapleLook.GAME_WIDTH;
     }
+    // The trained detector finds things; the map's sprites, the reference set, the item icons and
+    // the name tags name them. When the detector cannot run (an old browser) the map's sprites are
+    // looked for directly.
+    const detector=scope.MapleLookDetector&&look?.detector?MapleLookDetector.create({
+      model:()=>lookFile(file(look.detector)).then(r=>r.arrayBuffer()),runtime:()=>lookFile(RUNTIME).then(r=>r.arrayBuffer()),minScore:.25}):null;
     async function analyze(s,region,onProgress){
       await loadCatalog();
       const mapId=s.map||liveMap();
-      const sprites=mapId?await spritesFor(mapId,onProgress):[];
-      const r=MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites});
-      const summary=MapleLook.summary(r.found);summary.forEach((f,i)=>f.n=i+1);
+      if(prefetchState.total&&prefetchState.done<prefetchState.total)onProgress?.('download');
+      const sprites=mapId?await spritesFor(mapId):[];
+      let r=null;
+      if(detector)try{
+        if(!s.detections){onProgress?.('detector');s.detections=await detector.detect(s.image);}
+        const [allSprites,icons,th]=await Promise.all([loadAtlas(),loadIcons(),s.detections.some(d=>d.cls==='item')?loadThumbs():null]);
+        const ground=await loadRaw().then(m=>new Set(m.keys())).catch(()=>null);
+        r=MapleLook.identify({image:s.image,detections:s.detections,lines:s.lines,region,k:s.k,names,sprites,allSprites,thumbs:th,groundItems:ground,
+          itemIcon:id=>icons.get(String(id))||null,itemName:id=>catalog.by.get('item:'+id)?.name||id});
+        r.method='detector';
+      }catch(e){console.warn('Look detector:',e);}
+      r??={...MapleLook.analyze({image:s.image,lines:s.lines,region,k:s.k,names,sprites}),method:'sprites'};
+      const summary=MapleLook.summary(r.found);let n=0;for(const f of summary)if(!(f.via==='name'&&f.ui))f.n=++n;
       // Each thing on the picture carries its row's number.
       for(const f of r.found){const s=summary.find(x=>x.type===f.type&&x.id===f.id);f.n=s?.n;}
       return {...r,mapId,drops:sprites.drops||[],summary};
@@ -178,8 +204,6 @@
       x.setTransform(view.s*d,0,0,view.s*d,view.tx*d,view.ty*d);x.imageSmoothingEnabled=view.s<2;x.drawImage(shot.bitmap,0,0);
       x.lineWidth=2.5/view.s;x.font=(13/view.s)+'px system-ui, sans-serif';
       const tag=(b,label,color,fill='rgba(0,0,0,.72)')=>{const tw=x.measureText(label).width+8/view.s;x.fillStyle=fill;x.fillRect(b.x,b.y-18/view.s,tw,17/view.s);x.fillStyle=color;x.fillText(label,b.x+4/view.s,b.y-5/view.s);};
-      // Players (yourself and others) are only labelled: they are not in the database.
-      for(const p of shotPlayers){x.strokeStyle='rgba(255,255,255,.55)';x.setLineDash([4/view.s,3/view.s]);x.strokeRect(p.box.x-2/view.s,p.box.y-2/view.s,p.box.w+4/view.s,p.box.h+4/view.s);x.setLineDash([]);tag(p.box,p.you?'You':'Player','#ddd','rgba(60,60,60,.8)');}
       for(const f of found){if(f.via==='name'&&f.ui)continue;x.strokeStyle=colors[f.type]||'#fff';x.strokeRect(f.box.x,f.box.y,f.box.w,f.box.h);tag(f.box,(f.n?f.n+' · ':'')+f.name,'#fff');}
     }
     let pointers=new Map(),pinch=null,resizing=null;
@@ -202,11 +226,11 @@
     function say(text){status.textContent=text;}
     function list(r,heading=''){
       const m=mapOf(r.mapId),rows=r.summary.filter(f=>!(f.via==='name'&&f.ui)),ui=r.summary.filter(f=>f.via==='name'&&f.ui);
-      const row=f=>{const e=catalog.by.get(f.type+':'+f.id),d=describe(f,r),src=spriteURL(e);
-        return '<button type="button" class="mc-look-row" data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'">'+(f.ui?'':'<span class="mc-look-num" style="--c:'+(colors[f.type]||'#999')+'">'+f.n+'</span>')+'<span class="mc-look-thumb" style="--c:'+(colors[f.type]||'#999')+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span><span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span>'+icon('chevron-right')+'</button>';};
+      const row=f=>{const e=catalog.by.get(f.type+':'+f.id),d=f.id==='?'?{detail:'Seen on the screen; not one of this map\'s '+(f.type==='item'?'drops':f.type==='npc'?'NPCs':'monsters'),extra:''}:describe(f,r),src=spriteURL(e);
+        return '<button type="button" class="mc-look-row'+(f.id==='?'?' mc-look-unknown':'')+'" '+(f.id==='?'?'disabled ':'')+'data-type="'+esc(f.type)+'" data-name="'+esc(f.name)+'">'+(f.ui?'':'<span class="mc-look-num" style="--c:'+(colors[f.type]||'#999')+'">'+f.n+'</span>')+'<span class="mc-look-thumb" style="--c:'+(colors[f.type]||'#999')+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':icon('search'))+'</span><span class="mc-look-text"><strong>'+esc(f.name)+(f.count>1?' ×'+f.count:'')+'</strong><small>'+esc(d.detail)+'</small>'+(d.extra?'<small class="mc-look-extra">'+esc(d.extra)+'</small>':'')+'</span>'+icon('chevron-right')+'</button>';};
       results.innerHTML=(heading?'<h3 class="mc-look-heading">'+esc(heading)+'</h3>':'')+(m?'<button type="button" class="mc-look-row mc-look-map" data-map="'+esc(m.id)+'"><span class="mc-look-thumb">'+icon('map')+'</span><span class="mc-look-text"><strong>'+esc(m.name)+'</strong><small>The map you are on'+(m.street?' · '+esc(m.street):'')+'</small></span>'+icon('chevron-right')+'</button>':'')
         +(rows.length?rows.map(row).join(''):'<p class="mc-look-empty">Nothing from the database found here. Move the box over a monster, an NPC or an item, or try Around me.</p>')
-        +(r.players?.length?'<p class="mc-look-players">'+icon('users')+'<span>Players and pets (not in the database): '+r.players.map(p=>esc(p.you?'you ('+p.name+')':p.name)).join(', ')+'</span></p>':'')
+
         +(ui.length?'<details class="mc-look-ui"><summary>Also in the game\'s windows ('+ui.length+')</summary>'+ui.map(row).join('')+'</details>':'');
       icons();
       results.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>openEntity(b.dataset.type,b.dataset.name));
@@ -216,7 +240,7 @@
       if(!shot||busy)return;busy=true;$('#mc-look-identify').disabled=$('#mc-look-around').disabled=true;
       say(label+'…');
       try{
-        const r=await analyze(shot,region,(done,total)=>say('Getting this map\'s monsters and NPCs ('+done+'/'+total+')…'));
+        const r=await analyze(shot,region,step=>say(step==='detector'?'Finding monsters, NPCs and items…':'Finishing the first download of Look\'s pictures ('+prefetchState.done+'/'+prefetchState.total+')…'));
         // Around me looks at the whole screen: the box is hidden until you move the picture again.
         found=r.found;shotPlayers=r.players||[];box.hidden=!region;if(!region)fitAll();else draw();list(r,region?'In the box':'On the whole screen');
         const n=r.summary.filter(f=>!(f.via==='name'&&f.ui)).length;
@@ -244,7 +268,7 @@
     addEventListener('resize',()=>{if(dialog.open&&shot){size();placeBox();clamp();draw();}});
     // ?lookdebug: show a given screenshot as if the computer had sent it (for checking the view).
     if(/[?&]lookdebug\b/.test(location.search))scope.MapleLookDebug={show:value=>{if(!dialog.open)dialog.showModal();requestAnimationFrame(()=>{size();placeBox();draw();});waiting=value.req;void received(value);}};
-    return {open,received};
+    return {open,received,prefetch};
   }
   scope.MapleLookUI={create};
 })(globalThis);

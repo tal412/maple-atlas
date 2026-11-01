@@ -5,7 +5,8 @@ name: Publish main and dev
     branches: [main, dev]
   workflow_dispatch:
   schedule:
-    - cron: '23 7 * * *'
+    # Hourly: the market feed's new prices reach the app within an hour of being published.
+    - cron: '7 * * * *'
 
 permissions:
   contents: read

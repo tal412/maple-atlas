@@ -5,6 +5,8 @@ const canonical=request=>{const url=new URL(request.url);url.search='';url.hash=
 self.addEventListener('fetch',event=>{
   const request=event.request,url=new URL(request.url),relative=url.pathname.slice(BASE.pathname.length);
   if(request.method!=='GET'||url.origin!==BASE.origin||!url.pathname.startsWith(BASE.pathname)||(CHANNEL==='main'&&relative.startsWith('dev/')))return;
+  // Look's files have their own cache, kept by the page across releases (src/look-ui.js).
+  if(relative.startsWith('assets/look/')||relative==='vendor/ort/ort-wasm-simd-threaded.wasm')return;
   // Market refreshes have their own dated IndexedDB cache and failure states.
   // Do not disguise a failed refresh as a successful service-worker cache hit.
   if(!['','index.html','favicon.svg','data/visual-index.json'].includes(relative)&&!relative.startsWith('assets/')&&!relative.startsWith('vendor/')&&!/^data\/(?:search-[a-f0-9]+\.json|visual-[a-f0-9]+\.bin)$/.test(relative))return;

@@ -27,6 +27,7 @@
 #maple-atlas-concept .mc-look-text .mc-look-extra {color:var(--mc-orange);}
 #maple-atlas-concept .mc-look-map .mc-look-thumb {color:var(--mc-blue);}
 #maple-atlas-concept .mc-look-empty {margin:8px 4px;}
+#maple-atlas-concept .mc-look-row.mc-look-unknown {opacity:.7;cursor:default;}
 #maple-atlas-concept .mc-look-heading {margin:2px 4px;font-size:13px;font-weight:600;color:var(--mc-muted);text-transform:uppercase;letter-spacing:.04em;}
 #maple-atlas-concept .mc-look-box[hidden] {display:none;}
 #maple-atlas-concept .mc-look-num {flex:none;display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:12px;background:var(--c);color:#000;font-size:12px;font-weight:700;}

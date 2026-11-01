@@ -14,6 +14,10 @@
  */
 (function(scope){
   const GAME_WIDTH=1366;   // the game's own width in pixels, when the minimap strip is not seen
+  // NPCs that are things, not people (a cab, a board, a crafting station): never marked.
+  // Kept the same as OBJECT_NPC in the detector's training scripts.
+  const OBJECT_NPC=/\b(cab|board|doorbell|mailbox|chest|safe|pile of|bluebell|door of dimension|ticket gate|exit|statue|mobile store|storage|maple tv|anvil|station|sewing machine|bud)\b/i;
+  const isObjectNpc=name=>OBJECT_NPC.test(String(name||''));
 
   // ---- Names ----
   const norm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'").replace(/[^a-z0-9']+/g,' ').trim();
@@ -215,6 +219,7 @@
         // Monsters carry no name tag in the game: a tag over the world with a monster's name is
         // a pet's or a player's.
         if(entry.type==='monster'&&!ui&&norm(l.text)===norm(entry.name))continue;
+        if(entry.type==='npc'&&isObjectNpc(entry.name))continue;
         // A one-word tag over the world that is an item's name is a pet's or a player's too.
         if(entry.type==='item'&&!ui&&norm(l.text)===norm(entry.name)&&!/\s/.test(norm(entry.name)))continue;
         const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);
@@ -239,6 +244,7 @@
     const index=colorIndex(image,search),smallIndex=small?colorIndex(small.image,{x:0,y:0,w:small.image.width,h:small.image.height}):null;
     for(const s of sprites){
       if(now()-started>budget)break;
+      if(s.type==='npc'&&isObjectNpc(s.name))continue;
       // Small sprites (a snail) lose too much at half size: those are scanned in full.
       const useHalf=big&&s.type!=='item'&&Math.min(s.image.width,s.image.height)*k>=48;
       for(const flip of s.type==='item'?[false]:[false,true]){
@@ -267,6 +273,149 @@
     }
     return {player,k,found:out,players,elapsed:now()-started};
   }
+  // Items that could be anywhere (the inventory, a shop, a store): a box's icon against every
+  // item's 16x16 thumbnail (thumbs: {cell, per, ids, sheet: ImageData-like}), fitted the same
+  // way (aspect kept, centred). Returns the n closest [{id, score}] to check in full.
+  // A box a little off the icon (a count in its corner, a loose edge) is tried trimmed a few
+  // ways; each item keeps its best score.
+  // allow: item ids that may be considered (null: any).
+  function shortlistItems(image,b,thumbs,n=8,allow=null){
+    const t=Math.max(2,Math.round(Math.min(b.w,b.h)*.12)),best=new Map();
+    for(const v of [b,{x:b.x+t,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t/2,y:b.y+t/2,w:b.w-t,h:b.h-t},{x:b.x,y:b.y,w:b.w-t,h:b.h-t},{x:b.x+t,y:b.y+t,w:b.w-t,h:b.h-t}])
+      for(const c of shortlistOnce(image,v,thumbs,n*2,allow))if(!best.has(c.id)||best.get(c.id)<c.score)best.set(c.id,c.score);
+    return [...best].map(([id,score])=>({id,score})).sort((a,c)=>c.score-a.score).slice(0,n);
+  }
+  function shortlistOnce(image,b,thumbs,n,allow){
+    const C=thumbs.cell,sheet=thumbs.sheet,box=new Float32Array(C*C*3),k=C/Math.max(b.w,b.h),w=b.w*k,h=b.h*k,ox=(C-w)/2,oy=(C-h)/2;
+    for(let y=0;y<C;y++)for(let x=0;x<C;x++){
+      // The screenshot pixels this thumbnail pixel covers, averaged.
+      const sx0=b.x+(x-ox)/k,sy0=b.y+(y-oy)/k,sx1=sx0+1/k,sy1=sy0+1/k;let r=0,g=0,bl=0,c=0;
+      for(let yy=Math.floor(sy0);yy<Math.ceil(sy1);yy++)for(let xx=Math.floor(sx0);xx<Math.ceil(sx1);xx++){if(xx<0||yy<0||xx>=image.width||yy>=image.height)continue;const j=(yy*image.width+xx)*4;r+=image.data[j];g+=image.data[j+1];bl+=image.data[j+2];c++;}
+      const o=(y*C+x)*3;if(c){box[o]=r/c;box[o+1]=g/c;box[o+2]=bl/c;}
+    }
+    // Each thumbnail's average colour (computed once): a box far from it in colour is skipped
+    // before the full comparison.
+    if(!thumbs.means){
+      thumbs.means=new Float32Array(thumbs.ids.length*3);
+      for(let i=0;i<thumbs.ids.length;i++){const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let r=0,g=0,bl=0,c=0;
+        for(let y=0;y<C;y++)for(let x=0;x<C;x++){const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160)continue;r+=sheet.data[j];g+=sheet.data[j+1];bl+=sheet.data[j+2];c++;}
+        if(c){thumbs.means[i*3]=r/c;thumbs.means[i*3+1]=g/c;thumbs.means[i*3+2]=bl/c;}else thumbs.means[i*3]=-999;}
+    }
+    let br=0,bg=0,bb=0;for(let i=0;i<C*C;i++){br+=box[i*3];bg+=box[i*3+1];bb+=box[i*3+2];}br/=C*C;bg/=C*C;bb/=C*C;
+    const out=[];
+    for(let i=0;i<thumbs.ids.length;i++){
+      if(allow&&!allow.has(thumbs.ids[i]))continue;
+      // The box's average includes some background around the icon, so the gate is loose.
+      if(Math.abs(thumbs.means[i*3]-br)+Math.abs(thumbs.means[i*3+1]-bg)+Math.abs(thumbs.means[i*3+2]-bb)>150)continue;
+      const cx=(i%thumbs.per)*C,cy=Math.floor(i/thumbs.per)*C;let n2=0,sa=0,sb=0,sab=0,saa=0,sbb=0,diff=0;
+      for(let y=0;y<C;y++)for(let x=0;x<C;x++){
+        const j=((cy+y)*sheet.width+cx+x)*4;if(sheet.data[j+3]<160)continue;
+        const o=(y*C+x)*3;for(let ch=0;ch<3;ch++){const a=box[o+ch],v=sheet.data[j+ch];sa+=a;sb+=v;sab+=a*v;saa+=a*a;sbb+=v*v;diff+=Math.abs(a-v);n2++;}
+      }
+      if(n2<30)continue;
+      const va=saa-sa*sa/n2,vb=sbb-sb*sb/n2,score=(va>0&&vb>0?(sab-sa*sb/n2)/Math.sqrt(va*vb):0)-diff/n2/255;
+      if(out.length<n||score>out[out.length-1].score){out.push({id:thumbs.ids[i],score});out.sort((a,c)=>c.score-a.score);if(out.length>n)out.pop();}
+    }
+    return out;
+  }
+  // Names what the detector found (src/look-detector.js): detections [{cls, score, box}].
+  // Each box must match a known sprite with high confidence, else it is dropped (a wooden frame
+  // is not a monster). First the map's own monsters, NPCs and drops (sprites: a few dozen, fast);
+  // only when none matches, and the detector is fairly sure, every known monster and NPC
+  // (allSprites, the reference atlas), within a time limit. Sprites are compared only when
+  // their size is close to the box's. NPCs and players are also named by the tag under them.
+  // Calibrated on real screens: true matches 0.76-0.95, wrong ones 0.47 at most.
+  const ACCEPT={monster:.6,npc:.6,item:.7};
+  // Items: also by the name printed beside the icon (shops, stores), then the map's drops, then
+  // thumbs (shortlistItems) checked against each candidate's full icon (itemIcon(id) -> ImageData
+  // or undefined while not loaded: those boxes are returned in pendingItems to load and retry).
+  function identify({image,detections=[],lines=[],region=null,k=null,names=null,sprites=[],allSprites=[],thumbs=null,groundItems=null,itemIcon=()=>null,itemName=id=>id,now=()=>Date.now(),budget=1200}){
+    // The ring just outside a box: flat (a window's slot) or busy (the world behind a drop).
+    const onSlot=b=>{const px=[];for(let i=0;i<24;i++){const t=i/24,side=i%4,x=Math.round(side===0?b.x-3:side===1?b.x+b.w+2:b.x+t*b.w),y=Math.round(side===2?b.y-3:side===3?b.y+b.h+2:b.y+t*b.h);if(x<0||y<0||x>=image.width||y>=image.height)continue;const j=(y*image.width+x)*4;px.push(image.data[j]*.299+image.data[j+1]*.587+image.data[j+2]*.114);}
+      if(px.length<12)return false;const m=px.reduce((a,v)=>a+v,0)/px.length;return Math.sqrt(px.reduce((a,v)=>a+(v-m)*(v-m),0)/px.length)<16;};
+    const frame={w:image.width,h:image.height},area=region||{x:0,y:0,w:frame.w,h:frame.h},started=now();
+    k=k||frame.w/GAME_WIDTH;
+    const inside=b=>b.x+b.w/2>=area.x&&b.x+b.w/2<=area.x+area.w&&b.y+b.h/2>=area.y&&b.y+b.h/2<=area.y+area.h;
+    const player=findPlayer(lines,frame),found=[],players=[],pendingItems=[];
+    // The text printed right of an icon, on its row (a shop's or a store's list).
+    const textBeside=b=>lines.filter(l=>l.x>=b.x+b.w-2&&l.x<=b.x+b.w+60&&l.y+l.h>b.y-4&&l.y<b.y+b.h*.8).sort((a,c)=>a.y-c.y);
+    // The name tag under a box: a text line just below it, centred on it.
+    const tagUnder=b=>lines.filter(l=>l.y>=b.y+b.h*.6&&l.y<=b.y+b.h+Math.max(28,b.h*.6)&&Math.abs(l.x+l.w/2-(b.x+b.w/2))<Math.max(b.w*.7,l.w*.6)).sort((a,c)=>a.y-c.y);
+    const usable=(list,t)=>list.filter(s=>s.type===t&&!(t==='npc'&&isObjectNpc(s.name)));
+    const local={monster:usable(sprites,'monster'),npc:usable(sprites,'npc'),item:usable(sprites,'item')};
+    const global={monster:usable(allSprites,'monster'),npc:usable(allSprites,'npc'),item:[]};
+    const templates=new Map();
+    const tmpl=(s,flip,kk)=>{let m=templates.get(s.image);if(!m){m={};templates.set(s.image,m);}return m[flip+':'+kk]??=template(s.image,kk,flip);};
+    // The scale measured from the minimap strip can be off by a few percent (the screenshot's
+    // compression blurs the strip's edges): each sprite is tried at it and 4% either side.
+    const scales=[k,k*.96,k*1.04];
+    // The best of these sprites inside the box, among those of about the box's size.
+    function bestSprite(list,b,deadline=Infinity){
+      const pad=Math.max(6,Math.max(b.w,b.h)*.15),r={x:b.x-pad,y:b.y-pad,w:b.w+pad*2,h:b.h+pad*2};let best=null;
+      for(const s of list){
+        const w=s.image.width*k,h=s.image.height*k;if(w<b.w*.6||w>b.w*1.4||h<b.h*.6||h>b.h*1.4)continue;
+        if(now()>deadline)break;
+        for(const kk of scales)for(const flip of s.type==='item'?[false]:[false,true]){
+          const hit=findSprite(image,tmpl(s,flip,kk),r,{threshold:.35})[0];
+          if(hit&&(!best||hit.score>best.score))best={s,score:hit.score};
+        }
+        if(best&&best.score>=.85)break;   // a clear match: no need to try the rest
+      }
+      return best;
+    }
+    for(const det of detections){
+      if(!inside(det.box))continue;
+      const b=det.box,tags=tagUnder(b);
+      if(det.cls==='player'){
+        const t=tags[0],name=t?String(t.text).trim():'';
+        players.push({name:name||'Player',box:b,you:!!(name&&player.name&&editDistance(norm(name),norm(player.name),1)<=1),score:det.score});
+        continue;
+      }
+      if(det.cls==='npc'&&names){
+        const named=tags.map(t=>names(t.text).find(m=>m.entry.type==='npc')).find(Boolean);
+        if(named){if(!isObjectNpc(named.entry.name))found.push({type:'npc',id:named.entry.id,name:named.entry.name,box:b,via:'tag',score:det.score});continue;}
+      }
+      // The status bar at the bottom holds the game's buttons (Cash Shop, Menu), never items.
+      if(det.cls==='item'&&b.y+b.h/2>frame.h*.915)continue;
+      if(det.cls==='item'&&names){
+        const named=textBeside(b).map(t=>names(t.text).find(m=>m.entry.type==='item')).find(Boolean);
+        if(named){found.push({type:'item',id:named.entry.id,name:named.entry.name,box:b,via:'text',score:det.score});continue;}
+      }
+      const accept=ACCEPT[det.cls]??.6;
+      let best=bestSprite(local[det.cls]||[],b);
+      if(det.cls==='item'&&(!best||best.score<accept)&&thumbs){
+        // Any item: the shortlist, each checked in full at the game's scale.
+        // Without a name beside it, an item must match clearly: 0.8 or more, and ahead of the
+        // next candidate (a different item) by 0.05. A doubtful icon is left unnamed.
+        // In a window (the inventory, a shop: the icon sits on a flat slot) any item can show;
+        // on the ground only what drops (Use and Etc items, dropped: groundItems).
+        const list=shortlistItems(image,b,thumbs,8,onSlot(b)?null:groundItems),missing=[],hits=[];
+        for(const c of list){
+          const icon=itemIcon(c.id);if(icon===undefined){missing.push(c.id);continue;}if(!icon)continue;
+          const hit=bestSprite([{type:'item',id:c.id,name:itemName(c.id),image:icon}],{x:b.x-2,y:b.y-2,w:b.w+4,h:b.h+4});
+          if(hit)hits.push(hit);
+        }
+        if(missing.length&&!hits.some(h=>h.score>=.8)){pendingItems.push({box:b,ids:missing});continue;}
+        hits.sort((a,c)=>c.score-a.score);
+        const top=hits[0],next=hits.find(h=>h.s.name!==top?.s.name);
+        if(top&&top.score>=.8&&(!next||top.score-next.score>=.05)&&(!best||top.score>best.score))best=top;
+        else if(!best||best.score<accept)continue;
+      }
+      if((!best||best.score<accept)&&det.score>=.45&&global[det.cls]?.length&&now()-started<budget){
+        const wide=bestSprite(global[det.cls],b,started+budget);
+        if(wide&&wide.score>=accept+.05&&(!best||wide.score>best.score))best=wide;
+      }
+      if(best&&best.score>=accept)found.push({type:det.cls,id:best.s.id,name:best.s.name,box:b,via:'sprite',score:Math.round(best.score*100)/100});
+    }
+    // Text in the game's windows: quest items and quests in the Quest Helper, items in chat.
+    if(names)for(const l of lines){
+      if(!inside(l))continue;
+      const ui=l.y>frame.h*.86||l.x>frame.w*.83&&l.y<frame.h*.62;if(!ui)continue;
+      const seen=new Set();
+      for(const {entry,exact} of names(l.text)){if(entry.type==='npc'||entry.type==='monster')continue;const key=entry.type+':'+norm(entry.name);if(seen.has(key))continue;seen.add(key);found.push({type:entry.type,id:entry.id,name:entry.name,box:{x:l.x,y:l.y,w:l.w,h:l.h},via:'name',ui:true,score:exact?.9:.7});}
+    }
+    return {player,k,found,players,pendingItems,elapsed:now()-started};
+  }
   // Summary: each thing once, with how many were seen.
   function summary(found){
     const by=new Map();
@@ -275,6 +424,6 @@
     return [...by.values()].sort((a,b)=>(order[a.type]??9)-(order[b.type]??9)||b.count-a.count||b.score-a.score);
   }
 
-  const api={analyze,summary,nameIndex,findPlayer,playerName,template,findSprite,colorIndex,score,norm,editDistance,GAME_WIDTH};
+  const api={analyze,identify,shortlistItems,summary,isObjectNpc,nameIndex,findPlayer,playerName,template,findSprite,colorIndex,score,norm,editDistance,GAME_WIDTH};
   scope.MapleLook=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
