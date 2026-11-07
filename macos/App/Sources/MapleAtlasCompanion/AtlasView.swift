@@ -63,7 +63,21 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
         view.addSubview(webView)
     }
 
-    func goHome() { if let home { move(to: home) } }
+    func goHome() {
+        setOverlay(false)
+        if let home { move(to: home) }
+    }
+
+    /// Over the game the page drops the site's header and footers (the card has its own).
+    private(set) var isOverlay = false
+    func setOverlay(_ on: Bool) {
+        isOverlay = on
+        webView.evaluateJavaScript("document.documentElement.toggleAttribute('data-atlas-overlay',\(on))")
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if isOverlay { setOverlay(true) }
+    }
 
     func reload() {
         if webView.url == nil, let base { webView.load(URLRequest(url: base)) } else { webView.reload() }

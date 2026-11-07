@@ -26,6 +26,12 @@ final class OverlayPanel: NSPanel {
 
     override func cancelOperation(_ sender: Any?) { onEscape?() }
 
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+           let chars = event.charactersIgnoringModifiers, Int(chars) != nil, onKey?(chars) == true { return true }
+        return super.performKeyEquivalent(with: event)
+    }
+
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 { onEscape?(); return }
         if let chars = event.charactersIgnoringModifiers, onKey?(chars) == true { return }
@@ -153,53 +159,122 @@ private struct AtlasMenuCard: View {
     }
 }
 
-/// Maple Atlas over the game: the same page as the app's window (its web view moves into this
-/// panel and back), over the game's middle, with a thin bar to close it.
+/// The overlay's tabs. Each is one number key (or ⌘ and the number while typing).
+enum OverlayTab: String, CaseIterable, Identifiable {
+    case map, search, quests, directions, look, companion
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .map: "Map"
+        case .search: "Search"
+        case .quests: "Quests"
+        case .directions: "Directions"
+        case .look: "Look"
+        case .companion: "Companion"
+        }
+    }
+    var symbol: String {
+        switch self {
+        case .map: "map"
+        case .search: "magnifyingglass"
+        case .quests: "scroll"
+        case .directions: "point.topleft.down.to.point.bottomright.curvepath"
+        case .look: "photo"
+        case .companion: "gearshape"
+        }
+    }
+}
+
+@MainActor @Observable
+final class AtlasCardState {
+    var tab = OverlayTab.map
+    var hovered: OverlayTab?
+}
+
+/// Maple Atlas over the game, in the same dark card as the Atlas menu: a header with the live
+/// status and numbered tabs, and under it the page (without the site's own header and footers)
+/// or the companion's settings. The page's web view moves into the card and back to the app's
+/// window when the card closes. It never brings the app's window forward.
 @MainActor
 final class AtlasPopupController {
     var gameFrame: () -> CGRect? = { nil }
     var onClosed: () -> Void = {}
+    /// A tab was picked (a click or its number): the model shows it.
+    var onTab: (OverlayTab) -> Void = { _ in }
+    let state = AtlasCardState()
     private var panel: OverlayPanel?
-    private var slot: NSView?
+    private var webSlot: NSView?
+    private var companionSlot: NSView?
     private var observer: NSObjectProtocol?
 
     var isOpen: Bool { panel?.isVisible == true }
 
-    func open(_ browser: AtlasBrowser) {
+    func open(_ browser: AtlasBrowser, model: CompanionModel) {
         if panel == nil {
             let p = OverlayPanel(size: CGSize(width: 1100, height: 720))
-            p.minSize = CGSize(width: 520, height: 400)
+            p.minSize = CGSize(width: 760, height: 480)
+            p.appearance = NSAppearance(named: .darkAqua)
             let root = NSView()
             root.wantsLayer = true
-            root.layer?.cornerRadius = 14
+            root.layer?.cornerRadius = 20
             root.layer?.masksToBounds = true
-            root.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-            let bar = NSHostingView(rootView: PopupBar(close: { [weak self] in self?.close() }))
-            let slot = NSView()
-            for v in [bar, slot] { v.translatesAutoresizingMaskIntoConstraints = false; root.addSubview(v) }
+            root.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.86).cgColor
+            root.layer?.borderColor = NSColor.white.withAlphaComponent(0.18).cgColor
+            root.layer?.borderWidth = 1
+            let header = NSHostingView(rootView: OverlayHeader(model: model, state: state, pick: { [weak self] tab in self?.onTab(tab) }, close: { [weak self] in self?.close() }))
+            let web = NSView()
+            web.wantsLayer = true
+            web.layer?.cornerRadius = 14
+            web.layer?.masksToBounds = true
+            let companion = NSHostingView(rootView: ContentView(model: model).frame(maxWidth: 640).frame(maxWidth: .infinity))
+            companion.wantsLayer = true
+            companion.layer?.cornerRadius = 14
+            companion.layer?.masksToBounds = true
+            companion.isHidden = true
+            for v in [header, web, companion] as [NSView] { v.translatesAutoresizingMaskIntoConstraints = false; root.addSubview(v) }
             NSLayoutConstraint.activate([
-                bar.topAnchor.constraint(equalTo: root.topAnchor), bar.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-                bar.trailingAnchor.constraint(equalTo: root.trailingAnchor), bar.heightAnchor.constraint(equalToConstant: 30),
-                slot.topAnchor.constraint(equalTo: bar.bottomAnchor), slot.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-                slot.trailingAnchor.constraint(equalTo: root.trailingAnchor), slot.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+                header.topAnchor.constraint(equalTo: root.topAnchor), header.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+                header.trailingAnchor.constraint(equalTo: root.trailingAnchor),
             ])
+            for v in [web, companion] as [NSView] {
+                NSLayoutConstraint.activate([
+                    v.topAnchor.constraint(equalTo: header.bottomAnchor), v.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 10),
+                    v.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -10), v.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -10),
+                ])
+            }
             p.contentView = root
             p.onEscape = nil  // Esc belongs to the page (it closes its own dialogs)
+            p.onKey = { [weak self] key in
+                guard let self, let n = Int(key), n >= 1, n <= OverlayTab.allCases.count else { return false }
+                self.onTab(OverlayTab.allCases[n - 1])
+                return true
+            }
             panel = p
-            self.slot = slot
+            webSlot = web
+            companionSlot = companion
         }
-        guard let panel, let slot else { return }
+        guard let panel, let webSlot else { return }
         let area = gameFrame() ?? NSScreen.main?.visibleFrame ?? .zero
-        let size = CGSize(width: max(560, area.width * 0.86), height: max(420, area.height * 0.86))
+        let size = CGSize(width: max(760, min(1240, area.width * 0.86)), height: max(480, min(880, area.height * 0.88)))
         panel.setFrame(CGRect(x: area.midX - size.width / 2, y: area.midY - size.height / 2, width: size.width, height: size.height), display: false)
-        browser.move(to: slot)
+        browser.move(to: webSlot)
+        browser.setOverlay(true)
         panel.orderFrontRegardless()
         panel.makeKey()
-        panel.makeFirstResponder(browser.webView)
+        show(state.tab, browser: browser)
         // Clicking back into the game puts it away.
         observer = NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: panel, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.close() }
         }
+    }
+
+    /// Shows a tab: the page for the Atlas ones, the settings for Companion.
+    func show(_ tab: OverlayTab, browser: AtlasBrowser) {
+        state.tab = tab
+        let companion = tab == .companion
+        companionSlot?.isHidden = !companion
+        webSlot?.isHidden = companion
+        panel?.makeFirstResponder(companion ? companionSlot : browser.webView)
     }
 
     func close() {
@@ -211,19 +286,51 @@ final class AtlasPopupController {
     }
 }
 
-private struct PopupBar: View {
+private struct OverlayHeader: View {
+    let model: CompanionModel
+    let state: AtlasCardState
+    let pick: (OverlayTab) -> Void
     let close: () -> Void
+
     var body: some View {
-        HStack(spacing: 8) {
-            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 18, height: 18)
-            Text("Maple Atlas").font(.system(size: 12, weight: .semibold))
-            Text("· ⌃⌥W or a click on the game hides it · ⌃⌥M menu").font(.system(size: 11)).foregroundStyle(.secondary)
-            Spacer()
-            Button(action: close) { Image(systemName: "xmark").font(.system(size: 11, weight: .bold)) }
-                .buttonStyle(.borderless).help("Hide (⌃⌥W)")
+        HStack(spacing: 14) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 28, height: 28)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Maple Atlas").font(.system(size: 15, weight: .semibold))
+                    Text(model.liveStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
+                }
+            }
+            .frame(minWidth: 150, alignment: .leading)
+            HStack(spacing: 4) {
+                ForEach(Array(OverlayTab.allCases.enumerated()), id: \.element.id) { i, tab in
+                    let on = state.tab == tab
+                    Button { pick(tab) } label: {
+                        HStack(spacing: 7) {
+                            Text("\(i + 1)").font(.system(size: 11, weight: .bold).monospacedDigit()).foregroundStyle(.white.opacity(0.45))
+                            Image(systemName: tab.symbol).font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color(red: 0.94, green: 0.77, blue: 0.10))
+                            Text(tab.title).font(.system(size: 13, weight: on ? .semibold : .medium))
+                        }
+                        .padding(.horizontal, 10).padding(.vertical, 7)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(on ? Color.white.opacity(0.16) : state.hovered == tab ? Color.white.opacity(0.08) : .clear))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(on ? Color.white.opacity(0.22) : .clear, lineWidth: 1))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { inside in state.hovered = inside ? tab : (state.hovered == tab ? nil : state.hovered) }
+                    .help("\(tab.title) · \(i + 1), or ⌘\(i + 1) while typing")
+                }
+            }
+            Spacer(minLength: 8)
+            Text("⌃⌥W hides").font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.5))
+            Button(action: close) {
+                Image(systemName: "xmark").font(.system(size: 12, weight: .bold)).frame(width: 26, height: 26)
+                    .background(Circle().fill(Color.white.opacity(0.10)))
+            }
+            .buttonStyle(.plain).help("Back to the game (⌃⌥W)")
         }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.bar)
+        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 10)
+        .foregroundStyle(.white)
     }
 }

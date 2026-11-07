@@ -675,6 +675,15 @@ body {background:light-dark(#d7e9e9,#142937);}
 #maple-atlas-concept #mc-desktop-shortcut{margin:0;padding:12px 14px;border-radius:14px;background:var(--mc-soft);color:var(--mc-muted);font-size:13px;line-height:1.5}
 #maple-atlas-concept #mc-desktop-shortcut kbd{font:600 13px/1 system-ui,sans-serif;padding:3px 7px;border-radius:6px;border:1px solid var(--mc-edge);background:var(--mc-paper);color:var(--mc-ink,inherit)}
 
+/* Over the game (Maple Atlas Companion's overlay card): the card has its own header and tabs,
+   so the site's header, footers and companion button step aside. */
+html[data-atlas-overlay] #maple-atlas-concept .mc-header,
+html[data-atlas-overlay] #maple-atlas-concept .mc-bottom,
+html[data-atlas-overlay] #maple-atlas-concept .mc-mapfooter,
+html[data-atlas-overlay] #maple-atlas-concept .mc-mobile-searchbar,
+html[data-atlas-overlay] #maple-atlas-concept .mc-mobile-nav {display:none;}
+html[data-atlas-overlay] #maple-atlas-concept .mc-shell {height:100dvh;}
+
 /* Quest helper (src/quest-panel.js) */
 #maple-atlas-concept button.mc-profile {border:0;cursor:pointer;color:var(--mc-ink);}
 #maple-atlas-concept .mc-qh-status {display:flex;align-items:center;gap:8px;margin:2px 0 14px;font-size:12px;color:var(--mc-muted);}

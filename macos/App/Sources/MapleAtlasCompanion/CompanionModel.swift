@@ -73,18 +73,27 @@ final class CompanionModel {
         if popup.isOpen { popup.close(); return }
         guard atlasURL != nil else { NSSound.beep(); return }
         atlasMenu.close()
-        popup.open(atlas)
+        popup.open(atlas, model: self)
         log("Maple Atlas over the game (\(LookController.atlasKey) again to hide)")
     }
 
-    /// Maple Atlas over the game, opened on a view (search, quests, directions, look).
+    /// Maple Atlas over the game, opened on a tab (map, search, quests, directions, look, or the
+    /// companion's settings). Never the app's own window: the game stays in front.
     func showInAtlas(_ what: String) {
-        guard !popup.isOpen else { helper?.send(.show(what)); return }
-        toggleAtlasPopup()
-        // The page changes layout as it moves into the larger panel (that closes its dialogs):
-        // ask for the view once that is done.
+        guard let tab = OverlayTab(rawValue: what) else { return }
+        let opening = !popup.isOpen
+        if opening {
+            guard atlasURL != nil else { NSSound.beep(); return }
+            popup.state.tab = tab
+            toggleAtlasPopup()
+        } else {
+            popup.show(tab, browser: atlas)
+        }
+        guard tab != .companion else { return }
+        // The page changes layout as it moves into the card (that closes its dialogs): ask for
+        // the view once that is done.
         Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(450))
+            if opening { try? await Task.sleep(for: .milliseconds(450)) }
             self?.helper?.send(.show(what))
         }
     }
@@ -108,7 +117,7 @@ final class CompanionModel {
             AtlasMenuEntry(symbol: "dot.radiowaves.left.and.right", title: "Look around me", detail: "A card with what is on screen", shortcut: "⌃⌥A") { [weak self] in self?.look.lookAll() },
             AtlasMenuEntry(symbol: "viewfinder", title: "Mark a box to look at", detail: "Drag over something on the game") { [weak self] in self?.look.beginMark() },
             AtlasMenuEntry(symbol: "signpost.right", title: "Navigation and pins on the game", on: showOverlay) { [weak self] in self?.showOverlay.toggle() },
-            AtlasMenuEntry(symbol: "gearshape", title: "Companion window", detail: "Game window, phone, updates") { [weak self] in self?.openCompanionWindow() },
+            AtlasMenuEntry(symbol: "gearshape", title: "Companion", detail: "Game window, phone, updates") { [weak self] in self?.showInAtlas("companion") },
         ])
     }
     /// Something is listening for the game: the phone or this Mac's own Maple Atlas window.
@@ -454,8 +463,8 @@ final class CompanionModel {
             if open { questsSentAt = nil; lastSearchingSent = nil; if !isTracking { helper?.send(.tracking(state: "paused")) } }
             if isLinked != was { refreshOverlay() }
         case .controls:
-            showControls = true
-            NSApp.activate()
+            // Asked from the page: over the game it stays over the game.
+            if popup.isOpen { showInAtlas("companion") } else { showControls = true; NSApp.activate() }
         case .lookRequest(let req):
             log("Look: asked to look")
             Task { await lookForPhone(req: req) }
@@ -570,6 +579,7 @@ final class CompanionModel {
         look.start()
         popup.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
         popup.onClosed = { [weak self] in self?.atlas.goHome() }
+        popup.onTab = { [weak self] tab in self?.showInAtlas(tab.rawValue) }
         atlasMenu.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
         look.onMenu = { [weak self] in self?.toggleAtlasMenu() }
     }
