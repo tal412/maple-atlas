@@ -106,6 +106,7 @@ func lookReady(owner uintptr) {
 	pRegisterHotKey.Call(owner, 1, modControl|modAlt|modNoRepeat, 'M')
 	pRegisterHotKey.Call(owner, 2, modControl|modAlt|modNoRepeat, 'A')
 	pRegisterHotKey.Call(owner, 3, modControl|modAlt|modNoRepeat, 'W')
+	pRegisterHotKey.Call(owner, 4, modControl|modAlt|modNoRepeat, 'Q')
 	class := utf16("MapleAtlasOverlay")
 	mark, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTopmost|wsExToolWindow, uintptr(unsafe.Pointer(class)),
 		uintptr(unsafe.Pointer(utf16("Maple Atlas Look"))), wsPopup, 0, 0, 100, 100, 0, 0, 0, 0)
@@ -122,7 +123,7 @@ func lookReady(owner uintptr) {
 	look.mu.Lock()
 	look.mark, look.card = mark, card
 	look.mu.Unlock()
-	buttonReady()
+	menuReady()
 }
 
 // gameClient is the game window's client area on screen (what the screenshot shows).
@@ -144,9 +145,6 @@ func gameClient() (winRect, bool) {
 }
 
 func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
-	if r, done := buttonProc(hwnd, msg, wparam, lparam); done {
-		return r, true
-	}
 	l := look
 	switch {
 	case msg == wmHotkey:
@@ -156,6 +154,8 @@ func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
 			l.lookAll()
 		} else if wparam == 3 {
 			toggleAtlasPopup()
+		} else if wparam == 4 {
+			openMenu()
 		}
 		return 0, true
 	case hwnd == l.mark && hwnd != 0:

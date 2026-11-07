@@ -79,6 +79,8 @@ final class LookController {
     var onLook: ((CGRect?) -> Void)?
     /// ⌃⌥W: show or hide Maple Atlas over the game.
     var onAtlas: (() -> Void)?
+    /// ⌃⌥Q: the Atlas menu.
+    var onMenu: (() -> Void)?
     /// The game window's id, for placing the marking layer and the card on it.
     var windowID: () -> CGWindowID? = { nil }
 
@@ -92,6 +94,7 @@ final class LookController {
     static let markKey = "⌃⌥M"
     static let aroundKey = "⌃⌥A"
     static let atlasKey = "⌃⌥W"
+    static let menuKey = "⌃⌥Q"
 
     func start() {
         guard hotKeys.isEmpty else { return }
@@ -106,7 +109,7 @@ final class LookController {
             MainActor.assumeIsolated { me.hotKey(which) }
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), nil)
-        for (i, key) in [(1, kVK_ANSI_M), (2, kVK_ANSI_A), (3, kVK_ANSI_W)] {
+        for (i, key) in [(1, kVK_ANSI_M), (2, kVK_ANSI_A), (3, kVK_ANSI_W), (4, kVK_ANSI_Q)] {
             var ref: EventHotKeyRef?
             RegisterEventHotKey(UInt32(key), UInt32(controlKey | optionKey), EventHotKeyID(signature: OSType(0x4D41_4C4B), id: UInt32(i)),
                                 GetApplicationEventTarget(), 0, &ref)
@@ -115,7 +118,7 @@ final class LookController {
     }
 
     private func hotKey(_ which: Int) {
-        if which == 1 { beginMark() } else if which == 2 { lookAll() } else { onAtlas?() }
+        if which == 1 { beginMark() } else if which == 2 { lookAll() } else if which == 3 { onAtlas?() } else { onMenu?() }
     }
 
     // MARK: Marking

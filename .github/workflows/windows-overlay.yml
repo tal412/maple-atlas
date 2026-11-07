@@ -11,7 +11,7 @@ on:
       - 'macos/link/pins.go'
       - 'macos/link/nav.go'
       - 'macos/link/look_overlay_windows.go'
-      - 'macos/link/atlas_button_windows.go'
+      - 'macos/link/atlas_menu_windows.go'
       - 'macos/link/atlas_popup_windows.go'
       - 'macos/link/lookhost_windows.go'
       - '.github/workflows/windows-overlay.yml'

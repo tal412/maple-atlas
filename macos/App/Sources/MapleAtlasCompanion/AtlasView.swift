@@ -51,6 +51,20 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
         if sameBase, webView.url != nil { webView.reload() } else { webView.load(URLRequest(url: newBase)) }
     }
 
+    /// The main window's place for the page.
+    weak var home: NSView?
+
+    /// Puts the page in a view (filling it): the main window's, or the overlay's.
+    func move(to view: NSView) {
+        guard webView.superview !== view else { return }
+        webView.removeFromSuperview()
+        webView.frame = view.bounds
+        webView.autoresizingMask = [.width, .height]
+        view.addSubview(webView)
+    }
+
+    func goHome() { if let home { move(to: home) } }
+
     func reload() {
         if webView.url == nil, let base { webView.load(URLRequest(url: base)) } else { webView.reload() }
     }
@@ -96,10 +110,17 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
     }
 }
 
+/// The main window's place for the page. The web view lives here, and moves into the overlay
+/// over the game while that is open (AtlasPopupController), then comes back.
 struct AtlasWebView: NSViewRepresentable {
-    let webView: WKWebView
-    func makeNSView(context: Context) -> WKWebView { webView }
-    func updateNSView(_ view: WKWebView, context: Context) {}
+    let browser: AtlasBrowser
+    func makeNSView(context: Context) -> NSView {
+        let home = NSView()
+        browser.home = home
+        browser.goHome()
+        return home
+    }
+    func updateNSView(_ view: NSView, context: Context) {}
 }
 
 /// The main window: Maple Atlas, with the companion's controls (phone pairing, game window,
@@ -108,7 +129,7 @@ struct MainView: View {
     @Bindable var model: CompanionModel
 
     var body: some View {
-        AtlasWebView(webView: model.atlas.webView)
+        AtlasWebView(browser: model.atlas)
             .overlay {
                 if model.atlasURL == nil {
                     VStack(spacing: 10) {

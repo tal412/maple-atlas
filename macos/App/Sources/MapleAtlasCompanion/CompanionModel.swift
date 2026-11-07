@@ -62,89 +62,54 @@ final class CompanionModel {
     @ObservationIgnored private var controlsAutoHidden = false
     func toggleControls() { showControls.toggle() }
 
-    /// ⌃⌥W: Maple Atlas pops up over the game window (on top, most of its size), and the same
-    /// shortcut, or going back to the game, puts it back where it was.
-    @ObservationIgnored private var popup: (frame: CGRect, level: NSWindow.Level, behavior: NSWindow.CollectionBehavior, controls: Bool, app: NSRunningApplication?)?
-    @ObservationIgnored private var popupObserver: NSObjectProtocol?
-    var isPopup: Bool { popup != nil }
-
-    // MARK: Atlas button
-
-    /// The Atlas button on the game window's bottom-left corner (AtlasButton.swift).
-    var showAtlasButton = UserDefaults.standard.object(forKey: "showAtlasButton") as? Bool ?? true {
-        didSet { UserDefaults.standard.set(showAtlasButton, forKey: "showAtlasButton") }
-    }
-    @ObservationIgnored private let atlasButton = AtlasButtonController()
-
-    /// Maple Atlas over the game, opened on a view (search, quests, directions, look).
-    func showInAtlas(_ what: String) {
-        if popup == nil { toggleAtlasPopup() }
-        if what == "controls" {
-            showControls = true
-        } else {
-            helper?.send(.show(what))
-        }
-    }
-
-    private func buttonMenu() -> NSMenu {
-        let menu = NSMenu()
-        menu.autoenablesItems = false
-        let head = NSMenuItem(title: liveStatus, action: nil, keyEquivalent: "")
-        head.isEnabled = false
-        menu.addItem(head)
-        menu.addItem(.separator())
-        menu.addItem(ActionItem(popup == nil ? "Maple Atlas Over the Game" : "Back to the Game", key: "w", modifiers: [.control, .option]) { [weak self] in self?.toggleAtlasPopup() })
-        menu.addItem(ActionItem("Search…") { [weak self] in self?.showInAtlas("search") })
-        menu.addItem(ActionItem("Your Quests") { [weak self] in self?.showInAtlas("quests") })
-        menu.addItem(ActionItem("Directions") { [weak self] in self?.showInAtlas("directions") })
-        menu.addItem(ActionItem("Look: Picture and List") { [weak self] in self?.showInAtlas("look") })
-        menu.addItem(.separator())
-        menu.addItem(ActionItem("Look Around Me", key: "a", modifiers: [.control, .option]) { [weak self] in self?.look.lookAll() })
-        menu.addItem(ActionItem("Mark a Box to Look At", key: "m", modifiers: [.control, .option]) { [weak self] in self?.look.beginMark() })
-        menu.addItem(.separator())
-        menu.addItem(ActionItem("Navigation and Pins on the Game", checked: showOverlay) { [weak self] in self?.showOverlay.toggle() })
-        menu.addItem(ActionItem("Game Window & Phone…") { [weak self] in self?.showInAtlas("controls") })
-        return menu
-    }
+    /// ⌃⌥W: Maple Atlas pops up over the game (in a floating panel, also over a game in full
+    /// screen); the same shortcut, the bar's ×, or a click back on the game puts it away.
+    @ObservationIgnored private let popup = AtlasPopupController()
+    /// ⌃⌥Q: the Atlas menu over the game (AtlasOverlay.swift).
+    @ObservationIgnored private let atlasMenu = AtlasMenuController()
+    var isPopup: Bool { popup.isOpen }
 
     func toggleAtlasPopup() {
-        guard let window = atlas.webView.window else { NSSound.beep(); return }
-        if popup != nil { endPopup(returnToGame: true); return }
-        if window.isMiniaturized { window.deminiaturize(nil) }
-        let front = NSWorkspace.shared.frontmostApplication
-        popup = (window.frame, window.level, window.collectionBehavior, showControls, front?.processIdentifier == ProcessInfo.processInfo.processIdentifier ? nil : front)
-        let area = LookController.gameFrame(capture.windowID) ?? window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? window.frame
-        let size = CGSize(width: max(720, area.width * 0.86), height: max(520, area.height * 0.86))
-        let target = CGRect(x: area.midX - size.width / 2, y: area.midY - size.height / 2, width: size.width, height: size.height)
-        let chosen = controlsChosen
-        showControls = false
-        controlsChosen = chosen
-        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
-        window.level = .floating
-        window.setFrame(target, display: true, animate: false)
-        NSApp.activate()
-        window.makeKeyAndOrderFront(nil)
-        // Clicking back into the game ends it.
-        popupObserver = NotificationCenter.default.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.endPopup(returnToGame: false) }
-        }
+        if popup.isOpen { popup.close(); return }
+        guard atlasURL != nil else { NSSound.beep(); return }
+        atlasMenu.close()
+        popup.open(atlas)
         log("Maple Atlas over the game (\(LookController.atlasKey) again to hide)")
     }
 
-    private func endPopup(returnToGame: Bool) {
-        guard let p = popup else { return }
-        popup = nil
-        if let popupObserver { NotificationCenter.default.removeObserver(popupObserver) }
-        popupObserver = nil
-        if let window = atlas.webView.window {
-            window.level = p.level
-            window.collectionBehavior = p.behavior
-            window.setFrame(p.frame, display: true, animate: false)
+    /// Maple Atlas over the game, opened on a view (search, quests, directions, look).
+    func showInAtlas(_ what: String) {
+        guard !popup.isOpen else { helper?.send(.show(what)); return }
+        toggleAtlasPopup()
+        // The page changes layout as it moves into the larger panel (that closes its dialogs):
+        // ask for the view once that is done.
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(450))
+            self?.helper?.send(.show(what))
         }
-        let chosen = controlsChosen
-        showControls = p.controls
-        controlsChosen = chosen
-        if returnToGame { p.app?.activate() }
+    }
+
+    /// The app's own window (the companion's controls): this one leaves the game's screen.
+    func openCompanionWindow() {
+        popup.close()
+        showControls = true
+        NSApp.activate()
+        atlas.webView.window?.makeKeyAndOrderFront(nil)
+    }
+
+    func toggleAtlasMenu() {
+        let over = popup.isOpen
+        atlasMenu.toggle(status: liveStatus, entries: [
+            AtlasMenuEntry(symbol: "map", title: over ? "Back to the game" : "Maple Atlas over the game", shortcut: "⌃⌥W") { [weak self] in self?.toggleAtlasPopup() },
+            AtlasMenuEntry(symbol: "magnifyingglass", title: "Search", detail: "Monsters, items, quests, maps, prices") { [weak self] in self?.showInAtlas("search") },
+            AtlasMenuEntry(symbol: "scroll", title: "Your quests") { [weak self] in self?.showInAtlas("quests") },
+            AtlasMenuEntry(symbol: "point.topleft.down.to.point.bottomright.curvepath", title: "Directions") { [weak self] in self?.showInAtlas("directions") },
+            AtlasMenuEntry(symbol: "photo", title: "Look: picture and list") { [weak self] in self?.showInAtlas("look") },
+            AtlasMenuEntry(symbol: "dot.radiowaves.left.and.right", title: "Look around me", detail: "A card with what is on screen", shortcut: "⌃⌥A") { [weak self] in self?.look.lookAll() },
+            AtlasMenuEntry(symbol: "viewfinder", title: "Mark a box to look at", shortcut: "⌃⌥M") { [weak self] in self?.look.beginMark() },
+            AtlasMenuEntry(symbol: "signpost.right", title: "Navigation and pins on the game", on: showOverlay) { [weak self] in self?.showOverlay.toggle() },
+            AtlasMenuEntry(symbol: "gearshape", title: "Companion window", detail: "Game window, phone, updates") { [weak self] in self?.openCompanionWindow() },
+        ])
     }
     /// Something is listening for the game: the phone or this Mac's own Maple Atlas window.
     var isLinked: Bool { isPhoneConnected || isAtlasOpen }
@@ -603,10 +568,10 @@ final class CompanionModel {
         look.onLook = { [weak self] box in self?.lookAsked(box) }
         look.onAtlas = { [weak self] in self?.toggleAtlasPopup() }
         look.start()
-        atlasButton.windowID = { [weak self] in self?.capture.windowID }
-        atlasButton.enabled = { [weak self] in self?.showAtlasButton ?? false }
-        atlasButton.menu = { [weak self] in self?.buttonMenu() ?? NSMenu() }
-        atlasButton.start()
+        popup.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
+        popup.onClosed = { [weak self] in self?.atlas.goHome() }
+        atlasMenu.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
+        look.onMenu = { [weak self] in self?.toggleAtlasMenu() }
     }
 
     // MARK: Phone actions

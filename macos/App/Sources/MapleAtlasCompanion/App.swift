@@ -19,6 +19,7 @@ struct MapleAtlasCompanionApp: App {
                     .keyboardShortcut("k", modifiers: [.command, .shift])
                 // ⌃⌥W works everywhere (a global shortcut), so the menu item has none of its own.
                 Button("Show Over the Game (⌃⌥W)") { appDelegate.model.toggleAtlasPopup() }
+                Button("Atlas Menu (⌃⌥Q)") { appDelegate.model.toggleAtlasMenu() }
             }
         }
 
