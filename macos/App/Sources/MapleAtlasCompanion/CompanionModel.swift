@@ -579,6 +579,7 @@ final class CompanionModel {
         look.start()
         popup.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
         popup.onClosed = { [weak self] in self?.atlas.goHome() }
+        atlas.onLog = { [weak self] text in self?.log(text) }
         popup.onTab = { [weak self] tab in self?.showInAtlas(tab.rawValue) }
         atlasMenu.gameFrame = { [weak self] in LookController.gameFrame(self?.capture.windowID) }
         look.onMenu = { [weak self] in self?.toggleAtlasMenu() }

@@ -3,7 +3,8 @@
   const $=s=>root.querySelector(s), $$=s=>[...root.querySelectorAll(s)];
   const DATA=__INLINE_MAP_DATA__;
   const mobile=matchMedia('(max-width:700px)');
-  let hasInspected=false,noticeTimer=0;
+  // Declared first: the companion can redraw the panel while it is still being set up.
+  let hasInspected=false,noticeTimer=0,shownQuestHtml=null;
   const maps=new Map(DATA.maps.map(m=>[String(m.id),m]));
   const visualMaps=new Map(DATA.visualMaps.map(m=>[String(m.id),m]));
   const spots=new Map(DATA.spots.map(s=>[String(s.id),s]));
@@ -191,7 +192,7 @@
   },onQuests:value=>questPanel.update(value),onLook:value=>lookUI?.received(value),onShow:what=>{
     // The Atlas button on the game (Maple Atlas Companion) opens a view over the game.
     for(const d of root.querySelectorAll('dialog[open]'))d.close();
-    if(what==='search')search.open();else if(what==='quests')$('#mc-mobile-journal').click();else if(what==='directions')openRoute();else if(what==='look')lookUI?.open();
+    if(what==='search')search.open();else if(what==='quests')$('#mc-mobile-journal').click();else if(what==='directions'){if(mobile.matches)openRoute();else{state.panel='route';setSheet(true);detail();camera();save();$('#mc-to').focus();$('#mc-to').select();}}else if(what==='look')lookUI?.open();else if(what==='map'){state.panel='place';detail();camera();save();}
   },onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
@@ -309,7 +310,6 @@
     detail();camera();save();
   });
   mobile.addEventListener('change',()=>{if(!mobile.matches){for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();$('#mc-route-home').append($('#mc-form'));}detail();camera();});
-  let shownQuestHtml=null;
   function detail(){
     const wasQuests=shownQuestHtml;shownQuestHtml=null;
     $$('.mc-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===state.panel)));

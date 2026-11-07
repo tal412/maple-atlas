@@ -6,7 +6,9 @@ import WebKit
 /// own loopback address (macos/link/local.go) and linked to the game here the way a paired
 /// phone is, so the map, quests, Look and prices all work with no phone near.
 @MainActor
-final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
+final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
+    /// The page's errors and link state, for the Diagnostics log.
+    var onLog: (String) -> Void = { _ in }
     let webView: WKWebView
     private var base: URL?
     private var token = ""
@@ -30,6 +32,19 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
         super.init()
         webView.uiDelegate = self
         webView.navigationDelegate = self
+        // Page errors go to the Diagnostics log (nothing else is read from the page).
+        tokenScript.add(self, name: "atlasLog")
+    }
+
+    private static let errorScript = WKUserScript(source: """
+    (()=>{const say=t=>{try{webkit.messageHandlers.atlasLog.postMessage(String(t).slice(0,400));}catch(_){}};
+    addEventListener('error',e=>say('error: '+e.message+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
+    addEventListener('unhandledrejection',e=>say('rejection: '+(e.reason&&e.reason.message||e.reason)));
+    addEventListener('DOMContentLoaded',()=>say('page loaded'));})();
+    """, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        if let text = message.body as? String { onLog("Maple Atlas page: " + text) }
     }
 
     /// Opens the helper's address (http://127.0.0.1:PORT/#companion=TOKEN). The token is given
@@ -48,6 +63,7 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
         tokenScript.removeAllUserScripts()
         let source = "try{if(/^(127\\.0\\.0\\.1|localhost)$/.test(location.hostname))sessionStorage.setItem('maple-atlas-companion-token','\(newToken)');}catch(_){}"
         tokenScript.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        tokenScript.addUserScript(Self.errorScript)
         if sameBase, webView.url != nil { webView.reload() } else { webView.load(URLRequest(url: newBase)) }
     }
 
@@ -98,7 +114,16 @@ final class AtlasBrowser: NSObject, WKUIDelegate, WKNavigationDelegate {
         return .allow
     }
 
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        onLog("Maple Atlas page: load failed · \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        onLog("Maple Atlas page: load failed · \(error.localizedDescription)")
+    }
+
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        onLog("Maple Atlas page: the web view stopped; reloading")
         reload()
     }
 

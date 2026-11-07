@@ -223,7 +223,8 @@
       $('#mc-companion-badge').onclick=open;
       setInterval(()=>{if(link.connected&&seenAt&&Date.now()-seenAt>12000){tracking('No recent location update','Check tracking under Game window & phone.');onConnection('stale');}},1000);
       paintState({phase:'connecting',message:''});
-      link.start();
+      // After the page has finished setting up: the link's first news redraws its panels.
+      setTimeout(()=>link.start(),0);
       return {open,enterFullscreen:()=>{},nav:value=>link.nav(value),pins:value=>link.pins(value),look:req=>link.look(req),lookResult:()=>false,lookProgress:()=>false,
         controls:()=>$('#mc-desktop-controls').click(),get connected(){return link.connected;},desktop:true};
     }
