@@ -168,6 +168,13 @@ func (c *controller) handle(cmd command) {
 				}
 			}()
 		}
+	case "show":
+		// The Atlas button on the game asks the Maple Atlas window for a view (local.go).
+		if c.desk != nil {
+			c.desk.show(cmd.State)
+		}
+	case "button":
+		overlayButton(cmd.On)
 	case "stop":
 		if c.current != nil {
 			c.current.disconnect()

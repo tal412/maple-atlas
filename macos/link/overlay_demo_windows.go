@@ -91,11 +91,23 @@ func runOverlayDemo() int {
 	icons.mu.Lock()
 	loaded := len(icons.pix)
 	icons.mu.Unlock()
-	report, _ := json.Marshal(map[string]any{"overlayWindow": hwnd != 0, "visible": vis != 0, "centred": centred, "gameInFront": front == game,
+	// The Atlas button: on the game's bottom-left corner, inside its client area.
+	button.mu.Lock()
+	bh := button.hwnd
+	button.mu.Unlock()
+	var br winRect
+	bVisible, _, _ := pIsWindowVisible.Call(bh)
+	if bh != 0 {
+		pGetWindowRect.Call(bh, uintptr(unsafe.Pointer(&br)))
+	}
+	client, _ := gameClient()
+	buttonOK := bh != 0 && bVisible != 0 && br.Left >= client.Left && br.Left-client.Left < 40 && br.Bottom <= client.Bottom && client.Bottom-br.Bottom < 40 && br.Right-br.Left >= 30
+	report, _ := json.Marshal(map[string]any{"button": []int32{br.Left, br.Top, br.Right, br.Bottom}, "buttonOK": buttonOK, "client": []int32{client.Left, client.Top, client.Right, client.Bottom},
+		"overlayWindow": hwnd != 0, "visible": vis != 0, "centred": centred, "gameInFront": front == game,
 		"pinsVisible": pinsVisible != 0, "pinsAboveCard": pinsAbove, "pins": []int32{pr.Left, pr.Top, pr.Right, pr.Bottom}, "iconsLoaded": loaded,
 		"game": []int32{gr.Left, gr.Top, gr.Right, gr.Bottom}, "card": []int32{or.Left, or.Top, or.Right, or.Bottom}, "screenshot": shot})
 	os.Stdout.Write(append(report, '\n'))
-	if hwnd != 0 && vis != 0 && centred && pinsAbove {
+	if hwnd != 0 && vis != 0 && centred && pinsAbove && buttonOK {
 		return 0
 	}
 	return 1

@@ -128,6 +128,7 @@ func runDesktop(site, stateDir string, _ bool) {
 	// Maple Atlas itself opens in the window, linked to this PC like a phone (local.go); the
 	// companion's controls (this folder's webui) open inside it, at /__companion/ui/.
 	d := newDesk("windows", emit)
+	setAtlasDesk(d)
 	ctrl := &controller{site: site, stateDir: stateDir, emit: emit, desk: d}
 	// Look: the hotkeys live on the overlay's window, so it runs from the start.
 	lookSession = func() *session {

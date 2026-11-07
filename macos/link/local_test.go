@@ -210,6 +210,13 @@ func TestDeskLinksTheWindow(t *testing.T) {
 	if v := next(); v["kind"] != "look-found" || v["n"].(float64) != 1 {
 		t.Fatalf("found %v", v)
 	}
+	// The Atlas button's views reach the window; unknown ones do not.
+	if !d.show("quests") || d.show("evil") {
+		t.Fatal("show: known views only")
+	}
+	if v := next(); v["kind"] != "show" || v["what"] != "quests" {
+		t.Fatalf("show %v", v)
+	}
 	// Pins and the controls request become events, like the phone's.
 	post(`{"kind":"pins","v":1,"pins":[]}`)
 	post(`{"kind":"controls"}`)

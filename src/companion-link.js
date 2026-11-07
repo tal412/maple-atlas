@@ -277,7 +277,8 @@
   // computer sends (the phone link's own messages) and POST for what the page sends. No
   // pairing: the app's token is the proof. hello carries the app ({host, ui}): ui is where the
   // companion's controls open in this page (Windows), "" when the app shows them (Mac).
-  function createLocal({token,ids,base='',onState=()=>{},onLocation,onReading,onPosition,onQuests,onLook,Source=scope.EventSource,send=(url,init)=>scope.fetch(url,init),now=Date.now,timers=scope}={}){
+  const SHOW=['map','search','quests','directions','look','controls'];
+  function createLocal({token,ids,base='',onState=()=>{},onShow=()=>{},onLocation,onReading,onPosition,onQuests,onLook,Source=scope.EventSource,send=(url,init)=>scope.fetch(url,init),now=Date.now,timers=scope}={}){
     const rx=receiver({ids,onLocation,onReading,onPosition,onQuests,onLook,now});
     let source=null,phase='idle',hello=null,failures=0,lost=null;
     const state=(next,message,extra={})=>{phase=next;onState({phase:next,message,expires:0,local:true,...extra});};
@@ -295,6 +296,8 @@
           failures=0;timers.clearTimeout(lost);rx.reset();
           state('connected','This window follows the game on this computer.',{host:hello.host});return;
         }
+        // The app's Atlas button on the game asks for a view: the map, search, quests, directions, Look.
+        if(value.kind==='show'&&value.v===1&&phase==='connected'){if(SHOW.includes(value.what))onShow(value.what);return;}
         if(phase==='connected')rx.deliver(value);
       };
       // The stream reconnects by itself; after a few failures (the app quit) it says so.

@@ -5,7 +5,7 @@
   const loaded=new Map();
   function load(path){if(!loaded.has(path))loaded.set(path,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=path;script.onload=resolve;script.onerror=()=>{loaded.delete(path);script.remove();reject(Error('Could not load the QR reader. Connect once to download it, then retry.'));};document.head.append(script);}));return loaded.get(path);}
   const busy=['connecting','verifying'];
-  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},onLook=()=>{},device}){
+  function create({root,visualMaps,onLocation,onConnection,onPosition=()=>{},onQuests=()=>{},onLook=()=>{},onShow=()=>{},device}){
     const $=s=>root.querySelector(s),dialog=$('#mc-companion-dialog'),status=$('#mc-companion-status'),input=$('#mc-pair-input'),scanVideo=$('#mc-scan-video');
     device=device||MapleCompanionDevice.detect({userAgent:navigator.userAgent,platform:navigator.platform,maxTouchPoints:navigator.maxTouchPoints,userAgentData:navigator.userAgentData});
     const role=device.role;dialog.dataset.role=role;
@@ -201,6 +201,7 @@
         document.body.append(drawer);
       }
       const link=MapleCompanionLink.createLocal({token,ids,
+        onShow:what=>{if(what==='controls'){if(drawer){for(const d of root.querySelectorAll('dialog[open]'))d.close();drawer.dataset.open='true';}return;}if(drawer)drawer.dataset.open='false';onShow(what);},
         onLocation:value=>{seenAt=Date.now();tracking('Tracking live',known.get(value.id)?.name||'Map detected');onLocation(value);},
         onPosition:value=>{seenAt=Date.now();onPosition(value);},onQuests:value=>onQuests(value),onLook:value=>onLook(value),
         onReading:state=>{seenAt=0;tracking(state==='paused'?'Tracking paused':'Finding your map',state==='paused'?'Start tracking under Game window & phone.':'Keep the map name showing on the in-game minimap (press + on it).');onConnection(state==='paused'?'stale':'searching');},

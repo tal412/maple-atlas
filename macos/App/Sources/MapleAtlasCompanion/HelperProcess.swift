@@ -174,6 +174,8 @@ enum HelperCommand {
     case lookProgress(req: String, text: String)
     /// What the Mac found (a JSON file), for the phone's Look view.
     case lookFound(req: String, path: String)
+    /// A view for the Maple Atlas window (the Atlas button on the game): map, search, quests, directions, look.
+    case show(String)
 
     var payload: [String: Any] {
         switch self {
@@ -181,6 +183,7 @@ enum HelperCommand {
         case .pair: ["cmd": "pair"]
         case .stop: ["cmd": "stop"]
         case .tracking(let state): ["cmd": "tracking", "state": state]
+        case .show(let what): ["cmd": "show", "state": what]
         case .location(let id, let confidence, let observedAt):
             [
                 "cmd": "location",

@@ -188,7 +188,11 @@
     $('#mc-status').textContent='Live · '+(m?.name||'Current map')+(hint?' · '+hint:' · Position found');
     if(hint!==liveHint){liveHint=hint;if(state.panel==='route')detail();}
     pushNav();if(arrivedAt)checkArrival();
-  },onQuests:value=>questPanel.update(value),onLook:value=>lookUI?.received(value),onConnection:phase=>{
+  },onQuests:value=>questPanel.update(value),onLook:value=>lookUI?.received(value),onShow:what=>{
+    // The Atlas button on the game (Maple Atlas Companion) opens a view over the game.
+    for(const d of root.querySelectorAll('dialog[open]'))d.close();
+    if(what==='search')search.open();else if(what==='quests')$('#mc-mobile-journal').click();else if(what==='directions')openRoute();else if(what==='look')lookUI?.open();
+  },onConnection:phase=>{
     questPanel.setConnection(phase);linkPhase=phase;if(phase!=='searching')clearTimeout(searchTimer);
     const wasFresh=liveFresh;if(['stale','searching','reconnecting','failed','disconnected'].includes(phase)&&liveHint){liveHint='';if(state.panel==='route')detail();}
     if(['failed','disconnected'].includes(phase))clearPosition();

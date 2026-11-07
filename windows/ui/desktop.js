@@ -20,6 +20,8 @@
     else if(v.event==='state'){phase=v.phase;if(v.paired)paired=true;if(phase==='connected'){paired=true;questsSentAt=0;}paintPhone(v.message);paintFirewall();}
     else if(v.event==='contact'){contactAt=Date.now();contactFrom=v.from;paintContact();}
     else if(v.event==='update'){$('update-text').textContent=v.message;$('update').hidden=v.phase!=='failed';$('update').disabled=false;if(v.phase==='failed')$('update').textContent='Try again';}
+    // The Atlas button's menu switched the navigation on or off.
+    else if(v.event==='overlay'){overlayOn=!!v.on;$('overlay').checked=overlayOn;try{localStorage.setItem(OVERLAY_KEY,overlayOn?'on':'off');}catch(_){}}
     else if(v.event==='error'){$('phone-error').textContent=v.message;$('phone-error').hidden=false;}
     paintPhone();
   };
@@ -42,6 +44,10 @@
   const OVERLAY_KEY='maple-atlas-companion-overlay';let overlayOn=true;try{overlayOn=localStorage.getItem(OVERLAY_KEY)!=='off';}catch(_){}
   $('overlay').checked=overlayOn;cmd({cmd:'overlay',on:overlayOn});
   $('overlay').onchange=()=>{overlayOn=$('overlay').checked;try{localStorage.setItem(OVERLAY_KEY,overlayOn?'on':'off');}catch(_){}cmd({cmd:'overlay',on:overlayOn});};
+  // The Atlas button on the game (bottom left).
+  const BUTTON_KEY='maple-atlas-companion-button';let buttonOn=true;try{buttonOn=localStorage.getItem(BUTTON_KEY)!=='off';}catch(_){}
+  $('atlas-button').checked=buttonOn;cmd({cmd:'button',on:buttonOn});
+  $('atlas-button').onchange=()=>{buttonOn=$('atlas-button').checked;try{localStorage.setItem(BUTTON_KEY,buttonOn?'on':'off');}catch(_){}cmd({cmd:'button',on:buttonOn});};
   $('disconnect').onclick=()=>cmd({cmd:'stop'});
 
   // Whether the phone's connection attempts arrive at all (a blocked network looks the same as no try).

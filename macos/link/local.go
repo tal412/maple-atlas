@@ -199,6 +199,14 @@ func (d *desk) sendTracking(state string) bool {
 	return d.sequenced(map[string]any{"kind": "tracking", "state": state, "observedAt": time.Now().UnixMilli()})
 }
 
+// showViews are the views the Atlas button on the game can open in the window.
+var showViews = map[string]bool{"map": true, "search": true, "quests": true, "directions": true, "look": true, "controls": true}
+
+// show asks the open window for a view; false when none is open or the view is unknown.
+func (d *desk) show(what string) bool {
+	return showViews[what] && d.send(map[string]any{"kind": "show", "v": 1, "what": what}, false) == nil
+}
+
 // own records a look this window asked for, so its answer comes back here.
 func (d *desk) own(req string) {
 	d.mu.Lock()

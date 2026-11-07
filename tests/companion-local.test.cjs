@@ -56,3 +56,13 @@ class Source{constructor(url){this.url=url;this.readyState=0;Source.last=this;}c
   Source.last.emit({kind:'hello',v:1,role:'pc'});assert.equal(states.at(-1).reason,'version');
 }
 console.log('PASS: app token (loopback only, leaves the address bar, kept for reloads) · local link hello, replay, live messages, Look parts, pins, controls, reconnect, closed app, version');
+{
+  // The app's Atlas button asks the window for a view; only known views, only once linked.
+  const shown=[];const link=createLocal({token,ids,Source,timers:new Clock(),send:async()=>{},onShow:w=>shown.push(w)});
+  link.start();const s=Source.last;
+  s.emit({kind:'show',v:1,what:'search'});
+  s.emit({kind:'hello',v:2,role:'pc',host:'mac',ui:''});
+  for(const what of ['search','quests','look','evil'])s.emit({kind:'show',v:1,what});
+  assert.deepEqual(shown,['search','quests','look']);
+  console.log('PASS: the app opens views in its window (known views only, once linked)');
+}

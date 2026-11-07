@@ -122,6 +122,7 @@ func lookReady(owner uintptr) {
 	look.mu.Lock()
 	look.mark, look.card = mark, card
 	look.mu.Unlock()
+	buttonReady()
 }
 
 // gameClient is the game window's client area on screen (what the screenshot shows).
@@ -143,6 +144,9 @@ func gameClient() (winRect, bool) {
 }
 
 func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
+	if r, done := buttonProc(hwnd, msg, wparam, lparam); done {
+		return r, true
+	}
 	l := look
 	switch {
 	case msg == wmHotkey:

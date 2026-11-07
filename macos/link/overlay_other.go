@@ -20,3 +20,9 @@ var lookSession = func() *session { return nil }
 
 // atlasWindowAt is used by the Windows pop-up shortcut (atlas_popup_windows.go) only.
 func atlasWindowAt(url, dir string) {}
+
+// overlayButton turns the Atlas button on the game on or off (Windows: atlas_button_windows.go).
+func overlayButton(on bool) {}
+
+// setAtlasDesk gives the Windows Atlas button the window's link.
+func setAtlasDesk(d *desk) {}

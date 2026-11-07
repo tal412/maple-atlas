@@ -348,6 +348,10 @@ struct SettingsView: View {
                     }
                 }
             }
+            Toggle("Show the Atlas button on the game", isOn: $model.showAtlasButton)
+            Text("A round button on the game's bottom-left corner. Click it for Maple Atlas over the game, search, your quests, directions and Look, without leaving the game.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
             Toggle("Show navigation on the game window", isOn: $model.showOverlay)
             Text("During a route on your phone, a card on top of the game shows the way to the next portal or the best hunting spot. Clicks pass through it.")
                 .font(.callout)
