@@ -120,3 +120,4 @@ html[data-atlas-overlay] #maple-atlas-concept .mc-shell {height:100dvh;}
 /* Quests over the game: the list gets the room (no route form above it). */
 html[data-atlas-overlay] #maple-atlas-concept .mc-panel {width:400px;}
 html[data-atlas-overlay] #maple-atlas-concept[data-panel="progress"] #mc-route-home {display:none;}
+html[data-atlas-overlay] #maple-atlas-concept .mc-maptools {left:432px;max-width:calc(100% - 452px);}
