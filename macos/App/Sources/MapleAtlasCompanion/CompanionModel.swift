@@ -65,7 +65,7 @@ final class CompanionModel {
     /// ⌃⌥W: Maple Atlas pops up over the game (in a floating panel, also over a game in full
     /// screen); the same shortcut, the bar's ×, or a click back on the game puts it away.
     @ObservationIgnored private let popup = AtlasPopupController()
-    /// ⌃⌥Q: the Atlas menu over the game (AtlasOverlay.swift).
+    /// ⌃⌥M: the Atlas menu over the game (AtlasOverlay.swift).
     @ObservationIgnored private let atlasMenu = AtlasMenuController()
     var isPopup: Bool { popup.isOpen }
 
@@ -106,7 +106,7 @@ final class CompanionModel {
             AtlasMenuEntry(symbol: "point.topleft.down.to.point.bottomright.curvepath", title: "Directions") { [weak self] in self?.showInAtlas("directions") },
             AtlasMenuEntry(symbol: "photo", title: "Look: picture and list") { [weak self] in self?.showInAtlas("look") },
             AtlasMenuEntry(symbol: "dot.radiowaves.left.and.right", title: "Look around me", detail: "A card with what is on screen", shortcut: "⌃⌥A") { [weak self] in self?.look.lookAll() },
-            AtlasMenuEntry(symbol: "viewfinder", title: "Mark a box to look at", shortcut: "⌃⌥M") { [weak self] in self?.look.beginMark() },
+            AtlasMenuEntry(symbol: "viewfinder", title: "Mark a box to look at", detail: "Drag over something on the game") { [weak self] in self?.look.beginMark() },
             AtlasMenuEntry(symbol: "signpost.right", title: "Navigation and pins on the game", on: showOverlay) { [weak self] in self?.showOverlay.toggle() },
             AtlasMenuEntry(symbol: "gearshape", title: "Companion window", detail: "Game window, phone, updates") { [weak self] in self?.openCompanionWindow() },
         ])
@@ -480,7 +480,7 @@ final class CompanionModel {
     /// Recognition happens here, on the Mac (LookHost); the phone only shows what was found.
     @ObservationIgnored private let lookHost = LookHost()
 
-    /// ⌃⌥M / ⌃⌥A: look at the marked box (or the whole window) and show the card. No phone needed.
+    /// Mark a box / ⌃⌥A: look at the marked box (or the whole window) and show the card. No phone needed.
     private func lookAsked(_ box: CGRect?) {
         lookCount += 1
         let req = "c\(lookCount)"
@@ -561,7 +561,7 @@ final class CompanionModel {
     @ObservationIgnored private var lookCount = 0
     @ObservationIgnored private var lookPending: String?
 
-    /// Starts the Look hotkeys (⌃⌥M mark a box, ⌃⌥A the whole window).
+    /// Starts the shortcuts (⌃⌥M the Atlas menu, ⌃⌥A look at the whole window, ⌃⌥W Maple Atlas).
     func startLook() {
         Task { [weak self] in guard let self else { return }; try? await self.lookHost.prepare(site: self.site.url) }
         look.windowID = { [weak self] in self?.capture.windowID }

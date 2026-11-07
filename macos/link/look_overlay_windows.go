@@ -2,7 +2,7 @@
 
 package main
 
-// Look on Windows: Ctrl+Alt+M marks a box on the game window (drag, or click for the area
+// Look on Windows: "Mark a box" in the Atlas menu (Ctrl+Alt+M) marks a box on the game window (drag, or click for the area
 // around the pointer), Ctrl+Alt+A looks at all of it. The screenshot goes to the phone, which
 // finds what is in it and sends a card back (look-result), drawn next to the box.
 //
@@ -106,7 +106,6 @@ func lookReady(owner uintptr) {
 	pRegisterHotKey.Call(owner, 1, modControl|modAlt|modNoRepeat, 'M')
 	pRegisterHotKey.Call(owner, 2, modControl|modAlt|modNoRepeat, 'A')
 	pRegisterHotKey.Call(owner, 3, modControl|modAlt|modNoRepeat, 'W')
-	pRegisterHotKey.Call(owner, 4, modControl|modAlt|modNoRepeat, 'Q')
 	class := utf16("MapleAtlasOverlay")
 	mark, _, _ := pCreateWindowExW.Call(wsExLayered|wsExTopmost|wsExToolWindow, uintptr(unsafe.Pointer(class)),
 		uintptr(unsafe.Pointer(utf16("Maple Atlas Look"))), wsPopup, 0, 0, 100, 100, 0, 0, 0, 0)
@@ -149,13 +148,11 @@ func lookProc(hwnd, msg, wparam, lparam uintptr) (uintptr, bool) {
 	switch {
 	case msg == wmHotkey:
 		if wparam == 1 {
-			l.beginMark()
+			openMenu()
 		} else if wparam == 2 {
 			l.lookAll()
 		} else if wparam == 3 {
 			toggleAtlasPopup()
-		} else if wparam == 4 {
-			openMenu()
 		}
 		return 0, true
 	case hwnd == l.mark && hwnd != 0:

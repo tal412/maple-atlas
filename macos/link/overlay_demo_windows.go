@@ -91,7 +91,7 @@ func runOverlayDemo() int {
 	icons.mu.Lock()
 	loaded := len(icons.pix)
 	icons.mu.Unlock()
-	// The Atlas menu's owner window exists (Ctrl+Alt+Q opens the menu from it).
+	// The Atlas menu's owner window exists (Ctrl+Alt+M opens the menu from it).
 	button.mu.Lock()
 	menuOK := button.hwnd != 0
 	button.mu.Unlock()

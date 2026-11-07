@@ -3,7 +3,7 @@ import WebKit
 
 /// Look's recognition on the Mac: a hidden web view with the site's look-host.html (Look's own
 /// detector, namers and files, kept in this web view's cache after the first download). A box
-/// marked on the game (⌃⌥M) or the phone's Look is recognized here; the phone only shows it.
+/// marked on the game (from the ⌃⌥M menu) or the phone's Look is recognized here; the phone only shows it.
 @MainActor
 final class LookHost: NSObject, WKNavigationDelegate {
     /// What the phone's Look view needs (each thing with its box), as JSON, and the card for the

@@ -1,5 +1,5 @@
 /* Look for the computer: the page look-host.html (built by scripts/build.py) that Maple Atlas
- * Companion opens in a hidden web view, so a box marked on the game (⌃⌥M / Ctrl+Alt+M) is
+ * Companion opens in a hidden web view, so a box marked on the game (from the ⌃⌥M / Ctrl+Alt+M menu) is
  * recognized on the computer itself and its card shown at once, with no phone needed. It is
  * Look's own recognition (src/look-engine.js: the same detector, namers and files, kept in the
  * web view's cache) and the phone's own words (src/look-card.js), with market prices.

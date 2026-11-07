@@ -52,8 +52,8 @@ final class AtlasMenuState {
     var pick: (AtlasMenuEntry) -> Void = { _ in }
 }
 
-/// ⌃⌥Q: the Atlas menu pops up over the game (in its middle): Maple Atlas, search, quests,
-/// directions, Look and the on-game navigation. A number key or a click picks an entry; Esc, ⌃⌥Q
+/// ⌃⌥M: the Atlas menu pops up over the game (in its middle): Maple Atlas, search, quests,
+/// directions, Look and the on-game navigation. A number key or a click picks an entry; Esc, ⌃⌥M
 /// again or a click outside closes it.
 @MainActor
 final class AtlasMenuController {
@@ -114,7 +114,7 @@ private struct AtlasMenuCard: View {
                     Text(state.status).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7)).lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Text("⌃⌥Q").font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.5))
+                Text("⌃⌥M").font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.5))
             }
             .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 8)
             ForEach(Array(state.entries.enumerated()), id: \.element.id) { i, entry in
@@ -217,7 +217,7 @@ private struct PopupBar: View {
         HStack(spacing: 8) {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 18, height: 18)
             Text("Maple Atlas").font(.system(size: 12, weight: .semibold))
-            Text("· ⌃⌥W or a click on the game hides it · ⌃⌥Q menu").font(.system(size: 11)).foregroundStyle(.secondary)
+            Text("· ⌃⌥W or a click on the game hides it · ⌃⌥M menu").font(.system(size: 11)).foregroundStyle(.secondary)
             Spacer()
             Button(action: close) { Image(systemName: "xmark").font(.system(size: 11, weight: .bold)) }
                 .buttonStyle(.borderless).help("Hide (⌃⌥W)")

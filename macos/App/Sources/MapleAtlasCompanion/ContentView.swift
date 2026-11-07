@@ -348,7 +348,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            Text("In the game: ⌃⌥Q opens the Atlas menu (Maple Atlas, search, quests, directions, Look), ⌃⌥W shows Maple Atlas over the game, ⌃⌥A looks around you, ⌃⌥M marks a box to look at.")
+            Text("In the game: ⌃⌥M opens the Atlas menu (Maple Atlas, search, quests, directions, Look, mark a box), ⌃⌥W shows Maple Atlas over the game, ⌃⌥A looks around you.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
             Toggle("Show navigation on the game window", isOn: $model.showOverlay)

@@ -2,7 +2,7 @@
 
 package main
 
-// The Atlas menu: Ctrl+Alt+Q pops a menu up over the game's middle with what is useful in
+// The Atlas menu: Ctrl+Alt+M pops a menu up over the game's middle with what is useful in
 // play: Maple Atlas over the game, search, your quests, directions, Look, and the on-game
 // navigation, so the game never has to be left. Its owner is a hidden window of the overlay.
 
@@ -54,7 +54,7 @@ func menuReady() {
 	button.mu.Unlock()
 }
 
-// openMenu shows the menu over the game's middle (Ctrl+Alt+Q).
+// openMenu shows the menu over the game's middle (Ctrl+Alt+M).
 func openMenu() {
 	button.mu.Lock()
 	h := button.hwnd
@@ -92,7 +92,7 @@ func buttonMenu(h uintptr) {
 	add := func(flags uintptr, id int, text string) {
 		pAppendMenuW.Call(m, flags, uintptr(id), uintptr(unsafe.Pointer(utf16(text))))
 	}
-	add(mfString|mfGrayed, 1, "Maple Atlas\tCtrl+Alt+Q")
+	add(mfString|mfGrayed, 1, "Maple Atlas\tCtrl+Alt+M")
 	if over {
 		add(mfString, cmdAtlas, "Back to the game\tCtrl+Alt+W")
 	} else {
@@ -104,7 +104,7 @@ func buttonMenu(h uintptr) {
 	add(mfString, cmdLook, "Look: picture and list")
 	add(mfSeparator, 0, "")
 	add(mfString, cmdAround, "Look around me\tCtrl+Alt+A")
-	add(mfString, cmdMark, "Mark a box to look at\tCtrl+Alt+M")
+	add(mfString, cmdMark, "Mark a box to look at")
 	add(mfSeparator, 0, "")
 	nav := uintptr(mfString)
 	if navOn {

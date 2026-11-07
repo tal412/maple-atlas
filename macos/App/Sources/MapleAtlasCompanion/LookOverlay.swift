@@ -67,8 +67,8 @@ final class LookState {
     var onClose: () -> Void = {}
 }
 
-/// Look on the Mac: ⌃⌥M marks a box on the game window (drag, or click for the area around the
-/// pointer), ⌃⌥A looks at the whole window ("Around me"). The Mac finds what is in it
+/// Look on the Mac: "Mark a box" in the Atlas menu marks a box on the game window (drag, or click
+/// for the area around the pointer), ⌃⌥A looks at the whole window ("Around me"). The Mac finds what is in it
 /// (LookHost) and shows a card next to the box.
 ///
 /// The hotkeys use Carbon's RegisterEventHotKey, the one global shortcut API that needs no
@@ -79,7 +79,7 @@ final class LookController {
     var onLook: ((CGRect?) -> Void)?
     /// ⌃⌥W: show or hide Maple Atlas over the game.
     var onAtlas: (() -> Void)?
-    /// ⌃⌥Q: the Atlas menu.
+    /// ⌃⌥M: the Atlas menu.
     var onMenu: (() -> Void)?
     /// The game window's id, for placing the marking layer and the card on it.
     var windowID: () -> CGWindowID? = { nil }
@@ -91,10 +91,9 @@ final class LookController {
     private var hotKeys: [EventHotKeyRef?] = []
     private var lastBox: CGRect?   // where the card goes, in screen coordinates
 
-    static let markKey = "⌃⌥M"
     static let aroundKey = "⌃⌥A"
     static let atlasKey = "⌃⌥W"
-    static let menuKey = "⌃⌥Q"
+    static let menuKey = "⌃⌥M"
 
     func start() {
         guard hotKeys.isEmpty else { return }
@@ -109,7 +108,7 @@ final class LookController {
             MainActor.assumeIsolated { me.hotKey(which) }
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), nil)
-        for (i, key) in [(1, kVK_ANSI_M), (2, kVK_ANSI_A), (3, kVK_ANSI_W), (4, kVK_ANSI_Q)] {
+        for (i, key) in [(1, kVK_ANSI_M), (2, kVK_ANSI_A), (3, kVK_ANSI_W)] {
             var ref: EventHotKeyRef?
             RegisterEventHotKey(UInt32(key), UInt32(controlKey | optionKey), EventHotKeyID(signature: OSType(0x4D41_4C4B), id: UInt32(i)),
                                 GetApplicationEventTarget(), 0, &ref)
@@ -118,7 +117,7 @@ final class LookController {
     }
 
     private func hotKey(_ which: Int) {
-        if which == 1 { beginMark() } else if which == 2 { lookAll() } else if which == 3 { onAtlas?() } else { onMenu?() }
+        if which == 1 { onMenu?() } else if which == 2 { lookAll() } else if which == 3 { onAtlas?() }
     }
 
     // MARK: Marking
