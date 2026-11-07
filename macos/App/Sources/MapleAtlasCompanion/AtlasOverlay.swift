@@ -226,7 +226,7 @@ final class AtlasPopupController {
             web.wantsLayer = true
             web.layer?.cornerRadius = 14
             web.layer?.masksToBounds = true
-            let companion = NSHostingView(rootView: ContentView(model: model).frame(maxWidth: 640).frame(maxWidth: .infinity))
+            let companion = NSHostingView(rootView: ContentView(model: model).scrollContentBackground(.hidden).frame(maxWidth: 640).frame(maxWidth: .infinity))
             companion.wantsLayer = true
             companion.layer?.cornerRadius = 14
             companion.layer?.masksToBounds = true
