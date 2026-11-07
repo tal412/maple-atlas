@@ -683,6 +683,9 @@ html[data-atlas-overlay] #maple-atlas-concept .mc-mapfooter,
 html[data-atlas-overlay] #maple-atlas-concept .mc-mobile-searchbar,
 html[data-atlas-overlay] #maple-atlas-concept .mc-mobile-nav {display:none;}
 html[data-atlas-overlay] #maple-atlas-concept .mc-shell {height:100dvh;}
+/* Quests over the game: the list gets the room (no route form above it). */
+html[data-atlas-overlay] #maple-atlas-concept .mc-panel {width:400px;}
+html[data-atlas-overlay] #maple-atlas-concept[data-panel="progress"] #mc-route-home {display:none;}
 
 /* Quest helper (src/quest-panel.js) */
 #maple-atlas-concept button.mc-profile {border:0;cursor:pointer;color:var(--mc-ink);}
@@ -5143,7 +5146,7 @@ window.mapleStorageReady.then(() => {
   mobile.addEventListener('change',()=>{if(!mobile.matches){for(const d of $$('.mc-mobile-dialog'))if(d.open)d.close();$('#mc-route-home').append($('#mc-form'));}detail();camera();});
   function detail(){
     const wasQuests=shownQuestHtml;shownQuestHtml=null;
-    $$('.mc-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===state.panel)));
+    $$('.mc-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===state.panel)));root.dataset.panel=state.panel;
     const m=get(state.selected),box=$('#mc-detail');if(!m)return;
     if(mobile.matches&&state.panel==='place'&&!hasInspected){
       box.innerHTML='<div class="mc-eyebrow">Your world</div><h3>Explore Victoria Island</h3><div class="mc-secondary">Choose a town to see quests, NPCs and places.</div>'+DATA.maps.filter(p=>p.town&&anchor(p.id)).map(p=>'<button type="button" class="mc-search-result" data-inspect="'+p.id+'">'+icon('map-pin')+'<span><strong>'+esc(p.name)+'</strong><small>'+p.npcs.length+' NPCs · Explore town</small></span></button>').join('');
